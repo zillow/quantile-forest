@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>User Guide &mdash; Version 1.0.0</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/quantile-forest.css" type="text/css" />
+      <link rel="stylesheet" href="_static/basic.css" type="text/css" />
+      <link rel="stylesheet" href="_static/sg_gallery.css" type="text/css" />
+      <link rel="stylesheet" href="_static/sg_gallery-binder.css" type="text/css" />
+      <link rel="stylesheet" href="_static/sg_gallery-dataframe.css" type="text/css" />
+      <link rel="stylesheet" href="_static/sg_gallery-rendered-html.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/quantile-forest.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/js/copybutton.js"></script>
+        <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="API Reference" href="api.html" />
+    <link rel="prev" title="Getting Started" href="install.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="index.html" class="icon icon-home"> quantile-forest
+          </a>
+              <div class="version">
+                1.0.0
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="install.html">Getting Started</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">User Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#introduction">Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#quantile-regression-forests">Quantile Regression Forests</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#fitting-and-predicting">Fitting and Predicting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#quantile-ranks">Quantile Ranks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#proximity-counts">Proximity Counts</a></li>
+</ul>
+</li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="auto_examples/index.html">General Examples</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">quantile-forest</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>User Guide</li>
+
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="user-guide">
+<span id="id1"></span><h1>User Guide<a class="headerlink" href="#user-guide" title="Permalink to this headline"></a></h1>
+<section id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline"></a></h2>
+<p>Random forests have proven to be very popular and powerful for regression and classification. For regression, random forests give an accurate approximation of the conditional mean of a response variable. That is, if we let <span class="math notranslate nohighlight">\(Y\)</span> be a real-valued response variable and <span class="math notranslate nohighlight">\(X\)</span> a covariate or predictor variable, they estimate <span class="math notranslate nohighlight">\(E(Y | X)\)</span>, which can be interpreted as the expected value of the output <span class="math notranslate nohighlight">\(Y\)</span> given the input <span class="math notranslate nohighlight">\(X\)</span>.</p>
+<p>However random forests provide information about the full conditional distribution of the response variable, not only about the conditional mean. Quantile regression forests, a generalization of random forests, can be used to infer conditional quantiles. That is, they return <span class="math notranslate nohighlight">\(y\)</span> at <span class="math notranslate nohighlight">\(q\)</span> for which <span class="math notranslate nohighlight">\(F(Y=y|X) = q\)</span>, where <span class="math notranslate nohighlight">\(q\)</span> is the quantile.</p>
+<p>The quantiles give more complete information about the distribution of <span class="math notranslate nohighlight">\(Y\)</span> as a function of the predictor variable <span class="math notranslate nohighlight">\(X\)</span> than the conditional mean alone. They can be useful, for example, to build prediction intervals or to perform outlier detection in a high-dimensional dataset.</p>
+<p>In practice, the empirical estimation of quantiles can be calculated in several ways. In this package, a desired quantile is calculated from the input rank <span class="math notranslate nohighlight">\(x\)</span> such that <span class="math notranslate nohighlight">\(x = (N + 1 - 2C)q + C\)</span>, where <span class="math notranslate nohighlight">\(q\)</span> is the quantile, <span class="math notranslate nohighlight">\(N\)</span> is the number of samples, and <span class="math notranslate nohighlight">\(C\)</span> is a constant (degree of freedom). In this package, <span class="math notranslate nohighlight">\(C = 1\)</span>. This package provides methods that calculate quantiles using samples that are weighted and unweighted. In a weighted quantile, <span class="math notranslate nohighlight">\(N\)</span> is calculated from the fraction of the total weight instead of the total number of samples.</p>
+</section>
+<section id="quantile-regression-forests">
+<h2>Quantile Regression Forests<a class="headerlink" href="#quantile-regression-forests" title="Permalink to this headline"></a></h2>
+<p>A standard decision tree can be extended in a straightforward way to estimate conditional quantiles. When a decision tree is fit, rather than storing only the sufficient statistics of the response variable at the leaf node, such as the mean and variance, all of the response values can be stored with the leaf node. At prediction time, these values can then be used to calculate empirical quantile estimates.</p>
+<p>The quantile-based approach can be extended to random forests. To estimate <span class="math notranslate nohighlight">\(F(Y=y|x) = q\)</span>, each response value in <code class="docutils literal notranslate"><span class="pre">y_train</span></code> is given a weight or frequency. Formally, the weight or frequency given to the <span class="math notranslate nohighlight">\(j\)</span>th sample of <code class="docutils literal notranslate"><span class="pre">y_train</span></code>, <span class="math notranslate nohighlight">\(y_j\)</span>, while estimating the quantile is</p>
+<div class="math notranslate nohighlight">
+\[\frac{1}{T} \sum_{t=1}^{T} \frac{\mathbb{1}(y_j \in L(x))}{\sum_{i=1}^N \mathbb{1}(y_i \in L(x))},\]</div>
+<p>where <span class="math notranslate nohighlight">\(L(x)\)</span> denotes the leaf that <span class="math notranslate nohighlight">\(x\)</span> falls into.</p>
+<p>Informally, this means that given a new unknown sample, we first find the leaf that it falls into at each tree. Then for each <code class="docutils literal notranslate"><span class="pre">(X,</span> <span class="pre">y)</span></code> pair in the training data, a weight or frequency is given to <code class="docutils literal notranslate"><span class="pre">y</span></code> for each tree based on the number of times each training sample falls into the same leaf as the new sample. This information can then be used to calculate the empirical quantile estimates.</p>
+<p>This approach was first proposed by <span id="id2">Meinshausen [<a class="reference internal" href="#id4" title="Nicolai Meinshausen. Quantile Regression Forests. Journal of Machine Learning Research, 7(6), 983-999, 2006. URL: https://www.jmlr.org/papers/volume7/meinshausen06a/meinshausen06a.pdf.">Mei06</a>]</span>.</p>
+<p id="id3"><dl class="citation">
+<dt class="label" id="id4"><span class="brackets">Mei06</span></dt>
+<dd><p>Nicolai Meinshausen. <em>Quantile Regression Forests</em>. Journal of Machine Learning Research, 7(6), 983-999, 2006. URL: <a class="reference external" href="https://www.jmlr.org/papers/volume7/meinshausen06a/meinshausen06a.pdf">https://www.jmlr.org/papers/volume7/meinshausen06a/meinshausen06a.pdf</a>.</p>
+</dd>
+</dl>
+</p>
+</section>
+<section id="fitting-and-predicting">
+<h2>Fitting and Predicting<a class="headerlink" href="#fitting-and-predicting" title="Permalink to this headline"></a></h2>
+<p>Quantile forests can be fit and used to predict like standard scikit-learn estimators.</p>
+<p>Let’s fit a quantile forest on a simple regression dataset:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">sklearn</span> <span class="kn">import</span> <span class="n">datasets</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">sklearn.model_selection</span> <span class="kn">import</span> <span class="n">train_test_split</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">quantile_forest</span> <span class="kn">import</span> <span class="n">RandomForestQuantileRegressor</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">X</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">datasets</span><span class="o">.</span><span class="n">load_diabetes</span><span class="p">(</span><span class="n">return_X_y</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">X_train</span><span class="p">,</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">y_test</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="mf">0.25</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">reg</span> <span class="o">=</span> <span class="n">RandomForestQuantileRegressor</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">reg</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">)</span>
+<span class="go">RandomForestQuantileRegressor(...)</span>
+</pre></div>
+</div>
+<p>As quantile forests can provide predictions at quantiles, they accept an optional parameter during the call to the <code class="docutils literal notranslate"><span class="pre">predict</span></code> method, which can be a float or list of floats that specify the empirical quantiles to return:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">y_pred</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">,</span> <span class="n">quantiles</span><span class="o">=</span><span class="p">[</span><span class="mf">0.25</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.75</span><span class="p">])</span>  <span class="c1"># returns three columns per row</span>
+</pre></div>
+</div>
+<p>If the <code class="docutils literal notranslate"><span class="pre">predict</span></code> method is called without quantiles, the prediction defaults to the empirical median (<code class="docutils literal notranslate"><span class="pre">quantiles</span> <span class="pre">=</span> <span class="pre">0.5</span></code>):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">y_pred</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">)</span>  <span class="c1"># returns empirical median prediction for each test sample</span>
+</pre></div>
+</div>
+<p>If the <code class="docutils literal notranslate"><span class="pre">predict</span></code> method is explicitly called with <code class="docutils literal notranslate"><span class="pre">quantiles</span> <span class="pre">=</span> <span class="pre">None</span></code>, the prediction returns the empirical mean:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">y_pred</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">,</span> <span class="n">quantiles</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>  <span class="c1"># returns empirical mean prediction for each test sample</span>
+</pre></div>
+</div>
+<p>The output of the <code class="docutils literal notranslate"><span class="pre">predict</span></code> method is an array with one column for each specified quantile or a single column if no quantiles are specified. The order of the output columns corresponds to the order of the quantiles, which can be specified in any order (i.e., they do not need to be monotonically ordered):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">y_pred</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">,</span> <span class="n">quantiles</span><span class="o">=</span><span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">,</span> <span class="mf">0.75</span><span class="p">])</span>  <span class="c1"># first column corresponds to quantile 0.5</span>
+</pre></div>
+</div>
+<p>By default, the predict method calculates quantiles using an unweighted quantile method (<code class="docutils literal notranslate"><span class="pre">weighted_quantile</span> <span class="pre">=</span> <span class="pre">False</span></code>), which aggregates the list of training <code class="docutils literal notranslate"><span class="pre">y</span></code> values for each leaf node to which the test sample belongs across all trees. When the number of samples in the training set is smaller than the expected size of this list (i.e., <span class="math notranslate nohighlight">\(n_{train} \ll n_{trees} \cdot n_{leaves} \cdot n_{leafsamples}\)</span>), it can be more efficient to calculate a weighted quantile (<code class="docutils literal notranslate"><span class="pre">weighted_quantile</span> <span class="pre">=</span> <span class="pre">True</span></code>), which assigns a weight to each sample in the training set based on the number of times that it co-occurs in the same leaves as the test sample. For a given input, both methods return the same output values:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">y_pred_unweighted</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">,</span> <span class="n">weighted_quantile</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>  <span class="c1"># unweighted quantile (default)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">y_pred_weighted</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">,</span> <span class="n">weighted_quantile</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>  <span class="c1"># weighted quantile</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">y_pred_unweighted</span><span class="p">,</span> <span class="n">y_pred_weighted</span><span class="p">)</span>
+<span class="go">True</span>
+</pre></div>
+</div>
+<p>Out-of-bag (OOB) predictions can be returned by specifying <code class="docutils literal notranslate"><span class="pre">oob_score</span> <span class="pre">=</span> <span class="pre">True</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">y_pred_oob</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">quantiles</span><span class="o">=</span><span class="p">[</span><span class="mf">0.25</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.75</span><span class="p">],</span> <span class="n">oob_score</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>By default, when the <code class="docutils literal notranslate"><span class="pre">predict</span></code> method is called with the OOB flag set to True, it assumes that the input samples are the training samples, arranged in the same order as during model fitting. It accepts an optional parameter that can be used to specify the training index of each input sample, with -1 used to specify non-training samples that can in effect be scored in-bag (IB) during the same call:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">X_mixed</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">X_train</span><span class="p">,</span> <span class="n">X_test</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">X_train</span><span class="p">)),</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">X_test</span><span class="p">),</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">y_pred_mix</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_mixed</span><span class="p">,</span> <span class="n">quantiles</span><span class="o">=</span><span class="p">[</span><span class="mf">0.25</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.75</span><span class="p">],</span> <span class="n">oob_score</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">indices</span><span class="o">=</span><span class="n">indices</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">y_pred_train_oob</span> <span class="o">=</span> <span class="n">y_pred_mix</span><span class="p">[:</span><span class="nb">len</span><span class="p">(</span><span class="n">X_train</span><span class="p">)]</span>  <span class="c1"># predictions on the training data are OOB</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">y_pred_test</span> <span class="o">=</span> <span class="n">y_pred_mix</span><span class="p">[</span><span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="n">X_test</span><span class="p">):]</span>  <span class="c1"># predictions on the new test data are IB</span>
+</pre></div>
+</div>
+<p>This allows all samples, both from the training and test sets, to be scored with a single call to <code class="docutils literal notranslate"><span class="pre">predict</span></code>, whereby OOB predictions are returned for the training samples and IB (i.e., non-OOB) predictions are returned for the test samples.</p>
+<p>The predictions of a standard random forest can also be recovered from a quantile forest without retraining by passing <code class="docutils literal notranslate"><span class="pre">quantiles</span> <span class="pre">=</span> <span class="pre">None</span></code> and <code class="docutils literal notranslate"><span class="pre">aggregate_leaves_first</span> <span class="pre">=</span> <span class="pre">False</span></code>, the latter which specifies a Boolean flag to average the leaf values before aggregating the leaves across trees. This configuration essentially replicates the prediction process used by a standard random forest regressor, which is an averaging of mean leaf values across trees:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">sklearn</span> <span class="kn">import</span> <span class="n">datasets</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">sklearn.ensemble</span> <span class="kn">import</span> <span class="n">RandomForestRegressor</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">sklearn.model_selection</span> <span class="kn">import</span> <span class="n">train_test_split</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">quantile_forest</span> <span class="kn">import</span> <span class="n">RandomForestQuantileRegressor</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">X</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">datasets</span><span class="o">.</span><span class="n">load_diabetes</span><span class="p">(</span><span class="n">return_X_y</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">X_train</span><span class="p">,</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">y_test</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="mf">0.25</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">rf</span> <span class="o">=</span> <span class="n">RandomForestRegressor</span><span class="p">(</span><span class="n">random_state</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">qrf</span> <span class="o">=</span> <span class="n">RandomForestQuantileRegressor</span><span class="p">(</span><span class="n">random_state</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">rf</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">),</span> <span class="n">qrf</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">)</span>
+<span class="go">(RandomForestRegressor(random_state=0), RandomForestQuantileRegressor(random_state=0))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">y_pred_rf</span> <span class="o">=</span> <span class="n">rf</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">y_pred_qrf</span> <span class="o">=</span> <span class="n">qrf</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">,</span> <span class="n">quantiles</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">aggregate_leaves_first</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">y_pred_rf</span><span class="p">,</span> <span class="n">y_pred_qrf</span><span class="p">)</span>
+<span class="go">True</span>
+</pre></div>
+</div>
+</section>
+<section id="quantile-ranks">
+<h2>Quantile Ranks<a class="headerlink" href="#quantile-ranks" title="Permalink to this headline"></a></h2>
+<p>The quantile rank of a score is the quantile of scores in its frequency distribution that are equal to or lower than it. The output quantile rank will be a value in the range [0, 1] for each test sample. The quantile rank of each sample is calculated by aggregating all of the training samples that share the same leaf node across all of the trees:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">sklearn</span> <span class="kn">import</span> <span class="n">datasets</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">sklearn.model_selection</span> <span class="kn">import</span> <span class="n">train_test_split</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">quantile_forest</span> <span class="kn">import</span> <span class="n">RandomForestQuantileRegressor</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">X</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">datasets</span><span class="o">.</span><span class="n">load_diabetes</span><span class="p">(</span><span class="n">return_X_y</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">X_train</span><span class="p">,</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">y_test</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="mf">0.25</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">reg</span> <span class="o">=</span> <span class="n">RandomForestQuantileRegressor</span><span class="p">()</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">y_ranks</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">quantile_ranks</span><span class="p">(</span><span class="n">X_test</span><span class="p">,</span> <span class="n">y_test</span><span class="p">)</span>  <span class="c1"># quantile ranks of y_test</span>
+</pre></div>
+</div>
+<p>Out-of-bag (OOB) quantile ranks can be returned by specifying <code class="docutils literal notranslate"><span class="pre">oob_score</span> <span class="pre">=</span> <span class="pre">True</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">y_ranks_oob</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">quantile_ranks</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">oob_score</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="proximity-counts">
+<h2>Proximity Counts<a class="headerlink" href="#proximity-counts" title="Permalink to this headline"></a></h2>
+<p>Proximity counts are counts of the number of times that two samples share a leaf node. When a test set is present, the proximity counts of each sample in the test set with each sample in the training set can be computed:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">sklearn</span> <span class="kn">import</span> <span class="n">datasets</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">sklearn.model_selection</span> <span class="kn">import</span> <span class="n">train_test_split</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">quantile_forest</span> <span class="kn">import</span> <span class="n">RandomForestQuantileRegressor</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">X</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">datasets</span><span class="o">.</span><span class="n">load_diabetes</span><span class="p">(</span><span class="n">return_X_y</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">X_train</span><span class="p">,</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">y_test</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="mf">0.25</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">reg</span> <span class="o">=</span> <span class="n">RandomForestQuantileRegressor</span><span class="p">()</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">proximities</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">proximity_counts</span><span class="p">(</span><span class="n">X_test</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>For each test sample, the method outputs a list of tuples of the training index and proximity count, listed in descending order by proximity count. For example, a test sample with an output of [(1, 5), (0, 3), (3, 1)], means that the test sample shared 5, 3, and 1 leaf nodes with the training samples that were (zero-)indexed as 1, 0, and 3 during model fitting, respectively.</p>
+<p>The maximum number of proximity counts output per test sample can be limited by specifying <code class="docutils literal notranslate"><span class="pre">max_proximities</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">proximities</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">proximity_counts</span><span class="p">(</span><span class="n">X_test</span><span class="p">,</span> <span class="n">max_proximities</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Out-of-bag (OOB) proximity counts can be returned by specifying <code class="docutils literal notranslate"><span class="pre">oob_score</span> <span class="pre">=</span> <span class="pre">True</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">proximities</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">proximity_counts</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">oob_score</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="install.html" class="btn btn-neutral float-left" title="Getting Started" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="api.html" class="btn btn-neutral float-right" title="API Reference" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022-2022, Zillow Group.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

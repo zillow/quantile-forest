@@ -1,0 +1,50 @@
+﻿RandomForestQuantileRegressor
+===========================================================
+
+.. currentmodule:: quantile_forest
+
+.. autoclass:: RandomForestQuantileRegressor
+
+   
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      
+      
+        ~RandomForestQuantileRegressor.apply
+      
+      
+        ~RandomForestQuantileRegressor.decision_path
+      
+      
+        ~RandomForestQuantileRegressor.fit
+      
+      
+        ~RandomForestQuantileRegressor.get_params
+      
+      
+        ~RandomForestQuantileRegressor.predict
+      
+      
+        ~RandomForestQuantileRegressor.proximity_counts
+      
+      
+        ~RandomForestQuantileRegressor.quantile_ranks
+      
+      
+        ~RandomForestQuantileRegressor.score
+      
+      
+        ~RandomForestQuantileRegressor.set_params
+      
+   
+   
+
+.. include:: quantile_forest.RandomForestQuantileRegressor.examples
+
+.. raw:: html
+
+    <div style='clear:both'></div>

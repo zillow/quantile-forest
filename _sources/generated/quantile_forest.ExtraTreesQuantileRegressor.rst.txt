@@ -1,0 +1,50 @@
+﻿ExtraTreesQuantileRegressor
+=========================================================
+
+.. currentmodule:: quantile_forest
+
+.. autoclass:: ExtraTreesQuantileRegressor
+
+   
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      
+      
+        ~ExtraTreesQuantileRegressor.apply
+      
+      
+        ~ExtraTreesQuantileRegressor.decision_path
+      
+      
+        ~ExtraTreesQuantileRegressor.fit
+      
+      
+        ~ExtraTreesQuantileRegressor.get_params
+      
+      
+        ~ExtraTreesQuantileRegressor.predict
+      
+      
+        ~ExtraTreesQuantileRegressor.proximity_counts
+      
+      
+        ~ExtraTreesQuantileRegressor.quantile_ranks
+      
+      
+        ~ExtraTreesQuantileRegressor.score
+      
+      
+        ~ExtraTreesQuantileRegressor.set_params
+      
+   
+   
+
+.. include:: quantile_forest.ExtraTreesQuantileRegressor.examples
+
+.. raw:: html
+
+    <div style='clear:both'></div>
