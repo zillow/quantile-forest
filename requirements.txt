@@ -1,0 +1,4 @@
+cython >= 3.0a4
+numpy
+scipy
+scikit-learn >= 1.0
