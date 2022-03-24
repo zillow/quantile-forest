@@ -24,6 +24,7 @@ Only single output problems are handled.
 
 import numbers
 import random
+import warnings
 from math import ceil
 from warnings import warn
 
@@ -190,7 +191,9 @@ class BaseForestQuantileRegressor(ForestRegressor):
                 "".format(type(self.max_samples_leaf))
             )
 
-        X_leaves = self.apply(X)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", UserWarning)
+            X_leaves = self.apply(X)
 
         shape = (n_samples, self.n_estimators)
         bootstrap_indices = np.empty(shape, dtype=np.int64)
@@ -473,7 +476,9 @@ class BaseForestQuantileRegressor(ForestRegressor):
                     "to compute any reliable OOB estimates."
                 )
         else:
-            X_leaves = self.apply(X)
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", UserWarning)
+                X_leaves = self.apply(X)
             X_indices = None
 
         y_pred = self.forest_.predict(
@@ -579,7 +584,9 @@ class BaseForestQuantileRegressor(ForestRegressor):
                     "to compute any reliable OOB estimates."
                 )
         else:
-            X_leaves = self.apply(X)
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", UserWarning)
+                X_leaves = self.apply(X)
             X_indices = None
 
         y_ranks = self.forest_.quantile_ranks(
@@ -672,7 +679,9 @@ class BaseForestQuantileRegressor(ForestRegressor):
                     "to compute any reliable OOB estimates."
                 )
         else:
-            X_leaves = self.apply(X)
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", UserWarning)
+                X_leaves = self.apply(X)
             X_indices = None
 
         proximities = self.forest_.proximity_counts(
