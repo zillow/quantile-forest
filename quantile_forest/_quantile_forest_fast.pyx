@@ -324,6 +324,9 @@ cpdef vector[double] calc_weighted_quantile(
     for i in range(1, n_inputs):
         cum_weights[i] = cum_weights[i-1] + weights[i]
 
+    if cum_weights[n_inputs-1] <= 0:
+        return out
+
     f = cum_weights[n_inputs-1] + 1 - (2*C)
 
     out = vector[double](n_quantiles)
