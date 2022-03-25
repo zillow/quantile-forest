@@ -26,6 +26,7 @@ cdef class QuantileForest:
         UINT8_t[:, :] X_indices=*,
         char* interpolation=*,
         bint weighted_quantile=*,
+        bint weighted_leaves=*,
         bint aggregate_leaves_first=*,
     )
 

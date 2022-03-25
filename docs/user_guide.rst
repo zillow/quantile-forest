@@ -67,12 +67,14 @@ The output of the `predict` method is an array with one column for each specifie
 
     >>> y_pred = reg.predict(X_test, quantiles=[0.5, 0.25, 0.75])  # first column corresponds to quantile 0.5
 
-By default, the predict method calculates quantiles using an unweighted quantile method (`weighted_quantile = False`), which aggregates the list of training `y` values for each leaf node to which the test sample belongs across all trees. When the number of samples in the training set is smaller than the expected size of this list (i.e., :math:`n_{train} \ll n_{trees} \cdot n_{leaves} \cdot n_{leafsamples}`), it can be more efficient to calculate a weighted quantile (`weighted_quantile = True`), which assigns a weight to each sample in the training set based on the number of times that it co-occurs in the same leaves as the test sample. For a given input, both methods return the same output values::
+By default, the predict method calculates quantiles by weighting each sample inversely according to the size of its leaf node (`weighted_leaves = True`). If `weighted_leaves = False`, each sample in a leaf (including repeated bootstrap samples) will be given equal weight. Note that this leaf-based weighting can only be used with weighted quantiles.
+
+By default, the predict method calculates quantiles using a weighted quantile method (`weighted_quantile = True`), which aggregates the list of training `y` values for each leaf node to which the test sample belongs across all trees. When the number of samples in the training set is smaller than the expected size of this list (i.e., :math:`n_{train} \ll n_{trees} \cdot n_{leaves} \cdot n_{leafsamples}`), it can be more efficient to calculate a weighted quantile (`weighted_quantile = True`), which assigns a weight to each sample in the training set based on the number of times that it co-occurs in the same leaves as the test sample. For a given input, both methods can return the same output values::
 
     >>> import numpy as np
-    >>> y_pred_unweighted = reg.predict(X_test, weighted_quantile=False)  # unweighted quantile (default)
-    >>> y_pred_weighted = reg.predict(X_test, weighted_quantile=True)  # weighted quantile
-    >>> np.allclose(y_pred_unweighted, y_pred_weighted)
+    >>> y_pred_weighted = reg.predict(X_test, weighted_quantile=True, weighted_leaves=False)  # weighted quantile (default)
+    >>> y_pred_unweighted = reg.predict(X_test, weighted_quantile=False, weighted_leaves=False)  # unweighted quantile
+    >>> np.allclose(y_pred_weighted, y_pred_unweighted)
     True
 
 Out-of-bag (OOB) predictions can be returned by specifying `oob_score = True`::

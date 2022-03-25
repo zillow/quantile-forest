@@ -380,7 +380,8 @@ class BaseForestQuantileRegressor(ForestRegressor):
         X,
         quantiles=0.5,
         interpolation="linear",
-        weighted_quantile=False,
+        weighted_quantile=True,
+        weighted_leaves=True,
         aggregate_leaves_first=True,
         oob_score=False,
         indices=None,
@@ -413,12 +414,16 @@ class BaseForestQuantileRegressor(ForestRegressor):
             - If "nearest", then ``i`` or ``j``, whichever is nearest.
             - If "midpoint", then ``(i + j) / 2``.
 
-        weighted_quantile : bool, default=False
+        weighted_quantile : bool, default=True
             Calculate a weighted quantile. Weighted quantiles are computed by
             assigning weights to each training sample, while unweighted
             quantiles are computed by aggregating sibling samples. When the
             number of training samples relative to siblings is small, weighted
             quantiles can be more efficient to compute than unweighted ones.
+
+        weighted_leaves : bool, default=True
+            Weight samples inversely to the size of their leaf node.
+            Only used if `weighted_quantile=True`.
 
         aggregate_leaves_first : bool, default=True
             Calculate predictions using aggregated leaf values. If True, a
@@ -486,6 +491,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
             X_leaves,
             X_indices,
             interpolation,
+            weighted_leaves,
             weighted_quantile,
             aggregate_leaves_first,
         )
@@ -948,7 +954,7 @@ class RandomForestQuantileRegressor(BaseForestQuantileRegressor):
     >>> regr.fit(X, y)
     RandomForestQuantileRegressor(...)
     >>> print(regr.predict([[0, 0, 0, 0]], quantiles=0.5))
-    [-7.46245465]
+    [-4.68693299]
     """
 
     def __init__(
@@ -1220,7 +1226,7 @@ class ExtraTreesQuantileRegressor(BaseForestQuantileRegressor):
     >>> reg = ExtraTreesQuantileRegressor(
     ...     n_estimators=100, random_state=0).fit(X_train, y_train)
     >>> reg.score(X_test, y_test, quantiles=0.5)
-    0.2053...
+    0.2113...
     """
 
     def __init__(

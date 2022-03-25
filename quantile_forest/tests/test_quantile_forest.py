@@ -212,6 +212,29 @@ def check_predict_quantiles_toy(name):
     y_pred = est.predict(X, quantiles, interpolation="linear")
     assert_array_equal(y_pred, expected)
 
+    if name == "RandomForestQuantileRegressor":
+        for oob_score in [False, True]:
+            # Check weighted and unweighted leaves.
+            est = ForestRegressor(
+                n_estimators=20, max_depth=1, random_state=0
+            )
+            est.fit(X, y)
+            y_pred1 = est.predict(
+                X,
+                quantiles=quantiles,
+                weighted_quantile=True,
+                weighted_leaves=True,
+                oob_score=oob_score,
+            )
+            y_pred2 = est.predict(
+                X,
+                quantiles=quantiles,
+                weighted_quantile=True,
+                weighted_leaves=False,
+                oob_score=oob_score,
+            )
+            assert np.any(y_pred1 != y_pred2)
+
 
 @pytest.mark.parametrize("name", FOREST_REGRESSORS)
 def test_predict_quantiles_toy(name):
@@ -281,13 +304,34 @@ def check_predict_quantiles(
         X_test,
         quantiles=quantiles,
         weighted_quantile=True,
+        weighted_leaves=False,
         aggregate_leaves_first=aggregate_leaves_first,
     )
     y_pred_2 = est.predict(
         X_test,
         quantiles=quantiles,
         weighted_quantile=False,
+        weighted_leaves=False,
         aggregate_leaves_first=aggregate_leaves_first,
+    )
+    assert_allclose(y_pred_1, y_pred_2)
+
+    # Check that weighted and unweighted leaves are all equal.
+    est = ForestRegressor(n_estimators=1, max_samples_leaf=1, random_state=0)
+    est.fit(X_train, y_train)
+    y_pred_1 = est.predict(
+        X_test,
+        quantiles=quantiles,
+        weighted_quantile=weighted_quantile,
+        weighted_leaves=True,
+        aggregate_leaves_first=False,
+    )
+    y_pred_2 = est.predict(
+        X_test,
+        quantiles=quantiles,
+        weighted_quantile=weighted_quantile,
+        weighted_leaves=False,
+        aggregate_leaves_first=False,
     )
     assert_allclose(y_pred_1, y_pred_2)
 
@@ -298,12 +342,14 @@ def check_predict_quantiles(
         X_test,
         quantiles=quantiles,
         weighted_quantile=weighted_quantile,
+        weighted_leaves=False,
         aggregate_leaves_first=True,
     )
     y_pred_2 = est.predict(
         X_test,
         quantiles=quantiles,
         weighted_quantile=weighted_quantile,
+        weighted_leaves=False,
         aggregate_leaves_first=False,
     )
     assert_allclose(y_pred_1, y_pred_2)
@@ -314,12 +360,14 @@ def check_predict_quantiles(
     y_pred_1 = est.predict(
         X_test,
         weighted_quantile=weighted_quantile,
+        weighted_leaves=False,
         aggregate_leaves_first=True,
     )
     y_pred_2 = est.predict(
         X_test,
         quantiles=0.5,
         weighted_quantile=weighted_quantile,
+        weighted_leaves=False,
         aggregate_leaves_first=False,
     )
     assert_allclose(y_pred_1, y_pred_2)
@@ -343,6 +391,7 @@ def check_predict_quantiles(
             X_test,
             quantiles=None,
             weighted_quantile=weighted_quantile,
+            weighted_leaves=False,
             aggregate_leaves_first=False,
         )
         assert_allclose(y_pred_1, y_pred_2)
@@ -702,7 +751,7 @@ def check_predict_oob(
     ForestRegressor = FOREST_REGRESSORS[name]
 
     est = ForestRegressor(
-        n_estimators=20,  bootstrap=True, oob_score=True, random_state=0
+        n_estimators=20, bootstrap=True, oob_score=True, random_state=0
     )
     est.fit(X, y)
 
