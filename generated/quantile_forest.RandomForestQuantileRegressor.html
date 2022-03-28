@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>RandomForestQuantileRegressor &mdash; Version 1.0.1</title>
+  <title>RandomForestQuantileRegressor &mdash; Version 1.0.2</title>
       <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../_static/css/quantile-forest.css" type="text/css" />
       <link rel="stylesheet" href="../_static/basic.css" type="text/css" />
@@ -38,7 +38,7 @@
             <a href="../index.html" class="icon icon-home"> quantile-forest
           </a>
               <div class="version">
-                1.0.1
+                1.0.2
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
@@ -275,11 +275,11 @@ Learning Research, 7(Jun), 983-999, 2006.
 <span class="gp">&gt;&gt;&gt; </span><span class="n">regr</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
 <span class="go">RandomForestQuantileRegressor(...)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">regr</span><span class="o">.</span><span class="n">predict</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]],</span> <span class="n">quantiles</span><span class="o">=</span><span class="mf">0.5</span><span class="p">))</span>
-<span class="go">[-7.46245465]</span>
+<span class="go">[-4.68693299]</span>
 </pre></div>
 </div>
 <p class="rubric">Methods</p>
-<table class="longtable docutils align-default">
+<table class="autosummary longtable docutils align-default">
 <colgroup>
 <col style="width: 10%" />
 <col style="width: 90%" />
@@ -452,7 +452,7 @@ contained subobjects that are estimators.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="quantile_forest.RandomForestQuantileRegressor.predict">
-<span class="sig-name descname"><span class="pre">predict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantiles</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interpolation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'linear'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weighted_quantile</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">aggregate_leaves_first</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">oob_score</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">indices</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">duplicates</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#quantile_forest.RandomForestQuantileRegressor.predict" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">predict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantiles</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interpolation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'linear'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weighted_quantile</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weighted_leaves</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">aggregate_leaves_first</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">oob_score</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">indices</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">duplicates</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#quantile_forest.RandomForestQuantileRegressor.predict" title="Permalink to this definition"></a></dt>
 <dd><p>Predict quantiles for X.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -477,11 +477,14 @@ is the fractional part of the index surrounded by <code class="docutils literal 
 <li><p>If “midpoint”, then <code class="docutils literal notranslate"><span class="pre">(i</span> <span class="pre">+</span> <span class="pre">j)</span> <span class="pre">/</span> <span class="pre">2</span></code>.</p></li>
 </ul>
 </dd>
-<dt><strong>weighted_quantile</strong><span class="classifier">bool, default=False</span></dt><dd><p>Calculate a weighted quantile. Weighted quantiles are computed by
+<dt><strong>weighted_quantile</strong><span class="classifier">bool, default=True</span></dt><dd><p>Calculate a weighted quantile. Weighted quantiles are computed by
 assigning weights to each training sample, while unweighted
 quantiles are computed by aggregating sibling samples. When the
 number of training samples relative to siblings is small, weighted
 quantiles can be more efficient to compute than unweighted ones.</p>
+</dd>
+<dt><strong>weighted_leaves</strong><span class="classifier">bool, default=True</span></dt><dd><p>Weight samples inversely to the size of their leaf node.
+Only used if <code class="docutils literal notranslate"><span class="pre">weighted_quantile=True</span></code>.</p>
 </dd>
 <dt><strong>aggregate_leaves_first</strong><span class="classifier">bool, default=True</span></dt><dd><p>Calculate predictions using aggregated leaf values. If True, a
 single prediction is calculated over the aggregated leaf values.
