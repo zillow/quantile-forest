@@ -21,6 +21,7 @@ y = np.array([-2, -1, 0, 1, 2])
 
 est = RandomForestQuantileRegressor(
     n_estimators=1,
+    max_samples_leaf=None,
     bootstrap=False,
     random_state=0,
 )
