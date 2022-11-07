@@ -1226,7 +1226,7 @@ class ExtraTreesQuantileRegressor(BaseForestQuantileRegressor):
     >>> reg = ExtraTreesQuantileRegressor(
     ...     n_estimators=100, random_state=0).fit(X_train, y_train)
     >>> reg.score(X_test, y_test, quantiles=0.5)
-    0.2113...
+    0.2152...
     """
 
     def __init__(
