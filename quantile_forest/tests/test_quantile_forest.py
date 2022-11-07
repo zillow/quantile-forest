@@ -59,7 +59,9 @@ def check_regression_toy(name, weighted_quantile):
 
     ForestRegressor = FOREST_REGRESSORS[name]
 
-    regr = ForestRegressor(n_estimators=10, bootstrap=False, random_state=1)
+    regr = ForestRegressor(
+        n_estimators=10, max_samples_leaf=None, bootstrap=False, random_state=1
+    )
     regr.fit(X, y)
 
     # Check model and apply outputs shape.
@@ -154,7 +156,9 @@ def check_predict_quantiles_toy(name):
     X = [[-2, -2], [-2, -2], [-1, -1], [-1, -1], [1, 1], [1, 2]]
     y = [-1, -1, 0, 1, 1, 2]
 
-    est = ForestRegressor(n_estimators=1, bootstrap=False, random_state=0)
+    est = ForestRegressor(
+        n_estimators=1, max_samples_leaf=None, bootstrap=False, random_state=0
+    )
     est.fit(X, y)
 
     expected = [
@@ -425,7 +429,9 @@ def check_quantile_ranks_toy(name):
     X = [[-2, -2], [-2, -2], [-1, -1], [-1, -1], [1, 1], [1, 2]]
     y = [-1, -1, 0, 1, 1, 2]
 
-    est = ForestRegressor(n_estimators=1, bootstrap=False, random_state=0)
+    est = ForestRegressor(
+        n_estimators=1, max_samples_leaf=None, bootstrap=False, random_state=0
+    )
     est.fit(X, y)
 
     expected = [0.75, 0.75, 0.5, 1., 1., 1.]
@@ -445,7 +451,9 @@ def check_quantile_ranks_toy(name):
     assert_array_equal(y_ranks, expected)
 
     # Check aggregated and unaggregated predicted ranks.
-    est = ForestRegressor(n_estimators=2, bootstrap=False, random_state=0)
+    est = ForestRegressor(
+        n_estimators=2, max_samples_leaf=None, bootstrap=False, random_state=0
+    )
     est.fit(X, y)
 
     kwargs = {"aggregate_leaves_first": True}
@@ -534,7 +542,9 @@ def check_proximity_counts(name):
     y = [-1, -1, 0, 1, 1, 2]
 
     # Check that proximity counts match expected counts without bootstrap.
-    est = ForestRegressor(n_estimators=5, bootstrap=False, random_state=0)
+    est = ForestRegressor(
+        n_estimators=5, max_samples_leaf=None, bootstrap=False, random_state=0
+    )
     est.fit(X, y)
 
     expected = [
@@ -581,6 +591,7 @@ def check_proximity_counts(name):
     # Check that proximity counts match expected counts without splits.
     est = ForestRegressor(
         n_estimators=1,
+        max_samples_leaf=None,
         min_samples_leaf=len(X),
         bootstrap=False,
         random_state=0,
@@ -591,7 +602,9 @@ def check_proximity_counts(name):
     assert np.sum(proximity_counts) == (1 * len(X) * len(X))
 
     # Check proximity counts on the California Housing Prices dataset.
-    est = ForestRegressor(n_estimators=10, bootstrap=True, random_state=0)
+    est = ForestRegressor(
+        n_estimators=10, max_samples_leaf=None, bootstrap=True, random_state=0
+    )
     est.fit(X_california, y_california)
 
     # Check that proximity counts match bootstrap counts.
@@ -1007,7 +1020,11 @@ def check_proximity_counts_oob(name):
     ForestRegressor = FOREST_REGRESSORS[name]
 
     est = ForestRegressor(
-        n_estimators=20, bootstrap=True, oob_score=True, random_state=0
+        n_estimators=20,
+        max_samples_leaf=None,
+        bootstrap=True,
+        oob_score=True,
+        random_state=0,
     )
     est.fit(X, y)
 
@@ -1054,7 +1071,11 @@ def check_proximity_counts_oob(name):
     # Check warning if not enough estimators.
     with np.errstate(divide="ignore", invalid="ignore"):
         est = ForestRegressor(
-            n_estimators=4, bootstrap=True, oob_score=True, random_state=0
+            n_estimators=4,
+            max_samples_leaf=None,
+            bootstrap=True,
+            oob_score=True,
+            random_state=0,
         )
         with pytest.warns(UserWarning):
             est.fit(X, y)
@@ -1063,7 +1084,9 @@ def check_proximity_counts_oob(name):
                 assert any(len(x) == 0 for x in proximities)
 
     # Check error if no bootstrapping.
-    est = ForestRegressor(n_estimators=1, bootstrap=False)
+    est = ForestRegressor(
+        n_estimators=1, max_samples_leaf=None, bootstrap=False
+    )
     est.fit(X, y)
     assert_raises(ValueError, est.proximity_counts, X, oob_score=True)
 

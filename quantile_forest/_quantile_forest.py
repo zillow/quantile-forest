@@ -800,13 +800,14 @@ class RandomForestQuantileRegressor(BaseForestQuantileRegressor):
           `ceil(min_samples_leaf * n_samples)` are the minimum
           number of samples for each node.
 
-    max_samples_leaf : int or float, default=None
+    max_samples_leaf : int, float or None, default=1
         The maximum number of samples permitted to be at a leaf node.
 
         - If int, then consider `max_samples_leaf` as the maximum number.
         - If float, then `max_samples_leaf` is a fraction and
           `ceil(max_samples_leaf * n_samples)` are the maximum
           number of samples for each node.
+        - If None then unlimited number of leaf samples.
 
     min_weight_fraction_leaf : float, default=0.0
         The minimum weighted fraction of the sum total of weights (of all
@@ -965,7 +966,7 @@ class RandomForestQuantileRegressor(BaseForestQuantileRegressor):
         max_depth=None,
         min_samples_split=2,
         min_samples_leaf=1,
-        max_samples_leaf=None,
+        max_samples_leaf=1,
         min_weight_fraction_leaf=0.0,
         max_features=1.0,
         max_leaf_nodes=None,
@@ -1068,13 +1069,14 @@ class ExtraTreesQuantileRegressor(BaseForestQuantileRegressor):
           `ceil(min_samples_leaf * n_samples)` are the minimum
           number of samples for each node.
 
-    max_samples_leaf : int or float, default=None
+    max_samples_leaf : int, float or None, default=1
         The maximum number of samples permitted to be at a leaf node.
 
         - If int, then consider `max_samples_leaf` as the maximum number.
         - If float, then `max_samples_leaf` is a fraction and
           `ceil(max_samples_leaf * n_samples)` are the maximum
           number of samples for each node.
+        - If None then unlimited number of leaf samples.
 
     min_weight_fraction_leaf : float, default=0.0
         The minimum weighted fraction of the sum total of weights (of all
@@ -1237,7 +1239,7 @@ class ExtraTreesQuantileRegressor(BaseForestQuantileRegressor):
         max_depth=None,
         min_samples_split=2,
         min_samples_leaf=1,
-        max_samples_leaf=None,
+        max_samples_leaf=1,
         min_weight_fraction_leaf=0.0,
         max_features=1.0,
         max_leaf_nodes=None,
