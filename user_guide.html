@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>User Guide &mdash; Version 1.0.2</title>
+  <title>User Guide &mdash; Version 1.1.0</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/quantile-forest.css" type="text/css" />
       <link rel="stylesheet" href="_static/basic.css" type="text/css" />
@@ -20,7 +20,9 @@
         <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
         <script src="_static/jquery.js"></script>
         <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
         <script src="_static/js/copybutton.js"></script>
         <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
     <script src="_static/js/theme.js"></script>
@@ -38,7 +40,7 @@
             <a href="index.html" class="icon icon-home"> quantile-forest
           </a>
               <div class="version">
-                1.0.2
+                1.1.0
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
@@ -81,8 +83,8 @@
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
-      <li>User Guide</li>
+      <li><a href="index.html" class="icon icon-home"></a></li>
+      <li class="breadcrumb-item active">User Guide</li>
 
   </ul>
   <hr/>
@@ -91,16 +93,16 @@
            <div itemprop="articleBody">
              
   <section id="user-guide">
-<span id="id1"></span><h1>User Guide<a class="headerlink" href="#user-guide" title="Permalink to this headline"></a></h1>
+<span id="id1"></span><h1>User Guide<a class="headerlink" href="#user-guide" title="Permalink to this heading"></a></h1>
 <section id="introduction">
-<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline"></a></h2>
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this heading"></a></h2>
 <p>Random forests have proven to be very popular and powerful for regression and classification. For regression, random forests give an accurate approximation of the conditional mean of a response variable. That is, if we let <span class="math notranslate nohighlight">\(Y\)</span> be a real-valued response variable and <span class="math notranslate nohighlight">\(X\)</span> a covariate or predictor variable, they estimate <span class="math notranslate nohighlight">\(E(Y | X)\)</span>, which can be interpreted as the expected value of the output <span class="math notranslate nohighlight">\(Y\)</span> given the input <span class="math notranslate nohighlight">\(X\)</span>.</p>
 <p>However random forests provide information about the full conditional distribution of the response variable, not only about the conditional mean. Quantile regression forests, a generalization of random forests, can be used to infer conditional quantiles. That is, they return <span class="math notranslate nohighlight">\(y\)</span> at <span class="math notranslate nohighlight">\(q\)</span> for which <span class="math notranslate nohighlight">\(F(Y=y|X) = q\)</span>, where <span class="math notranslate nohighlight">\(q\)</span> is the quantile.</p>
 <p>The quantiles give more complete information about the distribution of <span class="math notranslate nohighlight">\(Y\)</span> as a function of the predictor variable <span class="math notranslate nohighlight">\(X\)</span> than the conditional mean alone. They can be useful, for example, to build prediction intervals or to perform outlier detection in a high-dimensional dataset.</p>
 <p>In practice, the empirical estimation of quantiles can be calculated in several ways. In this package, a desired quantile is calculated from the input rank <span class="math notranslate nohighlight">\(x\)</span> such that <span class="math notranslate nohighlight">\(x = (N + 1 - 2C)q + C\)</span>, where <span class="math notranslate nohighlight">\(q\)</span> is the quantile, <span class="math notranslate nohighlight">\(N\)</span> is the number of samples, and <span class="math notranslate nohighlight">\(C\)</span> is a constant (degree of freedom). In this package, <span class="math notranslate nohighlight">\(C = 1\)</span>. This package provides methods that calculate quantiles using samples that are weighted and unweighted. In a weighted quantile, <span class="math notranslate nohighlight">\(N\)</span> is calculated from the fraction of the total weight instead of the total number of samples.</p>
 </section>
 <section id="quantile-regression-forests">
-<h2>Quantile Regression Forests<a class="headerlink" href="#quantile-regression-forests" title="Permalink to this headline"></a></h2>
+<h2>Quantile Regression Forests<a class="headerlink" href="#quantile-regression-forests" title="Permalink to this heading"></a></h2>
 <p>A standard decision tree can be extended in a straightforward way to estimate conditional quantiles. When a decision tree is fit, rather than storing only the sufficient statistics of the response variable at the leaf node, such as the mean and variance, all of the response values can be stored with the leaf node. At prediction time, these values can then be used to calculate empirical quantile estimates.</p>
 <p>The quantile-based approach can be extended to random forests. To estimate <span class="math notranslate nohighlight">\(F(Y=y|x) = q\)</span>, each response value in <code class="docutils literal notranslate"><span class="pre">y_train</span></code> is given a weight or frequency. Formally, the weight or frequency given to the <span class="math notranslate nohighlight">\(j\)</span>th sample of <code class="docutils literal notranslate"><span class="pre">y_train</span></code>, <span class="math notranslate nohighlight">\(y_j\)</span>, while estimating the quantile is</p>
 <div class="math notranslate nohighlight">
@@ -108,15 +110,16 @@
 <p>where <span class="math notranslate nohighlight">\(L(x)\)</span> denotes the leaf that <span class="math notranslate nohighlight">\(x\)</span> falls into.</p>
 <p>Informally, this means that given a new unknown sample, we first find the leaf that it falls into at each tree. Then for each <code class="docutils literal notranslate"><span class="pre">(X,</span> <span class="pre">y)</span></code> pair in the training data, a weight or frequency is given to <code class="docutils literal notranslate"><span class="pre">y</span></code> for each tree based on the number of times each training sample falls into the same leaf as the new sample. This information can then be used to calculate the empirical quantile estimates.</p>
 <p>This approach was first proposed by <span id="id2">Meinshausen [<a class="reference internal" href="#id4" title="Nicolai Meinshausen. Quantile Regression Forests. Journal of Machine Learning Research, 7(6), 983-999, 2006. URL: https://www.jmlr.org/papers/volume7/meinshausen06a/meinshausen06a.pdf.">Mei06</a>]</span>.</p>
-<p id="id3"><dl class="citation">
+<div class="docutils container" id="id3">
+<dl class="citation">
 <dt class="label" id="id4"><span class="brackets">Mei06</span></dt>
 <dd><p>Nicolai Meinshausen. <em>Quantile Regression Forests</em>. Journal of Machine Learning Research, 7(6), 983-999, 2006. URL: <a class="reference external" href="https://www.jmlr.org/papers/volume7/meinshausen06a/meinshausen06a.pdf">https://www.jmlr.org/papers/volume7/meinshausen06a/meinshausen06a.pdf</a>.</p>
 </dd>
 </dl>
-</p>
+</div>
 </section>
 <section id="fitting-and-predicting">
-<h2>Fitting and Predicting<a class="headerlink" href="#fitting-and-predicting" title="Permalink to this headline"></a></h2>
+<h2>Fitting and Predicting<a class="headerlink" href="#fitting-and-predicting" title="Permalink to this heading"></a></h2>
 <p>Quantile forests can be fit and used to predict like standard scikit-learn estimators.</p>
 <p>Let’s fit a quantile forest on a simple regression dataset:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">sklearn</span> <span class="kn">import</span> <span class="n">datasets</span>
@@ -188,7 +191,7 @@
 </div>
 </section>
 <section id="quantile-ranks">
-<h2>Quantile Ranks<a class="headerlink" href="#quantile-ranks" title="Permalink to this headline"></a></h2>
+<h2>Quantile Ranks<a class="headerlink" href="#quantile-ranks" title="Permalink to this heading"></a></h2>
 <p>The quantile rank of a score is the quantile of scores in its frequency distribution that are equal to or lower than it. The output quantile rank will be a value in the range [0, 1] for each test sample. The quantile rank of each sample is calculated by aggregating all of the training samples that share the same leaf node across all of the trees:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">sklearn</span> <span class="kn">import</span> <span class="n">datasets</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">sklearn.model_selection</span> <span class="kn">import</span> <span class="n">train_test_split</span>
@@ -205,7 +208,7 @@
 </div>
 </section>
 <section id="proximity-counts">
-<h2>Proximity Counts<a class="headerlink" href="#proximity-counts" title="Permalink to this headline"></a></h2>
+<h2>Proximity Counts<a class="headerlink" href="#proximity-counts" title="Permalink to this heading"></a></h2>
 <p>Proximity counts are counts of the number of times that two samples share a leaf node. When a test set is present, the proximity counts of each sample in the test set with each sample in the training set can be computed:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">sklearn</span> <span class="kn">import</span> <span class="n">datasets</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">sklearn.model_selection</span> <span class="kn">import</span> <span class="n">train_test_split</span>

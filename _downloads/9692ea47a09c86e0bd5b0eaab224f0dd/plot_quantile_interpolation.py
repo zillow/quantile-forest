@@ -16,8 +16,8 @@ from quantile_forest import RandomForestQuantileRegressor
 
 
 # Create toy dataset.
-X = np.array([[-2, -2], [-2, -2], [-1, -1], [-1, -1], [1, 1], [1, 2]])
-y = np.array([-1, -1, 0, 1, 1, 2])
+X = np.array([[-1, -1], [-1, -1], [-1, -1], [1, 1], [1, 1]])
+y = np.array([-2, -1, 0, 1, 2])
 
 est = RandomForestQuantileRegressor(
     n_estimators=1,
@@ -39,7 +39,10 @@ for interpolation in interpolations:
         interpolation=interpolation,
     )
     y_medians.append(y_pred[:, 1])
-    y_errs.append(np.concatenate(([y_pred[:, 2]], [y_pred[:, 0]]), axis=0))
+    y_errs.append(np.concatenate((
+        [y_pred[:, 1] - y_pred[:, 0]],
+        [y_pred[:, 2] - y_pred[:, 1]],
+    ), axis=0))
 
 sc = plt.scatter(np.arange(len(y)) - .35, y, color="k", zorder=10)
 ebs = []

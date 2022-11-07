@@ -5,14 +5,14 @@
 
 Computation times
 =================
-**00:17.735** total execution time for **auto_examples** files:
+**00:20.193** total execution time for **auto_examples** files:
 
 +---------------------------------------------------------------------------------------------------------------------+-----------+--------+
-| :ref:`sphx_glr_auto_examples_plot_quantile_weighted_vs_unweighted.py` (``plot_quantile_weighted_vs_unweighted.py``) | 00:12.058 | 0.0 MB |
+| :ref:`sphx_glr_auto_examples_plot_quantile_weighted_vs_unweighted.py` (``plot_quantile_weighted_vs_unweighted.py``) | 00:13.909 | 0.0 MB |
 +---------------------------------------------------------------------------------------------------------------------+-----------+--------+
-| :ref:`sphx_glr_auto_examples_plot_quantile_regression_intervals.py` (``plot_quantile_regression_intervals.py``)     | 00:05.016 | 0.0 MB |
+| :ref:`sphx_glr_auto_examples_plot_quantile_regression_intervals.py` (``plot_quantile_regression_intervals.py``)     | 00:05.478 | 0.0 MB |
 +---------------------------------------------------------------------------------------------------------------------+-----------+--------+
-| :ref:`sphx_glr_auto_examples_plot_quantile_vs_standard_forest.py` (``plot_quantile_vs_standard_forest.py``)         | 00:00.521 | 0.0 MB |
+| :ref:`sphx_glr_auto_examples_plot_quantile_vs_standard_forest.py` (``plot_quantile_vs_standard_forest.py``)         | 00:00.658 | 0.0 MB |
 +---------------------------------------------------------------------------------------------------------------------+-----------+--------+
-| :ref:`sphx_glr_auto_examples_plot_quantile_interpolation.py` (``plot_quantile_interpolation.py``)                   | 00:00.141 | 0.0 MB |
+| :ref:`sphx_glr_auto_examples_plot_quantile_interpolation.py` (``plot_quantile_interpolation.py``)                   | 00:00.149 | 0.0 MB |
 +---------------------------------------------------------------------------------------------------------------------+-----------+--------+
