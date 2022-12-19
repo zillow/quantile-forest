@@ -30,6 +30,7 @@ from warnings import warn
 
 import joblib
 import numpy as np
+import sklearn
 
 from sklearn.ensemble._forest import ForestRegressor
 from sklearn.ensemble._forest import _generate_sample_indices
@@ -41,6 +42,8 @@ from sklearn.utils.validation import check_is_fitted
 
 from ._quantile_forest_fast import QuantileForest
 from ._quantile_forest_fast import generate_unsampled_indices
+
+sklearn_version = tuple(map(int, (sklearn.__version__.split('.'))))
 
 
 def _generate_unsampled_indices(sample_indices, duplicates=None):
@@ -980,10 +983,10 @@ class RandomForestQuantileRegressor(BaseForestQuantileRegressor):
         ccp_alpha=0.0,
         max_samples=None,
     ):
-        super(RandomForestQuantileRegressor, self).__init__(
-            base_estimator=DecisionTreeRegressor(),
-            n_estimators=n_estimators,
-            estimator_params=(
+        init_dict = {
+            'base_estimator' if sklearn_version < (1, 2) else 'estimator': DecisionTreeRegressor(),
+            'n_estimators': n_estimators,
+            'estimator_params': (
                 "criterion",
                 "max_depth",
                 "min_samples_split",
@@ -995,14 +998,15 @@ class RandomForestQuantileRegressor(BaseForestQuantileRegressor):
                 "random_state",
                 "ccp_alpha",
             ),
-            bootstrap=bootstrap,
-            oob_score=oob_score,
-            n_jobs=n_jobs,
-            random_state=random_state,
-            verbose=verbose,
-            warm_start=warm_start,
-            max_samples=max_samples,
-        )
+            'bootstrap': bootstrap,
+            'oob_score': oob_score,
+            'n_jobs': n_jobs,
+            'random_state': random_state,
+            'verbose': verbose,
+            'warm_start': warm_start,
+            'max_samples': max_samples,
+        }
+        super(RandomForestQuantileRegressor, self).__init__(**init_dict)
 
         self.criterion = criterion
         self.max_depth = max_depth
@@ -1253,10 +1257,10 @@ class ExtraTreesQuantileRegressor(BaseForestQuantileRegressor):
         ccp_alpha=0.0,
         max_samples=None,
     ):
-        super(ExtraTreesQuantileRegressor, self).__init__(
-            base_estimator=ExtraTreeRegressor(),
-            n_estimators=n_estimators,
-            estimator_params=(
+        init_dict = {
+            'base_estimator' if sklearn_version < (1, 2) else 'estimator': ExtraTreeRegressor(),
+            'n_estimators': n_estimators,
+            'estimator_params': (
                 "criterion",
                 "max_depth",
                 "min_samples_split",
@@ -1268,14 +1272,15 @@ class ExtraTreesQuantileRegressor(BaseForestQuantileRegressor):
                 "random_state",
                 "ccp_alpha",
             ),
-            bootstrap=bootstrap,
-            oob_score=oob_score,
-            n_jobs=n_jobs,
-            random_state=random_state,
-            verbose=verbose,
-            warm_start=warm_start,
-            max_samples=max_samples,
-        )
+            'bootstrap': bootstrap,
+            'oob_score': oob_score,
+            'n_jobs': n_jobs,
+            'random_state': random_state,
+            'verbose': verbose,
+            'warm_start': warm_start,
+            'max_samples': max_samples,
+        }
+        super(ExtraTreesQuantileRegressor, self).__init__(**init_dict)
 
         self.criterion = criterion
         self.max_depth = max_depth
