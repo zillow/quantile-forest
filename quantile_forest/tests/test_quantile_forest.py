@@ -261,7 +261,7 @@ def check_predict_quantiles(
     e1 = np.random.uniform(0, e1_high)
 
     X_train = x1.reshape(-1, 1)
-    y_train = np.squeeze(x1*2 + e1)
+    y_train = np.squeeze(x1 * 2 + e1)
 
     x2 = np.random.choice(np.arange(0, 101), size=4)
 
@@ -508,7 +508,7 @@ def check_quantile_ranks(name):
     e1 = np.random.uniform(0, e1_high)
 
     X_train = x1.reshape(-1, 1)
-    y_train = np.squeeze(x1*2 + e1)
+    y_train = np.squeeze(x1 * 2 + e1)
 
     x2 = np.random.choice(np.arange(0, 101), size=4)
 
@@ -625,8 +625,8 @@ def check_proximity_counts(name):
 
     # Check that sorting is correctly applied.
     for i in range(len(proximities)):
-        for j in range(len(proximities[i])-1):
-            assert proximities[i][j][1] >= proximities[i][j+1][1]
+        for j in range(len(proximities[i]) - 1):
+            assert proximities[i][j][1] >= proximities[i][j + 1][1]
     proximities_unsorted = est.proximity_counts(
         X_california, return_sorted=False
     )
@@ -646,7 +646,7 @@ def check_max_samples_leaf(name):
     ForestRegressor = FOREST_REGRESSORS[name]
 
     max_leaf_sizes = []
-    for max_samples_leaf in [0.99/len(X), 1, 3./len(X), 5, 20, None]:
+    for max_samples_leaf in [0.99 / len(X), 1, 3. / len(X), 5, 20, None]:
         est = ForestRegressor(
             n_estimators=10, max_samples_leaf=max_samples_leaf, random_state=0
         )
