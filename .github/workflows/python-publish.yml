@@ -13,7 +13,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-20.04, windows-2019, macOS-latest]
+        os: [ubuntu-latest, windows-latest, macOS-latest]
 
     steps:
     - uses: actions/checkout@v3
@@ -23,10 +23,10 @@ jobs:
         python-version: '3.10'
 
     - name: Install cibuildwheel
-      run: python -m pip install cibuildwheel==2.11.2
+      run: python -m pip install cibuildwheel==2.11.3
 
     - name: Build wheels for Linux
-      if: matrix.os == 'ubuntu-20.04'
+      if: matrix.os == 'ubuntu-latest'
       run: |
         python -m cibuildwheel --output-dir wheelhouse
       env:
@@ -35,7 +35,7 @@ jobs:
         CIBW_BEFORE_BUILD: pip install -r requirements.txt && python setup.py build_ext --inplace && pip install .
 
     - name: Build wheels for Windows
-      if: matrix.os == 'windows-2019'
+      if: matrix.os == 'windows-latest'
       run: |
         python -m cibuildwheel --output-dir wheelhouse
       env:
