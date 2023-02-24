@@ -65,9 +65,11 @@ def setup_package():
     )
 
     if len(sys.argv) == 1 or (
-        len(sys.argv) >= 2 and (
-            "--help" in sys.argv[1:] or sys.argv[1] in
-            (
+        len(sys.argv) >= 2
+        and (
+            "--help" in sys.argv[1:]
+            or sys.argv[1]
+            in (
                 "--help-commands",
                 "--version",
                 "egg_info",

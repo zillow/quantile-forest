@@ -59,9 +59,7 @@ def check_regression_toy(name, weighted_quantile):
 
     ForestRegressor = FOREST_REGRESSORS[name]
 
-    regr = ForestRegressor(
-        n_estimators=10, max_samples_leaf=None, bootstrap=False, random_state=1
-    )
+    regr = ForestRegressor(n_estimators=10, max_samples_leaf=None, bootstrap=False, random_state=1)
     regr.fit(X, y)
 
     # Check model and apply outputs shape.
@@ -70,7 +68,7 @@ def check_regression_toy(name, weighted_quantile):
     assert 10 == len(regr)
 
     # Check aggregated quantile predictions.
-    y_true = [[0., 0.5, 1.], [2., 2., 2.], [2., 2., 2.]]
+    y_true = [[0.0, 0.5, 1.0], [2.0, 2.0, 2.0], [2.0, 2.0, 2.0]]
     y_pred = regr.predict(
         y_test,
         quantiles=quantiles,
@@ -80,7 +78,7 @@ def check_regression_toy(name, weighted_quantile):
     assert_allclose(y_pred, y_true)
 
     # Check unaggregated quantile predictions.
-    y_true = [[0.25, 0.5, 0.75], [2., 2., 2.], [2., 2., 2.]]
+    y_true = [[0.25, 0.5, 0.75], [2.0, 2.0, 2.0], [2.0, 2.0, 2.0]]
     y_pred = regr.predict(
         y_test,
         quantiles=quantiles,
@@ -100,48 +98,34 @@ def check_california_criterion(name, criterion):
     # Check for consistency on the California Housing Prices dataset.
     ForestRegressor = FOREST_REGRESSORS[name]
 
-    regr = ForestRegressor(
-        n_estimators=5, criterion=criterion, random_state=1
-    )
+    regr = ForestRegressor(n_estimators=5, criterion=criterion, random_state=1)
     regr.fit(X_california, y_california)
     score = regr.score(X_california, y_california, quantiles=0.5)
-    assert (
-        score > 0.85
-    ), "Failed with max_features=None, criterion {0} and score = {1}".format(
+    assert score > 0.85, "Failed with max_features=None, criterion {0} and score = {1}".format(
         criterion, score
     )
 
     # Test maximum features.
-    regr = ForestRegressor(
-        n_estimators=5, criterion=criterion, max_features=6, random_state=1
-    )
+    regr = ForestRegressor(n_estimators=5, criterion=criterion, max_features=6, random_state=1)
     regr.fit(X_california, y_california)
     score = regr.score(X_california, y_california, quantiles=0.5)
-    assert (
-        score > 0.9
-    ), "Failed with max_features=6, criterion {0} and score = {1}".format(
+    assert score > 0.9, "Failed with max_features=6, criterion {0} and score = {1}".format(
         criterion, score
     )
 
     # Test sample weights.
-    regr = ForestRegressor(
-        n_estimators=5, criterion=criterion, random_state=1
-    )
+    regr = ForestRegressor(n_estimators=5, criterion=criterion, random_state=1)
 
     sample_weight = np.ones(y_california.shape)
     regr.fit(X_california, y_california, sample_weight=sample_weight)
     score = regr.score(X_california, y_california, quantiles=0.5)
-    assert (
-        score > 0.9
-    ), "Failed with criterion {0}, sample weight and score = {1}".format(
+    assert score > 0.9, "Failed with criterion {0}, sample weight and score = {1}".format(
         criterion, score
     )
 
 
 @pytest.mark.parametrize("name", FOREST_REGRESSORS)
-@pytest.mark.parametrize(
-    "criterion", ("squared_error", "absolute_error", "friedman_mse")
-)
+@pytest.mark.parametrize("criterion", ("squared_error", "absolute_error", "friedman_mse"))
 def test_california(name, criterion):
     check_california_criterion(name, criterion)
 
@@ -156,62 +140,60 @@ def check_predict_quantiles_toy(name):
     X = [[-2, -2], [-2, -2], [-1, -1], [-1, -1], [1, 1], [1, 2]]
     y = [-1, -1, 0, 1, 1, 2]
 
-    est = ForestRegressor(
-        n_estimators=1, max_samples_leaf=None, bootstrap=False, random_state=0
-    )
+    est = ForestRegressor(n_estimators=1, max_samples_leaf=None, bootstrap=False, random_state=0)
     est.fit(X, y)
 
     expected = [
-        [-1., -1., -1.],
-        [-1., -1., -1.],
-        [0., 0., 0.],
-        [0., 0., 0.],
-        [1., 1., 1.],
-        [2., 2., 2.],
+        [-1.0, -1.0, -1.0],
+        [-1.0, -1.0, -1.0],
+        [0.0, 0.0, 0.0],
+        [0.0, 0.0, 0.0],
+        [1.0, 1.0, 1.0],
+        [2.0, 2.0, 2.0],
     ]
     y_pred = est.predict(X, quantiles, interpolation="lower")
     assert_array_equal(y_pred, expected)
 
     expected = [
-        [-1., -1., -1.],
-        [-1., -1., -1.],
-        [1., 1., 1.],
-        [1., 1., 1.],
-        [1., 1., 1.],
-        [2., 2., 2.],
+        [-1.0, -1.0, -1.0],
+        [-1.0, -1.0, -1.0],
+        [1.0, 1.0, 1.0],
+        [1.0, 1.0, 1.0],
+        [1.0, 1.0, 1.0],
+        [2.0, 2.0, 2.0],
     ]
     y_pred = est.predict(X, quantiles, interpolation="higher")
     assert_array_equal(y_pred, expected)
 
     expected = [
-        [-1., -1., -1.],
-        [-1., -1., -1.],
+        [-1.0, -1.0, -1.0],
+        [-1.0, -1.0, -1.0],
         [0.5, 0.5, 0.5],
         [0.5, 0.5, 0.5],
-        [1., 1., 1.],
-        [2., 2., 2.],
+        [1.0, 1.0, 1.0],
+        [2.0, 2.0, 2.0],
     ]
     y_pred = est.predict(X, quantiles, interpolation="midpoint")
     assert_array_equal(y_pred, expected)
 
     expected = [
-        [-1., -1., -1.],
-        [-1., -1., -1.],
-        [0., 0., 1.],
-        [0., 0., 1.],
-        [1., 1., 1.],
-        [2., 2., 2.],
+        [-1.0, -1.0, -1.0],
+        [-1.0, -1.0, -1.0],
+        [0.0, 0.0, 1.0],
+        [0.0, 0.0, 1.0],
+        [1.0, 1.0, 1.0],
+        [2.0, 2.0, 2.0],
     ]
     y_pred = est.predict(X, quantiles, interpolation="nearest")
     assert_array_equal(y_pred, expected)
 
     expected = [
-        [-1., -1., -1.],
-        [-1., -1., -1.],
+        [-1.0, -1.0, -1.0],
+        [-1.0, -1.0, -1.0],
         [0.25, 0.5, 0.75],
         [0.25, 0.5, 0.75],
-        [1., 1., 1.],
-        [2., 2., 2.],
+        [1.0, 1.0, 1.0],
+        [2.0, 2.0, 2.0],
     ]
     y_pred = est.predict(X, quantiles, interpolation="linear")
     assert_array_equal(y_pred, expected)
@@ -219,9 +201,7 @@ def check_predict_quantiles_toy(name):
     if name == "RandomForestQuantileRegressor":
         for oob_score in [False, True]:
             # Check weighted and unweighted leaves.
-            est = ForestRegressor(
-                n_estimators=20, max_depth=1, random_state=0
-            )
+            est = ForestRegressor(n_estimators=20, max_depth=1, random_state=0)
             est.fit(X, y)
             y_pred1 = est.predict(
                 X,
@@ -416,9 +396,7 @@ def test_predict_quantiles(
     weighted_quantile,
     aggregate_leaves_first,
 ):
-    check_predict_quantiles(
-        name, weighted_quantile, aggregate_leaves_first
-    )
+    check_predict_quantiles(name, weighted_quantile, aggregate_leaves_first)
 
 
 def check_quantile_ranks_toy(name):
@@ -429,20 +407,18 @@ def check_quantile_ranks_toy(name):
     X = [[-2, -2], [-2, -2], [-1, -1], [-1, -1], [1, 1], [1, 2]]
     y = [-1, -1, 0, 1, 1, 2]
 
-    est = ForestRegressor(
-        n_estimators=1, max_samples_leaf=None, bootstrap=False, random_state=0
-    )
+    est = ForestRegressor(n_estimators=1, max_samples_leaf=None, bootstrap=False, random_state=0)
     est.fit(X, y)
 
-    expected = [0.75, 0.75, 0.5, 1., 1., 1.]
+    expected = [0.75, 0.75, 0.5, 1.0, 1.0, 1.0]
     y_ranks = est.quantile_ranks(X, y, kind="rank")
     assert_array_equal(y_ranks, expected)
 
-    expected = [1., 1., 0.5, 1., 1., 1.]
+    expected = [1.0, 1.0, 0.5, 1.0, 1.0, 1.0]
     y_ranks = est.quantile_ranks(X, y, kind="weak")
     assert_array_equal(y_ranks, expected)
 
-    expected = [0., 0., 0., 0.5, 0., 0.]
+    expected = [0.0, 0.0, 0.0, 0.5, 0.0, 0.0]
     y_ranks = est.quantile_ranks(X, y, kind="strict")
     assert_array_equal(y_ranks, expected)
 
@@ -451,9 +427,7 @@ def check_quantile_ranks_toy(name):
     assert_array_equal(y_ranks, expected)
 
     # Check aggregated and unaggregated predicted ranks.
-    est = ForestRegressor(
-        n_estimators=2, max_samples_leaf=None, bootstrap=False, random_state=0
-    )
+    est = ForestRegressor(n_estimators=2, max_samples_leaf=None, bootstrap=False, random_state=0)
     est.fit(X, y)
 
     kwargs = {"aggregate_leaves_first": True}
@@ -462,11 +436,11 @@ def check_quantile_ranks_toy(name):
     y_ranks = est.quantile_ranks(X, y, kind="rank", **kwargs)
     assert_allclose(y_ranks, expected)
 
-    expected = [1., 1., 0.5, 1., 1., 1.]
+    expected = [1.0, 1.0, 0.5, 1.0, 1.0, 1.0]
     y_ranks = est.quantile_ranks(X, y, kind="weak", **kwargs)
     assert_allclose(y_ranks, expected)
 
-    expected = [0., 0., 0., 0.5, 0., 0.]
+    expected = [0.0, 0.0, 0.0, 0.5, 0.0, 0.0]
     y_ranks = est.quantile_ranks(X, y, kind="strict", **kwargs)
     assert_allclose(y_ranks, expected)
 
@@ -480,11 +454,11 @@ def check_quantile_ranks_toy(name):
     y_ranks = est.quantile_ranks(X, y, kind="rank", **kwargs)
     assert_allclose(y_ranks, expected)
 
-    expected = [1., 1., 0.5, 1., 1., 1.]
+    expected = [1.0, 1.0, 0.5, 1.0, 1.0, 1.0]
     y_ranks = est.quantile_ranks(X, y, kind="weak", **kwargs)
     assert_allclose(y_ranks, expected)
 
-    expected = [0., 0., 0., 0.5, 0., 0.]
+    expected = [0.0, 0.0, 0.0, 0.5, 0.0, 0.0]
     y_ranks = est.quantile_ranks(X, y, kind="strict", **kwargs)
     assert_allclose(y_ranks, expected)
 
@@ -542,9 +516,7 @@ def check_proximity_counts(name):
     y = [-1, -1, 0, 1, 1, 2]
 
     # Check that proximity counts match expected counts without bootstrap.
-    est = ForestRegressor(
-        n_estimators=5, max_samples_leaf=None, bootstrap=False, random_state=0
-    )
+    est = ForestRegressor(n_estimators=5, max_samples_leaf=None, bootstrap=False, random_state=0)
     est.fit(X, y)
 
     expected = [
@@ -568,22 +540,16 @@ def check_proximity_counts(name):
 
     expected = [sorted((perm_i[k], v) for k, v in expected[p]) for p in perm]
     proximities = est.proximity_counts(X)
-    assert_array_equal(
-        np.array(proximities, dtype=object), np.array(expected, dtype=object)
-    )
+    assert_array_equal(np.array(proximities, dtype=object), np.array(expected, dtype=object))
 
     # Check proximity counts with `max_proximities` greater than `n_samples`.
     proximities = est.proximity_counts(X, max_proximities=10)
-    assert_array_equal(
-        [len(p) for p in proximities], [len(e) for e in expected]
-    )
+    assert_array_equal([len(p) for p in proximities], [len(e) for e in expected])
 
     # Check proximity counts with fixed `max_proximities` equal to 1.
     expected = [[e[0]] for e in expected]
     proximities = est.proximity_counts(X, max_proximities=1)
-    assert_array_equal(
-        [len(p) for p in proximities], [len(e) for e in expected]
-    )
+    assert_array_equal([len(p) for p in proximities], [len(e) for e in expected])
 
     # Check error if `max_proximities` < 1.
     assert_raises(ValueError, est.proximity_counts, X, max_proximities=0)
@@ -602,17 +568,16 @@ def check_proximity_counts(name):
     assert np.sum(proximity_counts) == (1 * len(X) * len(X))
 
     # Check proximity counts on the California Housing Prices dataset.
-    est = ForestRegressor(
-        n_estimators=10, max_samples_leaf=None, bootstrap=True, random_state=0
-    )
+    est = ForestRegressor(n_estimators=10, max_samples_leaf=None, bootstrap=True, random_state=0)
     est.fit(X_california, y_california)
 
     # Check that proximity counts match bootstrap counts.
     n_samples = len(X_california)
     proximities = est.proximity_counts(X_california)
     X_leaves = est.apply(X_california)
-    bootstrap_indices = np.array([_generate_sample_indices(
-        e.random_state, n_samples, n_samples) for e in est.estimators_])
+    bootstrap_indices = np.array(
+        [_generate_sample_indices(e.random_state, n_samples, n_samples) for e in est.estimators_]
+    )
     for train_idx, train_idx_prox in enumerate(proximities):
         for proximity_idx, proximity_count in train_idx_prox:
             bootstrap_count = 0
@@ -627,9 +592,7 @@ def check_proximity_counts(name):
     for i in range(len(proximities)):
         for j in range(len(proximities[i]) - 1):
             assert proximities[i][j][1] >= proximities[i][j + 1][1]
-    proximities_unsorted = est.proximity_counts(
-        X_california, return_sorted=False
-    )
+    proximities_unsorted = est.proximity_counts(X_california, return_sorted=False)
     assert proximities != proximities_unsorted
 
 
@@ -646,10 +609,8 @@ def check_max_samples_leaf(name):
     ForestRegressor = FOREST_REGRESSORS[name]
 
     max_leaf_sizes = []
-    for max_samples_leaf in [0.99 / len(X), 1, 3. / len(X), 5, 20, None]:
-        est = ForestRegressor(
-            n_estimators=10, max_samples_leaf=max_samples_leaf, random_state=0
-        )
+    for max_samples_leaf in [0.99 / len(X), 1, 3.0 / len(X), 5, 20, None]:
+        est = ForestRegressor(n_estimators=10, max_samples_leaf=max_samples_leaf, random_state=0)
         est.fit(X, y)
 
         max_leaf_size = 0
@@ -706,7 +667,7 @@ def check_oob_samples(name):
 
     mean_oob_count = X_indices[X_indices == 1].sum() / X_indices.shape[1]
     actual = mean_oob_count / len(y)
-    expected = 1. / math.e  # OOB count should asymptotically approach 1/e
+    expected = 1.0 / math.e  # OOB count should asymptotically approach 1/e
     assert_almost_equal(actual, expected, decimal=2)
 
 
@@ -731,9 +692,7 @@ def check_oob_samples_duplicates(name):
 
     ForestRegressor = FOREST_REGRESSORS[name]
 
-    est = ForestRegressor(
-        n_estimators=1, bootstrap=True, oob_score=True, random_state=0
-    )
+    est = ForestRegressor(n_estimators=1, bootstrap=True, oob_score=True, random_state=0)
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", UserWarning)
@@ -763,9 +722,7 @@ def check_predict_oob(
 
     ForestRegressor = FOREST_REGRESSORS[name]
 
-    est = ForestRegressor(
-        n_estimators=20, bootstrap=True, oob_score=True, random_state=0
-    )
+    est = ForestRegressor(n_estimators=20, bootstrap=True, oob_score=True, random_state=0)
     est.fit(X, y)
 
     n_quantiles = None
@@ -875,9 +832,7 @@ def check_predict_oob(
 
     # Check warning if not enough estimators.
     with np.errstate(divide="ignore", invalid="ignore"):
-        est = ForestRegressor(
-            n_estimators=4, bootstrap=True, oob_score=True, random_state=0
-        )
+        est = ForestRegressor(n_estimators=4, bootstrap=True, oob_score=True, random_state=0)
         with pytest.warns(UserWarning):
             est.fit(X, y)
             est.predict(
@@ -910,9 +865,7 @@ def check_predict_oob(
             aggregate_leaves_first=aggregate_leaves_first,
             oob_score=True,
         )
-        assert np.all(
-            est._get_unsampled_indices(est.estimators_[0]) == np.array([])
-        )
+        assert np.all(est._get_unsampled_indices(est.estimators_[0]) == np.array([]))
 
     # Check error if number of scoring and training samples are different.
     est = ForestRegressor(n_estimators=1, bootstrap=True)
@@ -940,9 +893,7 @@ def test_predict_oob(
     weighted_quantile,
     aggregate_leaves_first,
 ):
-    check_predict_oob(
-        name, quantiles, weighted_quantile, aggregate_leaves_first
-    )
+    check_predict_oob(name, quantiles, weighted_quantile, aggregate_leaves_first)
 
 
 def check_quantile_ranks_oob(name):
@@ -952,9 +903,7 @@ def check_quantile_ranks_oob(name):
 
     ForestRegressor = FOREST_REGRESSORS[name]
 
-    est = ForestRegressor(
-        n_estimators=20, bootstrap=True, oob_score=True, random_state=0
-    )
+    est = ForestRegressor(n_estimators=20, bootstrap=True, oob_score=True, random_state=0)
     est.fit(X, y)
 
     y_ranks = est.quantile_ranks(X, y, oob_score=True)
@@ -966,9 +915,7 @@ def check_quantile_ranks_oob(name):
     y_ranks_chunks = np.empty(len(X))
     for indices in np.split(np.arange(len(X)), range(100, len(X), 100)):
         X_chunk, y_chunk = X[indices], y[indices]
-        y_ranks_chunk = est.quantile_ranks(
-            X_chunk, y_chunk, oob_score=True, indices=indices
-        )
+        y_ranks_chunk = est.quantile_ranks(X_chunk, y_chunk, oob_score=True, indices=indices)
         y_ranks_chunks[indices] = y_ranks_chunk
         assert len(y_ranks_chunk) == len(X_chunk)
 
@@ -979,16 +926,12 @@ def check_quantile_ranks_oob(name):
 
     # Check that OOB ranks indexed by -1 return IB ranks.
     y_ranks_ib = est.quantile_ranks(X, y, oob_score=False)
-    y_ranks_oob = est.quantile_ranks(
-        X, y, oob_score=True, indices=-np.ones(len(X))
-    )
+    y_ranks_oob = est.quantile_ranks(X, y, oob_score=True, indices=-np.ones(len(X)))
     assert np.all(y_ranks_ib == y_ranks_oob)
 
     # Check warning if not enough estimators.
     with np.errstate(divide="ignore", invalid="ignore"):
-        est = ForestRegressor(
-            n_estimators=4, bootstrap=True, oob_score=True, random_state=0
-        )
+        est = ForestRegressor(n_estimators=4, bootstrap=True, oob_score=True, random_state=0)
         with pytest.warns(UserWarning):
             est.fit(X, y)
             y_ranks = est.quantile_ranks(X, y, oob_score=True)
@@ -1002,9 +945,7 @@ def check_quantile_ranks_oob(name):
     # Check error if number of scoring and training samples are different.
     est = ForestRegressor(n_estimators=1, bootstrap=True)
     est.fit(X, y)
-    assert_raises(
-        ValueError, est.quantile_ranks, X[:1], y[:1], oob_score=True
-    )
+    assert_raises(ValueError, est.quantile_ranks, X[:1], y[:1], oob_score=True)
 
 
 @pytest.mark.parametrize("name", FOREST_REGRESSORS)
@@ -1033,8 +974,9 @@ def check_proximity_counts_oob(name):
     # Check that OOB proximity counts match OOB bootstrap counts.
     X_leaves = est.apply(X)
     n_samples = len(X)
-    bootstrap_indices = np.array([_generate_sample_indices(
-        e.random_state, n_samples, n_samples) for e in est.estimators_])
+    bootstrap_indices = np.array(
+        [_generate_sample_indices(e.random_state, n_samples, n_samples) for e in est.estimators_]
+    )
     for train_idx, train_idx_prox in enumerate(proximities):
         for proximity_idx, proximity_count in train_idx_prox:
             bootstrap_count = 0
@@ -1051,9 +993,7 @@ def check_proximity_counts_oob(name):
     proximities_chunks = [None] * len(X)
     for indices in np.split(np.arange(len(X)), range(100, len(X), 100)):
         X_chunk = X[indices]
-        proximities_chunk = est.proximity_counts(
-            X_chunk, oob_score=True, indices=indices
-        )
+        proximities_chunk = est.proximity_counts(X_chunk, oob_score=True, indices=indices)
         for i, idx in enumerate(indices):
             proximities_chunks[idx] = proximities_chunk[i]
         assert len(proximities_chunk) == len(X_chunk)
@@ -1063,9 +1003,7 @@ def check_proximity_counts_oob(name):
 
     # Check that OOB proximity counts indexed by -1 return IB counts.
     proximities_ib = est.proximity_counts(X, oob_score=False)
-    proximities_oob = est.proximity_counts(
-        X, oob_score=True, indices=-np.ones(len(X))
-    )
+    proximities_oob = est.proximity_counts(X, oob_score=True, indices=-np.ones(len(X)))
     assert np.all(proximities_ib == proximities_oob)
 
     # Check warning if not enough estimators.
@@ -1084,9 +1022,7 @@ def check_proximity_counts_oob(name):
                 assert any(len(x) == 0 for x in proximities)
 
     # Check error if no bootstrapping.
-    est = ForestRegressor(
-        n_estimators=1, max_samples_leaf=None, bootstrap=False
-    )
+    est = ForestRegressor(n_estimators=1, max_samples_leaf=None, bootstrap=False)
     est.fit(X, y)
     assert_raises(ValueError, est.proximity_counts, X, oob_score=True)
 
@@ -1098,7 +1034,7 @@ def test_proximity_counts_oob(name):
 
 def test_calc_quantile():
     # Check quantile calculations.
-    quantiles = [0., 0.25, 0.5, 0.75, 1.]
+    quantiles = [0.0, 0.25, 0.5, 0.75, 1.0]
     interpolations = [b"linear", b"lower", b"higher", b"midpoint", b"nearest"]
 
     inputs = [
@@ -1153,14 +1089,12 @@ def test_calc_quantile():
 
     # Check error if invalid parameters.
     assert_raises(TypeError, calc_quantile, [1, 2], 0.5)
-    assert_raises(
-        TypeError, calc_quantile, [1, 2], [0.5], interpolation=None
-    )
+    assert_raises(TypeError, calc_quantile, [1, 2], [0.5], interpolation=None)
 
 
 def test_calc_weighted_quantile():
     # Check weighted quantile calculations.
-    quantiles = [0., 0.25, 0.5, 0.75, 1.]
+    quantiles = [0.0, 0.25, 0.5, 0.75, 1.0]
     interpolations = [b"linear", b"lower", b"higher", b"midpoint", b"nearest"]
 
     def _dicts_to_weighted_inputs(input_dicts):
@@ -1215,9 +1149,7 @@ def test_calc_weighted_quantile():
 
     # Check that linear interpolation at 0.5 quantiles equals median.
     for (i1, w1), i2 in _dicts_to_input_pairs(inputs):
-        actual = calc_weighted_quantile(
-            i1, w1, [0.5], interpolation=b"linear"
-        )
+        actual = calc_weighted_quantile(i1, w1, [0.5], interpolation=b"linear")
         expected = [np.median(i2)]
         assert_allclose(actual, expected)
 
@@ -1242,10 +1174,7 @@ def test_calc_weighted_quantile():
     ]
 
     # Check that empty array is returned for weights that sum to 0.
-    actual = [
-        calc_weighted_quantile(i, w, quantiles)
-        for i, w in _dicts_to_weighted_inputs(inputs)
-    ]
+    actual = [calc_weighted_quantile(i, w, quantiles) for i, w in _dicts_to_weighted_inputs(inputs)]
     expected = [[], [], []]
     assert_array_equal(actual, expected)
 
@@ -1261,19 +1190,18 @@ def test_calc_weighted_quantile():
     weights = [1, 1, 1]
 
     # Check that sorting is correctly applied.
-    actual1 = calc_weighted_quantile(
-        inputs, weights, quantiles, issorted=True
-    )
-    actual2 = calc_weighted_quantile(
-        inputs, weights, quantiles, issorted=False
-    )
+    actual1 = calc_weighted_quantile(inputs, weights, quantiles, issorted=True)
+    actual2 = calc_weighted_quantile(inputs, weights, quantiles, issorted=False)
     assert actual1 != actual2
 
     # Check error if invalid parameters.
     assert_raises(TypeError, calc_weighted_quantile, [1, 2], [1, 1], 0.5)
     assert_raises(
         TypeError,
-        calc_weighted_quantile, [1, 2], [1, 1], [0.5],
+        calc_weighted_quantile,
+        [1, 2],
+        [1, 1],
+        [0.5],
         interpolation=None,
     )
 
@@ -1304,7 +1232,7 @@ def test_calc_quantile_rank():
         kwargs2 = {"kind": kind.decode()}
         for i, s in zip(inputs, scores):
             actual = calc_quantile_rank(i, s, **kwargs1)
-            expected = percentileofscore(i, s, **kwargs2) / 100.
+            expected = percentileofscore(i, s, **kwargs2) / 100.0
             assert_allclose(actual, expected)
 
     inputs = []
@@ -1327,7 +1255,8 @@ def test_calc_quantile_rank():
     assert_raises(TypeError, calc_quantile_rank, [1, 2], [1])
     assert_raises(
         TypeError,
-        calc_quantile_rank, [1, 2],
+        calc_quantile_rank,
+        [1, 2],
         np.array([1], dtype=np.float64),
         kind=None,
     )

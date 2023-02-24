@@ -43,7 +43,7 @@ from sklearn.utils.validation import check_is_fitted
 from ._quantile_forest_fast import QuantileForest
 from ._quantile_forest_fast import generate_unsampled_indices
 
-sklearn_version = tuple(map(int, (sklearn.__version__.split('.'))))
+sklearn_version = tuple(map(int, (sklearn.__version__.split("."))))
 
 
 def _generate_unsampled_indices(sample_indices, duplicates=None):
@@ -71,6 +71,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
     Warning: This class should not be used directly. Use derived classes
     instead.
     """
+
     def fit(self, X, y, sample_weight=None, sparse_pickle=False):
         """Build a forest from the training set (X, y).
 
@@ -99,12 +100,8 @@ class BaseForestQuantileRegressor(ForestRegressor):
         self : object
             Fitted estimator.
         """
-        super(BaseForestQuantileRegressor, self).fit(
-            X, y, sample_weight=sample_weight
-        )
-        X, y = self._validate_data(
-            X, y, multi_output=False, accept_sparse="csc", dtype=DTYPE
-        )
+        super(BaseForestQuantileRegressor, self).fit(X, y, sample_weight=sample_weight)
+        X, y = self._validate_data(X, y, multi_output=False, accept_sparse="csc", dtype=DTYPE)
 
         # Sort the target values in ascending order.
         # Use sorter to maintain mapping to original order.
@@ -115,9 +112,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
             sample_weight = np.asarray(sample_weight)[sorter]
 
         # Get map of tree leaf nodes to training indices.
-        y_train_leaves = self._get_y_train_leaves(
-            X, sorter=sorter, sample_weight=sample_weight
-        )
+        y_train_leaves = self._get_y_train_leaves(X, sorter=sorter, sample_weight=sample_weight)
 
         # Create quantile forest object.
         self.forest_ = QuantileForest(
@@ -176,7 +171,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
             max_samples_leaf = self.max_samples_leaf
             leaf_subsample = True
         elif isinstance(self.max_samples_leaf, numbers.Real):
-            if not 0. < self.max_samples_leaf <= 1.:
+            if not 0.0 < self.max_samples_leaf <= 1.0:
                 raise ValueError(
                     "If max_samples_leaf is a float, "
                     "it must be in range (0, 1], got {0}."
@@ -203,9 +198,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
         for i, estimator in enumerate(self.estimators_):
             # Get bootstrap indices.
             if self.bootstrap:
-                n_samples_bootstrap = _get_n_samples_bootstrap(
-                    n_samples, self.max_samples
-                )
+                n_samples_bootstrap = _get_n_samples_bootstrap(n_samples, self.max_samples)
                 bootstrap_indices[:, i] = _generate_sample_indices(
                     estimator.random_state, n_samples, n_samples_bootstrap
                 )
@@ -258,7 +251,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
                         y_indices = list(y_indices)
                     y_indices = random.sample(y_indices, max_samples_leaf)
 
-                y_train_leaves[i, leaf_idx, :len(y_indices)] = y_indices
+                y_train_leaves[i, leaf_idx, : len(y_indices)] = y_indices
 
         return y_train_leaves
 
@@ -305,8 +298,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
 
         if indices is not None and n_samples != len(indices):
             raise ValueError(
-                "If `indices` are not None, OOB samples "
-                "and indices must be the same length."
+                "If `indices` are not None, OOB samples " "and indices must be the same length."
             )
 
         X_leaves = np.empty((n_samples, n_estimators), dtype=np.intp)
@@ -314,9 +306,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
         for i, estimator in enumerate(self.estimators_):
             # Get the indices excluded from the bootstrapping process.
             if self.unsampled_indices_ is None:
-                unsampled_indices = self._get_unsampled_indices(
-                    estimator, duplicates=duplicates
-                )
+                unsampled_indices = self._get_unsampled_indices(estimator, duplicates=duplicates)
             else:
                 # Avoid generating unsampled indices if they are precomputed.
                 unsampled_indices = np.asarray(self.unsampled_indices_[i])
@@ -326,8 +316,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
                 # Token index (-1) denotes indices that are always unsampled.
                 if len(indices) == 1:  # optimize for single-row performance
                     unsampled_indices = [
-                        x_i for x_i, x in enumerate(indices)
-                        if x in unsampled_indices or x == -1
+                        x_i for x_i, x in enumerate(indices) if x in unsampled_indices or x == -1
                     ]
                     unsampled_indices = np.array(unsampled_indices)
                 else:
@@ -367,15 +356,11 @@ class BaseForestQuantileRegressor(ForestRegressor):
             warn("Unsampled indices only exist if bootstrap=True.")
             return np.array([])
         n_train_samples = self.n_train_samples_
-        n_samples_bootstrap = _get_n_samples_bootstrap(
-            n_train_samples, self.max_samples
-        )
+        n_samples_bootstrap = _get_n_samples_bootstrap(n_train_samples, self.max_samples)
         sample_indices = _generate_sample_indices(
             estimator.random_state, n_train_samples, n_samples_bootstrap
         )
-        unsampled_indices = _generate_unsampled_indices(
-            sample_indices, duplicates=duplicates
-        )
+        unsampled_indices = _generate_unsampled_indices(sample_indices, duplicates=duplicates)
         return np.asarray(unsampled_indices)
 
     def predict(
@@ -470,10 +455,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
 
         if oob_score:
             if not self.bootstrap:
-                raise ValueError(
-                    "Out-of-bag estimation only available "
-                    "if bootstrap=True."
-                )
+                raise ValueError("Out-of-bag estimation only available " "if bootstrap=True.")
 
             X_leaves, X_indices = self._oob_samples(X, indices, duplicates)
 
@@ -570,19 +552,14 @@ class BaseForestQuantileRegressor(ForestRegressor):
             Quantile ranks in range [0, 1].
         """
         check_is_fitted(self)
-        X, y = self._validate_data(
-            X, y, multi_output=False, accept_sparse="csc", dtype=DTYPE
-        )
+        X, y = self._validate_data(X, y, multi_output=False, accept_sparse="csc", dtype=DTYPE)
 
         if not isinstance(kind, (bytes, bytearray)):
             kind = kind.encode()
 
         if oob_score:
             if not self.bootstrap:
-                raise ValueError(
-                    "Out-of-bag estimation only available "
-                    "if bootstrap=True."
-                )
+                raise ValueError("Out-of-bag estimation only available " "if bootstrap=True.")
 
             X_leaves, X_indices = self._oob_samples(X, indices, duplicates)
 
@@ -674,10 +651,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
 
         if oob_score:
             if not self.bootstrap:
-                raise ValueError(
-                    "Out-of-bag estimation only available "
-                    "if bootstrap=True."
-                )
+                raise ValueError("Out-of-bag estimation only available " "if bootstrap=True.")
 
             X_leaves, X_indices = self._oob_samples(X, indices, duplicates)
 
@@ -702,10 +676,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
 
         if return_sorted:
             # Sort each dict of proximities in descending order by count.
-            proximities = [
-                sorted(p.items(), key=lambda x: x[1], reverse=True)
-                for p in proximities
-            ]
+            proximities = [sorted(p.items(), key=lambda x: x[1], reverse=True) for p in proximities]
         else:
             proximities = [p.items() for p in proximities]
 
@@ -745,6 +716,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
             :math:`R^2` of ``self.predict(X)`` wrt. `y`.
         """
         from sklearn.metrics import r2_score
+
         return r2_score(
             y,
             self.predict(X, quantiles),
@@ -984,9 +956,9 @@ class RandomForestQuantileRegressor(BaseForestQuantileRegressor):
         max_samples=None,
     ):
         init_dict = {
-            'base_estimator' if sklearn_version < (1, 2) else 'estimator': DecisionTreeRegressor(),
-            'n_estimators': n_estimators,
-            'estimator_params': (
+            "base_estimator" if sklearn_version < (1, 2) else "estimator": DecisionTreeRegressor(),
+            "n_estimators": n_estimators,
+            "estimator_params": (
                 "criterion",
                 "max_depth",
                 "min_samples_split",
@@ -998,13 +970,13 @@ class RandomForestQuantileRegressor(BaseForestQuantileRegressor):
                 "random_state",
                 "ccp_alpha",
             ),
-            'bootstrap': bootstrap,
-            'oob_score': oob_score,
-            'n_jobs': n_jobs,
-            'random_state': random_state,
-            'verbose': verbose,
-            'warm_start': warm_start,
-            'max_samples': max_samples,
+            "bootstrap": bootstrap,
+            "oob_score": oob_score,
+            "n_jobs": n_jobs,
+            "random_state": random_state,
+            "verbose": verbose,
+            "warm_start": warm_start,
+            "max_samples": max_samples,
         }
         super(RandomForestQuantileRegressor, self).__init__(**init_dict)
 
@@ -1258,9 +1230,9 @@ class ExtraTreesQuantileRegressor(BaseForestQuantileRegressor):
         max_samples=None,
     ):
         init_dict = {
-            'base_estimator' if sklearn_version < (1, 2) else 'estimator': ExtraTreeRegressor(),
-            'n_estimators': n_estimators,
-            'estimator_params': (
+            "base_estimator" if sklearn_version < (1, 2) else "estimator": ExtraTreeRegressor(),
+            "n_estimators": n_estimators,
+            "estimator_params": (
                 "criterion",
                 "max_depth",
                 "min_samples_split",
@@ -1272,13 +1244,13 @@ class ExtraTreesQuantileRegressor(BaseForestQuantileRegressor):
                 "random_state",
                 "ccp_alpha",
             ),
-            'bootstrap': bootstrap,
-            'oob_score': oob_score,
-            'n_jobs': n_jobs,
-            'random_state': random_state,
-            'verbose': verbose,
-            'warm_start': warm_start,
-            'max_samples': max_samples,
+            "bootstrap": bootstrap,
+            "oob_score": oob_score,
+            "n_jobs": n_jobs,
+            "random_state": random_state,
+            "verbose": verbose,
+            "warm_start": warm_start,
+            "max_samples": max_samples,
         }
         super(ExtraTreesQuantileRegressor, self).__init__(**init_dict)
 

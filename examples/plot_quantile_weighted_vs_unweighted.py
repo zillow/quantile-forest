@@ -32,9 +32,7 @@ def timing():
 # Create synthetic regression dataset.
 X, y = datasets.make_regression(n_samples=500, n_features=4, random_state=0)
 
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.5, random_state=0
-)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.5, random_state=0)
 
 estimator_sizes = [1, 5, 10, 25, 50, 100, 250, 500]
 n_repeats = 3
@@ -70,7 +68,7 @@ for n_estimators in estimator_sizes:
             )
         )
 
-    timings.append([np.min(x) * 1000. for x in list(zip(*timings_i))])
+    timings.append([np.min(x) * 1000.0 for x in list(zip(*timings_i))])
 
 rf_time, qrf_weighted_time, qrf_unweighted_time = list(zip(*timings))
 
