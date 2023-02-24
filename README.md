@@ -1,5 +1,10 @@
-quantile-forest
-============================================================
+# quantile-forest
+
+[![PyPI Version](https://badge.fury.io/py/quantile-forest.svg)](https://badge.fury.io/py/quantile-forest)
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![GitHub Actions](https://github.com/zillow/quantile-forest/actions/workflows/python-app.yml/badge.svg)](https://github.com/zillow/quantile-forest/actions/workflows/python-app.yml)
+[![Code Style black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![PyPI Downloads](https://img.shields.io/pypi/dm/quantile-forest)](https://pypi.org/project/quantile-forest)
 
 **quantile-forest** offers a Python implementation of quantile regression forests compatible with scikit-learn.
 
