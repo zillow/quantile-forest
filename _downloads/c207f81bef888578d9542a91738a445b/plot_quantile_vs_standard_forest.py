@@ -32,9 +32,7 @@ X = rng.randn(n_samples, 2) * y.reshape(-1, 1)
 regr_rf = RandomForestRegressor(n_estimators=10, random_state=0)
 regr_qrf = RandomForestQuantileRegressor(n_estimators=10, random_state=0)
 
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.5, random_state=0
-)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.5, random_state=0)
 
 regr_rf.fit(X_train, y_train)
 regr_qrf.fit(X_train, y_train)

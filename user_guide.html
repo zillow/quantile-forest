@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>User Guide &mdash; Version 1.1.1</title>
@@ -17,10 +17,8 @@
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
         <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-        <script src="_static/jquery.js"></script>
-        <script src="_static/underscore.js"></script>
-        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="_static/doctools.js"></script>
         <script src="_static/sphinx_highlight.js"></script>
         <script src="_static/js/copybutton.js"></script>
@@ -37,14 +35,18 @@
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-            <a href="index.html" class="icon icon-home"> quantile-forest
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            quantile-forest
           </a>
               <div class="version">
                 1.1.1
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
     <input type="hidden" name="check_keywords" value="yes" />
     <input type="hidden" name="area" value="default" />
   </form>
@@ -83,7 +85,7 @@
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="index.html" class="icon icon-home"></a></li>
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
       <li class="breadcrumb-item active">User Guide</li>
 
   </ul>
@@ -111,11 +113,11 @@
 <p>Informally, this means that given a new unknown sample, we first find the leaf that it falls into at each tree. Then for each <code class="docutils literal notranslate"><span class="pre">(X,</span> <span class="pre">y)</span></code> pair in the training data, a weight or frequency is given to <code class="docutils literal notranslate"><span class="pre">y</span></code> for each tree based on the number of times each training sample falls into the same leaf as the new sample. This information can then be used to calculate the empirical quantile estimates.</p>
 <p>This approach was first proposed by <span id="id2">Meinshausen [<a class="reference internal" href="#id4" title="Nicolai Meinshausen. Quantile Regression Forests. Journal of Machine Learning Research, 7(6), 983-999, 2006. URL: https://www.jmlr.org/papers/volume7/meinshausen06a/meinshausen06a.pdf.">Mei06</a>]</span>.</p>
 <div class="docutils container" id="id3">
-<dl class="citation">
-<dt class="label" id="id4"><span class="brackets">Mei06</span></dt>
-<dd><p>Nicolai Meinshausen. <em>Quantile Regression Forests</em>. Journal of Machine Learning Research, 7(6), 983-999, 2006. URL: <a class="reference external" href="https://www.jmlr.org/papers/volume7/meinshausen06a/meinshausen06a.pdf">https://www.jmlr.org/papers/volume7/meinshausen06a/meinshausen06a.pdf</a>.</p>
-</dd>
-</dl>
+<div class="citation" id="id4" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Mei06<span class="fn-bracket">]</span></span>
+<p>Nicolai Meinshausen. <em>Quantile Regression Forests</em>. Journal of Machine Learning Research, 7(6), 983-999, 2006. URL: <a class="reference external" href="https://www.jmlr.org/papers/volume7/meinshausen06a/meinshausen06a.pdf">https://www.jmlr.org/papers/volume7/meinshausen06a/meinshausen06a.pdf</a>.</p>
+</div>
+</div>
 </div>
 </section>
 <section id="fitting-and-predicting">
@@ -150,7 +152,7 @@
 </pre></div>
 </div>
 <p>By default, the predict method calculates quantiles by weighting each sample inversely according to the size of its leaf node (<code class="docutils literal notranslate"><span class="pre">weighted_leaves</span> <span class="pre">=</span> <span class="pre">True</span></code>). If <code class="docutils literal notranslate"><span class="pre">weighted_leaves</span> <span class="pre">=</span> <span class="pre">False</span></code>, each sample in a leaf (including repeated bootstrap samples) will be given equal weight. Note that this leaf-based weighting can only be used with weighted quantiles.</p>
-<p>By default, the predict method calculates quantiles using a weighted quantile method (<code class="docutils literal notranslate"><span class="pre">weighted_quantile</span> <span class="pre">=</span> <span class="pre">True</span></code>), which aggregates the list of training <code class="docutils literal notranslate"><span class="pre">y</span></code> values for each leaf node to which the test sample belongs across all trees. When the number of samples in the training set is smaller than the expected size of this list (i.e., <span class="math notranslate nohighlight">\(n_{train} \ll n_{trees} \cdot n_{leaves} \cdot n_{leafsamples}\)</span>), it can be more efficient to calculate a weighted quantile (<code class="docutils literal notranslate"><span class="pre">weighted_quantile</span> <span class="pre">=</span> <span class="pre">True</span></code>), which assigns a weight to each sample in the training set based on the number of times that it co-occurs in the same leaves as the test sample. For a given input, both methods can return the same output values:</p>
+<p>By default, the predict method calculates quantiles using a weighted quantile method (<code class="docutils literal notranslate"><span class="pre">weighted_quantile</span> <span class="pre">=</span> <span class="pre">True</span></code>), which assigns a weight to each sample in the training set based on the number of times that it co-occurs in the same leaves as the test sample. When the number of samples in the training set is larger than the expected size of this list (i.e., <span class="math notranslate nohighlight">\(n_{train} \gg n_{trees} \cdot n_{leaves} \cdot n_{leafsamples}\)</span>), it can be more efficient to calculate an unweighted quantile (<code class="docutils literal notranslate"><span class="pre">weighted_quantile</span> <span class="pre">=</span> <span class="pre">False</span></code>), which aggregates the list of training <code class="docutils literal notranslate"><span class="pre">y</span></code> values for each leaf node to which the test sample belongs across all trees. For a given input, both methods can return the same output values:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">y_pred_weighted</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">,</span> <span class="n">weighted_quantile</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">weighted_leaves</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>  <span class="c1"># weighted quantile (default)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">y_pred_unweighted</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">,</span> <span class="n">weighted_quantile</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">weighted_leaves</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>  <span class="c1"># unweighted quantile</span>
@@ -243,7 +245,7 @@
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2022-2022, Zillow Group.</p>
+    <p>&#169; Copyright 2022-2023, Zillow Group.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

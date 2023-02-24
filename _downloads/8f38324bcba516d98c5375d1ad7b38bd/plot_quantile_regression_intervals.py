@@ -39,7 +39,10 @@ y_pred_upper = []
 
 for train_index, test_index in kf.split(X):
     X_train, X_test, y_train, y_test = (
-        X[train_index], X[test_index], y[train_index], y[test_index]
+        X[train_index],
+        X[test_index],
+        y[train_index],
+        y[test_index],
     )
 
     qrf.set_params(max_features=X_train.shape[1] // 3)

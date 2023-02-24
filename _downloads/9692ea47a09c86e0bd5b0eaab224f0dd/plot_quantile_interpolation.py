@@ -40,17 +40,22 @@ for interpolation in interpolations:
         interpolation=interpolation,
     )
     y_medians.append(y_pred[:, 1])
-    y_errs.append(np.concatenate((
-        [y_pred[:, 1] - y_pred[:, 0]],
-        [y_pred[:, 2] - y_pred[:, 1]],
-    ), axis=0))
+    y_errs.append(
+        np.concatenate(
+            (
+                [y_pred[:, 1] - y_pred[:, 0]],
+                [y_pred[:, 2] - y_pred[:, 1]],
+            ),
+            axis=0,
+        )
+    )
 
-sc = plt.scatter(np.arange(len(y)) - .35, y, color="k", zorder=10)
+sc = plt.scatter(np.arange(len(y)) - 0.35, y, color="k", zorder=10)
 ebs = []
 for i, (median, y_err) in enumerate(zip(y_medians, y_errs)):
     ebs.append(
         plt.errorbar(
-            np.arange(len(y)) + (.15 * (i + 1)) - .35,
+            np.arange(len(y)) + (0.15 * (i + 1)) - 0.35,
             median,
             yerr=y_err,
             color=colors[i],
@@ -58,7 +63,7 @@ for i, (median, y_err) in enumerate(zip(y_medians, y_errs)):
             fmt="o",
         )
     )
-plt.xlim([-.75, len(y) - .25])
+plt.xlim([-0.75, len(y) - 0.25])
 plt.xticks(np.arange(len(y)), X.tolist())
 plt.xlabel("Samples (Feature Values)")
 plt.ylabel("Actual and Predicted Values")
