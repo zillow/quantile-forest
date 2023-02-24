@@ -34,8 +34,6 @@ Informally, this means that given a new unknown sample, we first find the leaf t
 
 This approach was first proposed by :cite:t:`2006:meinshausen`.
 
-.. bibliography::
-
 Fitting and Predicting
 ----------------------
 Quantile forests can be fit and used to predict like standard scikit-learn estimators.
@@ -150,3 +148,7 @@ The maximum number of proximity counts output per test sample can be limited by 
 Out-of-bag (OOB) proximity counts can be returned by specifying `oob_score = True`::
 
     >>> proximities = reg.proximity_counts(X_train, oob_score=True)
+
+References
+----------
+.. bibliography::
