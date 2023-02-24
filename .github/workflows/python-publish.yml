@@ -1,4 +1,4 @@
-name: Quantile Forest CD
+name: CD
 
 on:
   push:

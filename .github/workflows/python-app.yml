@@ -1,4 +1,4 @@
-name: Quantile Forest CI
+name: CI
 
 on: [push, pull_request]
 
