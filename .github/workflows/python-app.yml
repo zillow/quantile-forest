@@ -46,3 +46,6 @@ jobs:
         run: |
           python -m pytest docs/*rst
           python -m pytest --pyargs quantile_forest --cov=quantile_forest --doctest-modules
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v3
