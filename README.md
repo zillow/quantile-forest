@@ -1,11 +1,11 @@
 # quantile-forest
 
-[![PyPI Version](https://badge.fury.io/py/quantile-forest.svg)](https://badge.fury.io/py/quantile-forest)
-[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![GitHub Actions](https://github.com/zillow/quantile-forest/actions/workflows/python-app.yml/badge.svg)](https://github.com/zillow/quantile-forest/actions/workflows/python-app.yml)
-[![codecov](https://codecov.io/gh/zillow/quantile-forest/branch/main/graph/badge.svg?token=STRT8T67YP)](https://codecov.io/gh/zillow/quantile-forest)
+[![PyPI - Version](https://img.shields.io/pypi/v/quantile-forest)](https://pypi.org/project/quantile-forest)
+[![License](https://img.shields.io/github/license/zillow/quantile-forest)](https://github.com/zillow/quantile-forest/blob/main/LICENSE)
+[![GitHub Actions](https://github.com/zillow/quantile-forest/actions/workflows/build.yml/badge.svg)](https://github.com/zillow/quantile-forest/actions/workflows/build.yml)
+[![Codecov](https://codecov.io/gh/zillow/quantile-forest/branch/main/graph/badge.svg?token=STRT8T67YP)](https://codecov.io/gh/zillow/quantile-forest)
 [![Code Style black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-[![PyPI Downloads](https://img.shields.io/pypi/dm/quantile-forest)](https://pypi.org/project/quantile-forest)
+[![PyPI - Downloads](https://img.shields.io/pypi/dm/quantile-forest)](https://pypi.org/project/quantile-forest)
 
 **quantile-forest** offers a Python implementation of quantile regression forests compatible with scikit-learn.
 
