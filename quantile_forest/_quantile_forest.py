@@ -31,6 +31,7 @@ from warnings import warn
 import joblib
 import numpy as np
 import sklearn
+from pkg_resources import parse_version
 
 from sklearn.ensemble._forest import ForestRegressor
 from sklearn.ensemble._forest import _generate_sample_indices
@@ -43,7 +44,7 @@ from sklearn.utils.validation import check_is_fitted
 from ._quantile_forest_fast import QuantileForest
 from ._quantile_forest_fast import generate_unsampled_indices
 
-sklearn_version = tuple(map(int, (sklearn.__version__.split("."))))
+sklearn_version = parse_version(sklearn.__version__)
 
 
 def _generate_unsampled_indices(sample_indices, duplicates=None):
@@ -956,7 +957,9 @@ class RandomForestQuantileRegressor(BaseForestQuantileRegressor):
         max_samples=None,
     ):
         init_dict = {
-            "base_estimator" if sklearn_version < (1, 2) else "estimator": DecisionTreeRegressor(),
+            "base_estimator"
+            if sklearn_version < parse_version("1.2.0")
+            else "estimator": DecisionTreeRegressor(),
             "n_estimators": n_estimators,
             "estimator_params": (
                 "criterion",
@@ -1230,7 +1233,9 @@ class ExtraTreesQuantileRegressor(BaseForestQuantileRegressor):
         max_samples=None,
     ):
         init_dict = {
-            "base_estimator" if sklearn_version < (1, 2) else "estimator": ExtraTreeRegressor(),
+            "base_estimator"
+            if sklearn_version < parse_version("1.2.0")
+            else "estimator": ExtraTreeRegressor(),
             "n_estimators": n_estimators,
             "estimator_params": (
                 "criterion",
