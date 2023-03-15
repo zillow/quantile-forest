@@ -1,11 +1,18 @@
 #! /usr/bin/env python
 """scikit-learn compatible quantile forests."""
 
+import builtins
 import codecs
 import os
 import sys
 
 from setuptools import find_packages, setup
+
+# Setting a global variable so that the main package __init__ can detect if it
+# is being loaded by the setup routine.
+builtins.__QF_SETUP__ = True
+
+import quantile_forest._min_dependencies as min_deps  # noqa
 
 
 def write_version_py():
@@ -19,9 +26,6 @@ def write_version_py():
 
 
 __version__ = write_version_py()
-
-with open("requirements.txt", "r") as f:
-    INSTALL_REQUIRES = f.read().splitlines()
 
 DISTNAME = "quantile-forest"
 DESCRIPTION = "scikit-learn compatible quantile forests."
@@ -49,6 +53,30 @@ CLASSIFIERS = [
 ]
 
 
+def configure_extension_modules():
+    # Skip cythonization as we do not want to include the generated
+    # C/C++ files in the release tarballs as they are not necessarily
+    # forward compatible with future versions of Python for instance.
+    if "sdist" in sys.argv or "--help" in sys.argv:
+        return []
+
+    import numpy
+    from Cython.Build import cythonize
+    from setuptools.extension import Extension
+
+    # For building Cython extensions.
+    EXTENSIONS = [
+        Extension(
+            "quantile_forest._quantile_forest_fast",
+            sources=["quantile_forest/_quantile_forest_fast.pyx"],
+            include_dirs=[numpy.get_include()],
+            language="c++",
+        ),
+    ]
+
+    return cythonize(EXTENSIONS)
+
+
 def setup_package():
     metadata = dict(
         name=DISTNAME,
@@ -61,41 +89,12 @@ def setup_package():
         zip_safe=False,  # the package can run out of an .egg file
         classifiers=CLASSIFIERS,
         packages=find_packages(),
-        install_requires=INSTALL_REQUIRES,
+        install_requires=min_deps.tag_to_packages["install"],
     )
 
-    if len(sys.argv) == 1 or (
-        len(sys.argv) >= 2
-        and (
-            "--help" in sys.argv[1:]
-            or sys.argv[1]
-            in (
-                "--help-commands",
-                "--version",
-                "egg_info",
-                "dist_info",
-                "clean",
-            )
-        )
-    ):
-        # For these actions, NumPy is not required. They must succeed without
-        # NumPy, for example to install the package when NumPy is not present.
-        pass
-    else:
-        import numpy
-        from Cython.Build import cythonize
-        from setuptools.extension import Extension
-
-        # For building Cython extensions.
-        EXTENSIONS = [
-            Extension(
-                "quantile_forest._quantile_forest_fast",
-                sources=["quantile_forest/_quantile_forest_fast.pyx"],
-                include_dirs=[numpy.get_include()],
-                language="c++",
-            ),
-        ]
-        metadata["ext_modules"] = cythonize(EXTENSIONS)
+    commands = [arg for arg in sys.argv[1:] if not arg.startswith("-")]
+    if not all(command in ("egg_info", "dist_info", "clean", "check") for command in commands):
+        metadata["ext_modules"] = configure_extension_modules()
 
     setup(**metadata)
 

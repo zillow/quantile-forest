@@ -24,8 +24,7 @@ Developer Install
 To manually build and install the package, run::
 
   pip install -r requirements.txt
-  python setup.py build_ext --inplace
-  python setup.py install
+  pip install --verbose --editable .
 
 Troubleshooting
 ===============

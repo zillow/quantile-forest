@@ -1,0 +1,28 @@
+[build-system]
+# Minimum requirements for the build system to execute.
+requires = [
+    "setuptools",
+    "wheel",
+    "Cython>=3.0a4",
+    "numpy>=1.23",
+    "scipy>=1.4",
+    "scikit-learn>=1.0",
+]
+
+[tool.black]
+line-length = 100
+target_version = ['py38', 'py39', 'py310']
+preview = true
+exclude = '''
+/(
+    \.eggs         # exclude a few common directories in the
+  | \.git          # root of the project
+  | \.mypy_cache
+  | \.vscode
+  | build
+  | dist
+  | doc/tutorial
+  | doc/_build
+  | doc/auto_examples
+)/
+'''

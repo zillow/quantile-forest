@@ -32,7 +32,7 @@ jobs:
         env:
           CIBW_SKIP: "pp* *i686* *musllinux*"
           CIBW_PROJECT_REQUIRES_PYTHON: ">=3.8"
-          CIBW_BEFORE_BUILD: pip install -r requirements.txt && python setup.py build_ext --inplace && pip install .
+          CIBW_BEFORE_BUILD: pip install --verbose --editable .
 
       - name: Build wheels for Windows
         if: matrix.os == 'windows-latest'
@@ -41,7 +41,7 @@ jobs:
         env:
           CIBW_SKIP: "pp* *i686* *win32"
           CIBW_PROJECT_REQUIRES_PYTHON: ">=3.8"
-          CIBW_BEFORE_BUILD: pip install -r requirements.txt && python setup.py build_ext --inplace && pip install .
+          CIBW_BEFORE_BUILD: pip install --verbose --editable .
 
       - name: Build wheels for macOS
         if: matrix.os == 'macos-latest'
@@ -51,7 +51,7 @@ jobs:
           CIBW_ARCHS_MACOS: "x86_64 universal2 arm64"
           CIBW_SKIP: "pp* *i686*"
           CIBW_PROJECT_REQUIRES_PYTHON: ">=3.8"
-          CIBW_BEFORE_BUILD: pip install -r requirements.txt && python setup.py build_ext --inplace && pip install .
+          CIBW_BEFORE_BUILD: pip install --verbose --editable .
 
       - uses: actions/upload-artifact@v3
         with:

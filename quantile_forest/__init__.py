@@ -1,7 +1,5 @@
 import os
-
-from ._quantile_forest import ExtraTreesQuantileRegressor
-from ._quantile_forest import RandomForestQuantileRegressor
+import sys
 
 try:
     from .version import __version__  # noqa
@@ -10,7 +8,23 @@ except ImportError:
     with open(version_txt) as f:
         __version__ = f.read().strip()
 
-__all__ = [
-    "ExtraTreesQuantileRegressor",
-    "RandomForestQuantileRegressor",
-]
+try:
+    # This variable is injected in the __builtins__ by the build process. It
+    # is used to enable importing subpackages of quantile-forest when the
+    # binaries are not built.
+    __QF_SETUP__  # type: ignore
+except NameError:
+    __QF_SETUP__ = False
+
+if __QF_SETUP__:
+    sys.stderr.write("Partial import of quantile-forest during the build process.\n")
+    # We are not importing the rest of quantile-forest during the build
+    # process, as it may not be compiled yet
+else:
+    from ._quantile_forest import ExtraTreesQuantileRegressor
+    from ._quantile_forest import RandomForestQuantileRegressor
+
+    __all__ = [
+        "ExtraTreesQuantileRegressor",
+        "RandomForestQuantileRegressor",
+    ]
