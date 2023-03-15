@@ -23,7 +23,6 @@ Developer Install
 
 To manually build and install the package, run::
 
-  pip install -r requirements.txt
   pip install --verbose --editable .
 
 Troubleshooting
