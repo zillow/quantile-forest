@@ -7,8 +7,8 @@ Prerequisites
 
 The quantile-forest package requires the following dependencies:
 
-* python (>=3.7)
-* cython (>=3.0)
+* python (>=3.8)
+* cython (>=3.0a4)
 * scikit-learn (>=1.0)
 
 Install
@@ -44,3 +44,11 @@ Test and Coverage
 To test the code::
 
   $ pytest quantile_forest -v
+
+Documentation
+=============
+
+To build the documentation, run::
+
+  $ pip install -r ./docs/sphinx_requirements.txt
+  $ sphinx-build -b html ./docs ./docs/_build

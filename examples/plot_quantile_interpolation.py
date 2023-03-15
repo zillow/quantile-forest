@@ -28,7 +28,7 @@ est = RandomForestQuantileRegressor(
 est.fit(X, y)
 
 interpolations = ["linear", "lower", "higher", "midpoint", "nearest"]
-colors = ["#eeca3b", "#4c78a8", "#72b7b2", "#54a24b", "#f58518"]
+colors = ["#006aff", "#ffd237", "#0d4599", "#f2a619", "#a6e5ff"]
 
 y_medians = []
 y_errs = []
