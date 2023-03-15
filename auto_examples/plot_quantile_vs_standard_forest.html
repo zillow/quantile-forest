@@ -17,7 +17,6 @@
     <script src="../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
         <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
         <script src="../_static/doctools.js"></script>
         <script src="../_static/sphinx_highlight.js"></script>
@@ -64,6 +63,7 @@
 <li class="toctree-l1 current"><a class="reference internal" href="index.html">General Examples</a><ul class="current">
 <li class="toctree-l2 current"><a class="current reference internal" href="#">Quantile regression forest vs. standard regression forest</a></li>
 <li class="toctree-l2"><a class="reference internal" href="plot_quantile_interpolation.html">Predicting with different quantile interpolation methods</a></li>
+<li class="toctree-l2"><a class="reference internal" href="plot_quantile_extrapolation_problem.html">Quantile regression forest extrapolation problem</a></li>
 <li class="toctree-l2"><a class="reference internal" href="plot_quantile_weighted_vs_unweighted.html">Predicting with weighted and unweighted quantiles</a></li>
 <li class="toctree-l2"><a class="reference internal" href="plot_quantile_regression_intervals.html">Quantile regression forest prediction intervals</a></li>
 </ul>
@@ -95,7 +95,7 @@
              
   <div class="sphx-glr-download-link-note admonition note">
 <p class="admonition-title">Note</p>
-<p>Click <a class="reference internal" href="#sphx-glr-download-auto-examples-plot-quantile-vs-standard-forest-py"><span class="std std-ref">here</span></a>
+<p><a class="reference internal" href="#sphx-glr-download-auto-examples-plot-quantile-vs-standard-forest-py"><span class="std std-ref">Go to the end</span></a>
 to download the full example code</p>
 </div>
 <section class="sphx-glr-example-title" id="quantile-regression-forest-vs-standard-regression-forest">
@@ -135,7 +135,7 @@ distribution, the mean is to the right of the median.</p>
 <span class="n">y_pred_rf</span> <span class="o">=</span> <a href="https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestRegressor.html#sklearn.ensemble.RandomForestRegressor.predict" title="sklearn.ensemble.RandomForestRegressor.predict" class="sphx-glr-backref-module-sklearn-ensemble sphx-glr-backref-type-py-method"><span class="n">regr_rf</span><span class="o">.</span><span class="n">predict</span></a><span class="p">(</span><span class="n">X_test</span><span class="p">)</span>
 <span class="n">y_pred_qrf</span> <span class="o">=</span> <span class="n">regr_qrf</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">,</span> <span class="n">quantiles</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
 
-<a href="https://docs.python.org/3/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">colors</span></a> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;#c0c0c0&quot;</span><span class="p">,</span> <span class="s2">&quot;#e69f00&quot;</span><span class="p">,</span> <span class="s2">&quot;#56b4e9&quot;</span><span class="p">]</span>
+<a href="https://docs.python.org/3/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">colors</span></a> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;#c0c0c0&quot;</span><span class="p">,</span> <span class="s2">&quot;#f2a619&quot;</span><span class="p">,</span> <span class="s2">&quot;#a6e5ff&quot;</span><span class="p">]</span>
 <a href="https://docs.python.org/3/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">names</span></a> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;Actual&quot;</span><span class="p">,</span> <span class="s2">&quot;RF (Mean)&quot;</span><span class="p">,</span> <span class="s2">&quot;QRF (Median)&quot;</span><span class="p">]</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">hist</span><span class="p">([</span><span class="n">y_test</span><span class="p">,</span> <span class="n">y_pred_rf</span><span class="p">,</span> <span class="n">y_pred_qrf</span><span class="p">],</span> <span class="n">bins</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><a href="https://docs.python.org/3/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">colors</span></a><span class="p">,</span> <span class="n">label</span><span class="o">=</span><a href="https://docs.python.org/3/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">names</span></a><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;Actual and Predicted Target Values&quot;</span><span class="p">)</span>
@@ -144,7 +144,7 @@ distribution, the mean is to the right of the median.</p>
 <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </pre></div>
 </div>
-<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> ( 0 minutes  0.493 seconds)</p>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> ( 0 minutes  0.575 seconds)</p>
 <div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-examples-plot-quantile-vs-standard-forest-py">
 <div class="sphx-glr-download sphx-glr-download-python docutils container">
 <p><a class="reference download internal" download="" href="../_downloads/c207f81bef888578d9542a91738a445b/plot_quantile_vs_standard_forest.py"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">plot_quantile_vs_standard_forest.py</span></code></a></p>

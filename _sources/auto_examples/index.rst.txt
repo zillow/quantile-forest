@@ -21,7 +21,7 @@ General-purpose and introductory examples.
 .. only:: html
 
   .. image:: /auto_examples/images/thumb/sphx_glr_plot_quantile_vs_standard_forest_thumb.png
-    :alt: Quantile regression forest vs. standard regression forest
+    :alt:
 
   :ref:`sphx_glr_auto_examples_plot_quantile_vs_standard_forest.py`
 
@@ -38,7 +38,7 @@ General-purpose and introductory examples.
 .. only:: html
 
   .. image:: /auto_examples/images/thumb/sphx_glr_plot_quantile_interpolation_thumb.png
-    :alt: Predicting with different quantile interpolation methods
+    :alt:
 
   :ref:`sphx_glr_auto_examples_plot_quantile_interpolation.py`
 
@@ -50,12 +50,29 @@ General-purpose and introductory examples.
 
 .. raw:: html
 
+    <div class="sphx-glr-thumbcontainer" tooltip="An example on a toy dataset that demonstrates that the prediction intervals produced by a quant...">
+
+.. only:: html
+
+  .. image:: /auto_examples/images/thumb/sphx_glr_plot_quantile_extrapolation_problem_thumb.png
+    :alt:
+
+  :ref:`sphx_glr_auto_examples_plot_quantile_extrapolation_problem.py`
+
+.. raw:: html
+
+      <div class="sphx-glr-thumbnail-title">Quantile regression forest extrapolation problem</div>
+    </div>
+
+
+.. raw:: html
+
     <div class="sphx-glr-thumbcontainer" tooltip="An example comparison of the prediction runtime when using a quantile regression forest with we...">
 
 .. only:: html
 
   .. image:: /auto_examples/images/thumb/sphx_glr_plot_quantile_weighted_vs_unweighted_thumb.png
-    :alt: Predicting with weighted and unweighted quantiles
+    :alt:
 
   :ref:`sphx_glr_auto_examples_plot_quantile_weighted_vs_unweighted.py`
 
@@ -72,7 +89,7 @@ General-purpose and introductory examples.
 .. only:: html
 
   .. image:: /auto_examples/images/thumb/sphx_glr_plot_quantile_regression_intervals_thumb.png
-    :alt: Quantile regression forest prediction intervals
+    :alt:
 
   :ref:`sphx_glr_auto_examples_plot_quantile_regression_intervals.py`
 
@@ -92,6 +109,7 @@ General-purpose and introductory examples.
 
    /auto_examples/plot_quantile_vs_standard_forest
    /auto_examples/plot_quantile_interpolation
+   /auto_examples/plot_quantile_extrapolation_problem
    /auto_examples/plot_quantile_weighted_vs_unweighted
    /auto_examples/plot_quantile_regression_intervals
 

@@ -10,7 +10,7 @@
     .. note::
         :class: sphx-glr-download-link-note
 
-        Click :ref:`here <sphx_glr_download_auto_examples_plot_quantile_vs_standard_forest.py>`
+        :ref:`Go to the end <sphx_glr_download_auto_examples_plot_quantile_vs_standard_forest.py>`
         to download the full example code
 
 .. rst-class:: sphx-glr-example-title
@@ -73,7 +73,7 @@ distribution, the mean is to the right of the median.
     y_pred_rf = regr_rf.predict(X_test)
     y_pred_qrf = regr_qrf.predict(X_test, quantiles=0.5)
 
-    colors = ["#c0c0c0", "#e69f00", "#56b4e9"]
+    colors = ["#c0c0c0", "#f2a619", "#a6e5ff"]
     names = ["Actual", "RF (Mean)", "QRF (Median)"]
     plt.hist([y_test, y_pred_rf, y_pred_qrf], bins=50, color=colors, label=names)
     plt.xlabel("Actual and Predicted Target Values")
@@ -84,7 +84,7 @@ distribution, the mean is to the right of the median.
 
 .. rst-class:: sphx-glr-timing
 
-   **Total running time of the script:** ( 0 minutes  0.493 seconds)
+   **Total running time of the script:** ( 0 minutes  0.575 seconds)
 
 
 .. _sphx_glr_download_auto_examples_plot_quantile_vs_standard_forest.py:
@@ -92,6 +92,8 @@ distribution, the mean is to the right of the median.
 .. only:: html
 
   .. container:: sphx-glr-footer sphx-glr-footer-example
+
+
 
 
     .. container:: sphx-glr-download sphx-glr-download-python

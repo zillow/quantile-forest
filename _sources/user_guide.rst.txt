@@ -51,7 +51,7 @@ Let's fit a quantile forest on a simple regression dataset::
 
 During model initialization, the parameter `max_samples_leaf` can be specified, which determines the maximum number of samples per leaf node to retain. If `max_samples_leaf` is smaller than the number of samples in a given leaf node, then a subset of values are randomly selected. By default, the model retains one randomly selected sample per leaf node (`max_samples_leaf = 1`); all samples can be retained by specifying `max_samples_leaf = None`. Note that the number of retained samples can materially impact the size of the model object.
 
-As quantile forests can provide predictions at quantiles, they accept an optional parameter during the call to the `predict` method, which can be a float or list of floats that specify the empirical quantiles to return::
+A notable advantage of quantile forests is that they can be fit once, while arbitrary quantiles can be estimated at prediction time. Accordingly, since the quantiles can be specified at prediction time, the model accepts an optional parameter during the call to the `predict` method, which can be a float or list of floats that specify the empirical quantiles to return::
 
     >>> y_pred = reg.predict(X_test, quantiles=[0.25, 0.5, 0.75])  # returns three columns per row
 
