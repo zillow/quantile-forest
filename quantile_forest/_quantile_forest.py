@@ -932,7 +932,7 @@ class RandomForestQuantileRegressor(BaseForestQuantileRegressor):
     >>> regr.fit(X, y)
     RandomForestQuantileRegressor(...)
     >>> print(regr.predict([[0, 0, 0, 0]], quantiles=0.5))
-    [-4.68693299]
+    [-3.04264873]
     """
 
     def __init__(
