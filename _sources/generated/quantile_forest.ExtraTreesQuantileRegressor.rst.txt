@@ -23,6 +23,9 @@
         ~ExtraTreesQuantileRegressor.fit
       
       
+        ~ExtraTreesQuantileRegressor.get_metadata_routing
+      
+      
         ~ExtraTreesQuantileRegressor.get_params
       
       
@@ -38,7 +41,16 @@
         ~ExtraTreesQuantileRegressor.score
       
       
+        ~ExtraTreesQuantileRegressor.set_fit_request
+      
+      
         ~ExtraTreesQuantileRegressor.set_params
+      
+      
+        ~ExtraTreesQuantileRegressor.set_predict_request
+      
+      
+        ~ExtraTreesQuantileRegressor.set_score_request
       
    
    

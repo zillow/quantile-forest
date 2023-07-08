@@ -23,6 +23,9 @@
         ~RandomForestQuantileRegressor.fit
       
       
+        ~RandomForestQuantileRegressor.get_metadata_routing
+      
+      
         ~RandomForestQuantileRegressor.get_params
       
       
@@ -38,7 +41,16 @@
         ~RandomForestQuantileRegressor.score
       
       
+        ~RandomForestQuantileRegressor.set_fit_request
+      
+      
         ~RandomForestQuantileRegressor.set_params
+      
+      
+        ~RandomForestQuantileRegressor.set_predict_request
+      
+      
+        ~RandomForestQuantileRegressor.set_score_request
       
    
    
