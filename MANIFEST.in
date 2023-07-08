@@ -3,3 +3,4 @@ recursive-include docs *
 recursive-include examples *
 recursive-include quantile_forest *.c *.cpp *.h *.pyx *.pxd
 include README.md
+include quantile_forest/version.txt
