@@ -59,9 +59,19 @@ If the `predict` method is called without quantiles, the prediction defaults to 
 
     >>> y_pred = reg.predict(X_test)  # returns empirical median prediction for each test sample
 
-If the `predict` method is explicitly called with `quantiles = None`, the prediction returns the empirical mean::
+If the `predict` method is explicitly called with `quantiles = "mean"`, the prediction returns the empirical mean::
 
-    >>> y_pred = reg.predict(X_test, quantiles=None)  # returns empirical mean prediction for each test sample
+    >>> y_pred = reg.predict(X_test, quantiles="mean")  # returns empirical mean prediction for each test sample
+
+Default quantiles can be specified at model initialization using the `default_quantiles` parameter:
+
+    >>> reg = RandomForestQuantileRegressor(default_quantiles=[0.25, 0.5, 0.75]).fit(X_train, y_train)
+    >>> y_pred = reg.predict(X_test)  # predicts using the default quantiles
+
+The default quantiles can be overwritten at prediction time by specifying a value for `quantiles`:
+
+    >>> reg = RandomForestQuantileRegressor(default_quantiles=[0.25, 0.5, 0.75]).fit(X_train, y_train)
+    >>> y_pred = reg.predict(X_test, quantiles=0.5)  # predicts using the override quantiles
 
 The output of the `predict` method is an array with one column for each specified quantile or a single column if no quantiles are specified. The order of the output columns corresponds to the order of the quantiles, which can be specified in any order (i.e., they do not need to be monotonically ordered)::
 

@@ -937,14 +937,13 @@ class RandomForestQuantileRegressor(BaseForestQuantileRegressor):
     Examples
     --------
     >>> from quantile_forest import RandomForestQuantileRegressor
-    >>> from sklearn.datasets import make_regression
-    >>> X, y = make_regression(
-    ...     n_features=4, n_informative=2, random_state=0, shuffle=False)
-    >>> regr = RandomForestQuantileRegressor(max_depth=2, random_state=0)
-    >>> regr.fit(X, y)
-    RandomForestQuantileRegressor(...)
-    >>> print(regr.predict([[0, 0, 0, 0]], quantiles=0.5))
-    [-4.68693299]
+    >>> from sklearn.datasets import fetch_california_housing
+    >>> X, y = fetch_california_housing(return_X_y=True)
+    >>> qrf = RandomForestQuantileRegressor(random_state=0)
+    >>> qrf.fit(X[:1000], y[:1000])
+    RandomForestQuantileRegressor(random_state=0)
+    >>> qrf.score(X, y, quantiles=0.5)
+    0.3592...
     """
 
     def __init__(
@@ -1218,16 +1217,14 @@ class ExtraTreesQuantileRegressor(BaseForestQuantileRegressor):
 
     Examples
     --------
-    >>> from sklearn.datasets import load_diabetes
-    >>> from sklearn.model_selection import train_test_split
     >>> from quantile_forest import ExtraTreesQuantileRegressor
-    >>> X, y = load_diabetes(return_X_y=True)
-    >>> X_train, X_test, y_train, y_test = train_test_split(
-    ...     X, y, random_state=0)
-    >>> reg = ExtraTreesQuantileRegressor(
-    ...     n_estimators=100, random_state=0).fit(X_train, y_train)
-    >>> reg.score(X_test, y_test, quantiles=0.5)
-    0.2152...
+    >>> from sklearn.datasets import fetch_california_housing
+    >>> X, y = fetch_california_housing(return_X_y=True)
+    >>> qrf = ExtraTreesQuantileRegressor(random_state=0)
+    >>> qrf.fit(X[:1000], y[:1000])
+    ExtraTreesQuantileRegressor(random_state=0)
+    >>> qrf.score(X, y, quantiles=0.5)
+    0.3352...
     """
 
     def __init__(
