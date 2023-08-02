@@ -92,7 +92,7 @@ By default, when the `predict` method is called with the OOB flag set to True, i
 
 This allows all samples, both from the training and test sets, to be scored with a single call to `predict`, whereby OOB predictions are returned for the training samples and IB (i.e., non-OOB) predictions are returned for the test samples.
 
-The predictions of a standard random forest can also be recovered from a quantile forest without retraining by passing `quantiles = None` and `aggregate_leaves_first = False`, the latter which specifies a Boolean flag to average the leaf values before aggregating the leaves across trees. This configuration essentially replicates the prediction process used by a standard random forest regressor, which is an averaging of mean leaf values across trees::
+The predictions of a standard random forest can also be recovered from a quantile forest without retraining by passing `quantiles = "mean"` and `aggregate_leaves_first = False`, the latter which specifies a Boolean flag to average the leaf values before aggregating the leaves across trees. This configuration essentially replicates the prediction process used by a standard random forest regressor, which is an averaging of mean leaf values across trees::
 
     >>> import numpy as np
     >>> from sklearn import datasets
@@ -106,7 +106,7 @@ The predictions of a standard random forest can also be recovered from a quantil
     >>> rf.fit(X_train, y_train), qrf.fit(X_train, y_train)
     (RandomForestRegressor(random_state=0), RandomForestQuantileRegressor(max_samples_leaf=None, random_state=0))
     >>> y_pred_rf = rf.predict(X_test)
-    >>> y_pred_qrf = qrf.predict(X_test, quantiles=None, aggregate_leaves_first=False)
+    >>> y_pred_qrf = qrf.predict(X_test, quantiles="mean", aggregate_leaves_first=False)
     >>> np.allclose(y_pred_rf, y_pred_qrf)
     True
 
