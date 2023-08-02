@@ -362,14 +362,12 @@ def check_predict_quantiles(
             est1 = ExtraTreesRegressor(n_estimators=10, random_state=0)
             est2 = ExtraTreesQuantileRegressor(
                 n_estimators=10,
-                default_quantiles=None,
                 random_state=0,
             )
         else:
             est1 = RandomForestRegressor(n_estimators=10, random_state=0)
             est2 = RandomForestQuantileRegressor(
                 n_estimators=10,
-                default_quantiles=None,
                 random_state=0,
             )
         y_pred_1 = est1.fit(X_train, y_train).predict(X_test)
@@ -384,19 +382,6 @@ def check_predict_quantiles(
 
     est = ForestRegressor(n_estimators=1, random_state=0)
     est.fit(X_train, y_train)
-
-    # Check that specifying `quantiles` overwrites `default_quantiles`.
-    est1 = ForestRegressor(n_estimators=1, random_state=0)
-    est1.fit(X_train, y_train)
-    y_pred_1 = est1.predict(X_test, quantiles=0.5)
-    est2 = ForestRegressor(
-        n_estimators=1,
-        default_quantiles=[0.25, 0.5, 0.75],
-        random_state=0,
-    )
-    est2.fit(X_train, y_train)
-    y_pred_2 = est2.predict(X_test, quantiles=0.5)
-    assert_allclose(y_pred_1, y_pred_2)
 
     # Check error if invalid quantiles.
     assert_raises(ValueError, est.predict, X_test, -0.01)
@@ -833,15 +818,6 @@ def check_predict_oob(
     )
     assert np.all(y_pred_ib == y_pred_oob)
 
-    # Check OOB predictions with `default_quantiles`.
-    est1 = ForestRegressor(n_estimators=1, random_state=0)
-    est1.fit(X, y)
-    est2 = ForestRegressor(n_estimators=1, default_quantiles=quantiles, random_state=0)
-    est2.fit(X, y)
-    y_pred_oob1 = est1.predict(X, quantiles=quantiles)
-    y_pred_oob2 = est2.predict(X)
-    assert_allclose(y_pred_oob1, y_pred_oob2)
-
     # Check error if OOB score without `indices` do not match training count.
     assert_raises(ValueError, est.predict, X[:1], oob_score=True)
 
@@ -908,7 +884,7 @@ def check_predict_oob(
 
 
 @pytest.mark.parametrize("name", FOREST_REGRESSORS)
-@pytest.mark.parametrize("quantiles", ["mean", 0.5, [0.2, 0.5, 0.8]])
+@pytest.mark.parametrize("quantiles", [None, 0.5, [0.2, 0.5, 0.8]])
 @pytest.mark.parametrize("weighted_quantile", [True, False])
 @pytest.mark.parametrize("aggregate_leaves_first", [True, False])
 def test_predict_oob(

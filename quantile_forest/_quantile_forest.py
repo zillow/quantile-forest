@@ -367,7 +367,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
     def predict(
         self,
         X,
-        quantiles=None,
+        quantiles=0.5,
         interpolation="linear",
         weighted_quantile=True,
         weighted_leaves=True,
@@ -385,11 +385,10 @@ class BaseForestQuantileRegressor(ForestRegressor):
             ``dtype=np.float32``. If a sparse matrix is provided, it will be
             converted into a sparse ``csr_matrix``.
 
-        quantiles : float, list, or "mean", default=None
+        quantiles : float or list, default=0.5
             The quantile or list of quantiles that the model tries to predict.
-            Each quantile must be strictly between 0 and 1. If "mean", the
-            model predicts the mean. If None, the model uses the value of
-            `default_quantiles`.
+            Each quantile must be strictly between 0 and 1. If None, the model
+            predicts the mean. By default, the model predicts the median.
 
         interpolation : {"linear", "lower", "higher", "midpoint", "nearest"}, \
                 default="linear"
@@ -447,12 +446,6 @@ class BaseForestQuantileRegressor(ForestRegressor):
         X = self._validate_X_predict(X)
 
         if quantiles is None:
-            if self.default_quantiles is None:
-                quantiles = [-1]
-            else:
-                quantiles = self.default_quantiles
-
-        if quantiles == "mean":
             quantiles = [-1]
 
         if not isinstance(quantiles, list):
@@ -749,11 +742,6 @@ class RandomForestQuantileRegressor(BaseForestQuantileRegressor):
     n_estimators : int, default=100
         The number of trees in the forest.
 
-    default_quantiles : float, list, or "mean", default=0.5
-        The default quantile or list of quantiles that the model tries to
-        predict. Each quantile must be strictly between 0 and 1. If "mean",
-        the model predicts the mean.
-
     criterion : {"squared_error", "absolute_error", "poisson"}, \
             default="squared_error"
         The function to measure the quality of a split. Supported criteria
@@ -950,7 +938,6 @@ class RandomForestQuantileRegressor(BaseForestQuantileRegressor):
         self,
         n_estimators=100,
         *,
-        default_quantiles=0.5,
         criterion="squared_error",
         max_depth=None,
         min_samples_split=2,
@@ -996,7 +983,6 @@ class RandomForestQuantileRegressor(BaseForestQuantileRegressor):
         }
         super(RandomForestQuantileRegressor, self).__init__(**init_dict)
 
-        self.default_quantiles = default_quantiles
         self.criterion = criterion
         self.max_depth = max_depth
         self.min_samples_split = min_samples_split
@@ -1030,11 +1016,6 @@ class ExtraTreesQuantileRegressor(BaseForestQuantileRegressor):
     ----------
     n_estimators : int, default=100
         The number of trees in the forest.
-
-    default_quantiles : float, list, or "mean", default=0.5
-        The default quantile or list of quantiles that the model tries to
-        predict. Each quantile must be strictly between 0 and 1. If "mean",
-        the model predicts the mean.
 
     criterion : {"squared_error", "absolute_error"}, default="squared_error"
         The function to measure the quality of a split. Supported criteria
@@ -1231,7 +1212,6 @@ class ExtraTreesQuantileRegressor(BaseForestQuantileRegressor):
         self,
         n_estimators=100,
         *,
-        default_quantiles=0.5,
         criterion="squared_error",
         max_depth=None,
         min_samples_split=2,
@@ -1277,7 +1257,6 @@ class ExtraTreesQuantileRegressor(BaseForestQuantileRegressor):
         }
         super(ExtraTreesQuantileRegressor, self).__init__(**init_dict)
 
-        self.default_quantiles = default_quantiles
         self.criterion = criterion
         self.max_depth = max_depth
         self.min_samples_split = min_samples_split
