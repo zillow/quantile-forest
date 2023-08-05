@@ -73,3 +73,6 @@ target/
 # OS generated files #
 ######################
 .DS_Store
+
+paper/paper.pdf
+paper/paper.jats
