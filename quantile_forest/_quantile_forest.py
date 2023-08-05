@@ -48,14 +48,14 @@ sklearn_version = parse_version(sklearn.__version__)
 
 
 def _generate_unsampled_indices(sample_indices, duplicates=None):
-    """Private function used by forest._get_unsampled_indices function."""
+    """Private function used by forest._get_y_train_leaves function."""
     if duplicates is None:
         duplicates = []
     return generate_unsampled_indices(sample_indices, duplicates)
 
 
 def _group_by_value(a):
-    """Private function used by forest._leaf_train_indices function."""
+    """Private function used by forest._get_y_train_leaves function."""
     sort_idx = np.argsort(a)
     a_sorted = a[sort_idx]
     unq_first = np.concatenate(([True], a_sorted[1:] != a_sorted[:-1]))
