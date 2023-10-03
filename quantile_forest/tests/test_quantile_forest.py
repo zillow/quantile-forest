@@ -759,7 +759,7 @@ def check_predict_oob(
         assert y_pred.shape == (len(X), n_quantiles)
     else:
         assert y_pred.shape == (len(X),)
-    if quantiles is None and aggregate_leaves_first is False:
+    if quantiles == "mean" and aggregate_leaves_first is False:
         assert est.oob_score_ == y_pred_score
     else:
         assert abs(est.oob_score_ - y_pred_score) < 0.1
@@ -884,7 +884,6 @@ def check_predict_oob(
             ValueError,
             est.predict,
             X,
-            y,
             weighted_quantile=weighted_quantile,
             aggregate_leaves_first=aggregate_leaves_first,
             oob_score=True,
@@ -908,7 +907,7 @@ def check_predict_oob(
 
 
 @pytest.mark.parametrize("name", FOREST_REGRESSORS)
-@pytest.mark.parametrize("quantiles", ["mean", 0.5, [0.2, 0.5, 0.8]])
+@pytest.mark.parametrize("quantiles", [None, "mean", 0.5, [0.2, 0.5, 0.8]])
 @pytest.mark.parametrize("weighted_quantile", [True, False])
 @pytest.mark.parametrize("aggregate_leaves_first", [True, False])
 def test_predict_oob(
