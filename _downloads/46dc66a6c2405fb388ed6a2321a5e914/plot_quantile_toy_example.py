@@ -24,7 +24,7 @@ def make_toy_dataset(n_samples, seed=0):
     f = x * np.sin(x)
 
     sigma = 0.25 + x / 10
-    noise = rng.lognormal(sigma=sigma) - np.exp(sigma ** 2 / 2)
+    noise = rng.lognormal(sigma=sigma) - np.exp(sigma**2 / 2)
     y = f + noise
 
     return np.atleast_2d(x).T, y
