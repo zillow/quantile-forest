@@ -33,6 +33,13 @@ with codecs.open("README.md", encoding="utf-8-sig") as f:
     LONG_DESCRIPTION = f.read()
 MAINTAINER = "Zillow Group AI Team"
 LICENSE = "Apache License 2.0"
+URL = "https://zillow.github.io/quantile-forest"
+DOWNLOAD_URL = "https://pypi.org/project/quantile-forest/#files"
+PROJECT_URLS = {
+    "Documentation": "https://zillow.github.io/quantile-forest",
+    "Source": "https://github.com/zillow/quantile-forest",
+    "Tracker": "https://github.com/zillow/quantile-forest/issues",
+}
 VERSION = __version__
 CLASSIFIERS = [
     "Intended Audience :: Science/Research",
@@ -49,6 +56,7 @@ CLASSIFIERS = [
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: Implementation :: CPython",
 ]
 
@@ -83,6 +91,9 @@ def setup_package():
         maintainer=MAINTAINER,
         description=DESCRIPTION,
         license=LICENSE,
+        url=URL,
+        download_url=DOWNLOAD_URL,
+        project_urls=PROJECT_URLS,
         version=VERSION,
         long_description=LONG_DESCRIPTION,
         long_description_content_type="text/markdown",
