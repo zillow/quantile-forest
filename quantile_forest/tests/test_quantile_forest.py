@@ -1193,7 +1193,7 @@ def test_calc_weighted_quantile():
         assert_allclose(actual, expected)
 
     # Check that quantile order is respected.
-    for (i1, w1) in _dicts_to_weighted_inputs(inputs):
+    for i1, w1 in _dicts_to_weighted_inputs(inputs):
         for q in [quantiles, quantiles[::-1]]:
             actual = calc_weighted_quantile(i1, w1, q)
             for idx in range(len(quantiles) - 1):
