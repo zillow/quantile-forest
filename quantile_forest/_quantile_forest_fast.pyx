@@ -317,7 +317,7 @@ cpdef vector[double] calc_weighted_quantile(
     if not issorted:
         parallel_qsort_asc(inputs, weights, 0, n_inputs-1)
 
-    # Get monontonic sorting of quantiles for efficient calculation.
+    # Get monotonic sorting of quantiles for efficient calculation.
     sorted_quantile_idx = vector[double](n_quantiles)
     for i in range(<SIZE_t>(sorted_quantile_idx.size())):
         sorted_quantile_idx[i] = <double>i
