@@ -47,7 +47,7 @@ y_pred_med = y_pred[:, 1]
 y_pred_upp = y_pred[:, 2]
 
 plt.plot(X_test, y_test, ".", c="#f2a619", label="Test Observations", ms=5)
-plt.plot(xx, (xx * np.sin(xx)), c="black", label="$f(x) = x\,\sin(x)$", lw=2)  # noqa: W605
+plt.plot(xx, (xx * np.sin(xx)), c="black", label="$f(x) = x\\,\\sin(x)$", lw=2)
 plt.plot(xx, y_pred_med, c="#006aff", label="Predicted Median", lw=3, ms=5)
 plt.fill_between(
     xx.ravel(),

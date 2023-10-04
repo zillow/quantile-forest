@@ -36,20 +36,8 @@ the predictions to a ground truth function used to generate noisy samples.
    :class: sphx-glr-single-img
 
 
-.. rst-class:: sphx-glr-script-out
-
- .. code-block:: none
-
-    /home/runner/work/quantile-forest/quantile-forest/examples/plot_quantile_toy_example.py:40: SyntaxWarning: invalid escape sequence '\,'
-      qrf = RandomForestQuantileRegressor(max_depth=3, min_samples_leaf=5, random_state=0)
 
 
-
-
-
-
-
-|
 
 .. code-block:: default
 
@@ -92,7 +80,7 @@ the predictions to a ground truth function used to generate noisy samples.
     y_pred_upp = y_pred[:, 2]
 
     plt.plot(X_test, y_test, ".", c="#f2a619", label="Test Observations", ms=5)
-    plt.plot(xx, (xx * np.sin(xx)), c="black", label="$f(x) = x\,\sin(x)$", lw=2)  # noqa: W605
+    plt.plot(xx, (xx * np.sin(xx)), c="black", label="$f(x) = x\\,\\sin(x)$", lw=2)
     plt.plot(xx, y_pred_med, c="#006aff", label="Predicted Median", lw=3, ms=5)
     plt.fill_between(
         xx.ravel(),
@@ -109,7 +97,7 @@ the predictions to a ground truth function used to generate noisy samples.
 
 .. rst-class:: sphx-glr-timing
 
-   **Total running time of the script:** (0 minutes 0.375 seconds)
+   **Total running time of the script:** (0 minutes 0.359 seconds)
 
 
 .. _sphx_glr_download_auto_examples_plot_quantile_toy_example.py:
