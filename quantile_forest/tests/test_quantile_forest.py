@@ -1096,6 +1096,16 @@ def test_calc_quantile():
         expected = [np.mean(i)]
         assert_allclose(actual, expected)
 
+    # Check that quantile order is respected.
+    for i in inputs:
+        for q in [quantiles, quantiles[::-1]]:
+            actual = calc_quantile(i, q)
+            for idx in range(len(quantiles) - 1):
+                if q[idx] <= q[idx + 1]:
+                    assert np.all(np.less_equal(actual[idx], actual[idx + 1]))
+                else:
+                    assert np.all(np.less_equal(actual[idx + 1], actual[idx]))
+
     inputs = []
 
     # Check that empty array is returned for empty list.
@@ -1181,6 +1191,16 @@ def test_calc_weighted_quantile():
         actual = calc_weighted_mean(i1, w1)
         expected = [np.mean(i2)]
         assert_allclose(actual, expected)
+
+    # Check that quantile order is respected.
+    for (i1, w1) in _dicts_to_weighted_inputs(inputs):
+        for q in [quantiles, quantiles[::-1]]:
+            actual = calc_weighted_quantile(i1, w1, q)
+            for idx in range(len(quantiles) - 1):
+                if q[idx] <= q[idx + 1]:
+                    assert np.all(np.less_equal(actual[idx], actual[idx + 1]))
+                else:
+                    assert np.all(np.less_equal(actual[idx + 1], actual[idx]))
 
     inputs = [1, 2, 3, 3, 3, 3, 3, 3, 4, 5]
     weights = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
