@@ -732,6 +732,7 @@ def test_oob_samples_duplicates(name):
 
 def check_predict_oob(
     name,
+    max_samples_leaf,
     quantiles,
     weighted_quantile,
     aggregate_leaves_first,
@@ -742,7 +743,13 @@ def check_predict_oob(
 
     ForestRegressor = FOREST_REGRESSORS[name]
 
-    est = ForestRegressor(n_estimators=20, bootstrap=True, oob_score=True, random_state=0)
+    est = ForestRegressor(
+        n_estimators=20,
+        max_samples_leaf=max_samples_leaf,
+        bootstrap=True,
+        oob_score=True,
+        random_state=0,
+    )
     est.fit(X, y)
 
     n_quantiles = None
@@ -912,16 +919,18 @@ def check_predict_oob(
 
 
 @pytest.mark.parametrize("name", FOREST_REGRESSORS)
+@pytest.mark.parametrize("max_samples_leaf", [None, 1])
 @pytest.mark.parametrize("quantiles", [None, "mean", 0.5, [0.2, 0.5, 0.8]])
 @pytest.mark.parametrize("weighted_quantile", [True, False])
 @pytest.mark.parametrize("aggregate_leaves_first", [True, False])
 def test_predict_oob(
     name,
+    max_samples_leaf,
     quantiles,
     weighted_quantile,
     aggregate_leaves_first,
 ):
-    check_predict_oob(name, quantiles, weighted_quantile, aggregate_leaves_first)
+    check_predict_oob(name, max_samples_leaf, quantiles, weighted_quantile, aggregate_leaves_first)
 
 
 def check_quantile_ranks_oob(name):
