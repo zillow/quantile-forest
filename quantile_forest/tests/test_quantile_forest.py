@@ -201,7 +201,12 @@ def check_predict_quantiles_toy(name):
     if name == "RandomForestQuantileRegressor":
         for oob_score in [False, True]:
             # Check weighted and unweighted leaves.
-            est = ForestRegressor(n_estimators=20, max_depth=1, random_state=0)
+            est = ForestRegressor(
+                n_estimators=20,
+                max_depth=1,
+                max_samples_leaf=None,
+                random_state=0,
+            )
             est.fit(X, y)
             y_pred1 = est.predict(
                 X,
