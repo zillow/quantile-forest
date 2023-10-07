@@ -477,15 +477,36 @@ class BaseForestQuantileRegressor(ForestRegressor):
                 X_leaves = self.apply(X)
             X_indices = None
 
-        y_pred = self.forest_.predict(
-            quantiles,
-            X_leaves,
-            X_indices,
-            interpolation,
-            weighted_leaves,
-            weighted_quantile,
-            aggregate_leaves_first,
-        )
+        if self.max_samples_leaf == 1:  # optimize for single-sample-per-leaf performance
+            leaf_values = np.empty((len(X), self.n_estimators))
+            y_train_leaves = np.asarray(self.forest_.y_train_leaves)
+            y_train = np.asarray(self.forest_.y_train)
+            for tree in range(self.n_estimators):
+                if X_indices is None:
+                    train_indices = y_train_leaves[tree, X_leaves[:, tree], 0]
+                else:
+                    unsampled_indices = X_indices[:, tree] == 1
+                    unsampled_leaves = X_leaves[unsampled_indices, tree]
+                    train_indices = np.zeros(len(X), dtype=int)
+                    train_indices[unsampled_indices] = y_train_leaves[tree, unsampled_leaves, 0]
+                leaf_values[:, tree] = y_train[train_indices - 1]
+                leaf_values[train_indices == 0, tree] = np.nan
+            if len(quantiles) == 1 and quantiles[0] == -1:  # calculate mean
+                func = np.mean if X_indices is None else np.nanmean
+                y_pred = np.expand_dims(func(leaf_values, axis=1), axis=1)
+            else:  # calculate quantiles
+                func = np.quantile if X_indices is None else np.nanquantile
+                y_pred = func(leaf_values, quantiles, axis=1).T
+        else:
+            y_pred = self.forest_.predict(
+                quantiles,
+                X_leaves,
+                X_indices,
+                interpolation,
+                weighted_leaves,
+                weighted_quantile,
+                aggregate_leaves_first,
+            )
 
         if y_pred.shape[1] == 1:
             y_pred = np.squeeze(y_pred, axis=1)
