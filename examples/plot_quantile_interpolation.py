@@ -51,7 +51,7 @@ for interpolation in interpolations:
     )
 
 
-def plot_interpolations(y, y_medians, y_errs):
+def plot_interpolations(X, y, y_medians, y_errs):
     sc = plt.scatter(np.arange(len(y)) - 0.35, y, color="k", zorder=10)
     ebs = []
     for i, (median, y_err) in enumerate(zip(y_medians, y_errs)):
