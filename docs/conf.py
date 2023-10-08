@@ -95,7 +95,7 @@ bibtex_bibfiles = ["refs.bib"]
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = "sphinx_rtd_theme"
+html_theme = "pydata_sphinx_theme"
 html_title = f"Version {version}"
 html_style = "css/quantile-forest.css"
 html_css_files = [
@@ -142,7 +142,7 @@ intersphinx_mapping = {
 # -- Options for sphinx-gallery -----------------------------------------------
 
 # Generate the plot for the gallery
-plot_gallery = True
+plot_gallery = "True"
 
 # sphinx-gallery configuration
 sphinx_gallery_conf = {
