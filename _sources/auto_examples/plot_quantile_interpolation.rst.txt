@@ -25,7 +25,7 @@ Predicting with different quantile interpolation methods
 An example comparison of interpolation methods that can be applied during
 prediction when the desired quantile lies between two data points.
 
-.. GENERATED FROM PYTHON SOURCE LINES 10-72
+.. GENERATED FROM PYTHON SOURCE LINES 10-77
 
 
 
@@ -83,30 +83,35 @@ prediction when the desired quantile lies between two data points.
             )
         )
 
-    sc = plt.scatter(np.arange(len(y)) - 0.35, y, color="k", zorder=10)
-    ebs = []
-    for i, (median, y_err) in enumerate(zip(y_medians, y_errs)):
-        ebs.append(
-            plt.errorbar(
-                np.arange(len(y)) + (0.15 * (i + 1)) - 0.35,
-                median,
-                yerr=y_err,
-                color=colors[i],
-                ecolor=colors[i],
-                fmt="o",
+
+    def plot_interpolations(y, y_medians, y_errs):
+        sc = plt.scatter(np.arange(len(y)) - 0.35, y, color="k", zorder=10)
+        ebs = []
+        for i, (median, y_err) in enumerate(zip(y_medians, y_errs)):
+            ebs.append(
+                plt.errorbar(
+                    np.arange(len(y)) + (0.15 * (i + 1)) - 0.35,
+                    median,
+                    yerr=y_err,
+                    color=colors[i],
+                    ecolor=colors[i],
+                    fmt="o",
+                )
             )
-        )
-    plt.xlim([-0.75, len(y) - 0.25])
-    plt.xticks(np.arange(len(y)), X.tolist())
-    plt.xlabel("Samples (Feature Values)")
-    plt.ylabel("Actual and Predicted Values")
-    plt.legend([sc] + ebs, ["actual"] + interpolations, loc=2)
-    plt.show()
+        plt.xlim([-0.75, len(y) - 0.25])
+        plt.xticks(np.arange(len(y)), X.tolist())
+        plt.xlabel("Samples (Feature Values)")
+        plt.ylabel("Actual and Predicted Values")
+        plt.legend([sc] + ebs, ["actual"] + interpolations, loc=2)
+        plt.show()
+
+
+    plot_interpolations(y, y_medians, y_errs)
 
 
 .. rst-class:: sphx-glr-timing
 
-   **Total running time of the script:** (0 minutes 0.152 seconds)
+   **Total running time of the script:** (0 minutes 0.134 seconds)
 
 
 .. _sphx_glr_download_auto_examples_plot_quantile_interpolation.py:

@@ -32,7 +32,7 @@ X = rng.randn(n_samples, 2) * y.reshape(-1, 1)
 regr_rf = RandomForestRegressor(n_estimators=10, random_state=0)
 regr_qrf = RandomForestQuantileRegressor(n_estimators=10, random_state=0)
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.5, random_state=0)
+X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
 regr_rf.fit(X_train, y_train)
 regr_qrf.fit(X_train, y_train)
@@ -40,7 +40,7 @@ regr_qrf.fit(X_train, y_train)
 y_pred_rf = regr_rf.predict(X_test)
 y_pred_qrf = regr_qrf.predict(X_test, quantiles=0.5)
 
-colors = ["#c0c0c0", "#f2a619", "#a6e5ff"]
+colors = ["#c0c0c0", "#f2a619", "#006aff"]
 names = ["Actual", "RF (Mean)", "QRF (Median)"]
 plt.hist([y_test, y_pred_rf, y_pred_qrf], bins=50, color=colors, label=names)
 plt.xlabel("Actual and Predicted Target Values")

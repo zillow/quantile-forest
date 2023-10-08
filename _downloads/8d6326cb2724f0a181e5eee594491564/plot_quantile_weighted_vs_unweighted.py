@@ -67,30 +67,30 @@ for i, n_estimators in enumerate(estimator_sizes):
         timings[i, j, :] = [rf_time(), qrf_weighted_time(), qrf_unweighted_time()]
         timings[i, j, :] *= 1000
 
-rf_time_avg, qrf_weighted_time_avg, qrf_unweighted_time_avg = list(zip(*np.mean(timings, axis=1)))
-rf_time_std, qrf_weighted_time_std, qrf_unweighted_time_std = list(zip(*np.std(timings, axis=1)))
+rf_avg, qrf_wgt_avg, qrf_unwgt_avg = list(zip(*np.mean(timings, axis=1)))
+rf_std, qrf_wgt_std, qrf_unwgt_std = list(zip(*np.std(timings, axis=1)))
 
-plt.plot(estimator_sizes, rf_time_avg, c="#f2a619")
-plt.plot(estimator_sizes, qrf_weighted_time_avg, c="#006aff")
-plt.plot(estimator_sizes, qrf_unweighted_time_avg, c="#001751")
+plt.plot(estimator_sizes, rf_avg, c="#f2a619")
+plt.plot(estimator_sizes, qrf_wgt_avg, c="#006aff")
+plt.plot(estimator_sizes, qrf_unwgt_avg, c="#001751")
 plt.fill_between(
     estimator_sizes,
-    np.array(rf_time_avg) - (np.array(rf_time_std) / 2),
-    np.array(rf_time_avg) + (np.array(rf_time_std) / 2),
+    np.array(rf_avg) - (np.array(rf_std) / 2),
+    np.array(rf_avg) + (np.array(rf_std) / 2),
     alpha=0.1,
     color="#f2a619",
 )
 plt.fill_between(
     estimator_sizes,
-    np.array(qrf_weighted_time_avg) - (np.array(qrf_weighted_time_std) * 1.96),
-    np.array(qrf_weighted_time_avg) + (np.array(qrf_weighted_time_std) * 1.96),
+    np.array(qrf_wgt_avg) - (np.array(qrf_wgt_std) * 1.96),
+    np.array(qrf_wgt_avg) + (np.array(qrf_wgt_std) * 1.96),
     alpha=0.1,
     color="#006aff",
 )
 plt.fill_between(
     estimator_sizes,
-    np.array(qrf_unweighted_time_avg) - (np.array(qrf_unweighted_time_std) * 1.96),
-    np.array(qrf_unweighted_time_avg) + (np.array(qrf_unweighted_time_std) * 1.96),
+    np.array(qrf_unwgt_avg) - (np.array(qrf_unwgt_std) * 1.96),
+    np.array(qrf_unwgt_avg) + (np.array(qrf_unwgt_std) * 1.96),
     alpha=0.1,
     color="#001751",
 )
