@@ -63,7 +63,7 @@ class WrappedRandomForestQuantileRegressor(RandomForestQuantileRegressor):
 
 
 def sort_y_values(y_test, y_pred, y_pis):
-    """Sort the dataset in order to make plots using the `fill_between` function."""
+    """Sort the dataset for making plots using the `fill_between` function."""
     indices = np.argsort(y_test)
     y_test_sorted = np.array(y_test)[indices]
     y_pred_sorted = y_pred[indices]
@@ -84,7 +84,7 @@ def plot_prediction_intervals(
     num_plots_idx,
     price_formatter,
 ):
-    """Plot of the prediction intervals for each different conformal method."""
+    """Plot of the prediction intervals for each method."""
     y_pred_low_ = np.take(y_pred_low, num_plots_idx)
     y_pred_upp_ = np.take(y_pred_upp, num_plots_idx)
     y_pred_ = np.take(y_pred, num_plots_idx)
@@ -122,8 +122,10 @@ def plot_prediction_intervals(
 est = WrappedRandomForestQuantileRegressor(random_state=random_state)
 
 strategies = {
-    "QRF": {"method": "plus"},
-    "CQR": {"method": "quantile", "cv": "split", "alpha": alpha},
+    "Quantile Regression Forest (QRF)": {"method": "plus"},
+    "Conformalized Quantile Regression (CQR)": {
+        "method": "quantile", "cv": "split", "alpha": alpha
+    },
 }
 
 quantile_estimator_params = {
@@ -137,7 +139,7 @@ y_pred, y_pis = {}, {}
 y_test_sorted, y_pred_sorted, lower_bound, upper_bound = {}, {}, {}, {}
 coverage, width = {}, {}
 for strategy, params in strategies.items():
-    if strategy == "CQR":
+    if strategy == "Conformalized Quantile Regression (CQR)":
         mapie = MapieQuantileRegressor(est, **params)
         mapie.quantile_estimator_params = quantile_estimator_params
         mapie.fit(
