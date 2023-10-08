@@ -21,8 +21,7 @@ if __QF_SETUP__:
     # We are not importing the rest of quantile-forest during the build
     # process, as it may not be compiled yet
 else:
-    from ._quantile_forest import ExtraTreesQuantileRegressor
-    from ._quantile_forest import RandomForestQuantileRegressor
+    from ._quantile_forest import ExtraTreesQuantileRegressor, RandomForestQuantileRegressor
 
     __all__ = [
         "ExtraTreesQuantileRegressor",

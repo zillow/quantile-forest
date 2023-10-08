@@ -7,32 +7,31 @@ import warnings
 from typing import Any, Dict
 
 import numpy as np
-from scipy.stats import percentileofscore
-
 import pytest
-
-from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_raises
-
+from scipy.stats import percentileofscore
 from sklearn import datasets
-from sklearn.ensemble import ExtraTreesRegressor
-from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import ExtraTreesRegressor, RandomForestRegressor
 from sklearn.ensemble._forest import _generate_sample_indices
 from sklearn.metrics import r2_score
 from sklearn.model_selection import train_test_split
+from sklearn.utils._testing import (
+    assert_allclose,
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+    assert_raises,
+)
 from sklearn.utils.validation import check_random_state
 
-from quantile_forest import ExtraTreesQuantileRegressor
-from quantile_forest import RandomForestQuantileRegressor
-from quantile_forest._quantile_forest_fast import calc_mean
-from quantile_forest._quantile_forest_fast import calc_quantile
-from quantile_forest._quantile_forest_fast import calc_quantile_rank
-from quantile_forest._quantile_forest_fast import calc_weighted_mean
-from quantile_forest._quantile_forest_fast import calc_weighted_quantile
-from quantile_forest._quantile_forest_fast import generate_unsampled_indices
+from quantile_forest import ExtraTreesQuantileRegressor, RandomForestQuantileRegressor
+from quantile_forest._quantile_forest_fast import (
+    calc_mean,
+    calc_quantile,
+    calc_quantile_rank,
+    calc_weighted_mean,
+    calc_weighted_quantile,
+    generate_unsampled_indices,
+)
 
 rng = check_random_state(0)
 
