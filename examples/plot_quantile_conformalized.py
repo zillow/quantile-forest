@@ -15,13 +15,14 @@ import warnings
 
 import matplotlib.pyplot as plt
 import numpy as np
-from matplotlib.offsetbox import AnchoredText
-from matplotlib.ticker import FuncFormatter
 from mapie.metrics import regression_coverage_score, regression_mean_width_score
 from mapie.regression import MapieQuantileRegressor
+from matplotlib.offsetbox import AnchoredText
+from matplotlib.ticker import FuncFormatter
 from sklearn import datasets
 from sklearn.model_selection import train_test_split
 from sklearn.utils.validation import check_random_state
+
 from quantile_forest import RandomForestQuantileRegressor
 
 random_state = 0

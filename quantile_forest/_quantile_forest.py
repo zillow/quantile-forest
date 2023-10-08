@@ -31,18 +31,17 @@ from warnings import warn
 import joblib
 import numpy as np
 import sklearn
-
-from sklearn.ensemble._forest import ForestRegressor
-from sklearn.ensemble._forest import _generate_sample_indices
-from sklearn.ensemble._forest import _get_n_samples_bootstrap
-from sklearn.tree import DecisionTreeRegressor
-from sklearn.tree import ExtraTreeRegressor
+from sklearn.ensemble._forest import (
+    ForestRegressor,
+    _generate_sample_indices,
+    _get_n_samples_bootstrap,
+)
+from sklearn.tree import DecisionTreeRegressor, ExtraTreeRegressor
 from sklearn.tree._tree import DTYPE
 from sklearn.utils import parse_version
 from sklearn.utils.validation import check_is_fitted
 
-from ._quantile_forest_fast import QuantileForest
-from ._quantile_forest_fast import generate_unsampled_indices
+from ._quantile_forest_fast import QuantileForest, generate_unsampled_indices
 
 sklearn_version = parse_version(sklearn.__version__)
 
