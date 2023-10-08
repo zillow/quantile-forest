@@ -114,7 +114,7 @@ The predictions of a standard random forest can also be recovered from a quantil
     >>> X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25)
     >>> rf = RandomForestRegressor(random_state=0)
     >>> qrf = RandomForestQuantileRegressor(max_samples_leaf=None, random_state=0)
-    >>> rf.fit(X_train, y_train),
+    >>> rf.fit(X_train, y_train)
     RandomForestRegressor(random_state=0)
     >>> qrf.fit(X_train, y_train)
     RandomForestQuantileRegressor(max_samples_leaf=None, random_state=0)
