@@ -61,7 +61,7 @@ If the `predict` method is called without quantiles, the prediction defaults to 
 
 If the `predict` method is explicitly called with `quantiles = "mean"`, the prediction returns the empirical mean::
 
-    >>> y_pred = reg.predict(X_test, quantiles="mean")  # returns empirical mean prediction for each test sample
+    >>> y_pred = reg.predict(X_test, quantiles="mean")  # returns mean prediction for each test sample
 
 Default quantiles can be specified at model initialization using the `default_quantiles` parameter:
 
@@ -75,15 +75,16 @@ The default quantiles can be overwritten at prediction time by specifying a valu
 
 The output of the `predict` method is an array with one column for each specified quantile or a single column if no quantiles are specified. The order of the output columns corresponds to the order of the quantiles, which can be specified in any order (i.e., they do not need to be monotonically ordered)::
 
-    >>> y_pred = reg.predict(X_test, quantiles=[0.5, 0.25, 0.75])  # first column corresponds to quantile 0.5
+    >>> y_pred = reg.predict(X_test, quantiles=[0.5, 0.25, 0.75])  # y_pred[:, 0] >= y_pred[:, 1]
 
 By default, the predict method calculates quantiles by weighting each sample inversely according to the size of its leaf node (`weighted_leaves = True`). If `weighted_leaves = False`, each sample in a leaf (including repeated bootstrap samples) will be given equal weight. Note that this leaf-based weighting can only be used with weighted quantiles.
 
 By default, the predict method calculates quantiles using a weighted quantile method (`weighted_quantile = True`), which assigns a weight to each sample in the training set based on the number of times that it co-occurs in the same leaves as the test sample. When the number of samples in the training set is larger than the expected size of this list (i.e., :math:`n_{train} \gg n_{trees} \cdot n_{leaves} \cdot n_{leafsamples}`), it can be more efficient to calculate an unweighted quantile (`weighted_quantile = False`), which aggregates the list of training `y` values for each leaf node to which the test sample belongs across all trees. For a given input, both methods can return the same output values::
 
     >>> import numpy as np
-    >>> y_pred_weighted = reg.predict(X_test, weighted_quantile=True, weighted_leaves=False)  # weighted quantile (default)
-    >>> y_pred_unweighted = reg.predict(X_test, weighted_quantile=False, weighted_leaves=False)  # unweighted quantile
+    >>> kwargs = {"weighted_leaves": False}
+    >>> y_pred_weighted = reg.predict(X_test, weighted_quantile=True, **kwargs)  # weighted quantile
+    >>> y_pred_unweighted = reg.predict(X_test, weighted_quantile=False, **kwargs)  # unweighted quantile
     >>> np.allclose(y_pred_weighted, y_pred_unweighted)
     True
 
@@ -113,8 +114,10 @@ The predictions of a standard random forest can also be recovered from a quantil
     >>> X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25)
     >>> rf = RandomForestRegressor(random_state=0)
     >>> qrf = RandomForestQuantileRegressor(max_samples_leaf=None, random_state=0)
-    >>> rf.fit(X_train, y_train), qrf.fit(X_train, y_train)
-    (RandomForestRegressor(random_state=0), RandomForestQuantileRegressor(max_samples_leaf=None, random_state=0))
+    >>> rf.fit(X_train, y_train),
+    RandomForestRegressor(random_state=0)
+    >>> qrf.fit(X_train, y_train)
+    RandomForestQuantileRegressor(max_samples_leaf=None, random_state=0)
     >>> y_pred_rf = rf.predict(X_test)
     >>> y_pred_qrf = qrf.predict(X_test, quantiles="mean", aggregate_leaves_first=False)
     >>> np.allclose(y_pred_rf, y_pred_qrf)
