@@ -36,7 +36,7 @@ X, y = make_toy_dataset(n_samples)
 X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
 X_sampled = np.atleast_2d(np.linspace(0, 10, n_samples)).T
-y_sampled = (X_sampled * np.sin(X_sampled))
+y_sampled = X_sampled * np.sin(X_sampled)
 
 qrf = RandomForestQuantileRegressor(max_depth=3, min_samples_leaf=5, random_state=0)
 qrf.fit(X_train, y_train)

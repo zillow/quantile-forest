@@ -124,7 +124,9 @@ est = WrappedRandomForestQuantileRegressor(random_state=random_state)
 strategies = {
     "Quantile Regression Forest (QRF)": {"method": "plus"},
     "Conformalized Quantile Regression (CQR)": {
-        "method": "quantile", "cv": "split", "alpha": alpha
+        "method": "quantile",
+        "cv": "split",
+        "alpha": alpha,
     },
 }
 
