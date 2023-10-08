@@ -73,4 +73,4 @@ def plot_interpolations(X, y, y_medians, y_errs):
     plt.show()
 
 
-plot_interpolations(y, y_medians, y_errs)
+plot_interpolations(X, y, y_medians, y_errs)
