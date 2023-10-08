@@ -59,22 +59,24 @@ for train_index, test_index in kf.split(X):
 
 def plot_calibration_and_intervals(y_true, y_pred, y_pred_low, y_pred_upp):
     def plot_calibration(ax, y_true, y_pred_low, y_pred_upp, price_formatter):
-        y_min = min(np.minimum(y_true, y_pred))
-        y_max = max(np.maximum(y_true, y_pred))
-
         for low, mid, upp in zip(y_pred_low, y_pred, y_pred_upp):
             ax.plot([mid, mid], [low, upp], lw=4, c="#e0f2ff")
 
         ax.plot(y_pred, y_true, c="#f2a619", lw=0, marker=".", ms=5)
         ax.plot(y_pred, y_pred_low, alpha=0.4, c="#006aff", lw=0, marker="_", ms=4)
         ax.plot(y_pred, y_pred_upp, alpha=0.4, c="#006aff", lw=0, marker="_", ms=4)
-        ax.plot([y_min, y_max], [y_min, y_max], ls="--", lw=1, c="grey")
+
+        lims = [
+            np.min(np.minimum(y_true, y_pred)),  # min of both axes
+            np.max(np.maximum(y_true, y_pred)),  # max of both axes
+        ]
+        ax.plot(lims, lims, ls="--", lw=1, c="grey")
         ax.grid(axis="x", color="0.95")
         ax.grid(axis="y", color="0.95")
         ax.xaxis.set_major_formatter(price_formatter)
         ax.yaxis.set_major_formatter(price_formatter)
-        ax.set_xlim(y_min, y_max)
-        ax.set_ylim(y_min, y_max)
+        ax.set_xlim(lims)
+        ax.set_ylim(lims)
         ax.set_xlabel("Fitted Values (Conditional Median)")
         ax.set_ylabel("Observed Values")
 

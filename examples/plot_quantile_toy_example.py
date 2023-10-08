@@ -44,7 +44,7 @@ qrf.fit(X_train, y_train)
 y_pred = qrf.predict(X_sampled, quantiles=[0.025, 0.5, 0.975])
 
 
-def plot_fit_and_intervals(X_test, y_test, y_pred):
+def plot_fit_and_intervals(X_sampled, y_sampled, X_test, y_test, y_pred):
     y_pred_low = y_pred[:, 0]
     y_pred_med = y_pred[:, 1]
     y_pred_upp = y_pred[:, 2]
@@ -65,4 +65,4 @@ def plot_fit_and_intervals(X_test, y_test, y_pred):
     plt.show()
 
 
-plot_fit_and_intervals(X_test, y_test, y_pred)
+plot_fit_and_intervals(X_sampled, y_sampled, X_test, y_test, y_pred)

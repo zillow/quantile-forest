@@ -25,9 +25,8 @@ from sklearn.utils.validation import check_random_state
 from quantile_forest import RandomForestQuantileRegressor
 
 random_state = 0
-rng = check_random_state(0)
+rng = check_random_state(random_state)
 round_to = 3
-usd_formatter = FuncFormatter(lambda x, p: f"${format(int(x) * 100, ',')}k")
 alpha = 0.5
 
 # Load the California Housing Prices dataset.
@@ -70,54 +69,6 @@ def sort_y_values(y_test, y_pred, y_pis):
     y_lower_bound = y_pis[:, 0, 0][indices]
     y_upper_bound = y_pis[:, 1, 0][indices]
     return y_test_sorted, y_pred_sorted, y_lower_bound, y_upper_bound
-
-
-def plot_prediction_intervals(
-    title,
-    alpha,
-    ax,
-    y_test,
-    y_pred,
-    y_pred_low,
-    y_pred_upp,
-    coverage,
-    width,
-    num_plots_idx,
-    price_formatter,
-):
-    """Plot of the prediction intervals for each method."""
-    y_pred_low_ = np.take(y_pred_low, num_plots_idx)
-    y_pred_upp_ = np.take(y_pred_upp, num_plots_idx)
-    y_pred_ = np.take(y_pred, num_plots_idx)
-    y_test_ = np.take(y_test, num_plots_idx)
-
-    for low, mid, upp in zip(y_pred_low_, y_pred_, y_pred_upp_):
-        ax.plot([mid, mid], [low, upp], lw=4, c="#e0f2ff")
-    ax.plot(y_pred_, y_test_, c="#f2a619", lw=0, marker=".", ms=5)
-    ax.plot(y_pred_, y_pred_low_, alpha=0.4, c="#006aff", lw=0, marker="_", ms=4)
-    ax.plot(y_pred_, y_pred_upp_, alpha=0.4, c="#006aff", lw=0, marker="_", ms=4)
-
-    ax.set_xlabel("True House Prices")
-    ax.set_ylabel("Predicted House Prices")
-    lims = [
-        np.min([ax.get_xlim(), ax.get_ylim()]),  # min of both axes
-        np.max([ax.get_xlim(), ax.get_ylim()]),  # max of both axes
-    ]
-    ax.plot(lims, lims, "--", alpha=0.75, color="grey", label=None)
-    at = AnchoredText(
-        (
-            f"PICP: {np.round(coverage, round_to)} (target = {1 - alpha})\n"
-            + f"Interval Width: {np.round(width, round_to)}"
-        ),
-        frameon=False,
-        loc=4,
-    )
-    ax.add_artist(at)
-    ax.grid(axis="x", color="0.95")
-    ax.grid(axis="y", color="0.95")
-    ax.yaxis.set_major_formatter(price_formatter)
-    ax.xaxis.set_major_formatter(price_formatter)
-    ax.set_title(title)
 
 
 est = WrappedRandomForestQuantileRegressor(random_state=random_state)
@@ -180,9 +131,63 @@ for strategy, params in strategies.items():
         y_pis[strategy][:, 1, 0],
     )
 
-num_plots = rng.choice(len(y_test), int(len(y_test)), replace=False)
-fig, axs = plt.subplots(nrows=1, ncols=2, figsize=(10, 4))
+
+def plot_prediction_intervals(
+    title,
+    alpha,
+    ax,
+    y_test,
+    y_pred,
+    y_pred_low,
+    y_pred_upp,
+    coverage,
+    width,
+    num_plots_idx,
+    price_formatter,
+):
+    """Plot of the prediction intervals for each method."""
+    y_pred_low_ = np.take(y_pred_low, num_plots_idx)
+    y_pred_upp_ = np.take(y_pred_upp, num_plots_idx)
+    y_pred_ = np.take(y_pred, num_plots_idx)
+    y_test_ = np.take(y_test, num_plots_idx)
+
+    for low, mid, upp in zip(y_pred_low_, y_pred_, y_pred_upp_):
+        ax.plot([mid, mid], [low, upp], lw=4, c="#e0f2ff")
+    ax.plot(y_pred_, y_test_, c="#f2a619", lw=0, marker=".", ms=5)
+    ax.plot(y_pred_, y_pred_low_, alpha=0.4, c="#006aff", lw=0, marker="_", ms=4)
+    ax.plot(y_pred_, y_pred_upp_, alpha=0.4, c="#006aff", lw=0, marker="_", ms=4)
+
+    ax.set_xlabel("True House Prices")
+    ax.set_ylabel("Predicted House Prices")
+    lims = [
+        np.min(np.minimum(y_test, y_pred)),  # min of both axes
+        np.max(np.maximum(y_test, y_pred)),  # max of both axes
+    ]
+    ax.plot(lims, lims, ls="--", lw=1, c="grey", label=None)
+    at = AnchoredText(
+        (
+            f"PICP: {np.round(coverage, round_to)} (target = {1 - alpha})\n"
+            + f"Interval Width: {np.round(width, round_to)}"
+        ),
+        frameon=False,
+        loc=2,
+    )
+    ax.add_artist(at)
+    ax.grid(axis="x", color="0.95")
+    ax.grid(axis="y", color="0.95")
+    ax.yaxis.set_major_formatter(price_formatter)
+    ax.xaxis.set_major_formatter(price_formatter)
+    ax.set_xlim(lims)
+    ax.set_ylim(lims)
+    ax.set_title(title)
+
+
+fig, axs = plt.subplots(nrows=1, ncols=2, figsize=(10, 4.15))
+
 coords = [axs[0], axs[1]]
+num_plots = rng.choice(len(y_test), int(len(y_test)), replace=False)
+usd_formatter = FuncFormatter(lambda x, p: f"${format(int(x) * 100, ',')}k")
+
 for strategy, coord in zip(strategies.keys(), coords):
     plot_prediction_intervals(
         strategy,
