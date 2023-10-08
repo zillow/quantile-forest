@@ -26,7 +26,7 @@ An example comparison between a quantile regression forest and a standard
 regression forest on a synthetic, right-skewed dataset. In a right-skewed
 distribution, the mean is to the right of the median.
 
-.. GENERATED FROM PYTHON SOURCE LINES 11-56
+.. GENERATED FROM PYTHON SOURCE LINES 11-55
 
 
 
@@ -50,7 +50,6 @@ distribution, the mean is to the right of the median.
     from sklearn.utils.validation import check_random_state
 
     from quantile_forest import RandomForestQuantileRegressor
-
 
     rng = check_random_state(0)
 
@@ -90,7 +89,7 @@ distribution, the mean is to the right of the median.
 
 .. rst-class:: sphx-glr-timing
 
-   **Total running time of the script:** (0 minutes 0.704 seconds)
+   **Total running time of the script:** (0 minutes 0.715 seconds)
 
 
 .. _sphx_glr_download_auto_examples_plot_quantile_vs_standard_forest.py:

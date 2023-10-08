@@ -28,7 +28,7 @@ regression (CQR). CQR offers prediction intervals that attain valid coverage,
 while QRF may require additional calibration for reliable interval estimates.
 This example uses MAPIE to construct the CQR interval estimates with a QRF.
 
-.. GENERATED FROM PYTHON SOURCE LINES 12-210
+.. GENERATED FROM PYTHON SOURCE LINES 12-211
 
 
 
@@ -49,13 +49,14 @@ This example uses MAPIE to construct the CQR interval estimates with a QRF.
 
     import matplotlib.pyplot as plt
     import numpy as np
-    from matplotlib.offsetbox import AnchoredText
-    from matplotlib.ticker import FuncFormatter
     from mapie.metrics import regression_coverage_score, regression_mean_width_score
     from mapie.regression import MapieQuantileRegressor
+    from matplotlib.offsetbox import AnchoredText
+    from matplotlib.ticker import FuncFormatter
     from sklearn import datasets
     from sklearn.model_selection import train_test_split
     from sklearn.utils.validation import check_random_state
+
     from quantile_forest import RandomForestQuantileRegressor
 
     random_state = 0
@@ -245,7 +246,7 @@ This example uses MAPIE to construct the CQR interval estimates with a QRF.
 
 .. rst-class:: sphx-glr-timing
 
-   **Total running time of the script:** (0 minutes 2.456 seconds)
+   **Total running time of the script:** (0 minutes 2.469 seconds)
 
 
 .. _sphx_glr_download_auto_examples_plot_quantile_conformalized.py:

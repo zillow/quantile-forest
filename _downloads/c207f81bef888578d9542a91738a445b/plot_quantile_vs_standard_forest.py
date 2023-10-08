@@ -18,7 +18,6 @@ from sklearn.utils.validation import check_random_state
 
 from quantile_forest import RandomForestQuantileRegressor
 
-
 rng = check_random_state(0)
 
 # Create right-skewed dataset.
