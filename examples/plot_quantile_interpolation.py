@@ -50,22 +50,27 @@ for interpolation in interpolations:
         )
     )
 
-sc = plt.scatter(np.arange(len(y)) - 0.35, y, color="k", zorder=10)
-ebs = []
-for i, (median, y_err) in enumerate(zip(y_medians, y_errs)):
-    ebs.append(
-        plt.errorbar(
-            np.arange(len(y)) + (0.15 * (i + 1)) - 0.35,
-            median,
-            yerr=y_err,
-            color=colors[i],
-            ecolor=colors[i],
-            fmt="o",
+
+def plot_interpolations(y, y_medians, y_errs):
+    sc = plt.scatter(np.arange(len(y)) - 0.35, y, color="k", zorder=10)
+    ebs = []
+    for i, (median, y_err) in enumerate(zip(y_medians, y_errs)):
+        ebs.append(
+            plt.errorbar(
+                np.arange(len(y)) + (0.15 * (i + 1)) - 0.35,
+                median,
+                yerr=y_err,
+                color=colors[i],
+                ecolor=colors[i],
+                fmt="o",
+            )
         )
-    )
-plt.xlim([-0.75, len(y) - 0.25])
-plt.xticks(np.arange(len(y)), X.tolist())
-plt.xlabel("Samples (Feature Values)")
-plt.ylabel("Actual and Predicted Values")
-plt.legend([sc] + ebs, ["actual"] + interpolations, loc=2)
-plt.show()
+    plt.xlim([-0.75, len(y) - 0.25])
+    plt.xticks(np.arange(len(y)), X.tolist())
+    plt.xlabel("Samples (Feature Values)")
+    plt.ylabel("Actual and Predicted Values")
+    plt.legend([sc] + ebs, ["actual"] + interpolations, loc=2)
+    plt.show()
+
+
+plot_interpolations(y, y_medians, y_errs)

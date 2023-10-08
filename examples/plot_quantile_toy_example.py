@@ -35,28 +35,34 @@ X, y = make_toy_dataset(n_samples)
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
-xx = np.atleast_2d(np.linspace(0, 10, n_samples)).T
+X_sampled = np.atleast_2d(np.linspace(0, 10, n_samples)).T
+y_sampled = X_sampled * np.sin(X_sampled)
 
 qrf = RandomForestQuantileRegressor(max_depth=3, min_samples_leaf=5, random_state=0)
 qrf.fit(X_train, y_train)
 
-y_pred = qrf.predict(xx, quantiles=[0.025, 0.5, 0.975])
+y_pred = qrf.predict(X_sampled, quantiles=[0.025, 0.5, 0.975])
 
-y_pred_low = y_pred[:, 0]
-y_pred_med = y_pred[:, 1]
-y_pred_upp = y_pred[:, 2]
 
-plt.plot(X_test, y_test, ".", c="#f2a619", label="Test Observations", ms=5)
-plt.plot(xx, (xx * np.sin(xx)), c="black", label="$f(x) = x\\,\\sin(x)$", lw=2)
-plt.plot(xx, y_pred_med, c="#006aff", label="Predicted Median", lw=3, ms=5)
-plt.fill_between(
-    xx.ravel(),
-    y_pred_low,
-    y_pred_upp,
-    color="#e0f2ff",
-    label="Predicted 95% Interval",
-)
-plt.xlabel("$x$")
-plt.ylabel("$f(x)$")
-plt.legend(loc="upper left")
-plt.show()
+def plot_fit(X_test, y_test, y_pred):
+    y_pred_low = y_pred[:, 0]
+    y_pred_med = y_pred[:, 1]
+    y_pred_upp = y_pred[:, 2]
+
+    plt.plot(X_test, y_test, ".", c="#f2a619", label="Test Observations", ms=5)
+    plt.plot(X_sampled, y_sampled, c="black", label="$f(x) = x\\,\\sin(x)$", lw=2)
+    plt.plot(X_sampled, y_pred_med, c="#006aff", label="Predicted Median", lw=3, ms=5)
+    plt.fill_between(
+        X_sampled.ravel(),
+        y_pred_low,
+        y_pred_upp,
+        color="#e0f2ff",
+        label="Predicted 95% Interval",
+    )
+    plt.xlabel("$x$")
+    plt.ylabel("$f(x)$")
+    plt.legend(loc="upper left")
+    plt.show()
+
+
+plot_fit(X_test, y_test, y_pred)
