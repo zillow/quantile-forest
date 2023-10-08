@@ -7,7 +7,7 @@ An example that demonstrates the use of a quantile regression forest to
 construct reliable prediction intervals using conformalized quantile
 regression (CQR). CQR offers prediction intervals that attain valid coverage,
 while QRF may require additional calibration for reliable interval estimates.
-This example uses MAPIE to construct the CQR interval estimates.
+This example uses MAPIE to construct the CQR interval estimates with a QRF.
 """
 print(__doc__)
 
@@ -74,6 +74,7 @@ def sort_y_values(y_test, y_pred, y_pis):
 
 def plot_prediction_intervals(
     title,
+    alpha,
     ax,
     y_test,
     y_pred,
@@ -185,6 +186,7 @@ coords = [axs[0], axs[1]]
 for strategy, coord in zip(strategies.keys(), coords):
     plot_prediction_intervals(
         strategy,
+        alpha,
         coord,
         y_test_sorted[strategy],
         y_pred_sorted[strategy],
