@@ -1,7 +1,9 @@
-quantile-forest
+quantile-forest Documentation
 ============================================
 
 quantile-forest is an implementation of scikit-learn compatible quantile regression forests.
+
+Quantile regression forests (QRF) are a non-parametric, tree-based ensemble method for estimating conditional quantiles, with application to high-dimensional data and uncertainty estimation. The estimators in this package are performant, Cython-optimized QRF implementations that extend the forest estimators available in scikit-learn to estimate conditional quantiles, as described by :cite:t:`2006:meinshausen`. The estimators can estimate arbitrary quantiles at prediction time without retraining and provide methods for out-of-bag estimation, calculating quantile ranks, and computing proximity counts. They are compatible with and can serve as drop-in replacements for the scikit-learn variants.
 
 .. toctree::
    :maxdepth: 2

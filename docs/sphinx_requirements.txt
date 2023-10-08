@@ -4,3 +4,4 @@ sphinx_rtd_theme
 sphinxcontrib.bibtex
 numpydoc
 matplotlib
+pydata_sphinx_theme
