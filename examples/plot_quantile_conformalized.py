@@ -122,7 +122,7 @@ def plot_prediction_intervals(
 est = WrappedRandomForestQuantileRegressor(random_state=random_state)
 
 strategies = {
-    "Quantile Regression Forest (QRF)": {"method": "plus"},
+    "Quantile Regression Forest (QRF)": {},
     "Conformalized Quantile Regression (CQR)": {
         "method": "quantile",
         "cv": "split",
