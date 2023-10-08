@@ -75,7 +75,9 @@ The default quantiles can be overwritten at prediction time by specifying a valu
 
 The output of the `predict` method is an array with one column for each specified quantile or a single column if no quantiles are specified. The order of the output columns corresponds to the order of the quantiles, which can be specified in any order (i.e., they do not need to be monotonically ordered)::
 
-    >>> y_pred = reg.predict(X_test, quantiles=[0.5, 0.25, 0.75])  # y_pred[:, 0] >= y_pred[:, 1]
+    >>> y_pred = reg.predict(X_test, quantiles=[0.5, 0.25, 0.75])
+    >>> (y_pred[:, 0] >= y_pred[:, 1]).all()
+    True
 
 By default, the predict method calculates quantiles by weighting each sample inversely according to the size of its leaf node (`weighted_leaves = True`). If `weighted_leaves = False`, each sample in a leaf (including repeated bootstrap samples) will be given equal weight. Note that this leaf-based weighting can only be used with weighted quantiles.
 
