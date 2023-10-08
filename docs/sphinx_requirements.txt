@@ -2,6 +2,7 @@ sphinx
 sphinx_gallery
 sphinx_rtd_theme
 sphinxcontrib.bibtex
+mapie
 numpydoc
 matplotlib
 pydata_sphinx_theme
