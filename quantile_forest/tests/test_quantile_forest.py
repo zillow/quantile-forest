@@ -231,6 +231,7 @@ def test_predict_quantiles_toy(name):
 
 def check_predict_quantiles(
     name,
+    max_samples_leaf,
     weighted_quantile,
     aggregate_leaves_first,
 ):
@@ -255,7 +256,7 @@ def check_predict_quantiles(
     y_train = y_train.astype(np.float64)
     y_test = y_test.astype(np.float64)
 
-    est = ForestRegressor(n_estimators=10, random_state=0)
+    est = ForestRegressor(n_estimators=10, max_samples_leaf=max_samples_leaf, random_state=0)
     est.fit(X_train, y_train)
     y_pred = est.predict(
         X_test,
@@ -271,7 +272,7 @@ def check_predict_quantiles(
         X_california, y_california, test_size=0.25, random_state=0
     )
 
-    est = ForestRegressor(n_estimators=10, random_state=0)
+    est = ForestRegressor(n_estimators=10, max_samples_leaf=max_samples_leaf, random_state=0)
     est.fit(X_train, y_train)
     y_pred = est.predict(
         X_test,
@@ -286,7 +287,7 @@ def check_predict_quantiles(
     assert np.all(np.less_equal(y_pred[:, 1], y_pred[:, 2]))
 
     # Check that weighted and unweighted quantiles are all equal.
-    est = ForestRegressor(n_estimators=10, random_state=0)
+    est = ForestRegressor(n_estimators=10, max_samples_leaf=max_samples_leaf, random_state=0)
     est.fit(X_train, y_train)
     y_pred_1 = est.predict(
         X_test,
@@ -305,7 +306,7 @@ def check_predict_quantiles(
     assert_allclose(y_pred_1, y_pred_2)
 
     # Check that weighted and unweighted leaves are all equal.
-    est = ForestRegressor(n_estimators=1, max_samples_leaf=1, random_state=0)
+    est = ForestRegressor(n_estimators=1, max_samples_leaf=max_samples_leaf, random_state=0)
     est.fit(X_train, y_train)
     y_pred_1 = est.predict(
         X_test,
@@ -324,7 +325,7 @@ def check_predict_quantiles(
     assert_allclose(y_pred_1, y_pred_2)
 
     # Check that aggregated and unaggregated quantiles are all equal.
-    est = ForestRegressor(n_estimators=1, random_state=0)
+    est = ForestRegressor(n_estimators=1, max_samples_leaf=max_samples_leaf, random_state=0)
     est.fit(X_train, y_train)
     y_pred_1 = est.predict(
         X_test,
@@ -343,7 +344,7 @@ def check_predict_quantiles(
     assert_allclose(y_pred_1, y_pred_2)
 
     # Check that omitting quantiles is the same as setting to 0.5.
-    est = ForestRegressor(n_estimators=1, random_state=0)
+    est = ForestRegressor(n_estimators=1, max_samples_leaf=max_samples_leaf, random_state=0)
     est.fit(X_train, y_train)
     y_pred_1 = est.predict(
         X_test,
@@ -363,17 +364,25 @@ def check_predict_quantiles(
     # Check that unaggregated predicted means match non-quantile regressor.
     if not aggregate_leaves_first:
         if name == "ExtraTreesQuantileRegressor":
-            est1 = ExtraTreesRegressor(n_estimators=10, random_state=0)
+            est1 = ExtraTreesRegressor(
+                n_estimators=1 if max_samples_leaf == 1 else 10,
+                random_state=0,
+            )
             est2 = ExtraTreesQuantileRegressor(
-                n_estimators=10,
+                n_estimators=1 if max_samples_leaf == 1 else 10,
                 default_quantiles=None,
+                max_samples_leaf=max_samples_leaf,
                 random_state=0,
             )
         else:
-            est1 = RandomForestRegressor(n_estimators=10, random_state=0)
+            est1 = RandomForestRegressor(
+                n_estimators=1 if max_samples_leaf == 1 else 10,
+                random_state=0,
+            )
             est2 = RandomForestQuantileRegressor(
-                n_estimators=10,
+                n_estimators=1 if max_samples_leaf == 1 else 10,
                 default_quantiles=None,
+                max_samples_leaf=max_samples_leaf,
                 random_state=0,
             )
         y_pred_1 = est1.fit(X_train, y_train).predict(X_test)
@@ -386,21 +395,29 @@ def check_predict_quantiles(
         )
         assert_allclose(y_pred_1, y_pred_2)
 
-    est = ForestRegressor(n_estimators=1, random_state=0)
+    est = ForestRegressor(n_estimators=1, max_samples_leaf=max_samples_leaf, random_state=0)
     est.fit(X_train, y_train)
 
     # Check that specifying `quantiles` overwrites `default_quantiles`.
-    est1 = ForestRegressor(n_estimators=1, random_state=0)
+    est1 = ForestRegressor(n_estimators=1, max_samples_leaf=max_samples_leaf, random_state=0)
     est1.fit(X_train, y_train)
     y_pred_1 = est1.predict(X_test, quantiles=0.5)
     est2 = ForestRegressor(
         n_estimators=1,
         default_quantiles=[0.25, 0.5, 0.75],
+        max_samples_leaf=max_samples_leaf,
         random_state=0,
     )
     est2.fit(X_train, y_train)
     y_pred_2 = est2.predict(X_test, quantiles=0.5)
     assert_allclose(y_pred_1, y_pred_2)
+
+    # Check that specifying `interpolation` changes outputs.
+    est = ForestRegressor(n_estimators=10, max_samples_leaf=max_samples_leaf, random_state=0)
+    est.fit(X_train, y_train)
+    y_pred_1 = est.predict(X_test, quantiles=0.5, interpolation="linear")
+    y_pred_2 = est.predict(X_test, quantiles=0.5, interpolation="nearest")
+    assert np.any(y_pred_1 != y_pred_2)
 
     # Check error if invalid quantiles.
     assert_raises(ValueError, est.predict, X_test, -0.01)
@@ -408,14 +425,16 @@ def check_predict_quantiles(
 
 
 @pytest.mark.parametrize("name", FOREST_REGRESSORS)
+@pytest.mark.parametrize("max_samples_leaf", [None, 1])
 @pytest.mark.parametrize("weighted_quantile", [True, False])
 @pytest.mark.parametrize("aggregate_leaves_first", [True, False])
 def test_predict_quantiles(
     name,
+    max_samples_leaf,
     weighted_quantile,
     aggregate_leaves_first,
 ):
-    check_predict_quantiles(name, weighted_quantile, aggregate_leaves_first)
+    check_predict_quantiles(name, max_samples_leaf, weighted_quantile, aggregate_leaves_first)
 
 
 def check_quantile_ranks_toy(name):
