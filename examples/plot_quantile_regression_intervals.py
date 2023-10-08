@@ -78,7 +78,7 @@ def plot_calibration_and_intervals(y_true, y_pred, y_pred_low, y_pred_upp):
         ax.set_xlabel("Fitted Values (Conditional Median)")
         ax.set_ylabel("Observed Values")
 
-    def plot_intervals(ax, y_true, y_pred_low, y_pred_upp):
+    def plot_intervals(ax, y_true, y_pred_low, y_pred_upp, price_formatter):
         # Center data, with the mean of the prediction interval at 0.
         mean = (y_pred_low + y_pred_upp) / 2
         y_true -= mean
@@ -97,6 +97,7 @@ def plot_calibration_and_intervals(y_true, y_pred, y_pred_low, y_pred_upp):
         ax.plot(np.arange(n_samples), y_pred_upp, alpha=0.8, c="#006aff", lw=2)
         ax.grid(axis="x", color="0.95")
         ax.grid(axis="y", color="0.95")
+        ax.yaxis.set_major_formatter(price_formatter)
         ax.set_xlim([0, n_samples])
         ax.set_xlabel("Ordered Samples")
         ax.set_ylabel("Observed Values and Prediction Intervals")
@@ -120,7 +121,7 @@ def plot_calibration_and_intervals(y_true, y_pred, y_pred_low, y_pred_upp):
     y_pred_low = y_pred_low[sort_idx]
     y_pred_upp = y_pred_upp[sort_idx]
 
-    plot_intervals(ax2, y_true, y_pred_low, y_pred_upp)
+    plot_intervals(ax2, y_true, y_pred_low, y_pred_upp, usd_formatter)
 
     plt.subplots_adjust(top=0.15)
     fig.tight_layout(pad=3)
