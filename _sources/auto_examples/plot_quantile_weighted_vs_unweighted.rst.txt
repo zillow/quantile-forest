@@ -27,7 +27,7 @@ regression forest with weighted and unweighted quantiles to compute the
 predicted output values. A standard random forest regressor is included for
 comparison.
 
-.. GENERATED FROM PYTHON SOURCE LINES 12-103
+.. GENERATED FROM PYTHON SOURCE LINES 12-97
 
 
 
@@ -68,15 +68,15 @@ comparison.
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.5, random_state=0)
 
-    estimator_sizes = [1, 5, 10, 25, 50, 100]
+    est_sizes = [1, 5, 10, 25, 50, 100]
 
     n_repeats = 10
-    n_sizes = len(estimator_sizes)
+    n_sizes = len(est_sizes)
 
     timings = []
 
     timings = np.empty((n_sizes, n_repeats, 3))
-    for i, n_estimators in enumerate(estimator_sizes):
+    for i, n_estimators in enumerate(est_sizes):
         for j in range(n_repeats):
             rf = RandomForestRegressor(
                 n_estimators=n_estimators,
@@ -100,44 +100,38 @@ comparison.
             timings[i, j, :] = [rf_time(), qrf_weighted_time(), qrf_unweighted_time()]
             timings[i, j, :] *= 1000
 
-    rf_avg, qrf_wgt_avg, qrf_unwgt_avg = list(zip(*np.mean(timings, axis=1)))
-    rf_std, qrf_wgt_std, qrf_unwgt_std = list(zip(*np.std(timings, axis=1)))
 
-    plt.plot(estimator_sizes, rf_avg, c="#f2a619")
-    plt.plot(estimator_sizes, qrf_wgt_avg, c="#006aff")
-    plt.plot(estimator_sizes, qrf_unwgt_avg, c="#001751")
-    plt.fill_between(
-        estimator_sizes,
-        np.array(rf_avg) - (np.array(rf_std) / 2),
-        np.array(rf_avg) + (np.array(rf_std) / 2),
-        alpha=0.1,
-        color="#f2a619",
-    )
-    plt.fill_between(
-        estimator_sizes,
-        np.array(qrf_wgt_avg) - (np.array(qrf_wgt_std) * 1.96),
-        np.array(qrf_wgt_avg) + (np.array(qrf_wgt_std) * 1.96),
-        alpha=0.1,
-        color="#006aff",
-    )
-    plt.fill_between(
-        estimator_sizes,
-        np.array(qrf_unwgt_avg) - (np.array(qrf_unwgt_std) * 1.96),
-        np.array(qrf_unwgt_avg) + (np.array(qrf_unwgt_std) * 1.96),
-        alpha=0.1,
-        color="#001751",
-    )
+    def plot_timings_by_size(est_sizes, est_names, est_colors, est_avgs, est_stds):
+        for color, avg in zip(est_colors, est_avgs):
+            plt.plot(est_sizes, avg, c=color)
 
-    plt.xlim([estimator_sizes[0], estimator_sizes[-1]])
-    plt.xlabel("Number of Estimators")
-    plt.ylabel("Prediction Runtime (seconds)")
-    plt.legend(["RF", "QRF Weighted Quantile", "QRF Unweighted Quantile"])
-    plt.show()
+        for color, avg, std in zip(est_colors, est_avgs, est_stds):
+            plt.fill_between(
+                est_sizes,
+                np.array(avg) - (np.array(std) / 2),
+                np.array(avg) + (np.array(std) / 2),
+                alpha=0.1,
+                color=color,
+            )
+
+        plt.xlim([est_sizes[0], est_sizes[-1]])
+        plt.xlabel("Number of Estimators")
+        plt.ylabel("Prediction Runtime (seconds)")
+        plt.legend(est_names)
+        plt.show()
+
+
+    est_avgs = list(zip(*np.mean(timings, axis=1)))
+    est_stds = list(zip(*np.std(timings, axis=1)))
+    est_colors = ["#f2a619", "#006aff", "#001751"]
+    est_names = ["RF", "QRF Weighted Quantile", "QRF Unweighted Quantile"]
+
+    plot_timings_by_size(est_sizes, est_names, est_colors, est_avgs, est_stds)
 
 
 .. rst-class:: sphx-glr-timing
 
-   **Total running time of the script:** (0 minutes 17.346 seconds)
+   **Total running time of the script:** (0 minutes 14.123 seconds)
 
 
 .. _sphx_glr_download_auto_examples_plot_quantile_weighted_vs_unweighted.py:

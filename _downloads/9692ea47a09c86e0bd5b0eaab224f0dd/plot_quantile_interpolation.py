@@ -27,7 +27,7 @@ est = RandomForestQuantileRegressor(
 )
 est.fit(X, y)
 
-interpolations = ["linear", "lower", "higher", "midpoint", "nearest"]
+interpolations = ["Linear", "Lower", "Higher", "Midpoint", "Nearest"]
 colors = ["#006aff", "#ffd237", "#0d4599", "#f2a619", "#a6e5ff"]
 
 y_medians = []
@@ -37,7 +37,7 @@ for interpolation in interpolations:
     y_pred = est.predict(
         X,
         quantiles=[0.025, 0.5, 0.975],
-        interpolation=interpolation,
+        interpolation=interpolation.lower(),
     )
     y_medians.append(y_pred[:, 1])
     y_errs.append(
@@ -51,7 +51,7 @@ for interpolation in interpolations:
     )
 
 
-def plot_interpolations(y, y_medians, y_errs):
+def plot_interpolations(names, colors, X, y, y_medians, y_errs):
     sc = plt.scatter(np.arange(len(y)) - 0.35, y, color="k", zorder=10)
     ebs = []
     for i, (median, y_err) in enumerate(zip(y_medians, y_errs)):
@@ -69,8 +69,8 @@ def plot_interpolations(y, y_medians, y_errs):
     plt.xticks(np.arange(len(y)), X.tolist())
     plt.xlabel("Samples (Feature Values)")
     plt.ylabel("Actual and Predicted Values")
-    plt.legend([sc] + ebs, ["actual"] + interpolations, loc=2)
+    plt.legend([sc] + ebs, ["Actual"] + names, loc=2)
     plt.show()
 
 
-plot_interpolations(y, y_medians, y_errs)
+plot_interpolations(interpolations, colors, X, y, y_medians, y_errs)

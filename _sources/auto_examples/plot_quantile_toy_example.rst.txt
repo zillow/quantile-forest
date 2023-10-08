@@ -77,7 +77,7 @@ the predictions to a ground truth function used to generate noisy samples.
     y_pred = qrf.predict(X_sampled, quantiles=[0.025, 0.5, 0.975])
 
 
-    def plot_fit(X_test, y_test, y_pred):
+    def plot_fit_and_intervals(X_sampled, y_sampled, X_test, y_test, y_pred):
         y_pred_low = y_pred[:, 0]
         y_pred_med = y_pred[:, 1]
         y_pred_upp = y_pred[:, 2]
@@ -98,12 +98,12 @@ the predictions to a ground truth function used to generate noisy samples.
         plt.show()
 
 
-    plot_fit(X_test, y_test, y_pred)
+    plot_fit_and_intervals(X_sampled, y_sampled, X_test, y_test, y_pred)
 
 
 .. rst-class:: sphx-glr-timing
 
-   **Total running time of the script:** (0 minutes 0.422 seconds)
+   **Total running time of the script:** (0 minutes 0.334 seconds)
 
 
 .. _sphx_glr_download_auto_examples_plot_quantile_toy_example.py:

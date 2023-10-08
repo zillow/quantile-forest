@@ -40,10 +40,16 @@ regr_qrf.fit(X_train, y_train)
 y_pred_rf = regr_rf.predict(X_test)
 y_pred_qrf = regr_qrf.predict(X_test, quantiles=0.5)
 
-colors = ["#c0c0c0", "#f2a619", "#006aff"]
+
+def plot_prediction_histograms(names, colors, y_preds):
+    plt.hist(y_preds, bins=50, color=colors, label=names)
+    plt.xlabel("Actual and Predicted Target Values")
+    plt.ylabel("Counts")
+    plt.legend()
+    plt.show()
+
+
 names = ["Actual", "RF (Mean)", "QRF (Median)"]
-plt.hist([y_test, y_pred_rf, y_pred_qrf], bins=50, color=colors, label=names)
-plt.xlabel("Actual and Predicted Target Values")
-plt.ylabel("Counts")
-plt.legend()
-plt.show()
+colors = ["#c0c0c0", "#f2a619", "#006aff"]
+y_preds = [y_test, y_pred_rf, y_pred_qrf]
+plot_prediction_histograms(names, colors, y_preds)
