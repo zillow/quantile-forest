@@ -495,7 +495,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
                 y_pred = np.expand_dims(func(leaf_values, axis=1), axis=1)
             else:  # calculate quantiles
                 func = np.quantile if X_indices is None else np.nanquantile
-                y_pred = func(leaf_values, quantiles, axis=1).T
+                y_pred = func(leaf_values, quantiles, method=interpolation.decode(), axis=1).T
         else:
             y_pred = self.forest_.predict(
                 quantiles,
