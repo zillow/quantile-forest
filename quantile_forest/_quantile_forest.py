@@ -410,7 +410,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
 
         weighted_leaves : bool, default=True
             Weight samples inversely to the size of their leaf node.
-            Only used if `weighted_quantile=True`.
+            Only used if `weighted_quantile=True` and `max_samples_leaf!=1`.
 
         aggregate_leaves_first : bool, default=True
             Calculate predictions using aggregated leaf values. If True, a
@@ -495,7 +495,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
                 y_pred = np.expand_dims(func(leaf_values, axis=1), axis=1)
             else:  # calculate quantiles
                 func = np.quantile if X_indices is None else np.nanquantile
-                y_pred = func(leaf_values, quantiles, axis=1).T
+                y_pred = func(leaf_values, quantiles, method=interpolation.decode(), axis=1).T
         else:
             y_pred = self.forest_.predict(
                 quantiles,
