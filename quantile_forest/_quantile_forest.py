@@ -772,13 +772,16 @@ class RandomForestQuantileRegressor(BaseForestQuantileRegressor):
         predict. Each quantile must be strictly between 0 and 1. If "mean",
         the model predicts the mean.
 
-    criterion : {"squared_error", "absolute_error", "poisson"}, \
+    criterion : {"squared_error", "absolute_error", "friedman_mse", "poisson"}, \
             default="squared_error"
         The function to measure the quality of a split. Supported criteria
         are "squared_error" for the mean squared error, which is equal to
-        variance reduction as feature selection criterion, "absolute_error"
-        for the mean absolute error, and "poisson" which uses reduction in
-        Poisson deviance to find splits.
+        variance reduction as feature selection criterion and minimizes the L2
+        loss using the mean of each terminal node, "friedman_mse", which uses
+        mean squared error with Friedman's improvement score for potential
+        splits, "absolute_error" for the mean absolute error, which minimizes
+        the L1 loss using the median of each terminal node, and "poisson" which
+        uses reduction in Poisson deviance to find splits.
         Training using "absolute_error" is significantly slower
         than when using "squared_error".
 
@@ -866,9 +869,11 @@ class RandomForestQuantileRegressor(BaseForestQuantileRegressor):
         Whether bootstrap samples are used when building trees. If False, the
         whole dataset is used to build each tree.
 
-    oob_score : bool, default=False
+    oob_score : bool or callable, default=False
         Whether to use out-of-bag samples to estimate the generalization score.
-        Only available if bootstrap=True.
+        By default, :func:`~sklearn.metrics.r2_score` is used.
+        Provide a callable with signature `metric(y_true, y_pred)` to use a
+        custom metric. Only available if `bootstrap=True`.
 
     n_jobs : int, default=None
         The number of jobs to run in parallel. :meth:`fit`, :meth:`predict`,
@@ -901,12 +906,12 @@ class RandomForestQuantileRegressor(BaseForestQuantileRegressor):
 
         - If None (default), then draw `X.shape[0]` samples.
         - If int, then draw `max_samples` samples.
-        - If float, then draw `max_samples * X.shape[0]` samples. Thus,
-          `max_samples` should be in the interval `(0.0, 1.0]`.
+        - If float, then draw `max(round(n_samples * max_samples), 1)` samples.
+          Thus, `max_samples` should be in the interval `(0.0, 1.0]`.
 
     Attributes
     ----------
-    base_estimator_ : DecisionTreeRegressor
+    estimator_ : DecisionTreeRegressor
         The child estimator template used to create the collection of fitted
         sub-estimators.
 
@@ -1054,11 +1059,18 @@ class ExtraTreesQuantileRegressor(BaseForestQuantileRegressor):
         predict. Each quantile must be strictly between 0 and 1. If "mean",
         the model predicts the mean.
 
-    criterion : {"squared_error", "absolute_error"}, default="squared_error"
+    criterion : {"squared_error", "absolute_error", "friedman_mse", "poisson"}, \
+            default="squared_error"
         The function to measure the quality of a split. Supported criteria
         are "squared_error" for the mean squared error, which is equal to
-        variance reduction as feature selection criterion, and "absolute_error"
-        for the mean absolute error.
+        variance reduction as feature selection criterion and minimizes the L2
+        loss using the mean of each terminal node, "friedman_mse", which uses
+        mean squared error with Friedman's improvement score for potential
+        splits, "absolute_error" for the mean absolute error, which minimizes
+        the L1 loss using the median of each terminal node, and "poisson" which
+        uses reduction in Poisson deviance to find splits.
+        Training using "absolute_error" is significantly slower
+        than when using "squared_error".
 
     max_depth : int, default=None
         The maximum depth of the tree. If None, then nodes are expanded until
@@ -1144,9 +1156,11 @@ class ExtraTreesQuantileRegressor(BaseForestQuantileRegressor):
         Whether bootstrap samples are used when building trees. If False, the
         whole dataset is used to build each tree.
 
-    oob_score : bool, default=False
+    oob_score : bool or callable, default=False
         Whether to use out-of-bag samples to estimate the generalization score.
-        Only available if bootstrap=True.
+        By default, :func:`~sklearn.metrics.accuracy_score` is used.
+        Provide a callable with signature `metric(y_true, y_pred)` to use a
+        custom metric. Only available if `bootstrap=True`.
 
     n_jobs : int, default=None
         The number of jobs to run in parallel. :meth:`fit`, :meth:`predict`,
@@ -1187,18 +1201,18 @@ class ExtraTreesQuantileRegressor(BaseForestQuantileRegressor):
 
     Attributes
     ----------
-    base_estimator_ : ExtraTreeQuantileRegressor
+    estimator_ : ExtraTreeRegressor
         The child estimator template used to create the collection of fitted
         sub-estimators.
 
-    estimators_ : list of ForestRegressor
+    estimators_ : list of DecisionTreeRegressor
         The collection of fitted sub-estimators.
 
     feature_importances_ : ndarray of shape (n_features,)
         The impurity-based feature importances.
         The higher, the more important the feature.
         The importance of a feature is computed as the (normalized)
-        total reduction of the criterion brought by that feature.  It is also
+        total reduction of the criterion brought by that feature. It is also
         known as the Gini importance.
 
         Warning: impurity-based feature importances can be misleading for
