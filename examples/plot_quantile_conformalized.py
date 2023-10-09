@@ -1,9 +1,9 @@
 """
-========================================================================
-Quantile regression forests for conformalized quantile regression (CQR)
-========================================================================
+=================================================================
+Quantile regression forests for conformalized quantile regression
+=================================================================
 
-An example that demonstrates the use of a quantile regression forest to
+An example that demonstrates the use of a quantile regression forest (QRF) to
 construct reliable prediction intervals using conformalized quantile
 regression (CQR). CQR offers prediction intervals that attain valid coverage,
 while QRF may require additional calibration for reliable interval estimates.
