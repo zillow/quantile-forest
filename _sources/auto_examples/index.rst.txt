@@ -118,7 +118,7 @@ General-purpose and introductory examples.
 
 .. raw:: html
 
-    <div class="sphx-glr-thumbcontainer" tooltip="An example that demonstrates the use of a quantile regression forest to construct reliable pred...">
+    <div class="sphx-glr-thumbcontainer" tooltip="An example that demonstrates the use of a quantile regression forest (QRF) to construct reliabl...">
 
 .. only:: html
 
@@ -129,7 +129,7 @@ General-purpose and introductory examples.
 
 .. raw:: html
 
-      <div class="sphx-glr-thumbnail-title">Quantile regression forests for conformalized quantile regression (CQR)</div>
+      <div class="sphx-glr-thumbnail-title">Quantile regression forests for conformalized quantile regression</div>
     </div>
 
 

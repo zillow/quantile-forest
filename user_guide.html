@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
-    <title>User Guide &#8212; Version 1.2.2</title>
+    <title>User Guide &#8212; Version 1.2.3</title>
   
   
   
@@ -42,7 +42,7 @@
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=ac02cc09edc035673794" />
   <script src="_static/vendor/fontawesome/6.1.2/js/all.min.js?digest=ac02cc09edc035673794"></script>
 
-    <script src="_static/documentation_options.js?v=0ed1cf23"></script>
+    <script src="_static/documentation_options.js?v=a791bb45"></script>
     <script src="_static/doctools.js?v=888ff710"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/copybutton.js?v=26522df0"></script>
@@ -123,7 +123,7 @@
   
   
   
-    <p class="title logo__title">Version 1.2.2</p>
+    <p class="title logo__title">Version 1.2.3</p>
   
 </a></div>
     
@@ -393,7 +393,7 @@ document.write(`
 </pre></div>
 </div>
 <p>If the <code class="docutils literal notranslate"><span class="pre">predict</span></code> method is explicitly called with <code class="docutils literal notranslate"><span class="pre">quantiles</span> <span class="pre">=</span> <span class="pre">&quot;mean&quot;</span></code>, the prediction returns the empirical mean:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">y_pred</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">,</span> <span class="n">quantiles</span><span class="o">=</span><span class="s2">&quot;mean&quot;</span><span class="p">)</span>  <span class="c1"># returns empirical mean prediction for each test sample</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">y_pred</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">,</span> <span class="n">quantiles</span><span class="o">=</span><span class="s2">&quot;mean&quot;</span><span class="p">)</span>  <span class="c1"># returns mean prediction for each test sample</span>
 </pre></div>
 </div>
 <p>Default quantiles can be specified at model initialization using the <code class="docutils literal notranslate"><span class="pre">default_quantiles</span></code> parameter:</p>
@@ -407,14 +407,17 @@ document.write(`
 </pre></div>
 </div>
 <p>The output of the <code class="docutils literal notranslate"><span class="pre">predict</span></code> method is an array with one column for each specified quantile or a single column if no quantiles are specified. The order of the output columns corresponds to the order of the quantiles, which can be specified in any order (i.e., they do not need to be monotonically ordered):</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">y_pred</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">,</span> <span class="n">quantiles</span><span class="o">=</span><span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">,</span> <span class="mf">0.75</span><span class="p">])</span>  <span class="c1"># first column corresponds to quantile 0.5</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">y_pred</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">,</span> <span class="n">quantiles</span><span class="o">=</span><span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">,</span> <span class="mf">0.75</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="p">(</span><span class="n">y_pred</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">y_pred</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">])</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+<span class="go">True</span>
 </pre></div>
 </div>
 <p>By default, the predict method calculates quantiles by weighting each sample inversely according to the size of its leaf node (<code class="docutils literal notranslate"><span class="pre">weighted_leaves</span> <span class="pre">=</span> <span class="pre">True</span></code>). If <code class="docutils literal notranslate"><span class="pre">weighted_leaves</span> <span class="pre">=</span> <span class="pre">False</span></code>, each sample in a leaf (including repeated bootstrap samples) will be given equal weight. Note that this leaf-based weighting can only be used with weighted quantiles.</p>
 <p>By default, the predict method calculates quantiles using a weighted quantile method (<code class="docutils literal notranslate"><span class="pre">weighted_quantile</span> <span class="pre">=</span> <span class="pre">True</span></code>), which assigns a weight to each sample in the training set based on the number of times that it co-occurs in the same leaves as the test sample. When the number of samples in the training set is larger than the expected size of this list (i.e., <span class="math notranslate nohighlight">\(n_{train} \gg n_{trees} \cdot n_{leaves} \cdot n_{leafsamples}\)</span>), it can be more efficient to calculate an unweighted quantile (<code class="docutils literal notranslate"><span class="pre">weighted_quantile</span> <span class="pre">=</span> <span class="pre">False</span></code>), which aggregates the list of training <code class="docutils literal notranslate"><span class="pre">y</span></code> values for each leaf node to which the test sample belongs across all trees. For a given input, both methods can return the same output values:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">y_pred_weighted</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">,</span> <span class="n">weighted_quantile</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">weighted_leaves</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>  <span class="c1"># weighted quantile (default)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">y_pred_unweighted</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">,</span> <span class="n">weighted_quantile</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">weighted_leaves</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>  <span class="c1"># unweighted quantile</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;weighted_leaves&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">y_pred_weighted</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">,</span> <span class="n">weighted_quantile</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>  <span class="c1"># weighted quantile</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">y_pred_unweighted</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">,</span> <span class="n">weighted_quantile</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>  <span class="c1"># unweighted quantile</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">y_pred_weighted</span><span class="p">,</span> <span class="n">y_pred_unweighted</span><span class="p">)</span>
 <span class="go">True</span>
 </pre></div>
@@ -443,8 +446,10 @@ document.write(`
 <span class="gp">&gt;&gt;&gt; </span><span class="n">X_train</span><span class="p">,</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">y_test</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="mf">0.25</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">rf</span> <span class="o">=</span> <span class="n">RandomForestRegressor</span><span class="p">(</span><span class="n">random_state</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">qrf</span> <span class="o">=</span> <span class="n">RandomForestQuantileRegressor</span><span class="p">(</span><span class="n">max_samples_leaf</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">rf</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">),</span> <span class="n">qrf</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">)</span>
-<span class="go">(RandomForestRegressor(random_state=0), RandomForestQuantileRegressor(max_samples_leaf=None, random_state=0))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">rf</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">)</span>
+<span class="go">RandomForestRegressor(random_state=0)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">qrf</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">)</span>
+<span class="go">RandomForestQuantileRegressor(max_samples_leaf=None, random_state=0)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">y_pred_rf</span> <span class="o">=</span> <span class="n">rf</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">y_pred_qrf</span> <span class="o">=</span> <span class="n">qrf</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">,</span> <span class="n">quantiles</span><span class="o">=</span><span class="s2">&quot;mean&quot;</span><span class="p">,</span> <span class="n">aggregate_leaves_first</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">y_pred_rf</span><span class="p">,</span> <span class="n">y_pred_qrf</span><span class="p">)</span>

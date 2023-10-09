@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
-    <title>ExtraTreesQuantileRegressor &#8212; Version 1.2.2</title>
+    <title>ExtraTreesQuantileRegressor &#8212; Version 1.2.3</title>
   
   
   
@@ -42,7 +42,7 @@
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=ac02cc09edc035673794" />
   <script src="../_static/vendor/fontawesome/6.1.2/js/all.min.js?digest=ac02cc09edc035673794"></script>
 
-    <script src="../_static/documentation_options.js?v=0ed1cf23"></script>
+    <script src="../_static/documentation_options.js?v=a791bb45"></script>
     <script src="../_static/doctools.js?v=888ff710"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/js/copybutton.js?v=26522df0"></script>
@@ -123,7 +123,7 @@
   
   
   
-    <p class="title logo__title">Version 1.2.2</p>
+    <p class="title logo__title">Version 1.2.3</p>
   
 </a></div>
     
@@ -384,10 +384,16 @@ over-fitting.</p>
 predict. Each quantile must be strictly between 0 and 1. If “mean”,
 the model predicts the mean.</p>
 </dd>
-<dt><strong>criterion</strong><span class="classifier">{“squared_error”, “absolute_error”}, default=”squared_error”</span></dt><dd><p>The function to measure the quality of a split. Supported criteria
+<dt><strong>criterion</strong><span class="classifier">{“squared_error”, “absolute_error”, “friedman_mse”, “poisson”},             default=”squared_error”</span></dt><dd><p>The function to measure the quality of a split. Supported criteria
 are “squared_error” for the mean squared error, which is equal to
-variance reduction as feature selection criterion, and “absolute_error”
-for the mean absolute error.</p>
+variance reduction as feature selection criterion and minimizes the L2
+loss using the mean of each terminal node, “friedman_mse”, which uses
+mean squared error with Friedman’s improvement score for potential
+splits, “absolute_error” for the mean absolute error, which minimizes
+the L1 loss using the median of each terminal node, and “poisson” which
+uses reduction in Poisson deviance to find splits.
+Training using “absolute_error” is significantly slower
+than when using “squared_error”.</p>
 </dd>
 <dt><strong>max_depth</strong><span class="classifier">int, default=None</span></dt><dd><p>The maximum depth of the tree. If None, then nodes are expanded until
 all leaves are pure or until all leaves contain less than
@@ -466,8 +472,10 @@ if <code class="docutils literal notranslate"><span class="pre">sample_weight</s
 <dt><strong>bootstrap</strong><span class="classifier">bool, default=False</span></dt><dd><p>Whether bootstrap samples are used when building trees. If False, the
 whole dataset is used to build each tree.</p>
 </dd>
-<dt><strong>oob_score</strong><span class="classifier">bool, default=False</span></dt><dd><p>Whether to use out-of-bag samples to estimate the generalization score.
-Only available if bootstrap=True.</p>
+<dt><strong>oob_score</strong><span class="classifier">bool or callable, default=False</span></dt><dd><p>Whether to use out-of-bag samples to estimate the generalization score.
+By default, <a class="reference external" href="https://scikit-learn.org/stable/modules/generated/sklearn.metrics.accuracy_score.html#sklearn.metrics.accuracy_score" title="(in scikit-learn v1.3)"><code class="xref py py-func docutils literal notranslate"><span class="pre">accuracy_score</span></code></a> is used.
+Provide a callable with signature <code class="docutils literal notranslate"><span class="pre">metric(y_true,</span> <span class="pre">y_pred)</span></code> to use a
+custom metric. Only available if <code class="docutils literal notranslate"><span class="pre">bootstrap=True</span></code>.</p>
 </dd>
 <dt><strong>n_jobs</strong><span class="classifier">int, default=None</span></dt><dd><p>The number of jobs to run in parallel. <a class="reference internal" href="#quantile_forest.ExtraTreesQuantileRegressor.fit" title="quantile_forest.ExtraTreesQuantileRegressor.fit"><code class="xref py py-meth docutils literal notranslate"><span class="pre">fit</span></code></a>, <a class="reference internal" href="#quantile_forest.ExtraTreesQuantileRegressor.predict" title="quantile_forest.ExtraTreesQuantileRegressor.predict"><code class="xref py py-meth docutils literal notranslate"><span class="pre">predict</span></code></a>,
 <a class="reference internal" href="#quantile_forest.ExtraTreesQuantileRegressor.decision_path" title="quantile_forest.ExtraTreesQuantileRegressor.decision_path"><code class="xref py py-meth docutils literal notranslate"><span class="pre">decision_path</span></code></a> and <a class="reference internal" href="#quantile_forest.ExtraTreesQuantileRegressor.apply" title="quantile_forest.ExtraTreesQuantileRegressor.apply"><code class="xref py py-meth docutils literal notranslate"><span class="pre">apply</span></code></a> are all parallelized over the
@@ -506,9 +514,10 @@ to train each base estimator.</p>
 </dd>
 <dt class="field-even">Attributes<span class="colon">:</span></dt>
 <dd class="field-even"><dl>
-<dt><a class="reference internal" href="#quantile_forest.ExtraTreesQuantileRegressor.base_estimator_" title="quantile_forest.ExtraTreesQuantileRegressor.base_estimator_"><code class="xref py py-obj docutils literal notranslate"><span class="pre">base_estimator_</span></code></a><span class="classifier">ExtraTreeQuantileRegressor</span></dt><dd><p>Estimator used to grow the ensemble.</p>
+<dt><strong>estimator_</strong><span class="classifier">ExtraTreeRegressor</span></dt><dd><p>The child estimator template used to create the collection of fitted
+sub-estimators.</p>
 </dd>
-<dt><strong>estimators_</strong><span class="classifier">list of ForestRegressor</span></dt><dd><p>The collection of fitted sub-estimators.</p>
+<dt><strong>estimators_</strong><span class="classifier">list of DecisionTreeRegressor</span></dt><dd><p>The collection of fitted sub-estimators.</p>
 </dd>
 <dt><a class="reference internal" href="#quantile_forest.ExtraTreesQuantileRegressor.feature_importances_" title="quantile_forest.ExtraTreesQuantileRegressor.feature_importances_"><code class="xref py py-obj docutils literal notranslate"><span class="pre">feature_importances_</span></code></a><span class="classifier">ndarray of shape (n_features,)</span></dt><dd><p>The impurity-based feature importances.</p>
 </dd>
@@ -786,7 +795,7 @@ number of training samples relative to siblings is small, weighted
 quantiles can be more efficient to compute than unweighted ones.</p>
 </dd>
 <dt><strong>weighted_leaves</strong><span class="classifier">bool, default=True</span></dt><dd><p>Weight samples inversely to the size of their leaf node.
-Only used if <code class="docutils literal notranslate"><span class="pre">weighted_quantile=True</span></code>.</p>
+Only used if <code class="docutils literal notranslate"><span class="pre">weighted_quantile=True</span></code> and <code class="docutils literal notranslate"><span class="pre">max_samples_leaf!=1</span></code>.</p>
 </dd>
 <dt><strong>aggregate_leaves_first</strong><span class="classifier">bool, default=True</span></dt><dd><p>Calculate predictions using aggregated leaf values. If True, a
 single prediction is calculated over the aggregated leaf values.
