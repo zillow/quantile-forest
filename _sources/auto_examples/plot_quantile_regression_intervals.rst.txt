@@ -139,7 +139,7 @@ intervals on the California Housing dataset.
 
         fig, (ax1, ax2) = plt.subplots(nrows=1, ncols=2, figsize=(10, 4))
 
-        usd_formatter = FuncFormatter(lambda x, p: f"${format(int(x) * 100, ',')}k")
+        usd_formatter = FuncFormatter(lambda x, p: f"${format(int(x * 100), ',')}k")
 
         y_pred_interval = y_pred_upp - y_pred_low
         sort_idx = np.argsort(y_pred)
@@ -169,7 +169,7 @@ intervals on the California Housing dataset.
 
 .. rst-class:: sphx-glr-timing
 
-   **Total running time of the script:** (0 minutes 5.478 seconds)
+   **Total running time of the script:** (0 minutes 6.505 seconds)
 
 
 .. _sphx_glr_download_auto_examples_plot_quantile_regression_intervals.py:

@@ -106,7 +106,7 @@ def plot_calibration_and_intervals(y_true, y_pred, y_pred_low, y_pred_upp):
 
     fig, (ax1, ax2) = plt.subplots(nrows=1, ncols=2, figsize=(10, 4))
 
-    usd_formatter = FuncFormatter(lambda x, p: f"${format(int(x) * 100, ',')}k")
+    usd_formatter = FuncFormatter(lambda x, p: f"${format(int(x * 100), ',')}k")
 
     y_pred_interval = y_pred_upp - y_pred_low
     sort_idx = np.argsort(y_pred)
