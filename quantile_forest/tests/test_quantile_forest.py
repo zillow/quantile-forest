@@ -592,6 +592,9 @@ def check_proximity_counts(name):
     # Check error if `max_proximities` < 1.
     assert_raises(ValueError, est.proximity_counts, X, max_proximities=0)
 
+    # Check error if `max_proximities` is a float.
+    assert_raises(ValueError, est.proximity_counts, X, max_proximities=1.5)
+
     # Check that proximity counts match expected counts without splits.
     est = ForestRegressor(
         n_estimators=1,

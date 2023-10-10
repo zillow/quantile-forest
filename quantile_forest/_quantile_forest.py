@@ -445,15 +445,19 @@ class BaseForestQuantileRegressor(ForestRegressor):
 
         if quantiles is None:
             if self.default_quantiles is None:
-                quantiles = [-1]
+                quantiles = ["mean"]
             else:
                 quantiles = self.default_quantiles
 
-        if quantiles == "mean":
-            quantiles = [-1]
-
         if not isinstance(quantiles, list):
             quantiles = [quantiles]
+
+        if quantiles == ["mean"]:
+            quantiles = [-1]
+        else:
+            for q in quantiles:
+                if not isinstance(q, (float, int)) or (q < 0 or q > 1):
+                    raise ValueError("Quantiles must be in the range [0, 1], got {0}.".format(q))
 
         if not isinstance(interpolation, (bytes, bytearray)):
             interpolation = interpolation.encode()
@@ -674,6 +678,10 @@ class BaseForestQuantileRegressor(ForestRegressor):
                 "max_proximities must larger than or equal to 1 if not None, got {0}.".format(
                     max_proximities
                 )
+            )
+        elif not isinstance(max_proximities, (int)):
+            raise ValueError(
+                "max_proximities must be an integer if not None, got {0}.".format(max_proximities)
             )
 
         if oob_score:
