@@ -367,7 +367,7 @@ document.write(`
 \[\frac{1}{T} \sum_{t=1}^{T} \frac{\mathbb{1}(y_j \in L(x))}{\sum_{i=1}^N \mathbb{1}(y_i \in L(x))},\]</div>
 <p>where <span class="math notranslate nohighlight">\(L(x)\)</span> denotes the leaf that <span class="math notranslate nohighlight">\(x\)</span> falls into.</p>
 <p>Informally, this means that given a new unknown sample, we first find the leaf that it falls into at each tree. Then for each <code class="docutils literal notranslate"><span class="pre">(X,</span> <span class="pre">y)</span></code> pair in the training data, a weight or frequency is given to <code class="docutils literal notranslate"><span class="pre">y</span></code> for each tree based on the number of times each training sample falls into the same leaf as the new sample. This information can then be used to calculate the empirical quantile estimates.</p>
-<p>This approach was first proposed by <span id="id2">Meinshausen [<a class="reference internal" href="#id4" title="Nicolai Meinshausen. Quantile Regression Forests. Journal of Machine Learning Research, 7(6), 983-999, 2006. URL: https://www.jmlr.org/papers/volume7/meinshausen06a/meinshausen06a.pdf.">Mei06</a>]</span>.</p>
+<p>This approach was first proposed by <span id="id2">Meinshausen [<a class="reference internal" href="references.html#id3" title="Nicolai Meinshausen. Quantile Regression Forests. Journal of Machine Learning Research, 7(6), 983-999, 2006. URL: https://www.jmlr.org/papers/volume7/meinshausen06a/meinshausen06a.pdf.">Mei06</a>]</span>.</p>
 </section>
 <section id="fitting-and-predicting">
 <h2>Fitting and Predicting<a class="headerlink" href="#fitting-and-predicting" title="Link to this heading">#</a></h2>
@@ -496,16 +496,6 @@ document.write(`
 </pre></div>
 </div>
 </section>
-<section id="references">
-<h2>References<a class="headerlink" href="#references" title="Link to this heading">#</a></h2>
-<div class="docutils container" id="id3">
-<div class="citation" id="id4" role="doc-biblioentry">
-<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id2">Mei06</a><span class="fn-bracket">]</span></span>
-<p>Nicolai Meinshausen. <em>Quantile Regression Forests</em>. Journal of Machine Learning Research, 7(6), 983-999, 2006. URL: <a class="reference external" href="https://www.jmlr.org/papers/volume7/meinshausen06a/meinshausen06a.pdf">https://www.jmlr.org/papers/volume7/meinshausen06a/meinshausen06a.pdf</a>.</p>
-</div>
-</div>
-</div>
-</section>
 </section>
 
 
@@ -556,7 +546,6 @@ document.write(`
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#fitting-and-predicting">Fitting and Predicting</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#quantile-ranks">Quantile Ranks</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#proximity-counts">Proximity Counts</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#references">References</a></li>
 </ul>
   </nav></div>
 

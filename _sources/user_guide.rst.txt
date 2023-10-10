@@ -163,7 +163,3 @@ The maximum number of proximity counts output per test sample can be limited by 
 Out-of-bag (OOB) proximity counts can be returned by specifying `oob_score = True`::
 
     >>> proximities = reg.proximity_counts(X_train, oob_score=True)
-
-References
-----------
-.. bibliography::
