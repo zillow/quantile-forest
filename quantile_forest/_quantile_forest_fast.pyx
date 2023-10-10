@@ -300,7 +300,7 @@ cpdef vector[double] calc_weighted_quantile(
     cdef SIZE_t i, j
     cdef double f
     cdef double quantile
-    cdef vector[double] cum_weights
+    cdef vector[double] cum_weights, sorted_quantile_indices
     cdef int idx_floor, idx_ceil
     cdef double p, p_floor, p_ceil
     cdef double v_floor, v_ceil, frac
@@ -317,12 +317,6 @@ cpdef vector[double] calc_weighted_quantile(
     if not issorted:
         parallel_qsort_asc(inputs, weights, 0, n_inputs-1)
 
-    # Get monotonic sorting of quantiles for efficient calculation.
-    sorted_quantile_idx = vector[double](n_quantiles)
-    for i in range(<SIZE_t>(sorted_quantile_idx.size())):
-        sorted_quantile_idx[i] = <double>i
-    parallel_qsort_asc(quantiles, sorted_quantile_idx, 0, n_quantiles-1)
-
     cum_weights = vector[double](n_inputs)
 
     # Calculate the empirical cumulative distribution function (ECDF).
@@ -335,6 +329,12 @@ cpdef vector[double] calc_weighted_quantile(
 
     f = cum_weights[n_inputs-1] + 1 - (2*C)
 
+    # Get the indices that would sort the quantiles in ascending order.
+    sorted_quantile_indices = vector[double](n_quantiles)
+    for i in range(<SIZE_t>(sorted_quantile_indices.size())):
+        sorted_quantile_indices[i] = <double>i
+    parallel_qsort_asc(quantiles, sorted_quantile_indices, 0, n_quantiles-1)
+
     out = vector[double](n_quantiles)
 
     idx_floor = 0
@@ -344,7 +344,7 @@ cpdef vector[double] calc_weighted_quantile(
         quantile = quantiles[i]
 
         # Assign the output based on the input quantile ordering.
-        i = <SIZE_t>sorted_quantile_idx[i]
+        i = <SIZE_t>sorted_quantile_indices[i]
 
         # Calculate the quantile's proportion of total weight.
         p = quantile * f + C
