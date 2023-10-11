@@ -1,6 +1,6 @@
-#cython: boundscheck=False
-#cython: cdivision=True
-#cython: wraparound=False
+# cython: boundscheck=False
+# cython: cdivision=True
+# cython: wraparound=False
 
 from libc.math cimport ceil, fabs, floor, round
 from libc.string cimport memset
@@ -690,24 +690,20 @@ cdef class QuantileForest:
             for q in quantiles:
                 if q < 0 or q > 1:
                     raise ValueError(
-                        "Quantiles must be in the range "
-                        "[0, 1], got {0}.".format(q)
+                        f"Quantiles must be in the range [0, 1], got {q}."
                     )
 
         if X_indices is not None:
             if X_indices.shape[1] != X_leaves.shape[1]:
                 raise ValueError(
-                    "X_indices.shape[1]={0} must be equal to "
-                    "X_leaves.shape[1]={1}, or X_indices must "
-                    "be None.".format(X_indices.shape[1], X_leaves.shape[1])
+                    f"X_indices.shape[1]={X_indices.shape[1]} must equal "
+                    f"X_leaves.shape[1]={X_leaves.shape[1]}, or X_indices "
+                    "must be None."
                 )
 
         interps = [b"linear", b"lower", b"higher", b"midpoint", b"nearest"]
-        if not interpolation in interps:
-            raise ValueError(
-                "Invalid interpolation method {0}."
-                "".format(interpolation)
-            )
+        if interpolation not in interps:
+            raise ValueError(f"Invalid interpolation method {interpolation}.")
 
         # Initialize NumPy array with NaN values and get view for nogil.
         preds = np.full((n_samples, n_quantiles), np.nan, dtype=np.float64)
@@ -737,7 +733,7 @@ cdef class QuantileForest:
                 n_total_samples = 0
                 n_total_trees = 0
                 for j in range(n_trees):
-                    if X_indices is None or X_indices[i, j] == True:
+                    if X_indices is None or X_indices[i, j] is True:
                         idx = 0 if aggregate_leaves_first else j
                         train_indices[idx].insert(
                             train_indices[idx].end(),
@@ -754,7 +750,7 @@ cdef class QuantileForest:
                         n_total_trees += 1
 
                 for j in range(n_trees):
-                    if X_indices is None or X_indices[i, j] == True:
+                    if X_indices is None or X_indices[i, j] is True:
                         idx = 0 if aggregate_leaves_first else j
                         train_weight = 1
                         if weighted_leaves:
@@ -766,7 +762,7 @@ cdef class QuantileForest:
                         train_weights[idx].insert(
                             train_weights[idx].end(),
                             max_idx,
-                            train_weight
+                            train_weight,
                         )
 
                 if weighted_quantile:
@@ -911,14 +907,14 @@ cdef class QuantileForest:
         if X_indices is not None:
             if X_indices.shape[1] != X_leaves.shape[1]:
                 raise ValueError(
-                    "X_indices.shape[1]={0} must be equal to "
-                    "X_leaves.shape[1]={1}, or X_indices must "
-                    "be None.".format(X_indices.shape[1], X_leaves.shape[1])
+                    f"X_indices.shape[1]={X_indices.shape[1]} must equal "
+                    f"X_leaves.shape[1]={X_leaves.shape[1]}, or X_indices "
+                    "must be None."
                 )
 
         kinds = [b"rank", b"weak", b"strict", b"mean"]
-        if not kind in kinds:
-            raise ValueError("Invalid kind {0}.".format(kind))
+        if kind not in kinds:
+            raise ValueError(f"Invalid kind {kind}.")
 
         # Initialize NumPy array with NaN values and get view for nogil.
         ranks = np.full((n_samples), np.nan, dtype=np.float64)
@@ -934,7 +930,7 @@ cdef class QuantileForest:
                 # Accumulate training indices across leaves for each tree.
                 # If `aggregate_leaves_first`, also accumulate across trees.
                 for j in range(n_trees):
-                    if X_indices is None or X_indices[i, j] == True:
+                    if X_indices is None or X_indices[i, j] is True:
                         idx = 0 if aggregate_leaves_first else j
                         train_indices[idx].insert(
                             train_indices[idx].end(),
@@ -1026,9 +1022,9 @@ cdef class QuantileForest:
         if X_indices is not None:
             if X_indices.shape[1] != X_leaves.shape[1]:
                 raise ValueError(
-                    "X_indices.shape[1]={0} must be equal to "
-                    "X_leaves.shape[1]={1}, or X_indices must "
-                    "be None.".format(X_indices.shape[1], X_leaves.shape[1])
+                    f"X_indices.shape[1]={X_indices.shape[1]} must equal "
+                    f"X_leaves.shape[1]={X_leaves.shape[1]}, or X_indices "
+                    "must be None."
                 )
 
         if max_proximities < 1 or n_train < max_proximities:
@@ -1045,7 +1041,7 @@ cdef class QuantileForest:
 
                 # Accumulate training indices across leaves for each tree.
                 for j in range(n_trees):
-                    if X_indices is None or X_indices[i, j] == True:
+                    if X_indices is None or X_indices[i, j] is True:
                         train_indices.insert(
                             train_indices.end(),
                             &self.y_train_leaves[j, X_leaves[i, j], 0],

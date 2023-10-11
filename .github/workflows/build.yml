@@ -25,13 +25,13 @@ jobs:
 
       - name: Check formatting with black
         run: |
-          black --line-length 100 --diff --color .
-          black --line-length=100 --check .
+          black --line-length 99 --diff --color .
+          black --line-length=99 --check .
 
       - name: Linting with flake8
         run: |
           flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics || exit 1
-          flake8 . --count --exit-zero --max-line-length=100 --ignore=E402,W503 --statistics
+          flake8 . --count --exit-zero --max-line-length=99 --ignore=E402,W503 --statistics
 
       - name: Test with pytest
         run: |

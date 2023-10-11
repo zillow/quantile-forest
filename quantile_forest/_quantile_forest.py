@@ -22,10 +22,10 @@ The module structure is the following:
 Only single output problems are handled.
 """
 
-import numbers
 import random
 import warnings
 from math import ceil
+from numbers import Integral, Real
 from warnings import warn
 
 import joblib
@@ -100,8 +100,8 @@ class BaseForestQuantileRegressor(ForestRegressor):
         self : object
             Fitted estimator.
         """
-        super(BaseForestQuantileRegressor, self).fit(X, y, sample_weight=sample_weight)
         X, y = self._validate_data(X, y, multi_output=False, accept_sparse="csc", dtype=DTYPE)
+        super(BaseForestQuantileRegressor, self).fit(X, y, sample_weight=sample_weight)
 
         # Sort the target values in ascending order.
         # Use sorter to maintain mapping to original order.
@@ -159,21 +159,19 @@ class BaseForestQuantileRegressor(ForestRegressor):
         """
         n_samples = X.shape[0]
 
-        if isinstance(self.max_samples_leaf, (numbers.Integral, np.integer)):
+        if isinstance(self.max_samples_leaf, (Integral, np.integer)):
             if self.max_samples_leaf < 1:
                 raise ValueError(
-                    "If max_samples_leaf is an integer, it must be be >= 1, got {0}.".format(
-                        self.max_samples_leaf
-                    )
+                    "If max_samples_leaf is an integer, it must be be >= 1, "
+                    f"got {self.max_samples_leaf}."
                 )
             max_samples_leaf = self.max_samples_leaf
             leaf_subsample = True
-        elif isinstance(self.max_samples_leaf, numbers.Real):
+        elif isinstance(self.max_samples_leaf, Real):
             if not 0.0 < self.max_samples_leaf <= 1.0:
                 raise ValueError(
-                    "If max_samples_leaf is a float, it must be in range (0, 1], got {0}.".format(
-                        self.max_samples_leaf
-                    )
+                    "If max_samples_leaf is a float, it must be in range (0, 1], "
+                    f"got {self.max_samples_leaf}."
                 )
             max_samples_leaf = int(ceil(self.max_samples_leaf * n_samples))
             leaf_subsample = True
@@ -182,9 +180,8 @@ class BaseForestQuantileRegressor(ForestRegressor):
             leaf_subsample = False
         else:
             raise ValueError(
-                "max_samples_leaf must be of integer, float, or None type, got {0}.".format(
-                    type(self.max_samples_leaf)
-                )
+                "max_samples_leaf must be of integer, float, or None type, got "
+                f"{self.max_samples_leaf}."
             )
 
         with warnings.catch_warnings():
@@ -457,7 +454,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
         else:
             for q in quantiles:
                 if not isinstance(q, (float, int)) or (q < 0 or q > 1):
-                    raise ValueError("Quantiles must be in the range [0, 1], got {0}.".format(q))
+                    raise ValueError(f"Quantiles must be in the range [0, 1], got {q}.")
 
         if not isinstance(interpolation, (bytes, bytearray)):
             interpolation = interpolation.encode()
@@ -675,13 +672,12 @@ class BaseForestQuantileRegressor(ForestRegressor):
             max_proximities = 0
         elif max_proximities < 1:
             raise ValueError(
-                "max_proximities must larger than or equal to 1 if not None, got {0}.".format(
-                    max_proximities
-                )
+                "`max_proximities` must be larger than or equal to 1 if not"
+                f" None, got {max_proximities}."
             )
         elif not isinstance(max_proximities, (int)):
             raise ValueError(
-                "max_proximities must be an integer if not None, got {0}.".format(max_proximities)
+                f"`max_proximities` must be an integer if not None, got {max_proximities}."
             )
 
         if oob_score:
@@ -711,7 +707,9 @@ class BaseForestQuantileRegressor(ForestRegressor):
 
         if return_sorted:
             # Sort each dict of proximities in descending order by count.
-            proximities = [sorted(p.items(), key=lambda x: x[1], reverse=True) for p in proximities]
+            proximities = [
+                sorted(p.items(), key=lambda x: x[1], reverse=True) for p in proximities
+            ]
         else:
             proximities = [p.items() for p in proximities]
 
