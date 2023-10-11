@@ -82,7 +82,7 @@ def configure_extension_modules():
         ),
     ]
 
-    return cythonize(EXTENSIONS)
+    return cythonize(EXTENSIONS, compiler_directives={"language_level": "3"})
 
 
 def setup_package():

@@ -24,7 +24,7 @@ cdef inline void parallel_qsort_asc(
     vector[double]& b,
     int left,
     int right,
-) nogil:
+) noexcept nogil:
     """Sort lists `a` and `b` in ascending order by `a`."""
     cdef int i, j
     cdef double pivot
@@ -52,7 +52,7 @@ cdef inline void parallel_qsort_asc(
         parallel_qsort_asc(a, b, i, right)
 
 
-cpdef double calc_mean(vector[double]& inputs) nogil:
+cpdef double calc_mean(vector[double]& inputs) noexcept nogil:
     """Return the mean for list of inputs.
 
     Parameters
@@ -84,7 +84,7 @@ cpdef double calc_mean(vector[double]& inputs) nogil:
 cpdef double calc_weighted_mean(
     vector[double]& inputs,
     vector[double]& weights,
-) nogil:
+) noexcept nogil:
     """Return the mean for list of weighted inputs.
 
     Parameters
@@ -126,7 +126,7 @@ cpdef vector[double] calc_quantile(
     vector[double] quantiles,
     char* interpolation=b"linear",
     bint issorted=<bint>False,
-) nogil:
+) noexcept nogil:
     """Return quantiles for list of inputs.
 
     A desired quantile is calculated from the input rank ``x`` such that
@@ -243,7 +243,7 @@ cpdef vector[double] calc_weighted_quantile(
     vector[double] quantiles,
     char* interpolation=b"linear",
     bint issorted=<bint>False,
-) nogil:
+) noexcept nogil:
     """Return quantiles for list of weighted inputs.
 
     The weighted quantile is calculated by first calculating the empirical
@@ -439,7 +439,7 @@ cpdef double calc_quantile_rank(
     double score,
     char* kind=b"rank",
     bint issorted=<bint>False,
-) nogil:
+) noexcept nogil:
     """Return quantile rank of score relative to inputs.
 
     Parameters
@@ -511,7 +511,7 @@ cpdef double calc_quantile_rank(
 cpdef vector[SIZE_t] generate_unsampled_indices(
     vector[SIZE_t] sample_indices,
     vector[set[SIZE_t]] duplicates,
-) nogil:
+) noexcept nogil:
     """Return a list of every unsampled index, accounting for duplicates.
 
     Parameters
