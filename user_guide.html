@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
-    <title>User Guide &#8212; Version 1.2.3</title>
+    <title>User Guide &#8212; Version 1.2.4dev</title>
   
   
   
@@ -42,7 +42,7 @@
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=ac02cc09edc035673794" />
   <script src="_static/vendor/fontawesome/6.1.2/js/all.min.js?digest=ac02cc09edc035673794"></script>
 
-    <script src="_static/documentation_options.js?v=a791bb45"></script>
+    <script src="_static/documentation_options.js?v=28b8c513"></script>
     <script src="_static/doctools.js?v=888ff710"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/copybutton.js?v=26522df0"></script>
@@ -123,7 +123,7 @@
   
   
   
-    <p class="title logo__title">Version 1.2.3</p>
+    <p class="title logo__title">Version 1.2.4dev</p>
   
 </a></div>
     
@@ -362,11 +362,11 @@ document.write(`
 <section id="quantile-regression-forests">
 <h2>Quantile Regression Forests<a class="headerlink" href="#quantile-regression-forests" title="Link to this heading">#</a></h2>
 <p>A standard decision tree can be extended in a straightforward way to estimate conditional quantiles. When a decision tree is fit, rather than storing only the sufficient statistics of the response variable at the leaf node, such as the mean and variance, all of the response values can be stored with the leaf node. At prediction time, these values can then be used to calculate empirical quantile estimates.</p>
-<p>The quantile-based approach can be extended to random forests. To estimate <span class="math notranslate nohighlight">\(F(Y=y|x) = q\)</span>, each response value in <code class="docutils literal notranslate"><span class="pre">y_train</span></code> is given a weight or frequency. Formally, the weight or frequency given to the <span class="math notranslate nohighlight">\(j\)</span>th sample of <code class="docutils literal notranslate"><span class="pre">y_train</span></code>, <span class="math notranslate nohighlight">\(y_j\)</span>, while estimating the quantile is</p>
+<p>The quantile-based approach can be extended to random forests. To estimate <span class="math notranslate nohighlight">\(F(Y=y|x) = q\)</span>, each response value in the training set is given a weight or frequency. Formally, the weight or frequency given to the <span class="math notranslate nohighlight">\(j\)</span>th training sample, <span class="math notranslate nohighlight">\(y_j\)</span>, while estimating the quantile is</p>
 <div class="math notranslate nohighlight">
 \[\frac{1}{T} \sum_{t=1}^{T} \frac{\mathbb{1}(y_j \in L(x))}{\sum_{i=1}^N \mathbb{1}(y_i \in L(x))},\]</div>
 <p>where <span class="math notranslate nohighlight">\(L(x)\)</span> denotes the leaf that <span class="math notranslate nohighlight">\(x\)</span> falls into.</p>
-<p>Informally, this means that given a new unknown sample, we first find the leaf that it falls into at each tree. Then for each <code class="docutils literal notranslate"><span class="pre">(X,</span> <span class="pre">y)</span></code> pair in the training data, a weight or frequency is given to <code class="docutils literal notranslate"><span class="pre">y</span></code> for each tree based on the number of times each training sample falls into the same leaf as the new sample. This information can then be used to calculate the empirical quantile estimates.</p>
+<p>Informally, this means that given a new unknown sample, we first find the leaf that it falls into for each tree in the ensemble. Each training sample <span class="math notranslate nohighlight">\(y_j\)</span> that falls into the same leaf as the new sample is given a weight that equals the fraction of samples in the leaf. Each <span class="math notranslate nohighlight">\(y_j\)</span> that does not fall into the same leaf as the new sample is given a weight or frequency of zero. The weights or frequencies for each <span class="math notranslate nohighlight">\(y_j\)</span> are then summed or aggregated across all of the trees in the ensemble. This information can then be used to calculate the empirical quantile estimates.</p>
 <p>This approach was first proposed by <span id="id2">Meinshausen [<a class="reference internal" href="references.html#id3" title="Nicolai Meinshausen. Quantile Regression Forests. Journal of Machine Learning Research, 7(6), 983-999, 2006. URL: https://www.jmlr.org/papers/volume7/meinshausen06a/meinshausen06a.pdf.">Mei06</a>]</span>.</p>
 </section>
 <section id="fitting-and-predicting">
