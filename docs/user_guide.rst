@@ -22,7 +22,7 @@ Quantile Regression Forests
 
 A standard decision tree can be extended in a straightforward way to estimate conditional quantiles. When a decision tree is fit, rather than storing only the sufficient statistics of the response variable at the leaf node, such as the mean and variance, all of the response values can be stored with the leaf node. At prediction time, these values can then be used to calculate empirical quantile estimates.
 
-The quantile-based approach can be extended to random forests. To estimate :math:`F(Y=y|x) = q`, each response value in `y_train` is given a weight or frequency. Formally, the weight or frequency given to the :math:`j`\th sample of `y_train`, :math:`y_j`, while estimating the quantile is
+The quantile-based approach can be extended to random forests. To estimate :math:`F(Y=y|x) = q`, each response value in the training set is given a weight or frequency. Formally, the weight or frequency given to the :math:`j`\th training sample, :math:`y_j`, while estimating the quantile is
 
 .. math::
 
@@ -30,7 +30,7 @@ The quantile-based approach can be extended to random forests. To estimate :math
 
 where :math:`L(x)` denotes the leaf that :math:`x` falls into.
 
-Informally, this means that given a new unknown sample, we first find the leaf that it falls into at each tree. Then for each `(X, y)` pair in the training data, a weight or frequency is given to `y` for each tree based on the number of times each training sample falls into the same leaf as the new sample. This information can then be used to calculate the empirical quantile estimates.
+Informally, this means that given a new unknown sample, we first find the leaf that it falls into for each tree in the ensemble. Each training sample :math:`y_j` that falls into the same leaf as the new sample is given a weight that equals the fraction of samples in the leaf. Each :math:`y_j` that does not fall into the same leaf as the new sample is given a weight or frequency of zero. The weights or frequencies for each :math:`y_j` are then summed or aggregated across all of the trees in the ensemble. This information can then be used to calculate the empirical quantile estimates.
 
 This approach was first proposed by :cite:t:`2006:meinshausen`.
 
