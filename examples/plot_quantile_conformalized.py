@@ -9,6 +9,7 @@ regression (CQR). CQR offers prediction intervals that attain valid coverage,
 while QRF may require additional calibration for reliable interval estimates.
 This example uses MAPIE to construct the CQR interval estimates with a QRF.
 """
+
 print(__doc__)
 
 import warnings

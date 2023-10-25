@@ -8,6 +8,7 @@ predict a conditional median and prediction intervals. The example compares
 the predictions to a ground truth function used to generate noisy samples.
 
 """
+
 print(__doc__)
 
 import matplotlib.pyplot as plt
