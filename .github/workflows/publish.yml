@@ -53,7 +53,7 @@ jobs:
           CIBW_PROJECT_REQUIRES_PYTHON: ">=3.8"
           CIBW_BEFORE_BUILD: pip install --verbose --editable .
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           path: ./wheelhouse/*.whl
 
