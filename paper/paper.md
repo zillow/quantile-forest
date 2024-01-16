@@ -11,7 +11,7 @@ authors:
 affiliations:
  - name: Zillow Group, USA
    index: 1
-date: 1 October 2023
+date: 16 January 2024
 bibliography: paper.bib
 ---
 
