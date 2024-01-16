@@ -58,7 +58,7 @@ def check_regression_toy(name, weighted_quantile):
 
     ForestRegressor = FOREST_REGRESSORS[name]
 
-    regr = ForestRegressor(n_estimators=10, max_samples_leaf=None, bootstrap=False, random_state=1)
+    regr = ForestRegressor(n_estimators=10, max_samples_leaf=None, bootstrap=False, random_state=0)
     regr.fit(X, y)
 
     # Check model and apply outputs shape.
@@ -97,30 +97,23 @@ def check_california_criterion(name, criterion):
     # Check for consistency on the California Housing Prices dataset.
     ForestRegressor = FOREST_REGRESSORS[name]
 
-    regr = ForestRegressor(n_estimators=5, criterion=criterion, random_state=1)
+    regr = ForestRegressor(n_estimators=5, criterion=criterion, max_features=None, random_state=0)
     regr.fit(X_california, y_california)
     score = regr.score(X_california, y_california, quantiles=0.5)
-    assert score > 0.85, "Failed with max_features=None, criterion {0} and score = {1}".format(
-        criterion, score
-    )
+    assert score > 0.9, f"Failed with max_features=None, criterion {criterion} and score={score}."
 
     # Test maximum features.
-    regr = ForestRegressor(n_estimators=5, criterion=criterion, max_features=6, random_state=1)
+    regr = ForestRegressor(n_estimators=5, criterion=criterion, max_features=6, random_state=0)
     regr.fit(X_california, y_california)
     score = regr.score(X_california, y_california, quantiles=0.5)
-    assert score > 0.9, "Failed with max_features=6, criterion {0} and score = {1}".format(
-        criterion, score
-    )
+    assert score > 0.9, f"Failed with max_features=6, criterion {criterion} and score={score}."
 
     # Test sample weights.
-    regr = ForestRegressor(n_estimators=5, criterion=criterion, random_state=1)
-
+    regr = ForestRegressor(n_estimators=5, criterion=criterion, random_state=0)
     sample_weight = np.ones(y_california.shape)
     regr.fit(X_california, y_california, sample_weight=sample_weight)
     score = regr.score(X_california, y_california, quantiles=0.5)
-    assert score > 0.9, "Failed with criterion {0}, sample weight and score = {1}".format(
-        criterion, score
-    )
+    assert score > 0.9, f"Failed with criterion {criterion}, sample weight and score={score}."
 
 
 @pytest.mark.parametrize("name", FOREST_REGRESSORS)
@@ -592,6 +585,9 @@ def check_proximity_counts(name):
     # Check error if `max_proximities` < 1.
     assert_raises(ValueError, est.proximity_counts, X, max_proximities=0)
 
+    # Check error if `max_proximities` is a float.
+    assert_raises(ValueError, est.proximity_counts, X, max_proximities=1.5)
+
     # Check that proximity counts match expected counts without splits.
     est = ForestRegressor(
         n_estimators=1,
@@ -716,16 +712,14 @@ def test_oob_samples(name):
 
 def check_oob_samples_duplicates(name):
     # Check OOB sampling with duplicates.
-    X = np.array(
-        [
-            [1, 2, 3],
-            [4, 5, 6],
-            [7, 8, 9],
-            [10, 11, 12],
-            [13, 14, 15],
-            [13, 14, 15],
-        ]
-    )
+    X = np.array([
+        [1, 2, 3],
+        [4, 5, 6],
+        [7, 8, 9],
+        [10, 11, 12],
+        [13, 14, 15],
+        [13, 14, 15],
+    ])
     y = np.array([-1, 10, 20, 30, 40, 41], dtype=np.float64)
 
     ForestRegressor = FOREST_REGRESSORS[name]
@@ -948,7 +942,13 @@ def test_predict_oob(
     weighted_quantile,
     aggregate_leaves_first,
 ):
-    check_predict_oob(name, max_samples_leaf, quantiles, weighted_quantile, aggregate_leaves_first)
+    check_predict_oob(
+        name,
+        max_samples_leaf,
+        quantiles,
+        weighted_quantile,
+        aggregate_leaves_first,
+    )
 
 
 def check_quantile_ranks_oob(name):
@@ -1249,7 +1249,9 @@ def test_calc_weighted_quantile():
     ]
 
     # Check that empty array is returned for weights that sum to 0.
-    actual = [calc_weighted_quantile(i, w, quantiles) for i, w in _dicts_to_weighted_inputs(inputs)]
+    actual = [
+        calc_weighted_quantile(i, w, quantiles) for i, w in _dicts_to_weighted_inputs(inputs)
+    ]
     expected = [[], [], []]
     assert_array_equal(actual, expected)
 

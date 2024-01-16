@@ -22,10 +22,11 @@ The module structure is the following:
 Only single output problems are handled.
 """
 
-import numbers
 import random
 import warnings
+from abc import abstractmethod
 from math import ceil
+from numbers import Integral, Real
 from warnings import warn
 
 import joblib
@@ -39,6 +40,12 @@ from sklearn.ensemble._forest import (
 from sklearn.tree import DecisionTreeRegressor, ExtraTreeRegressor
 from sklearn.tree._tree import DTYPE
 from sklearn.utils import parse_version
+
+param_validation = True
+try:
+    from sklearn.utils._param_validation import Interval, RealNotInt
+except ImportError:
+    param_validation = False
 from sklearn.utils.validation import check_is_fitted
 
 from ._quantile_forest_fast import QuantileForest, generate_unsampled_indices
@@ -72,6 +79,50 @@ class BaseForestQuantileRegressor(ForestRegressor):
     instead.
     """
 
+    if param_validation:
+        _parameter_constraints: dict = {
+            **ForestRegressor._parameter_constraints,
+            **DecisionTreeRegressor._parameter_constraints,
+            "max_samples_leaf": [
+                None,
+                Interval(RealNotInt, 0, 1, closed="right"),
+                Interval(Integral, 1, None, closed="left"),
+            ],
+        }
+        _parameter_constraints.pop("splitter")
+
+    @abstractmethod
+    def __init__(
+        self,
+        estimator,
+        n_estimators=100,
+        *,
+        estimator_params=tuple(),
+        bootstrap=False,
+        oob_score=False,
+        n_jobs=None,
+        random_state=None,
+        verbose=0,
+        warm_start=False,
+        max_samples=None,
+        max_samples_leaf=1,
+    ):
+        init_dict = {
+            (
+                "base_estimator" if sklearn_version < parse_version("1.2.0") else "estimator"
+            ): estimator,
+            "n_estimators": n_estimators,
+            "estimator_params": estimator_params,
+            "bootstrap": bootstrap,
+            "oob_score": oob_score,
+            "n_jobs": n_jobs,
+            "random_state": random_state,
+            "verbose": verbose,
+            "warm_start": warm_start,
+            "max_samples": max_samples,
+        }
+        super().__init__(**init_dict)
+
     def fit(self, X, y, sample_weight=None, sparse_pickle=False):
         """Build a forest from the training set (X, y).
 
@@ -100,8 +151,28 @@ class BaseForestQuantileRegressor(ForestRegressor):
         self : object
             Fitted estimator.
         """
-        super(BaseForestQuantileRegressor, self).fit(X, y, sample_weight=sample_weight)
+        if param_validation:
+            self._validate_params()
+        else:
+            if isinstance(self.max_samples_leaf, (Integral, np.integer)):
+                if self.max_samples_leaf < 1:
+                    raise ValueError(
+                        "If max_samples_leaf is an integer, it must be be >= 1, "
+                        f"got {self.max_samples_leaf}."
+                    )
+            elif isinstance(self.max_samples_leaf, Real):
+                if not 0.0 < self.max_samples_leaf <= 1.0:
+                    raise ValueError(
+                        "If max_samples_leaf is a float, it must be in range (0, 1], "
+                        f"got {self.max_samples_leaf}."
+                    )
+            elif self.max_samples_leaf is not None:
+                raise ValueError(
+                    "max_samples_leaf must be of integer, float, or None type, got "
+                    f"{self.max_samples_leaf}."
+                )
         X, y = self._validate_data(X, y, multi_output=False, accept_sparse="csc", dtype=DTYPE)
+        super(BaseForestQuantileRegressor, self).fit(X, y, sample_weight=sample_weight)
 
         # Sort the target values in ascending order.
         # Use sorter to maintain mapping to original order.
@@ -159,22 +230,10 @@ class BaseForestQuantileRegressor(ForestRegressor):
         """
         n_samples = X.shape[0]
 
-        if isinstance(self.max_samples_leaf, (numbers.Integral, np.integer)):
-            if self.max_samples_leaf < 1:
-                raise ValueError(
-                    "If max_samples_leaf is an integer, it must be be >= 1, got {0}.".format(
-                        self.max_samples_leaf
-                    )
-                )
+        if isinstance(self.max_samples_leaf, (Integral, np.integer)):
             max_samples_leaf = self.max_samples_leaf
             leaf_subsample = True
-        elif isinstance(self.max_samples_leaf, numbers.Real):
-            if not 0.0 < self.max_samples_leaf <= 1.0:
-                raise ValueError(
-                    "If max_samples_leaf is a float, it must be in range (0, 1], got {0}.".format(
-                        self.max_samples_leaf
-                    )
-                )
+        elif isinstance(self.max_samples_leaf, Real):
             max_samples_leaf = int(ceil(self.max_samples_leaf * n_samples))
             leaf_subsample = True
         elif self.max_samples_leaf is None:
@@ -182,9 +241,8 @@ class BaseForestQuantileRegressor(ForestRegressor):
             leaf_subsample = False
         else:
             raise ValueError(
-                "max_samples_leaf must be of integer, float, or None type, got {0}.".format(
-                    type(self.max_samples_leaf)
-                )
+                "`max_samples_leaf` must be of integer, float, or None type, "
+                f"got {type(self.max_samples_leaf)}."
             )
 
         with warnings.catch_warnings():
@@ -445,15 +503,19 @@ class BaseForestQuantileRegressor(ForestRegressor):
 
         if quantiles is None:
             if self.default_quantiles is None:
-                quantiles = [-1]
+                quantiles = ["mean"]
             else:
                 quantiles = self.default_quantiles
 
-        if quantiles == "mean":
-            quantiles = [-1]
-
         if not isinstance(quantiles, list):
             quantiles = [quantiles]
+
+        if quantiles == ["mean"]:
+            quantiles = [-1]
+        else:
+            for q in quantiles:
+                if not isinstance(q, (float, int)) or (q < 0 or q > 1):
+                    raise ValueError(f"Quantiles must be in the range [0, 1], got {q}.")
 
         if not isinstance(interpolation, (bytes, bytearray)):
             interpolation = interpolation.encode()
@@ -671,9 +733,12 @@ class BaseForestQuantileRegressor(ForestRegressor):
             max_proximities = 0
         elif max_proximities < 1:
             raise ValueError(
-                "max_proximities must larger than or equal to 1 if not None, got {0}.".format(
-                    max_proximities
-                )
+                "`max_proximities` must be larger than or equal to 1 if not"
+                f" None, got {max_proximities}."
+            )
+        elif not isinstance(max_proximities, (int)):
+            raise ValueError(
+                f"`max_proximities` must be an integer if not None, got {max_proximities}."
             )
 
         if oob_score:
@@ -703,7 +768,9 @@ class BaseForestQuantileRegressor(ForestRegressor):
 
         if return_sorted:
             # Sort each dict of proximities in descending order by count.
-            proximities = [sorted(p.items(), key=lambda x: x[1], reverse=True) for p in proximities]
+            proximities = [
+                sorted(p.items(), key=lambda x: x[1], reverse=True) for p in proximities
+            ]
         else:
             proximities = [p.items() for p in proximities]
 
@@ -993,9 +1060,7 @@ class RandomForestQuantileRegressor(BaseForestQuantileRegressor):
         max_samples=None,
     ):
         init_dict = {
-            (
-                "base_estimator" if sklearn_version < parse_version("1.2.0") else "estimator"
-            ): DecisionTreeRegressor(),
+            "estimator": DecisionTreeRegressor(),
             "n_estimators": n_estimators,
             "estimator_params": (
                 "criterion",
@@ -1016,6 +1081,7 @@ class RandomForestQuantileRegressor(BaseForestQuantileRegressor):
             "verbose": verbose,
             "warm_start": warm_start,
             "max_samples": max_samples,
+            "max_samples_leaf": max_samples_leaf,
         }
         super(RandomForestQuantileRegressor, self).__init__(**init_dict)
 
@@ -1283,9 +1349,7 @@ class ExtraTreesQuantileRegressor(BaseForestQuantileRegressor):
         max_samples=None,
     ):
         init_dict = {
-            (
-                "base_estimator" if sklearn_version < parse_version("1.2.0") else "estimator"
-            ): ExtraTreeRegressor(),
+            "estimator": ExtraTreeRegressor(),
             "n_estimators": n_estimators,
             "estimator_params": (
                 "criterion",
@@ -1306,6 +1370,7 @@ class ExtraTreesQuantileRegressor(BaseForestQuantileRegressor):
             "verbose": verbose,
             "warm_start": warm_start,
             "max_samples": max_samples,
+            "max_samples_leaf": max_samples_leaf,
         }
         super(ExtraTreesQuantileRegressor, self).__init__(**init_dict)
 

@@ -9,6 +9,7 @@ regression (CQR). CQR offers prediction intervals that attain valid coverage,
 while QRF may require additional calibration for reliable interval estimates.
 This example uses MAPIE to construct the CQR interval estimates with a QRF.
 """
+
 print(__doc__)
 
 import warnings
@@ -187,7 +188,7 @@ fig, axs = plt.subplots(nrows=1, ncols=2, figsize=(10, 4.15))
 
 coords = [axs[0], axs[1]]
 num_plots = rng.choice(len(y_test), int(len(y_test)), replace=False)
-usd_formatter = FuncFormatter(lambda x, p: f"${format(int(x) * 100, ',')}k")
+usd_formatter = FuncFormatter(lambda x, p: f"${format(int(x * 100), ',')}k")
 
 for strategy, coord in zip(strategies.keys(), coords):
     plot_prediction_intervals(

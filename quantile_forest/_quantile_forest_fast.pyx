@@ -1,6 +1,6 @@
-#cython: boundscheck=False
-#cython: cdivision=True
-#cython: wraparound=False
+# cython: boundscheck=False
+# cython: cdivision=True
+# cython: wraparound=False
 
 from libc.math cimport ceil, fabs, floor, round
 from libc.string cimport memset
@@ -24,7 +24,7 @@ cdef inline void parallel_qsort_asc(
     vector[double]& b,
     int left,
     int right,
-) nogil:
+) noexcept nogil:
     """Sort lists `a` and `b` in ascending order by `a`."""
     cdef int i, j
     cdef double pivot
@@ -52,7 +52,7 @@ cdef inline void parallel_qsort_asc(
         parallel_qsort_asc(a, b, i, right)
 
 
-cpdef double calc_mean(vector[double]& inputs) nogil:
+cpdef double calc_mean(vector[double]& inputs) noexcept nogil:
     """Return the mean for list of inputs.
 
     Parameters
@@ -84,7 +84,7 @@ cpdef double calc_mean(vector[double]& inputs) nogil:
 cpdef double calc_weighted_mean(
     vector[double]& inputs,
     vector[double]& weights,
-) nogil:
+) noexcept nogil:
     """Return the mean for list of weighted inputs.
 
     Parameters
@@ -126,7 +126,7 @@ cpdef vector[double] calc_quantile(
     vector[double] quantiles,
     char* interpolation=b"linear",
     bint issorted=<bint>False,
-) nogil:
+) noexcept nogil:
     """Return quantiles for list of inputs.
 
     A desired quantile is calculated from the input rank ``x`` such that
@@ -243,7 +243,7 @@ cpdef vector[double] calc_weighted_quantile(
     vector[double] quantiles,
     char* interpolation=b"linear",
     bint issorted=<bint>False,
-) nogil:
+) noexcept nogil:
     """Return quantiles for list of weighted inputs.
 
     The weighted quantile is calculated by first calculating the empirical
@@ -300,7 +300,7 @@ cpdef vector[double] calc_weighted_quantile(
     cdef SIZE_t i, j
     cdef double f
     cdef double quantile
-    cdef vector[double] cum_weights
+    cdef vector[double] cum_weights, sorted_quantile_indices
     cdef int idx_floor, idx_ceil
     cdef double p, p_floor, p_ceil
     cdef double v_floor, v_ceil, frac
@@ -317,12 +317,6 @@ cpdef vector[double] calc_weighted_quantile(
     if not issorted:
         parallel_qsort_asc(inputs, weights, 0, n_inputs-1)
 
-    # Get monotonic sorting of quantiles for efficient calculation.
-    sorted_quantile_idx = vector[double](n_quantiles)
-    for i in range(<SIZE_t>(sorted_quantile_idx.size())):
-        sorted_quantile_idx[i] = <double>i
-    parallel_qsort_asc(quantiles, sorted_quantile_idx, 0, n_quantiles-1)
-
     cum_weights = vector[double](n_inputs)
 
     # Calculate the empirical cumulative distribution function (ECDF).
@@ -335,6 +329,12 @@ cpdef vector[double] calc_weighted_quantile(
 
     f = cum_weights[n_inputs-1] + 1 - (2*C)
 
+    # Get the indices that would sort the quantiles in ascending order.
+    sorted_quantile_indices = vector[double](n_quantiles)
+    for i in range(<SIZE_t>(sorted_quantile_indices.size())):
+        sorted_quantile_indices[i] = <double>i
+    parallel_qsort_asc(quantiles, sorted_quantile_indices, 0, n_quantiles-1)
+
     out = vector[double](n_quantiles)
 
     idx_floor = 0
@@ -344,7 +344,7 @@ cpdef vector[double] calc_weighted_quantile(
         quantile = quantiles[i]
 
         # Assign the output based on the input quantile ordering.
-        i = <SIZE_t>sorted_quantile_idx[i]
+        i = <SIZE_t>sorted_quantile_indices[i]
 
         # Calculate the quantile's proportion of total weight.
         p = quantile * f + C
@@ -439,7 +439,7 @@ cpdef double calc_quantile_rank(
     double score,
     char* kind=b"rank",
     bint issorted=<bint>False,
-) nogil:
+) noexcept nogil:
     """Return quantile rank of score relative to inputs.
 
     Parameters
@@ -511,7 +511,7 @@ cpdef double calc_quantile_rank(
 cpdef vector[SIZE_t] generate_unsampled_indices(
     vector[SIZE_t] sample_indices,
     vector[set[SIZE_t]] duplicates,
-) nogil:
+) noexcept nogil:
     """Return a list of every unsampled index, accounting for duplicates.
 
     Parameters
@@ -690,24 +690,20 @@ cdef class QuantileForest:
             for q in quantiles:
                 if q < 0 or q > 1:
                     raise ValueError(
-                        "Quantiles must be in the range "
-                        "[0, 1], got {0}.".format(q)
+                        f"Quantiles must be in the range [0, 1], got {q}."
                     )
 
         if X_indices is not None:
             if X_indices.shape[1] != X_leaves.shape[1]:
                 raise ValueError(
-                    "X_indices.shape[1]={0} must be equal to "
-                    "X_leaves.shape[1]={1}, or X_indices must "
-                    "be None.".format(X_indices.shape[1], X_leaves.shape[1])
+                    f"X_indices.shape[1]={X_indices.shape[1]} must equal "
+                    f"X_leaves.shape[1]={X_leaves.shape[1]}, or X_indices "
+                    "must be None."
                 )
 
         interps = [b"linear", b"lower", b"higher", b"midpoint", b"nearest"]
-        if not interpolation in interps:
-            raise ValueError(
-                "Invalid interpolation method {0}."
-                "".format(interpolation)
-            )
+        if interpolation not in interps:
+            raise ValueError(f"Invalid interpolation method {interpolation}.")
 
         # Initialize NumPy array with NaN values and get view for nogil.
         preds = np.full((n_samples, n_quantiles), np.nan, dtype=np.float64)
@@ -737,7 +733,7 @@ cdef class QuantileForest:
                 n_total_samples = 0
                 n_total_trees = 0
                 for j in range(n_trees):
-                    if X_indices is None or X_indices[i, j] == True:
+                    if X_indices is None or X_indices[i, j] is True:
                         idx = 0 if aggregate_leaves_first else j
                         train_indices[idx].insert(
                             train_indices[idx].end(),
@@ -754,7 +750,7 @@ cdef class QuantileForest:
                         n_total_trees += 1
 
                 for j in range(n_trees):
-                    if X_indices is None or X_indices[i, j] == True:
+                    if X_indices is None or X_indices[i, j] is True:
                         idx = 0 if aggregate_leaves_first else j
                         train_weight = 1
                         if weighted_leaves:
@@ -766,7 +762,7 @@ cdef class QuantileForest:
                         train_weights[idx].insert(
                             train_weights[idx].end(),
                             max_idx,
-                            train_weight
+                            train_weight,
                         )
 
                 if weighted_quantile:
@@ -911,14 +907,14 @@ cdef class QuantileForest:
         if X_indices is not None:
             if X_indices.shape[1] != X_leaves.shape[1]:
                 raise ValueError(
-                    "X_indices.shape[1]={0} must be equal to "
-                    "X_leaves.shape[1]={1}, or X_indices must "
-                    "be None.".format(X_indices.shape[1], X_leaves.shape[1])
+                    f"X_indices.shape[1]={X_indices.shape[1]} must equal "
+                    f"X_leaves.shape[1]={X_leaves.shape[1]}, or X_indices "
+                    "must be None."
                 )
 
         kinds = [b"rank", b"weak", b"strict", b"mean"]
-        if not kind in kinds:
-            raise ValueError("Invalid kind {0}.".format(kind))
+        if kind not in kinds:
+            raise ValueError(f"Invalid kind {kind}.")
 
         # Initialize NumPy array with NaN values and get view for nogil.
         ranks = np.full((n_samples), np.nan, dtype=np.float64)
@@ -934,7 +930,7 @@ cdef class QuantileForest:
                 # Accumulate training indices across leaves for each tree.
                 # If `aggregate_leaves_first`, also accumulate across trees.
                 for j in range(n_trees):
-                    if X_indices is None or X_indices[i, j] == True:
+                    if X_indices is None or X_indices[i, j] is True:
                         idx = 0 if aggregate_leaves_first else j
                         train_indices[idx].insert(
                             train_indices[idx].end(),
@@ -1026,9 +1022,9 @@ cdef class QuantileForest:
         if X_indices is not None:
             if X_indices.shape[1] != X_leaves.shape[1]:
                 raise ValueError(
-                    "X_indices.shape[1]={0} must be equal to "
-                    "X_leaves.shape[1]={1}, or X_indices must "
-                    "be None.".format(X_indices.shape[1], X_leaves.shape[1])
+                    f"X_indices.shape[1]={X_indices.shape[1]} must equal "
+                    f"X_leaves.shape[1]={X_leaves.shape[1]}, or X_indices "
+                    "must be None."
                 )
 
         if max_proximities < 1 or n_train < max_proximities:
@@ -1045,7 +1041,7 @@ cdef class QuantileForest:
 
                 # Accumulate training indices across leaves for each tree.
                 for j in range(n_trees):
-                    if X_indices is None or X_indices[i, j] == True:
+                    if X_indices is None or X_indices[i, j] is True:
                         train_indices.insert(
                             train_indices.end(),
                             &self.y_train_leaves[j, X_leaves[i, j], 0],

@@ -20,7 +20,7 @@ def write_version_py():
         version = f.read().strip()
 
     with open(os.path.join("quantile_forest", "version.py"), "w") as f:
-        f.write('__version__ = "{}"\n'.format(version))
+        f.write(f'__version__ = "{version}"\n')
 
     return version
 
@@ -82,7 +82,7 @@ def configure_extension_modules():
         ),
     ]
 
-    return cythonize(EXTENSIONS)
+    return cythonize(EXTENSIONS, compiler_directives={"language_level": "3"})
 
 
 def setup_package():
