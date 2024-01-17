@@ -27,7 +27,7 @@ produced by a quantile regression forest do not extrapolate outside of the
 bounds of the data in the training set, an important limitation of the
 approach.
 
-.. GENERATED FROM PYTHON SOURCE LINES 12-113
+.. GENERATED FROM PYTHON SOURCE LINES 12-114
 
 
 
@@ -40,7 +40,8 @@ approach.
 
 
 
-.. code-block:: default
+.. code-block:: Python
+
 
     print(__doc__)
 
@@ -147,7 +148,7 @@ approach.
 
 .. rst-class:: sphx-glr-timing
 
-   **Total running time of the script:** (0 minutes 0.701 seconds)
+   **Total running time of the script:** (0 minutes 0.394 seconds)
 
 
 .. _sphx_glr_download_auto_examples_plot_quantile_extrapolation_problem.py:
@@ -156,16 +157,13 @@ approach.
 
   .. container:: sphx-glr-footer sphx-glr-footer-example
 
+    .. container:: sphx-glr-download sphx-glr-download-jupyter
 
-
+      :download:`Download Jupyter notebook: plot_quantile_extrapolation_problem.ipynb <plot_quantile_extrapolation_problem.ipynb>`
 
     .. container:: sphx-glr-download sphx-glr-download-python
 
       :download:`Download Python source code: plot_quantile_extrapolation_problem.py <plot_quantile_extrapolation_problem.py>`
-
-    .. container:: sphx-glr-download sphx-glr-download-jupyter
-
-      :download:`Download Jupyter notebook: plot_quantile_extrapolation_problem.ipynb <plot_quantile_extrapolation_problem.ipynb>`
 
 
 .. only:: html

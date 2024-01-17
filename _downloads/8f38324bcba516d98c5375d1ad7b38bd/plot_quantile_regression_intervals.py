@@ -7,6 +7,7 @@ An example of how to use a quantile regression forest to plot prediction
 intervals on the California Housing dataset.
 
 """
+
 print(__doc__)
 
 import matplotlib.pyplot as plt

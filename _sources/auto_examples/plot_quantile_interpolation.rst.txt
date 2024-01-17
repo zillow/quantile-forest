@@ -25,7 +25,7 @@ Predicting with different quantile interpolation methods
 An example comparison of interpolation methods that can be applied during
 prediction when the desired quantile lies between two data points.
 
-.. GENERATED FROM PYTHON SOURCE LINES 10-76
+.. GENERATED FROM PYTHON SOURCE LINES 10-77
 
 
 
@@ -38,7 +38,8 @@ prediction when the desired quantile lies between two data points.
 
 
 
-.. code-block:: default
+.. code-block:: Python
+
 
     print(__doc__)
 
@@ -110,7 +111,7 @@ prediction when the desired quantile lies between two data points.
 
 .. rst-class:: sphx-glr-timing
 
-   **Total running time of the script:** (0 minutes 0.155 seconds)
+   **Total running time of the script:** (0 minutes 0.091 seconds)
 
 
 .. _sphx_glr_download_auto_examples_plot_quantile_interpolation.py:
@@ -119,16 +120,13 @@ prediction when the desired quantile lies between two data points.
 
   .. container:: sphx-glr-footer sphx-glr-footer-example
 
+    .. container:: sphx-glr-download sphx-glr-download-jupyter
 
-
+      :download:`Download Jupyter notebook: plot_quantile_interpolation.ipynb <plot_quantile_interpolation.ipynb>`
 
     .. container:: sphx-glr-download sphx-glr-download-python
 
       :download:`Download Python source code: plot_quantile_interpolation.py <plot_quantile_interpolation.py>`
-
-    .. container:: sphx-glr-download sphx-glr-download-jupyter
-
-      :download:`Download Jupyter notebook: plot_quantile_interpolation.ipynb <plot_quantile_interpolation.ipynb>`
 
 
 .. only:: html

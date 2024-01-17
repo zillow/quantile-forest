@@ -28,7 +28,7 @@ regression (CQR). CQR offers prediction intervals that attain valid coverage,
 while QRF may require additional calibration for reliable interval estimates.
 This example uses MAPIE to construct the CQR interval estimates with a QRF.
 
-.. GENERATED FROM PYTHON SOURCE LINES 12-211
+.. GENERATED FROM PYTHON SOURCE LINES 12-212
 
 
 
@@ -38,10 +38,27 @@ This example uses MAPIE to construct the CQR interval estimates with a QRF.
    :class: sphx-glr-single-img
 
 
+.. rst-class:: sphx-glr-script-out
+
+ .. code-block:: none
+
+
+    /opt/hostedtoolcache/Python/3.12.1/x64/lib/python3.12/site-packages/mapie/utils.py:598: UserWarning: WARNING: The predictions have issues.
+    The upper predictions are lower thanthe lower predictions at some points.
+      warnings.warn(
+    /opt/hostedtoolcache/Python/3.12.1/x64/lib/python3.12/site-packages/mapie/utils.py:598: UserWarning: WARNING: The predictions have issues.
+    The upper predictions are lower thanthe lower predictions at some points.
+      warnings.warn(
 
 
 
-.. code-block:: default
+
+
+
+|
+
+.. code-block:: Python
+
 
     print(__doc__)
 
@@ -246,7 +263,7 @@ This example uses MAPIE to construct the CQR interval estimates with a QRF.
 
 .. rst-class:: sphx-glr-timing
 
-   **Total running time of the script:** (0 minutes 3.284 seconds)
+   **Total running time of the script:** (0 minutes 1.904 seconds)
 
 
 .. _sphx_glr_download_auto_examples_plot_quantile_conformalized.py:
@@ -255,16 +272,13 @@ This example uses MAPIE to construct the CQR interval estimates with a QRF.
 
   .. container:: sphx-glr-footer sphx-glr-footer-example
 
+    .. container:: sphx-glr-download sphx-glr-download-jupyter
 
-
+      :download:`Download Jupyter notebook: plot_quantile_conformalized.ipynb <plot_quantile_conformalized.ipynb>`
 
     .. container:: sphx-glr-download sphx-glr-download-python
 
       :download:`Download Python source code: plot_quantile_conformalized.py <plot_quantile_conformalized.py>`
-
-    .. container:: sphx-glr-download sphx-glr-download-jupyter
-
-      :download:`Download Jupyter notebook: plot_quantile_conformalized.ipynb <plot_quantile_conformalized.ipynb>`
 
 
 .. only:: html

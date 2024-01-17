@@ -9,6 +9,7 @@ bounds of the data in the training set, an important limitation of the
 approach.
 
 """
+
 print(__doc__)
 
 import matplotlib.pyplot as plt

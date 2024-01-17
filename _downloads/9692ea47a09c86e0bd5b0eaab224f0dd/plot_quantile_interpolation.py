@@ -7,6 +7,7 @@ An example comparison of interpolation methods that can be applied during
 prediction when the desired quantile lies between two data points.
 
 """
+
 print(__doc__)
 
 import matplotlib.pyplot as plt
