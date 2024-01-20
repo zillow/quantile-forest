@@ -49,7 +49,7 @@ References
 Citation
 --------
 
-If you use this package in academic work, please consider citing https://joss.theoj.org/papers/10.21105/joss.05976 as
+If you use this package in academic work, please consider citing https://joss.theoj.org/papers/10.21105/joss.05976:
 
 ```bib
 @article{Johnson2024,
