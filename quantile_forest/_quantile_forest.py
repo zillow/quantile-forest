@@ -171,33 +171,40 @@ class BaseForestQuantileRegressor(ForestRegressor):
                     "max_samples_leaf must be of integer, float, or None type, got "
                     f"{self.max_samples_leaf}."
                 )
-        X, y = self._validate_data(X, y, multi_output=False, accept_sparse="csc", dtype=DTYPE)
+        X, y = self._validate_data(X, y, multi_output=True, accept_sparse="csc", dtype=DTYPE)
         super(BaseForestQuantileRegressor, self).fit(X, y, sample_weight=sample_weight)
+
+        if y.ndim == 1:
+            y = np.expand_dims(y, axis=1)
 
         # Sort the target values in ascending order.
         # Use sorter to maintain mapping to original order.
-        sorter = np.argsort(y)
-        y = y[sorter]
+        sorter = np.argsort(y, axis=0)
+        y_sorted = np.empty_like(y)
+        for i in range(y.shape[1]):
+            y_sorted[:, i] = y[sorter[:, i], i]
 
         if sample_weight is not None:
             sample_weight = np.asarray(sample_weight)[sorter]
 
         # Get map of tree leaf nodes to training indices.
-        y_train_leaves = self._get_y_train_leaves(X, sorter=sorter, sample_weight=sample_weight)
+        y_train_leaves = self._get_y_train_leaves(
+            X, y_dim=y_sorted.shape[-1], sorter=sorter, sample_weight=sample_weight
+        )
 
         # Create quantile forest object.
         self.forest_ = QuantileForest(
-            y.astype(np.float64), y_train_leaves, sparse_pickle=sparse_pickle
+            y_sorted.astype(np.float64).T, y_train_leaves, sparse_pickle=sparse_pickle
         )
 
         self.sorter_ = sorter
-        self.n_train_samples_ = len(y)
+        self.n_train_samples_ = len(y_sorted)
         self.X_train_hash_ = joblib.hash(X)
         self.unsampled_indices_ = None
 
         return self
 
-    def _get_y_train_leaves(self, X, sorter=None, sample_weight=None):
+    def _get_y_train_leaves(self, X, y_dim=1, sorter=None, sample_weight=None):
         """Return a mapping of each leaf node to its list of training indices.
         The ``apply`` function is used on the ``X`` values to obtain the leaf
         indices for the appropriate training indices, as sorted by ``sorter``.
@@ -208,6 +215,9 @@ class BaseForestQuantileRegressor(ForestRegressor):
             The training input samples. Internally, its dtype will be converted
             to ``dtype=np.float32``. If a sparse matrix is provided, it will be
             converted into a sparse ``csc_matrix``.
+
+        y_dim : int, default=1
+            The number of target outputs for each y value.
 
         sorter : array-like of shape (n_samples), default=None
             The indices that would sort the target values in ascending order.
@@ -266,7 +276,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
 
         if sorter is not None:
             # Reassign bootstrap indices to account for target sorting.
-            bootstrap_indices = np.argsort(sorter)[bootstrap_indices]
+            bootstrap_indices = np.argsort(sorter, axis=0)[bootstrap_indices]
 
         bootstrap_indices += 1  # for sparse matrix (0s as empty)
 
@@ -284,7 +294,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
                     max_samples_leaf = sample_count
 
         # Initialize NumPy array (more efficient serialization than dict/list).
-        shape = (self.n_estimators, max_node_count, max_samples_leaf)
+        shape = (self.n_estimators, max_node_count, max_samples_leaf, y_dim)
         y_train_leaves = np.zeros(shape, dtype=np.int64)
 
         for i, estimator in enumerate(self.estimators_):
@@ -299,6 +309,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
                 y_indices = bootstrap_indices[:, i][leaf_values]
 
                 if sample_weight is not None:
+                    sample_weight = np.squeeze(sample_weight)
                     y_indices = y_indices[sample_weight[y_indices - 1] > 0]
 
                 # Subsample leaf training indices (without replacement).
@@ -306,6 +317,8 @@ class BaseForestQuantileRegressor(ForestRegressor):
                     if not isinstance(y_indices, list):
                         y_indices = list(y_indices)
                     y_indices = random.sample(y_indices, max_samples_leaf)
+
+                y_indices = np.asarray(y_indices).reshape(-1, y_dim)
 
                 y_train_leaves[i, leaf_idx, : len(y_indices)] = y_indices
 
@@ -539,35 +552,41 @@ class BaseForestQuantileRegressor(ForestRegressor):
             X_indices = None
 
         if self.max_samples_leaf == 1:  # optimize for single-sample-per-leaf performance
-            leaf_values = np.empty((len(X), self.n_estimators))
             y_train_leaves = np.asarray(self.forest_.y_train_leaves)
-            y_train = np.asarray(self.forest_.y_train)
-            for tree in range(self.n_estimators):
-                if X_indices is None:
-                    train_indices = y_train_leaves[tree, X_leaves[:, tree], 0]
-                else:
-                    unsampled_indices = X_indices[:, tree] == 1
-                    unsampled_leaves = X_leaves[unsampled_indices, tree]
-                    train_indices = np.zeros(len(X), dtype=int)
-                    train_indices[unsampled_indices] = y_train_leaves[tree, unsampled_leaves, 0]
-                leaf_values[:, tree] = y_train[train_indices - 1]
-                leaf_values[train_indices == 0, tree] = np.nan
-            if len(quantiles) == 1 and quantiles[0] == -1:  # calculate mean
-                func = np.mean if X_indices is None else np.nanmean
-                y_pred = np.expand_dims(func(leaf_values, axis=1), axis=1)
-            else:  # calculate quantiles
-                func = np.quantile if X_indices is None else np.nanquantile
-                y_pred = func(leaf_values, quantiles, method=interpolation.decode(), axis=1).T
+            y_train = np.asarray(self.forest_.y_train).T
+            y_pred = np.empty((len(X), len(quantiles), y_train.shape[1]))
+            for i in range(y_train.shape[1]):
+                leaf_values = np.empty((len(X), self.n_estimators))
+                for tree in range(self.n_estimators):
+                    if X_indices is None:
+                        train_indices = y_train_leaves[tree, X_leaves[:, tree], 0, i]
+                    else:  # OOB scoring
+                        indices = X_indices[:, tree] == 1
+                        leaves = X_leaves[indices, tree]
+                        train_indices = np.zeros(len(X), dtype=int)
+                        train_indices[indices] = y_train_leaves[tree, leaves, 0, i]
+                    leaf_values[:, tree] = y_train[train_indices - 1, i]
+                    leaf_values[train_indices == 0, tree] = np.nan
+                if len(quantiles) == 1 and quantiles[0] == -1:  # calculate mean
+                    func = np.mean if X_indices is None else np.nanmean
+                    y_pred[..., i] = np.expand_dims(func(leaf_values, axis=1), axis=1)
+                else:  # calculate quantiles
+                    func = np.quantile if X_indices is None else np.nanquantile
+                    method = interpolation.decode()
+                    y_pred[..., i] = func(leaf_values, quantiles, method=method, axis=1).T
         else:
             y_pred = self.forest_.predict(
                 quantiles,
                 X_leaves,
                 X_indices,
                 interpolation,
-                weighted_leaves,
                 weighted_quantile,
+                weighted_leaves,
                 aggregate_leaves_first,
             )
+
+        if y_pred.shape[2] == 1:
+            y_pred = np.squeeze(y_pred, axis=2)
 
         if y_pred.shape[1] == 1:
             y_pred = np.squeeze(y_pred, axis=1)

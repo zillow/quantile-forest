@@ -577,8 +577,8 @@ cdef class QuantileForest:
 
     def __cinit__(
         self,
-        np.ndarray[DOUBLE_t, ndim=1] y_train,
-        np.ndarray[SIZE_t, ndim=3] y_train_leaves,
+        np.ndarray[DOUBLE_t, ndim=2] y_train,
+        np.ndarray[SIZE_t, ndim=4] y_train_leaves,
         bint sparse_pickle=<bint>False,
     ):
         """Constructor."""
@@ -589,7 +589,7 @@ cdef class QuantileForest:
     def __reduce__(self):
         """Reduce re-implementation, for pickling."""
         if self.sparse_pickle:
-            y_train_leaves = np.empty(shape=(0, 0, 0), dtype=np.int64)
+            y_train_leaves = np.empty(shape=(0, 0, 0, 0), dtype=np.int64)
             kwargs = {"y_train_leaves": np.asarray(self.y_train_leaves)}
         else:
             y_train_leaves = np.asarray(self.y_train_leaves)
@@ -602,7 +602,7 @@ cdef class QuantileForest:
         d = {}
         if self.sparse_pickle:
             matrix = kwargs["y_train_leaves"]
-            reshape = (matrix.shape[2], matrix.shape[0]*matrix.shape[1])
+            reshape = (matrix.shape[2], matrix.shape[0]*matrix.shape[1]*matrix.shape[2])
             d["shape"] = matrix.shape
             d["matrix"] = sparse.csc_matrix(matrix.reshape(reshape))
         return d
@@ -654,33 +654,34 @@ cdef class QuantileForest:
 
         Returns
         -------
-        preds : array-like of shape (n_samples, n_quantiles)
+        preds : array-like of shape (n_samples, n_quantiles, n_outputs)
             Quantiles or means for samples as floats.
         """
         cdef vector[double] median = [0.5]
 
-        cdef SIZE_t n_quantiles, n_samples, n_trees, n_train
+        cdef SIZE_t n_quantiles, n_samples, n_trees, n_train, n_outputs
         cdef SIZE_t i, j, k
         cdef bint use_mean
         cdef vector[double] leaf_samples
         cdef vector[double] leaf_weights
-        cdef vector[vector[SIZE_t]] train_indices
+        cdef vector[vector[vector[SIZE_t]]] train_indices
         cdef vector[vector[double]] train_weights
         cdef SIZE_t idx, train_idx
         cdef double train_wgt
         cdef vector[int] n_leaf_samples
         cdef int n_total_samples, n_total_trees
         cdef double train_weight
-        cdef vector[vector[double]] leaf_preds
+        cdef vector[vector[vector[double]]] leaf_preds
         cdef vector[double] pred
-        cdef np.ndarray[DOUBLE_t, ndim=2] preds
-        cdef double[:, :] preds_view
+        cdef np.ndarray[DOUBLE_t, ndim=3] preds
+        cdef double[:, :, :] preds_view
 
         n_quantiles = len(quantiles)
         n_samples = X_leaves.shape[0]
         n_trees = X_leaves.shape[1]
 
-        n_train = self.y_train.size()
+        n_outputs = self.y_train.size()
+        n_train = self.y_train[0].size()
         max_idx = self.y_train_leaves.shape[2]
 
         use_mean = False
@@ -706,27 +707,36 @@ cdef class QuantileForest:
             raise ValueError(f"Invalid interpolation method {interpolation}.")
 
         # Initialize NumPy array with NaN values and get view for nogil.
-        preds = np.full((n_samples, n_quantiles), np.nan, dtype=np.float64)
+        preds = np.full((n_samples, n_quantiles, n_outputs), np.nan, dtype=np.float64)
         preds_view = preds  # memoryview
 
         with nogil:
             idx = 1 if aggregate_leaves_first else n_trees
-            train_indices = vector[vector[SIZE_t]](idx)
             train_weights = vector[vector[double]](idx)
+            train_indices = vector[vector[vector[SIZE_t]]](idx)
+            for i in range(<SIZE_t>(train_indices.size())):
+                train_indices[i] = vector[vector[SIZE_t]](n_outputs)
+
             n_leaf_samples = vector[int](n_trees)
-            leaf_preds = vector[vector[double]](n_quantiles)
+            leaf_preds = vector[vector[vector[double]]](n_quantiles)
+
             for i in range(<SIZE_t>(leaf_preds.size())):
-                leaf_preds[i].reserve(idx)
+                leaf_preds[i] = vector[vector[double]](n_outputs)
+                for j in range(n_outputs):
+                    leaf_preds[i][j].reserve(idx)
+
             if weighted_quantile:
                 leaf_weights = vector[double](n_train)
 
             for i in range(n_samples):
                 for j in range(<SIZE_t>(train_indices.size())):
-                    train_indices[j].clear()
+                    for k in range(<SIZE_t>(train_indices[j].size())):
+                        train_indices[j][k].clear()
                 for j in range(<SIZE_t>(train_weights.size())):
                     train_weights[j].clear()
                 for j in range(<SIZE_t>(leaf_preds.size())):
-                    leaf_preds[j].clear()
+                    for k in range(n_outputs):
+                        leaf_preds[j][k].clear()
 
                 # Accumulate training indices across leaves for each tree.
                 # If `aggregate_leaves_first`, also accumulate across trees.
@@ -735,15 +745,16 @@ cdef class QuantileForest:
                 for j in range(n_trees):
                     if X_indices is None or X_indices[i, j] is True:
                         idx = 0 if aggregate_leaves_first else j
-                        train_indices[idx].insert(
-                            train_indices[idx].end(),
-                            &self.y_train_leaves[j, X_leaves[i, j], 0],
-                            &self.y_train_leaves[j, X_leaves[i, j], max_idx],
-                        )
+                        for k in range(n_outputs):
+                            train_indices[idx][k].insert(
+                                train_indices[idx][k].end(),
+                                &self.y_train_leaves[j, X_leaves[i, j], 0, k],
+                                &self.y_train_leaves[j, X_leaves[i, j], max_idx, k],
+                            )
 
                         n_leaf_samples[j] = 0
                         for k in range(max_idx):
-                            if self.y_train_leaves[j, X_leaves[i, j], k] != 0:
+                            if self.y_train_leaves[j, X_leaves[i, j], k, 0] != 0:
                                 n_leaf_samples[j] += 1
 
                         n_total_samples += n_leaf_samples[j]
@@ -771,85 +782,89 @@ cdef class QuantileForest:
                         if train_indices[j].size() == 0:
                             continue
 
-                        # Reset leaf weights for all training indices to 0.
-                        memset(&leaf_weights[0], 0, n_train*sizeof(double))
+                        for k in range(n_outputs):
+                            # Reset leaf weights for all training indices to 0.
+                            memset(&leaf_weights[0], 0, n_train*sizeof(double))
 
-                        # Sum the weights/counts for each training index.
-                        for k in range(<SIZE_t>(train_indices[j].size())):
-                            train_idx = train_indices[j][k]
-                            train_wgt = train_weights[j][k]
-                            if train_idx != 0:
-                                leaf_weights[train_idx-1] += train_wgt
+                            # Sum the weights/counts for each training index.
+                            for l in range(<SIZE_t>(train_indices[j][k].size())):
+                                train_idx = train_indices[j][k][l]
+                                train_wgt = train_weights[j][l]
+                                if train_idx != 0:
+                                    leaf_weights[train_idx-1] += train_wgt
 
-                        # Calculate quantiles (or mean).
-                        if not use_mean:
-                            pred = calc_weighted_quantile(
-                                self.y_train,
-                                leaf_weights,
-                                quantiles,
-                                interpolation,
-                                issorted=True,
-                            )
-                            for k in range(<SIZE_t>(pred.size())):
-                                leaf_preds[k].push_back(pred[k])
-                        else:
-                            if self.y_train.size() > 0:
-                                pred = vector[double](1)
-                                pred[0] = calc_weighted_mean(
-                                    self.y_train,
+                            # Calculate quantiles (or mean).
+                            if not use_mean:
+                                pred = calc_weighted_quantile(
+                                    self.y_train[k],
                                     leaf_weights,
+                                    quantiles,
+                                    interpolation,
+                                    issorted=True,
                                 )
-                                leaf_preds[0].push_back(pred[0])
+                                for l in range(<SIZE_t>(pred.size())):
+                                    leaf_preds[l][k].push_back(pred[l])
+                            else:
+                                if self.y_train[k].size() > 0:
+                                    pred = vector[double](1)
+                                    pred[0] = calc_weighted_mean(
+                                        self.y_train[k],
+                                        leaf_weights,
+                                    )
+                                    leaf_preds[0][k].push_back(pred[0])
                 else:
                     # For each list of training indices, calculate output.
                     for j in range(<SIZE_t>(train_indices.size())):
                         if train_indices[j].size() == 0:
                             continue
+        
+                        for k in range(n_outputs):
+                            # Clear list of training target values.
+                            leaf_samples.clear()
 
-                        # Clear list of training target values.
-                        leaf_samples.clear()
+                            # Get training target values associated with indices.
+                            for train_idx in train_indices[j][k]:
+                                if train_idx != 0:
+                                    leaf_samples.push_back(
+                                        self.y_train[k][train_idx-1]
+                                    )
 
-                        # Get training target values associated with indices.
-                        for train_idx in train_indices[j]:
-                            if train_idx != 0:
-                                leaf_samples.push_back(
-                                    self.y_train[train_idx-1]
+                            # Calculate quantiles (or mean).
+                            if not use_mean:
+                                pred = calc_quantile(
+                                    leaf_samples,
+                                    quantiles,
+                                    interpolation,
+                                    issorted=False,
                                 )
-
-                        # Calculate quantiles (or mean).
-                        if not use_mean:
-                            pred = calc_quantile(
-                                leaf_samples,
-                                quantiles,
-                                interpolation,
-                                issorted=False,
-                            )
-                            for k in range(<SIZE_t>(pred.size())):
-                                leaf_preds[k].push_back(pred[k])
-                        else:
-                            if leaf_samples.size() > 0:
-                                pred = vector[double](1)
-                                pred[0] = calc_mean(leaf_samples)
-                                leaf_preds[0].push_back(pred[0])
+                                for l in range(<SIZE_t>(pred.size())):
+                                    leaf_preds[l][k].push_back(pred[l])
+                            else:
+                                if leaf_samples.size() > 0:
+                                    pred = vector[double](1)
+                                    pred[0] = calc_mean(leaf_samples)
+                                    leaf_preds[0][k].push_back(pred[0])
 
                 # Average the quantile predictions across accumulations.
                 if not use_mean:
                     for j in range(<SIZE_t>(leaf_preds.size())):
-                        if leaf_preds[j].size() == 1:
-                            preds_view[i, j] = leaf_preds[j][0]
-                        elif leaf_preds[j].size() > 1:
-                            pred = calc_quantile(
-                                leaf_preds[j],
-                                median,
-                                interpolation,
-                                issorted=False,
-                            )
-                            preds_view[i, j] = pred[0]
+                        for k in range(n_outputs):
+                            if leaf_preds[j][k].size() == 1:
+                                preds_view[i, j, k] = leaf_preds[j][k][0]
+                            elif leaf_preds[j][k].size() > 1:
+                                pred = calc_quantile(
+                                    leaf_preds[j][k],
+                                    median,
+                                    interpolation,
+                                    issorted=False,
+                                )
+                                preds_view[i, j, k] = pred[0]
                 else:
-                    if leaf_preds[0].size() == 1:
-                        preds_view[i, 0] = leaf_preds[0][0]
-                    elif leaf_preds[0].size() > 1:
-                        preds_view[i, 0] = calc_mean(leaf_preds[0])
+                    for j in range(n_outputs):
+                        if leaf_preds[0][j].size() == 1:
+                            preds_view[i, 0, j] = leaf_preds[0][j][0]
+                        elif leaf_preds[0][j].size() > 1:
+                            preds_view[i, 0, j] = calc_mean(leaf_preds[0][j])
 
         return np.asarray(preds_view)
 
@@ -934,8 +949,8 @@ cdef class QuantileForest:
                         idx = 0 if aggregate_leaves_first else j
                         train_indices[idx].insert(
                             train_indices[idx].end(),
-                            &self.y_train_leaves[j, X_leaves[i, j], 0],
-                            &self.y_train_leaves[j, X_leaves[i, j], max_idx],
+                            &self.y_train_leaves[j, X_leaves[i, j], 0, 0],
+                            &self.y_train_leaves[j, X_leaves[i, j], max_idx, 0],
                         )
 
                 # For each list of training indices, calculate rank.
@@ -946,7 +961,7 @@ cdef class QuantileForest:
                     # Get training target values associated with indices.
                     for train_idx in train_indices[j]:
                         if train_idx != 0:
-                            leaf_samples.push_back(self.y_train[train_idx-1])
+                            leaf_samples.push_back(self.y_train[0][train_idx-1])
 
                     # Calculate rank.
                     pred = calc_quantile_rank(
@@ -970,7 +985,7 @@ cdef class QuantileForest:
         SIZE_t[:, :] X_leaves,
         UINT8_t[:, :] X_indices=None,
         UINT32_t max_proximities=0,
-        SIZE_t[:] sorter=None,
+        SIZE_t[:, :] sorter=None,
     ):
         """Return proximity counts of the training samples for target leaves.
 
@@ -994,7 +1009,7 @@ cdef class QuantileForest:
             prioritized by proximity count. By default, return all proximity
             counts for each sample.
 
-        sorter : array-like of shape (n_train), default=None
+        sorter : array-like of shape (n_train, n_outputs), default=None
             The indices that would sort the target values in ascending order.
             Used to associate ``est.apply`` outputs with sorted target values.
 
@@ -1016,7 +1031,7 @@ cdef class QuantileForest:
         n_samples = X_leaves.shape[0]
         n_trees = X_leaves.shape[1]
 
-        n_train = self.y_train.size()
+        n_train = self.y_train[0].size()
         max_idx = self.y_train_leaves.shape[2]
 
         if X_indices is not None:
@@ -1044,8 +1059,8 @@ cdef class QuantileForest:
                     if X_indices is None or X_indices[i, j] is True:
                         train_indices.insert(
                             train_indices.end(),
-                            &self.y_train_leaves[j, X_leaves[i, j], 0],
-                            &self.y_train_leaves[j, X_leaves[i, j], max_idx],
+                            &self.y_train_leaves[j, X_leaves[i, j], 0, 0],
+                            &self.y_train_leaves[j, X_leaves[i, j], max_idx, 0],
                         )
 
                 # Sum the weights/counts for each training index.
@@ -1054,7 +1069,7 @@ cdef class QuantileForest:
                         train_idx -= 1
                         if sorter is not None:
                             # Align to the input (unsorted) training index.
-                            train_idx = sorter[train_idx]
+                            train_idx = sorter[:, 0][train_idx]
                         leaf_weights[train_idx] += 1
 
                 # Build priority queue by -weight (so smallest weight is top).
