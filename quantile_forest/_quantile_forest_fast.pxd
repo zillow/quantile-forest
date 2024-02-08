@@ -32,7 +32,7 @@ cdef class QuantileForest:
 
     cpdef np.ndarray quantile_ranks(
         self,
-        double[:] y_scores,
+        double[:, :] y_scores,
         SIZE_t[:, :] X_leaves,
         UINT8_t[:, :] X_indices=*,
         char* kind=*,

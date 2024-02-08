@@ -648,7 +648,7 @@ def check_max_samples_leaf(name):
         est.fit(X, y)
 
         max_leaf_size = 0
-        for _, tree_lookup in enumerate(est._get_y_train_leaves(X)):
+        for _, tree_lookup in enumerate(est._get_y_train_leaves(X, 1)):
             for leaf_samples in tree_lookup:
                 n_leaf_samples = len([x for x in leaf_samples if x != 0])
                 if n_leaf_samples > max_leaf_size:

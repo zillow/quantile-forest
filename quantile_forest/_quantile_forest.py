@@ -189,7 +189,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
 
         # Get map of tree leaf nodes to training indices.
         y_train_leaves = self._get_y_train_leaves(
-            X, y_dim=y_sorted.shape[-1], sorter=sorter, sample_weight=sample_weight
+            X, y_sorted.shape[-1], sorter=sorter, sample_weight=sample_weight
         )
 
         # Create quantile forest object.
@@ -204,7 +204,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
 
         return self
 
-    def _get_y_train_leaves(self, X, y_dim=1, sorter=None, sample_weight=None):
+    def _get_y_train_leaves(self, X, y_dim, sorter=None, sample_weight=None):
         """Return a mapping of each leaf node to its list of training indices.
         The ``apply`` function is used on the ``X`` values to obtain the leaf
         indices for the appropriate training indices, as sorted by ``sorter``.
@@ -216,10 +216,10 @@ class BaseForestQuantileRegressor(ForestRegressor):
             to ``dtype=np.float32``. If a sparse matrix is provided, it will be
             converted into a sparse ``csc_matrix``.
 
-        y_dim : int, default=1
+        y_dim : int
             The number of target outputs for each y value.
 
-        sorter : array-like of shape (n_samples), default=None
+        sorter : array-like of shape (n_samples, n_outputs), default=None
             The indices that would sort the target values in ascending order.
             Used to associate ``est.apply`` outputs with sorted target values.
 
@@ -231,7 +231,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
         Returns
         -------
         y_train_leaves : array-like of shape \
-                (n_estimators, n_leaves, n_indices)
+                (n_estimators, n_leaves, n_indices, n_outputs)
             List of trees, each with a list of nodes, each with a list of
             indices of the training samples residing at that node. Nodes with
             no samples (e.g., internal nodes) are empty. Internal nodes are
@@ -505,7 +505,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
 
         Returns
         -------
-        y_pred : array of shape (n_samples, n_quantiles)
+        y_pred : array of shape (n_samples, n_quantiles, n_outputs)
             If quantiles is set to None, then return ``E(Y | X)``. Else, for
             all quantiles, return ``y`` at ``q`` for which ``F(Y=y|x) = q``,
             where ``q`` is the quantile.
@@ -618,7 +618,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
             ``dtype=np.float32``. If a sparse matrix is provided, it will be
             converted into a sparse ``csr_matrix``.
 
-        y : array-like of shape (n_samples)
+        y : array-like of shape (n_samples) or (n_samples, n_outputs)
             The target values for which to calculate ranks.
 
         kind : {"rank", "weak", "strict", "mean"}, default="rank"
@@ -655,11 +655,11 @@ class BaseForestQuantileRegressor(ForestRegressor):
 
         Returns
         -------
-        y_ranks : array of shape (n_train)
+        y_ranks : array of shape (n_train) or (n_train, n_outputs)
             Quantile ranks in range [0, 1].
         """
         check_is_fitted(self)
-        X, y = self._validate_data(X, y, multi_output=False, accept_sparse="csc", dtype=DTYPE)
+        X, y = self._validate_data(X, y, multi_output=True, accept_sparse="csc", dtype=DTYPE)
 
         if not isinstance(kind, (bytes, bytearray)):
             kind = kind.encode()
@@ -682,13 +682,19 @@ class BaseForestQuantileRegressor(ForestRegressor):
                 X_leaves = self.apply(X)
             X_indices = None
 
+        if y.ndim == 1:
+            y = np.expand_dims(y, axis=1)
+
         y_ranks = self.forest_.quantile_ranks(
-            y.astype(np.float64),
+            y.astype(np.float64).T,
             X_leaves,
             X_indices,
             kind,
             aggregate_leaves_first,
         )
+
+        if y_ranks.shape[1] == 1:
+            y_ranks = np.squeeze(y_ranks, axis=1)
 
         return y_ranks
 
@@ -1117,9 +1123,8 @@ class RandomForestQuantileRegressor(BaseForestQuantileRegressor):
         self.ccp_alpha = ccp_alpha
 
     def _more_tags(self):
-        """TODO: Add support for multioutput."""
         return {
-            "multioutput": False,
+            "multioutput": True,
             "_xfail_checks": {
                 "check_dataframe_column_names_consistency": "Internal calls.",
             },
@@ -1406,9 +1411,8 @@ class ExtraTreesQuantileRegressor(BaseForestQuantileRegressor):
         self.ccp_alpha = ccp_alpha
 
     def _more_tags(self):
-        """TODO: Add support for multioutput."""
         return {
-            "multioutput": False,
+            "multioutput": True,
             "_xfail_checks": {
                 "check_dataframe_column_names_consistency": "Internal calls.",
             },
