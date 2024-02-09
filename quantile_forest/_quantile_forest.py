@@ -564,8 +564,8 @@ class BaseForestQuantileRegressor(ForestRegressor):
                 X_leaves,
                 X_indices,
                 interpolation,
-                weighted_leaves,
                 weighted_quantile,
+                weighted_leaves,
                 aggregate_leaves_first,
             )
 
