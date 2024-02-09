@@ -36,6 +36,7 @@ This approach was first proposed by :cite:t:`2006:meinshausen`.
 
 Fitting and Predicting
 ----------------------
+
 Quantile forests can be fit and used to predict like standard scikit-learn estimators.
 
 Let's fit a quantile forest on a simple regression dataset::
@@ -126,9 +127,9 @@ The predictions of a standard random forest can also be recovered from a quantil
     True
 
 Quantile Ranks
-----------------
+--------------
 
-The quantile rank of a score is the quantile of scores in its frequency distribution that are equal to or lower than it. The output quantile rank will be a value in the range [0, 1] for each test sample. The quantile rank of each sample is calculated by aggregating all of the training samples that share the same leaf node across all of the trees::
+The quantile rank is the fraction of scores in a frequency distribution that are less than (or equal to) that score. For a quantile forest, the frequency distribution is the set of training sample response values that are used to construct the empirical quantile estimates. The quantile rank of each sample is calculated by aggregating the response values from all of the training samples that share the same leaf node across all of the trees. The output quantile rank will be a value in the range [0, 1] for each test sample::
 
     >>> from sklearn import datasets
     >>> from sklearn.model_selection import train_test_split
@@ -144,6 +145,7 @@ Out-of-bag (OOB) quantile ranks can be returned by specifying `oob_score = True`
 
 Proximity Counts
 ----------------
+
 Proximity counts are counts of the number of times that two samples share a leaf node. When a test set is present, the proximity counts of each sample in the test set with each sample in the training set can be computed::
 
     >>> from sklearn import datasets
