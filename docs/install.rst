@@ -46,7 +46,11 @@ Test and Coverage
 
 To test the code::
 
-  $ pytest quantile_forest -v
+  $ python -m pytest quantile_forest -v
+
+To test the documentation::
+
+  $ python -m pytest docs/*rst
 
 Documentation
 =============

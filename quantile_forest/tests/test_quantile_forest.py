@@ -192,31 +192,66 @@ def check_predict_quantiles_toy(name):
     y_pred = est.predict(X, quantiles, interpolation="linear")
     assert_array_equal(y_pred, expected)
 
-    if name == "RandomForestQuantileRegressor":
-        for oob_score in [False, True]:
-            # Check weighted and unweighted leaves.
-            est = ForestRegressor(
-                n_estimators=20,
-                max_depth=1,
-                max_samples_leaf=None,
-                random_state=0,
-            )
-            est.fit(X, y)
-            y_pred1 = est.predict(
-                X,
-                quantiles=quantiles,
-                weighted_quantile=True,
-                weighted_leaves=True,
-                oob_score=oob_score,
-            )
-            y_pred2 = est.predict(
-                X,
-                quantiles=quantiles,
-                weighted_quantile=True,
-                weighted_leaves=False,
-                oob_score=oob_score,
-            )
-            assert np.any(y_pred1 != y_pred2)
+    for oob_score in [False, True]:
+        est = ForestRegressor(
+            n_estimators=25,
+            max_depth=1,
+            max_samples_leaf=None,
+            bootstrap=True,
+            random_state=0,
+        )
+        est.fit(X, y)
+
+        # Check that weighted and unweighted quantiles are approximately equal.
+        y_pred1 = est.predict(
+            X,
+            quantiles=quantiles,
+            weighted_quantile=True,
+            weighted_leaves=False,
+            oob_score=oob_score,
+        )
+        y_pred2 = est.predict(
+            X,
+            quantiles=quantiles,
+            weighted_quantile=False,
+            weighted_leaves=False,
+            oob_score=oob_score,
+        )
+        assert_allclose(y_pred1, y_pred2)
+
+        # Check that weighted and unweighted leaves are not equal.
+        y_pred1 = est.predict(
+            X,
+            quantiles=quantiles,
+            weighted_quantile=True,
+            weighted_leaves=True,
+            oob_score=oob_score,
+        )
+        y_pred2 = est.predict(
+            X,
+            quantiles=quantiles,
+            weighted_quantile=True,
+            weighted_leaves=False,
+            oob_score=oob_score,
+        )
+        assert_raises(AssertionError, assert_allclose, y_pred1, y_pred2)
+
+        # Check that leaf weighting without weighted quantiles does nothing.
+        y_pred1 = est.predict(
+            X,
+            quantiles=quantiles,
+            weighted_quantile=False,
+            weighted_leaves=True,
+            oob_score=oob_score,
+        )
+        y_pred2 = est.predict(
+            X,
+            quantiles=quantiles,
+            weighted_quantile=False,
+            weighted_leaves=False,
+            oob_score=oob_score,
+        )
+        assert_array_equal(y_pred1, y_pred2)
 
 
 @pytest.mark.parametrize("name", FOREST_REGRESSORS)
