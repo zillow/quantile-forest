@@ -231,7 +231,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
         Returns
         -------
         y_train_leaves : array-like of shape \
-                (n_estimators, n_leaves, n_indices, n_outputs)
+                (n_estimators, n_leaves, n_outputs, n_indices)
             List of trees, each with a list of nodes, each with a list of
             indices of the training samples residing at that node. Nodes with
             no samples (e.g., internal nodes) are empty. Internal nodes are
@@ -294,7 +294,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
                     max_samples_leaf = sample_count
 
         # Initialize NumPy array (more efficient serialization than dict/list).
-        shape = (self.n_estimators, max_node_count, max_samples_leaf, y_dim)
+        shape = (self.n_estimators, max_node_count, y_dim, max_samples_leaf)
         y_train_leaves = np.zeros(shape, dtype=np.int64)
 
         for i, estimator in enumerate(self.estimators_):
@@ -317,10 +317,10 @@ class BaseForestQuantileRegressor(ForestRegressor):
                     if not isinstance(y_indices, list):
                         y_indices = list(y_indices)
                     y_indices = random.sample(y_indices, max_samples_leaf)
+                y_indices = np.asarray(y_indices).reshape(y_dim, -1)
 
-                y_indices = np.asarray(y_indices).reshape(-1, y_dim)
-
-                y_train_leaves[i, leaf_idx, : len(y_indices)] = y_indices
+                for j in range(y_dim):
+                    y_train_leaves[i, leaf_idx, j, : len(y_indices[j])] = y_indices[j]
 
         return y_train_leaves
 
@@ -559,12 +559,12 @@ class BaseForestQuantileRegressor(ForestRegressor):
                 leaf_values = np.empty((len(X), self.n_estimators))
                 for tree in range(self.n_estimators):
                     if X_indices is None:
-                        train_indices = y_train_leaves[tree, X_leaves[:, tree], 0, i]
+                        train_indices = y_train_leaves[tree, X_leaves[:, tree], i, 0]
                     else:  # OOB scoring
                         indices = X_indices[:, tree] == 1
                         leaves = X_leaves[indices, tree]
                         train_indices = np.zeros(len(X), dtype=int)
-                        train_indices[indices] = y_train_leaves[tree, leaves, 0, i]
+                        train_indices[indices] = y_train_leaves[tree, leaves, i, 0]
                     leaf_values[:, tree] = y_train[train_indices - 1, i]
                     leaf_values[train_indices == 0, tree] = np.nan
                 if len(quantiles) == 1 and quantiles[0] == -1:  # calculate mean
@@ -793,9 +793,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
 
         if return_sorted:
             # Sort each dict of proximities in descending order by count.
-            proximities = [
-                sorted(p.items(), key=lambda x: x[1], reverse=True) for p in proximities
-            ]
+            proximities = [sorted(p.items(), key=lambda x: x[1], reverse=True) for p in proximities]
         else:
             proximities = [p.items() for p in proximities]
 

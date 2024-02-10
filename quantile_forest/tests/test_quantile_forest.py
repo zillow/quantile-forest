@@ -388,6 +388,21 @@ def check_predict_quantiles(
         )
         assert_allclose(y_pred_1, y_pred_2)
 
+    # Check multi-target outputs.
+    X, y = datasets.load_linnerud(return_X_y=True)
+    est = ForestRegressor(n_estimators=1, max_samples_leaf=1, random_state=0)
+    est.fit(X, y)
+    y_pred = est.predict(
+        X,
+        quantiles=quantiles,
+        weighted_quantile=True,
+        aggregate_leaves_first=True,
+    )
+    assert y_pred.ndim == 3
+    assert y_pred.shape[2] == y.shape[1]
+    score = est.score(X, y, quantiles=0.5)
+    assert score > 0.4
+
     est = ForestRegressor(n_estimators=1, max_samples_leaf=max_samples_leaf, random_state=0)
     est.fit(X_train, y_train)
 
@@ -649,7 +664,7 @@ def check_max_samples_leaf(name):
 
         max_leaf_size = 0
         for _, tree_lookup in enumerate(est._get_y_train_leaves(X, 1)):
-            for leaf_samples in tree_lookup:
+            for leaf_samples in np.squeeze(tree_lookup, -2):
                 n_leaf_samples = len([x for x in leaf_samples if x != 0])
                 if n_leaf_samples > max_leaf_size:
                     max_leaf_size = n_leaf_samples
@@ -1249,9 +1264,7 @@ def test_calc_weighted_quantile():
     ]
 
     # Check that empty array is returned for weights that sum to 0.
-    actual = [
-        calc_weighted_quantile(i, w, quantiles) for i, w in _dicts_to_weighted_inputs(inputs)
-    ]
+    actual = [calc_weighted_quantile(i, w, quantiles) for i, w in _dicts_to_weighted_inputs(inputs)]
     expected = [[], [], []]
     assert_array_equal(actual, expected)
 

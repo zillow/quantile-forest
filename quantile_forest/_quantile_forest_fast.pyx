@@ -562,7 +562,7 @@ cdef class QuantileForest:
         Training target values. Assumes values are sorted in ascending order.
 
     y_train_leaves : array-like of shape \
-            (n_estimators, n_leaves, n_indices, n_outputs)
+            (n_estimators, n_leaves, n_outputs, n_indices)
         List of trees, each with a list of nodes, each with a list of indices
         of the training samples residing at that node. Nodes with no samples
         (e.g., internal nodes) are empty. Internal nodes are included so that
@@ -657,19 +657,19 @@ cdef class QuantileForest:
         """
         cdef vector[double] median = [0.5]
 
-        cdef SIZE_t n_quantiles, n_samples, n_trees, n_train, n_outputs
-        cdef SIZE_t i, j, k
+        cdef SIZE_t n_quantiles, n_samples, n_trees, n_outputs, n_train
+        cdef SIZE_t i, j, k, l
         cdef bint use_mean
         cdef vector[double] leaf_samples
         cdef vector[double] leaf_weights
-        cdef vector[vector[vector[SIZE_t]]] train_indices
+        cdef vector[vector[SIZE_t]] train_indices
         cdef vector[vector[double]] train_weights
         cdef SIZE_t idx, train_idx
         cdef double train_wgt
         cdef vector[int] n_leaf_samples
         cdef int n_total_samples, n_total_trees
         cdef double train_weight
-        cdef vector[vector[vector[double]]] leaf_preds
+        cdef vector[vector[double]] leaf_preds
         cdef vector[double] pred
         cdef np.ndarray[DOUBLE_t, ndim=3] preds
         cdef double[:, :, :] preds_view
@@ -680,7 +680,7 @@ cdef class QuantileForest:
 
         n_outputs = self.y_train.size()
         n_train = self.y_train[0].size()
-        max_idx = self.y_train_leaves.shape[2]
+        max_idx = self.y_train_leaves.shape[3]
 
         use_mean = False
         if len(quantiles) == 1 and quantiles[0] == -1:
@@ -708,112 +708,107 @@ cdef class QuantileForest:
 
         with nogil:
             idx = 1 if aggregate_leaves_first else n_trees
-            train_weights = vector[vector[double]](idx)
-            train_indices = vector[vector[vector[SIZE_t]]](idx)
-            for i in range(<SIZE_t>(train_indices.size())):
-                train_indices[i] = vector[vector[SIZE_t]](n_outputs)
+            train_indices = vector[vector[SIZE_t]](idx)
 
             n_leaf_samples = vector[int](n_trees)
-            leaf_preds = vector[vector[vector[double]]](n_quantiles)
+            leaf_preds = vector[vector[double]](n_quantiles)
             for i in range(<SIZE_t>(leaf_preds.size())):
-                leaf_preds[i] = vector[vector[double]](n_outputs)
-                for j in range(n_outputs):
-                    leaf_preds[i][j].reserve(idx)
+                leaf_preds[i].reserve(idx)
 
             if weighted_quantile:
+                train_weights = vector[vector[double]](idx)
                 leaf_weights = vector[double](n_train)
 
             for i in range(n_samples):
-                for j in range(<SIZE_t>(train_indices.size())):
-                    for k in range(<SIZE_t>(train_indices[j].size())):
-                        train_indices[j][k].clear()
-                for j in range(<SIZE_t>(train_weights.size())):
-                    train_weights[j].clear()
-                for j in range(<SIZE_t>(leaf_preds.size())):
-                    for k in range(n_outputs):
-                        leaf_preds[j][k].clear()
-
-                # Accumulate training indices across leaves for each tree.
-                # If `aggregate_leaves_first`, also accumulate across trees.
                 n_total_samples = 0
                 n_total_trees = 0
                 for j in range(n_trees):
                     if X_indices is None or X_indices[i, j] is True:
-                        idx = 0 if aggregate_leaves_first else j
-                        for k in range(n_outputs):
-                            train_indices[idx][k].insert(
-                                train_indices[idx][k].end(),
-                                &self.y_train_leaves[j, X_leaves[i, j], 0, k],
-                                &self.y_train_leaves[j, X_leaves[i, j], max_idx, k],
-                            )
-
                         n_leaf_samples[j] = 0
                         for k in range(max_idx):
-                            if self.y_train_leaves[j, X_leaves[i, j], k, 0] != 0:
+                            if self.y_train_leaves[j, X_leaves[i, j], 0, k] != 0:
                                 n_leaf_samples[j] += 1
-
                         n_total_samples += n_leaf_samples[j]
                         n_total_trees += 1
 
-                for j in range(n_trees):
-                    if X_indices is None or X_indices[i, j] is True:
-                        idx = 0 if aggregate_leaves_first else j
-                        train_weight = 1
-                        if weighted_leaves:
-                            train_weight = 0
-                            if n_leaf_samples[j] > 0:
-                                train_weight = 1 / <double>n_leaf_samples[j]
-                                train_weight *= <double>n_total_samples
-                                train_weight /= <double>n_total_trees
-                        train_weights[idx].insert(train_weights[idx].end(), max_idx, train_weight)
+                for j in range(n_outputs):
+                    for k in range(<SIZE_t>(train_indices.size())):
+                        train_indices[k].clear()
+                    for k in range(<SIZE_t>(leaf_preds.size())):
+                        leaf_preds[k].clear()
 
-                if weighted_quantile:
-                    # For each list of training indices, calculate output.
-                    for j in range(<SIZE_t>(train_indices.size())):
-                        for k in range(n_outputs):
-                            if train_indices[j][k].size() == 0:
+                    # Accumulate training indices across leaves for each tree.
+                    # If `aggregate_leaves_first`, also accumulate across trees.
+                    for k in range(n_trees):
+                        if X_indices is None or X_indices[i, k] is True:
+                            idx = 0 if aggregate_leaves_first else k
+                            train_indices[idx].insert(
+                                train_indices[idx].end(),
+                                &self.y_train_leaves[k, X_leaves[i, k], j, 0],
+                                &self.y_train_leaves[k, X_leaves[i, k], j, max_idx],
+                            )
+
+                    if weighted_quantile:
+                        for k in range(<SIZE_t>(train_weights.size())):
+                            train_weights[k].clear()
+                        for k in range(n_trees):
+                            if X_indices is None or X_indices[i, k] is True:
+                                idx = 0 if aggregate_leaves_first else k
+                                train_weight = 1
+                                if weighted_leaves:
+                                    train_weight = 0
+                                    if n_leaf_samples[k] > 0:
+                                        train_weight = 1 / <double>n_leaf_samples[k]
+                                        train_weight *= <double>n_total_samples
+                                        train_weight /= <double>n_total_trees
+                                train_weights[idx].insert(
+                                    train_weights[idx].end(), max_idx, train_weight
+                                )
+
+                        # For each list of training indices, calculate output.
+                        for k in range(<SIZE_t>(train_indices.size())):
+                            if train_indices[k].size() == 0:
                                 continue
 
                             # Reset leaf weights for all training indices to 0.
                             memset(&leaf_weights[0], 0, n_train * sizeof(double))
 
                             # Sum the weights/counts for each training index.
-                            for l in range(<SIZE_t>(train_indices[j][k].size())):
-                                train_idx = train_indices[j][k][l]
-                                train_wgt = train_weights[j][l]
+                            for l in range(<SIZE_t>(train_indices[k].size())):
+                                train_idx = train_indices[k][l]
+                                train_wgt = train_weights[k][l]
                                 if train_idx != 0:
                                     leaf_weights[train_idx - 1] += train_wgt
 
                             # Calculate quantiles (or mean).
                             if not use_mean:
                                 pred = calc_weighted_quantile(
-                                    self.y_train[k],
+                                    self.y_train[j],
                                     leaf_weights,
                                     quantiles,
                                     interpolation,
                                     issorted=True,
                                 )
                                 for l in range(<SIZE_t>(pred.size())):
-                                    leaf_preds[l][k].push_back(pred[l])
+                                    leaf_preds[l].push_back(pred[l])
                             else:
-                                if self.y_train[k].size() > 0:
+                                if self.y_train[j].size() > 0:
                                     pred = vector[double](1)
-                                    pred[0] = calc_weighted_mean(self.y_train[k], leaf_weights)
-                                    leaf_preds[0][k].push_back(pred[0])
-                else:
-                    # For each list of training indices, calculate output.
-                    for j in range(<SIZE_t>(train_indices.size())):
-                        if train_indices[j].size() == 0:
-                            continue
+                                    pred[0] = calc_weighted_mean(self.y_train[j], leaf_weights)
+                                    leaf_preds[0].push_back(pred[0])
+                    else:
+                        # For each list of training indices, calculate output.
+                        for k in range(<SIZE_t>(train_indices.size())):
+                            if train_indices[k].size() == 0:
+                                continue
 
-                        for k in range(n_outputs):
                             # Clear list of training target values.
                             leaf_samples.clear()
 
                             # Get training target values associated with indices.
-                            for train_idx in train_indices[j][k]:
+                            for train_idx in train_indices[k]:
                                 if train_idx != 0:
-                                    leaf_samples.push_back(self.y_train[k][train_idx - 1])
+                                    leaf_samples.push_back(self.y_train[j][train_idx - 1])
 
                             # Calculate quantiles (or mean).
                             if not use_mean:
@@ -824,33 +819,31 @@ cdef class QuantileForest:
                                     issorted=False,
                                 )
                                 for l in range(<SIZE_t>(pred.size())):
-                                    leaf_preds[l][k].push_back(pred[l])
+                                    leaf_preds[l].push_back(pred[l])
                             else:
                                 if leaf_samples.size() > 0:
                                     pred = vector[double](1)
                                     pred[0] = calc_mean(leaf_samples)
-                                    leaf_preds[0][k].push_back(pred[0])
+                                    leaf_preds[0].push_back(pred[0])
 
-                # Average the quantile predictions across accumulations.
-                if not use_mean:
-                    for j in range(<SIZE_t>(leaf_preds.size())):
-                        for k in range(n_outputs):
-                            if leaf_preds[j][k].size() == 1:
-                                preds_view[i, j, k] = leaf_preds[j][k][0]
-                            elif leaf_preds[j][k].size() > 1:
+                    # Average the quantile predictions across accumulations.
+                    if not use_mean:
+                        for k in range(<SIZE_t>(leaf_preds.size())):
+                            if leaf_preds[k].size() == 1:
+                                preds_view[i, k, j] = leaf_preds[k][0]
+                            elif leaf_preds[k].size() > 1:
                                 pred = calc_quantile(
-                                    leaf_preds[j][k],
+                                    leaf_preds[k],
                                     median,
                                     interpolation,
                                     issorted=False,
                                 )
-                                preds_view[i, j, k] = pred[0]
-                else:
-                    for j in range(n_outputs):
-                        if leaf_preds[0][j].size() == 1:
-                            preds_view[i, 0, j] = leaf_preds[0][j][0]
-                        elif leaf_preds[0][j].size() > 1:
-                            preds_view[i, 0, j] = calc_mean(leaf_preds[0][j])
+                                preds_view[i, k, j] = pred[0]
+                    else:
+                        if leaf_preds[0].size() == 1:
+                            preds_view[i, 0, j] = leaf_preds[0][0]
+                        elif leaf_preds[0].size() > 1:
+                            preds_view[i, 0, j] = calc_mean(leaf_preds[0])
 
         return np.asarray(preds_view)
 
@@ -905,7 +898,7 @@ cdef class QuantileForest:
         n_samples = X_leaves.shape[0]
         n_trees = X_leaves.shape[1]
 
-        max_idx = self.y_train_leaves.shape[2]
+        max_idx = self.y_train_leaves.shape[3]
 
         if X_indices is not None:
             if X_indices.shape[1] != X_leaves.shape[1]:
@@ -941,8 +934,8 @@ cdef class QuantileForest:
                             idx = 0 if aggregate_leaves_first else k
                             train_indices[idx].insert(
                                 train_indices[idx].end(),
-                                &self.y_train_leaves[k, X_leaves[i, k], 0, j],
-                                &self.y_train_leaves[k, X_leaves[i, k], max_idx, j],
+                                &self.y_train_leaves[k, X_leaves[i, k], j, 0],
+                                &self.y_train_leaves[k, X_leaves[i, k], j, max_idx],
                             )
 
                     # For each list of training indices, calculate rank.
@@ -1020,7 +1013,7 @@ cdef class QuantileForest:
         n_trees = X_leaves.shape[1]
 
         n_train = self.y_train[0].size()
-        max_idx = self.y_train_leaves.shape[2]
+        max_idx = self.y_train_leaves.shape[3]
 
         if X_indices is not None:
             if X_indices.shape[1] != X_leaves.shape[1]:
@@ -1048,7 +1041,7 @@ cdef class QuantileForest:
                         train_indices.insert(
                             train_indices.end(),
                             &self.y_train_leaves[j, X_leaves[i, j], 0, 0],
-                            &self.y_train_leaves[j, X_leaves[i, j], max_idx, 0],
+                            &self.y_train_leaves[j, X_leaves[i, j], 0, max_idx],
                         )
 
                 # Sum the weights/counts for each training index.
