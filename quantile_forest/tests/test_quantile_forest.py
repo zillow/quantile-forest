@@ -86,6 +86,8 @@ def check_regression_toy(name, weighted_quantile):
     )
     assert_allclose(y_pred, y_true)
 
+    assert regr._more_tags()
+
 
 @pytest.mark.parametrize("name", FOREST_REGRESSORS)
 @pytest.mark.parametrize("weighted_quantile", [True, False])
@@ -682,17 +684,14 @@ def check_max_samples_leaf(name):
     for max_1, max_2 in zip(max_leaf_sizes[::], max_leaf_sizes[1::]):
         assert max_1 <= max_2
 
-    # Check error if `max_samples_leaf` <= 0.
-    est = ForestRegressor(n_estimators=1, max_samples_leaf=0)
-    assert_raises(ValueError, est.fit, X, y)
-
-    # Check error if `max_samples_leaf` is float larger than 1.
-    est = ForestRegressor(n_estimators=1, max_samples_leaf=1.5)
-    assert_raises(ValueError, est.fit, X, y)
-
-    # Check error if `max_samples_leaf` is not int, float, or None.
-    est = ForestRegressor(n_estimators=1, max_samples_leaf="None")
-    assert_raises(ValueError, est.fit, X, y)
+    # Check error if `max_samples_leaf` <= 0, float larger than 1, or string.
+    for max_samples_leaf in [0, 1.5, "None"]:
+        for param_validation in [True, False]:
+            est = ForestRegressor(n_estimators=1, max_samples_leaf=max_samples_leaf)
+            est.param_validation = param_validation
+            assert_raises(ValueError, est.fit, X, y)
+            est.max_samples_leaf = max_samples_leaf
+            assert_raises(ValueError, est._get_y_train_leaves, X, 1)
 
 
 @pytest.mark.parametrize("name", FOREST_REGRESSORS)
