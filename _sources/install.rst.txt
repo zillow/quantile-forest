@@ -8,8 +8,9 @@ Prerequisites
 The quantile-forest package requires the following dependencies:
 
 * python (>=3.8)
-* cython (>=3.0a4)
+* numpy (>=1.23)
 * scikit-learn (>=1.0)
+* scipy (>=1.4)
 
 Install
 =======
@@ -20,6 +21,10 @@ quantile-forest can be installed using `pip`::
 
 Developer Install
 =================
+
+Building the package from source additionally requires the following dependencies:
+
+* cython (>=3.0a4)
 
 To manually build and install the package, run::
 
