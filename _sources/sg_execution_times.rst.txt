@@ -6,7 +6,7 @@
 
 Computation times
 =================
-**00:18.122** total execution time for 7 files **from all galleries**:
+**00:18.493** total execution time for 7 files **from all galleries**:
 
 .. container::
 
@@ -33,16 +33,16 @@ Computation times
      - Time
      - Mem (MB)
    * - :ref:`sphx_glr_auto_examples_plot_quantile_weighted_vs_unweighted.py` (``../examples/plot_quantile_weighted_vs_unweighted.py``)
-     - 00:10.579
+     - 00:10.561
      - 0.0
    * - :ref:`sphx_glr_auto_examples_plot_quantile_regression_intervals.py` (``../examples/plot_quantile_regression_intervals.py``)
-     - 00:04.170
+     - 00:04.554
      - 0.0
    * - :ref:`sphx_glr_auto_examples_plot_quantile_conformalized.py` (``../examples/plot_quantile_conformalized.py``)
-     - 00:01.949
+     - 00:01.950
      - 0.0
    * - :ref:`sphx_glr_auto_examples_plot_quantile_vs_standard_forest.py` (``../examples/plot_quantile_vs_standard_forest.py``)
-     - 00:00.565
+     - 00:00.564
      - 0.0
    * - :ref:`sphx_glr_auto_examples_plot_quantile_extrapolation_problem.py` (``../examples/plot_quantile_extrapolation_problem.py``)
      - 00:00.434
@@ -51,5 +51,5 @@ Computation times
      - 00:00.315
      - 0.0
    * - :ref:`sphx_glr_auto_examples_plot_quantile_interpolation.py` (``../examples/plot_quantile_interpolation.py``)
-     - 00:00.112
+     - 00:00.114
      - 0.0
