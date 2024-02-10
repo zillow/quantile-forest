@@ -1264,7 +1264,9 @@ def test_calc_weighted_quantile():
     ]
 
     # Check that empty array is returned for weights that sum to 0.
-    actual = [calc_weighted_quantile(i, w, quantiles) for i, w in _dicts_to_weighted_inputs(inputs)]
+    actual = [
+        calc_weighted_quantile(i, w, quantiles) for i, w in _dicts_to_weighted_inputs(inputs)
+    ]
     expected = [[], [], []]
     assert_array_equal(actual, expected)
 

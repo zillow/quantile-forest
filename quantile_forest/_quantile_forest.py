@@ -793,7 +793,9 @@ class BaseForestQuantileRegressor(ForestRegressor):
 
         if return_sorted:
             # Sort each dict of proximities in descending order by count.
-            proximities = [sorted(p.items(), key=lambda x: x[1], reverse=True) for p in proximities]
+            proximities = [
+                sorted(p.items(), key=lambda x: x[1], reverse=True) for p in proximities
+            ]
         else:
             proximities = [p.items() for p in proximities]
 
