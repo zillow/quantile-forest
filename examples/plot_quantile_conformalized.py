@@ -38,7 +38,7 @@ perm = rng.permutation(n_samples)
 X = california.data[perm]
 y = california.target[perm]
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=random_state)
+X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
 
 def sort_y_values(y_test, y_pred, y_pis):
@@ -52,11 +52,13 @@ def sort_y_values(y_test, y_pred, y_pis):
 
 
 def coverage_score(y_true, y_pred_low, y_pred_upp):
+    """Effective coverage score obtained by the prediction intervals."""
     coverage = np.mean((y_pred_low <= y_true) & (y_pred_upp >= y_true))
     return float(coverage)
 
 
-def width_score(y_pred_low, y_pred_upp):
+def mean_width_score(y_pred_low, y_pred_upp):
+    """Effective mean width score obtained by the prediction intervals."""
     mean_width = np.abs(y_pred_upp - y_pred_low).mean()
     return float(mean_width)
 
@@ -67,66 +69,73 @@ strategies = {
 }
 
 
-def qrf_strategy(X_train, X_test, y_train, y_test):
+def qrf_strategy(alpha, X_train, X_test, y_train, y_test):
+    quantiles = [alpha / 2, 1 - alpha / 2]
+
     qrf = RandomForestQuantileRegressor(random_state=0)
     qrf.fit(X_train, y_train)
 
-    # Calculate lower and upper quantile values.
-    y_pred_low_upp = qrf.predict(X_test, quantiles=[alpha / 2, 1 - alpha / 2])
-    y_pred_low = y_pred_low_upp[:, 0]
-    y_pred_upp = y_pred_low_upp[:, 1]
+    # Calculate the lower and upper quantile values on the test data.
+    y_pred_interval = qrf.predict(X_test, quantiles=quantiles)
+    y_pred_low = y_pred_interval[:, 0]
+    y_pred_upp = y_pred_interval[:, 1]
     y_pis = np.stack([y_pred_low, y_pred_upp], axis=1)
 
-    # Calculate the point predictions.
+    # Calculate the point predictions on the test data.
     y_pred = qrf.predict(X_test, quantiles="mean", aggregate_leaves_first=False)
 
     coverage = coverage_score(y_test, y_pred_low, y_pred_upp)
-    width = width_score(y_pred_low, y_pred_upp)
+    width = mean_width_score(y_pred_low, y_pred_upp)
 
-    return coverage, width, sort_y_values(y_test, y_pred, y_pis)
+    return *sort_y_values(y_test, y_pred, y_pis), coverage, width
 
 
-def cqr_strategy(X_train, X_test, y_train, y_test):
+def cqr_strategy(alpha, X_train, X_test, y_train, y_test):
+    quantiles = [alpha / 2, 1 - alpha / 2]
+
     # Create calibration set.
     X_train, X_calib, y_train, y_calib = train_test_split(
-        X_train, y_train, test_size=0.5, random_state=random_state
+        X_train, y_train, test_size=0.5, random_state=0
     )
 
     qrf = RandomForestQuantileRegressor(random_state=0)
     qrf.fit(X_train, y_train)
 
-    # Calculate lower and upper quantile values.
-    y_pred_low_upp = qrf.predict(X_test, quantiles=[alpha / 2, 1 - alpha / 2])
-    y_pred_low = y_pred_low_upp[:, 0]
-    y_pred_upp = y_pred_low_upp[:, 1]
+    # Calculate the lower and upper quantile values on the test data.
+    y_pred_interval = qrf.predict(X_test, quantiles=quantiles)
+    y_pred_low = y_pred_interval[:, 0]
+    y_pred_upp = y_pred_interval[:, 1]
 
-    # Calculate the lower and upper quantile values of the calibration set.
-    y_pred_low_upp_calib = qrf.predict(X_calib, quantiles=[alpha / 2, 1 - alpha / 2])
-    y_pred_low_calib = y_pred_low_upp_calib[:, 0]
-    y_pred_upp_calib = y_pred_low_upp_calib[:, 1]
+    # Calculate the lower and upper quantile values on the calibration set.
+    y_pred_interval_calib = qrf.predict(X_calib, quantiles=quantiles)
+    y_pred_low_calib = y_pred_interval_calib[:, 0]
+    y_pred_upp_calib = y_pred_interval_calib[:, 1]
 
+    # Calculate the conformity scores on the calibration data.
     a = y_pred_low_calib - y_calib
     b = y_calib - y_pred_upp_calib
     conf_scores = (np.vstack((a, b)).T).max(axis=1)
 
+    # Get the 1-alpha quantile `s` from the distribution of conformity scores.
     s = np.quantile(conf_scores, (1 - alpha) * (1 + (1 / (len(y_calib)))))
 
+    # Subtract `s` from the lower quantile and add it to the upper quantile.
     y_conf_low = y_pred_low - s
     y_conf_upp = y_pred_upp + s
     y_pis = np.stack([y_conf_low, y_conf_upp], axis=1)
 
-    # Calculate the point predictions.
+    # Calculate the point predictions on the test data.
     y_pred = qrf.predict(X_test, quantiles="mean", aggregate_leaves_first=False)
 
     coverage = coverage_score(y_test, y_conf_low, y_conf_upp)
-    width = width_score(y_conf_low, y_conf_upp)
+    width = mean_width_score(y_conf_low, y_conf_upp)
 
-    return coverage, width, sort_y_values(y_test, y_pred, y_pis)
+    return *sort_y_values(y_test, y_pred, y_pis), coverage, width
 
 
-coverage, width, y_sorted = {}, {}, {}
-coverage["qrf"], width["qrf"], y_sorted["qrf"] = qrf_strategy(X_train, X_test, y_train, y_test)
-coverage["cqr"], width["cqr"], y_sorted["cqr"] = cqr_strategy(X_train, X_test, y_train, y_test)
+results = {}
+results["qrf"] = qrf_strategy(alpha, X_train, X_test, y_train, y_test)
+results["cqr"] = cqr_strategy(alpha, X_train, X_test, y_train, y_test)
 
 
 def plot_prediction_intervals(
@@ -140,6 +149,7 @@ def plot_prediction_intervals(
     coverage,
     width,
     num_plots_idx,
+    round_to,
     price_formatter,
 ):
     """Plot of the prediction intervals for each method."""
@@ -164,7 +174,7 @@ def plot_prediction_intervals(
     at = AnchoredText(
         (
             f"PICP: {np.round(coverage, round_to)} (target = {1 - alpha})\n"
-            + f"Interval Width: {np.round(width, round_to)}"
+            + f"Mean Interval Width: {np.round(width, round_to)}"
         ),
         frameon=False,
         loc=2,
@@ -190,10 +200,9 @@ for strategy, coord in zip(strategies.keys(), coords):
         strategies[strategy],
         alpha,
         coord,
-        *y_sorted[strategy],
-        coverage[strategy],
-        width[strategy],
+        *results[strategy],
         num_plots,
+        round_to,
         usd_formatter,
     )
 
