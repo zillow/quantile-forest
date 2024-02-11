@@ -5,4 +5,3 @@ sphinxcontrib.bibtex
 pydata_sphinx_theme
 numpydoc
 matplotlib
-
