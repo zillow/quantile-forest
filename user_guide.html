@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>User Guide &#8212; Version 1.2.5</title>
+    <title>User Guide &#8212; Version 1.3.0</title>
   
   
   
@@ -42,7 +42,7 @@
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=8d27b9dea8ad943066ae" />
   <script src="_static/vendor/fontawesome/6.5.1/js/all.min.js?digest=8d27b9dea8ad943066ae"></script>
 
-    <script src="_static/documentation_options.js?v=36f53d34"></script>
+    <script src="_static/documentation_options.js?v=1f29e9d3"></script>
     <script src="_static/doctools.js?v=888ff710"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/copybutton.js?v=26522df0"></script>
@@ -124,7 +124,7 @@
   
   
   
-    <p class="title logo__title">Version 1.2.5</p>
+    <p class="title logo__title">Version 1.3.0</p>
   
 </a></div>
     
@@ -378,7 +378,9 @@ document.write(`
 </section>
 <section id="fitting-and-predicting">
 <h2>Fitting and Predicting<a class="headerlink" href="#fitting-and-predicting" title="Link to this heading">#</a></h2>
-<p>Quantile forests can be fit and used to predict like standard scikit-learn estimators.</p>
+<p>Quantile forests can be fit and used to predict like standard scikit-learn estimators. In this package, the quantile forests extend standard scikit-learn forest regressors and inherent their model parameters, in addition to offering additional parameters related to quantile regression. We’ll discuss many of the important model parameters below.</p>
+<section id="fitting-a-model">
+<h3>Fitting a Model<a class="headerlink" href="#fitting-a-model" title="Link to this heading">#</a></h3>
 <p>Let’s fit a quantile forest on a simple regression dataset:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">sklearn</span> <span class="kn">import</span> <span class="n">datasets</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">sklearn.model_selection</span> <span class="kn">import</span> <span class="n">train_test_split</span>
@@ -391,6 +393,9 @@ document.write(`
 </pre></div>
 </div>
 <p>During model initialization, the parameter <code class="docutils literal notranslate"><span class="pre">max_samples_leaf</span></code> can be specified, which determines the maximum number of samples per leaf node to retain. If <code class="docutils literal notranslate"><span class="pre">max_samples_leaf</span></code> is smaller than the number of samples in a given leaf node, then a subset of values are randomly selected. By default, the model retains one randomly selected sample per leaf node (<code class="docutils literal notranslate"><span class="pre">max_samples_leaf</span> <span class="pre">=</span> <span class="pre">1</span></code>), which enables the use of optimizations at prediction time that are not available when a variable number of samples may be retained per leaf. All samples can be retained by specifying <code class="docutils literal notranslate"><span class="pre">max_samples_leaf</span> <span class="pre">=</span> <span class="pre">None</span></code>. Note that the number of retained samples can materially impact the size of the model object.</p>
+</section>
+<section id="making-predictions">
+<h3>Making Predictions<a class="headerlink" href="#making-predictions" title="Link to this heading">#</a></h3>
 <p>A notable advantage of quantile forests is that they can be fit once, while arbitrary quantiles can be estimated at prediction time. Accordingly, since the quantiles can be specified at prediction time, the model accepts an optional parameter during the call to the <code class="docutils literal notranslate"><span class="pre">predict</span></code> method, which can be a float or list of floats that specify the empirical quantiles to return:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">y_pred</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">,</span> <span class="n">quantiles</span><span class="o">=</span><span class="p">[</span><span class="mf">0.25</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.75</span><span class="p">])</span>  <span class="c1"># returns three columns per row</span>
 </pre></div>
@@ -419,6 +424,29 @@ document.write(`
 <span class="go">True</span>
 </pre></div>
 </div>
+<p>Multi-target quantile regression is also supported. If the target values are multi-dimensional, then the final output column will correspond to the number of targets:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">sklearn</span> <span class="kn">import</span> <span class="n">datasets</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">sklearn.model_selection</span> <span class="kn">import</span> <span class="n">train_test_split</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">quantile_forest</span> <span class="kn">import</span> <span class="n">RandomForestQuantileRegressor</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">X</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">datasets</span><span class="o">.</span><span class="n">make_regression</span><span class="p">(</span><span class="n">n_targets</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># 2 targets</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">reg_multi</span> <span class="o">=</span> <span class="n">RandomForestQuantileRegressor</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">reg_multi</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+<span class="go">RandomForestQuantileRegressor()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">quantiles</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.25</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.75</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">y_pred</span> <span class="o">=</span> <span class="n">reg_multi</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">quantiles</span><span class="o">=</span><span class="n">quantiles</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">y_pred</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">3</span>
+<span class="go">True</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">y_pred</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+<span class="go">True</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">y_pred</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">quantiles</span><span class="p">)</span>
+<span class="go">True</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">y_pred</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+<span class="go">True</span>
+</pre></div>
+</div>
+</section>
+<section id="quantile-weighting">
+<h3>Quantile Weighting<a class="headerlink" href="#quantile-weighting" title="Link to this heading">#</a></h3>
 <p>By default, the predict method calculates quantiles by weighting each sample inversely according to the size of its leaf node (<code class="docutils literal notranslate"><span class="pre">weighted_leaves</span> <span class="pre">=</span> <span class="pre">True</span></code>). If <code class="docutils literal notranslate"><span class="pre">weighted_leaves</span> <span class="pre">=</span> <span class="pre">False</span></code>, each sample in a leaf (including repeated bootstrap samples) will be given equal weight. Note that this leaf-based weighting can only be used with weighted quantiles.</p>
 <p>By default, the predict method calculates quantiles using a weighted quantile method (<code class="docutils literal notranslate"><span class="pre">weighted_quantile</span> <span class="pre">=</span> <span class="pre">True</span></code>), which assigns a weight to each sample in the training set based on the number of times that it co-occurs in the same leaves as the test sample. When the number of samples in the training set is larger than the expected size of this list (i.e., <span class="math notranslate nohighlight">\(n_{train} \gg n_{trees} \cdot n_{leaves} \cdot n_{leafsamples}\)</span>), it can be more efficient to calculate an unweighted quantile (<code class="docutils literal notranslate"><span class="pre">weighted_quantile</span> <span class="pre">=</span> <span class="pre">False</span></code>), which aggregates the list of training <code class="docutils literal notranslate"><span class="pre">y</span></code> values for each leaf node to which the test sample belongs across all trees. For a given input, both methods can return the same output values:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
@@ -429,6 +457,9 @@ document.write(`
 <span class="go">True</span>
 </pre></div>
 </div>
+</section>
+<section id="out-of-bag-estimation">
+<h3>Out-of-Bag Estimation<a class="headerlink" href="#out-of-bag-estimation" title="Link to this heading">#</a></h3>
 <p>Out-of-bag (OOB) predictions can be returned by specifying <code class="docutils literal notranslate"><span class="pre">oob_score</span> <span class="pre">=</span> <span class="pre">True</span></code>:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">y_pred_oob</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">quantiles</span><span class="o">=</span><span class="p">[</span><span class="mf">0.25</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.75</span><span class="p">],</span> <span class="n">oob_score</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
@@ -443,6 +474,9 @@ document.write(`
 </pre></div>
 </div>
 <p>This allows all samples, both from the training and test sets, to be scored with a single call to <code class="docutils literal notranslate"><span class="pre">predict</span></code>, whereby OOB predictions are returned for the training samples and IB (i.e., non-OOB) predictions are returned for the test samples.</p>
+</section>
+<section id="random-forest-predictions">
+<h3>Random Forest Predictions<a class="headerlink" href="#random-forest-predictions" title="Link to this heading">#</a></h3>
 <p>The predictions of a standard random forest can also be recovered from a quantile forest without retraining by passing <code class="docutils literal notranslate"><span class="pre">quantiles</span> <span class="pre">=</span> <span class="pre">&quot;mean&quot;</span></code> and <code class="docutils literal notranslate"><span class="pre">aggregate_leaves_first</span> <span class="pre">=</span> <span class="pre">False</span></code>, the latter which specifies a Boolean flag to average the leaf values before aggregating the leaves across trees. This configuration essentially replicates the prediction process used by a standard random forest regressor, which is an averaging of mean leaf values across trees:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">sklearn</span> <span class="kn">import</span> <span class="n">datasets</span>
@@ -464,9 +498,10 @@ document.write(`
 </pre></div>
 </div>
 </section>
+</section>
 <section id="quantile-ranks">
 <h2>Quantile Ranks<a class="headerlink" href="#quantile-ranks" title="Link to this heading">#</a></h2>
-<p>The quantile rank of a score is the quantile of scores in its frequency distribution that are equal to or lower than it. The output quantile rank will be a value in the range [0, 1] for each test sample. The quantile rank of each sample is calculated by aggregating all of the training samples that share the same leaf node across all of the trees:</p>
+<p>The quantile rank is the fraction of scores in a frequency distribution that are less than (or equal to) that score. For a quantile forest, the frequency distribution is the set of training sample response values that are used to construct the empirical quantile estimates. The quantile rank of each sample is calculated by aggregating the response values from all of the training samples that share the same leaf node across all of the trees. The output quantile rank will be a value in the range [0, 1] for each test sample:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">sklearn</span> <span class="kn">import</span> <span class="n">datasets</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">sklearn.model_selection</span> <span class="kn">import</span> <span class="n">train_test_split</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">quantile_forest</span> <span class="kn">import</span> <span class="n">RandomForestQuantileRegressor</span>
@@ -553,7 +588,14 @@ document.write(`
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#introduction">Introduction</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#quantile-regression-forests">Quantile Regression Forests</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#fitting-and-predicting">Fitting and Predicting</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#fitting-and-predicting">Fitting and Predicting</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#fitting-a-model">Fitting a Model</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#making-predictions">Making Predictions</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#quantile-weighting">Quantile Weighting</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#out-of-bag-estimation">Out-of-Bag Estimation</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#random-forest-predictions">Random Forest Predictions</a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#quantile-ranks">Quantile Ranks</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#proximity-counts">Proximity Counts</a></li>
 </ul>
