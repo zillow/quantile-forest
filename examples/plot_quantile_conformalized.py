@@ -124,7 +124,6 @@ def cqr_strategy(X_train, X_test, y_train, y_test):
     return coverage, width, sort_y_values(y_test, y_pred, y_pis)
 
 
-y_test_sorted, y_pred_sorted, lower_bound, upper_bound = {}, {}, {}, {}
 coverage, width, y_sorted = {}, {}, {}
 coverage["qrf"], width["qrf"], y_sorted["qrf"] = qrf_strategy(X_train, X_test, y_train, y_test)
 coverage["cqr"], width["cqr"], y_sorted["cqr"] = cqr_strategy(X_train, X_test, y_train, y_test)
