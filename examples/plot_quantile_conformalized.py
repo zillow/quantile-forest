@@ -8,13 +8,16 @@ construct reliable prediction intervals using conformalized quantile
 regression (CQR). CQR offers prediction intervals that attain valid coverage,
 while QRF may require additional calibration for reliable interval estimates.
 This example uses MAPIE to construct the CQR interval estimates with a QRF.
-
 """
 
 print(__doc__)
 
+import warnings
+
 import matplotlib.pyplot as plt
 import numpy as np
+from mapie.metrics import regression_coverage_score, regression_mean_width_score
+from mapie.regression import MapieQuantileRegressor
 from matplotlib.offsetbox import AnchoredText
 from matplotlib.ticker import FuncFormatter
 from sklearn import datasets
@@ -26,8 +29,7 @@ from quantile_forest import RandomForestQuantileRegressor
 random_state = 0
 rng = check_random_state(random_state)
 round_to = 3
-cov_pct = 90  # the "coverage level"
-alpha = (100 - cov_pct) / 100
+alpha = 0.5
 
 # Load the California Housing Prices dataset.
 california = datasets.fetch_california_housing()
@@ -41,94 +43,95 @@ X_train, X_calib, y_train, y_calib = train_test_split(
     X_train, y_train, test_size=0.5, random_state=random_state
 )
 
-qrf = RandomForestQuantileRegressor(random_state=0)
-qrf.fit(X_train, y_train)
 
-# Calculate lower and upper quantile values.
-y_pred_lower_upper = qrf.predict(X_test, quantiles=[alpha / 2, 1 - alpha / 2])
-y_pred_lower = y_pred_lower_upper[:, 0]
-y_pred_upper = y_pred_lower_upper[:, 1]
+class WrappedRandomForestQuantileRegressor(RandomForestQuantileRegressor):
+    """Wrap the QRF estimator with the parameters expected by MAPIE."""
 
-# Calculate the point predictions.
-y_pred_mean = qrf.predict(X_test, quantiles="mean", aggregate_leaves_first=False)
+    def __init__(self, loss="quantile", **kwargs):
+        super().__init__(**kwargs)
+        self.init_dict = {"loss": loss}
+        self.loss = loss
+        self.kwargs = kwargs
 
+    @classmethod
+    def parent(cls):
+        return cls.__bases__[0]
 
-def WIS_and_coverage(y_true, lower, upper, alpha):
-
-    assert np.isnan(y_true) == False, "y_true contains NaN value(s)"
-    assert np.isinf(y_true) == False, "y_true contains inf values(s)"
-    assert np.isnan(lower) == False, "lower interval value contains NaN value(s)"
-    assert np.isinf(lower) == False, "lower interval value contains inf values(s)"
-    assert np.isnan(upper) == False, "upper interval value contains NaN value(s)"
-    assert np.isinf(upper) == False, "upper interval value contains inf values(s)"
-    assert alpha > 0 and alpha <= 1, f"alpha should be (0,1]. Found: {alpha}"
-
-    # WIS for one single row
-    score = np.abs(upper - lower)
-    if y_true < np.minimum(upper, lower):
-        score += (2 / alpha) * (np.minimum(upper, lower) - y_true)
-    if y_true > np.maximum(upper, lower):
-        score += (2 / alpha) * (y_true - np.maximum(upper, lower))
-    # coverage for one single row
-    coverage = 1  # assume is within coverage
-    if (y_true < np.minimum(upper, lower)) or (y_true > np.maximum(upper, lower)):
-        coverage = 0
-    return score, coverage
+    def get_params(self, *args, **kwargs):
+        params = self.init_dict
+        params.update(self.parent()(**self.kwargs).get_params(*args, **kwargs))
+        return params
 
 
-# vectorize the function
-v_WIS_and_coverage = np.vectorize(WIS_and_coverage)
+def sort_y_values(y_test, y_pred, y_pis):
+    """Sort the dataset for making plots using the `fill_between` function."""
+    indices = np.argsort(y_test)
+    y_test_sorted = np.array(y_test)[indices]
+    y_pred_sorted = y_pred[indices]
+    y_lower_bound = y_pis[:, 0, 0][indices]
+    y_upper_bound = y_pis[:, 1, 0][indices]
+    return y_test_sorted, y_pred_sorted, y_lower_bound, y_upper_bound
 
 
-def score(y_true, lower, upper, alpha):
-    """
-    This is an implementation of the Winkler Interval score (https://otexts.com/fpp3/distaccuracy.html#winkler-score).
-    The mean over all of the individual Winkler Interval scores (MWIS) is returned, along with the coverage.
+est = WrappedRandomForestQuantileRegressor(random_state=random_state)
 
-    See:
-    [1] Robert L. Winkler "A Decision-Theoretic Approach to Interval Estimation", Journal of the American Statistical Association, vol. 67, pp. 187-191 (1972) (https://doi.org/10.1080/01621459.1972.10481224)
-    [2] Tilmann Gneiting and Adrian E Raftery "Strictly Proper Scoring Rules, Prediction, and Estimation", Journal of the American Statistical Association, vol. 102, pp. 359-378 (2007) (https://doi.org/10.1198/016214506000001437) (Section 6.2)
+strategies = {
+    "Quantile Regression Forest (QRF)": {},
+    "Conformalized Quantile Regression (CQR)": {
+        "method": "quantile",
+        "cv": "split",
+        "alpha": alpha,
+    },
+}
 
-    Version: 1.0.4
-    Author:  Carl McBride Ellis
-    Date:    2023-12-07
-    """
+quantile_estimator_params = {
+    "WrappedRandomForestQuantileRegressor": {
+        "loss_name": "loss",
+        "alpha_name": "default_quantiles",
+    },
+}
 
-    assert y_true.ndim == 1, "y_true: pandas Series or 1D array expected"
-    assert lower.ndim == 1, "lower: pandas Series or 1D array expected"
-    assert upper.ndim == 1, "upper: pandas Series or 1D array expected"
-    assert isinstance(alpha, float) == True, "alpha: float expected"
+y_pred, y_pis = {}, {}
+y_test_sorted, y_pred_sorted, lower_bound, upper_bound = {}, {}, {}, {}
+coverage, width = {}, {}
+for strategy, params in strategies.items():
+    if strategy == "Conformalized Quantile Regression (CQR)":
+        mapie = MapieQuantileRegressor(est, **params)
+        mapie.quantile_estimator_params = quantile_estimator_params
+        mapie.fit(
+            X_train,
+            y_train,
+            X_calib=X_calib,
+            y_calib=y_calib,
+            random_state=random_state,
+        )
 
-    WIS_scores, coverage = v_WIS_and_coverage(y_true, lower, upper, alpha)
-    MWIS = np.mean(WIS_scores)
-    MWIS = float(MWIS)
-    coverage = coverage.sum() / coverage.shape[0]
-    coverage = float(coverage)
-
-    return MWIS, coverage
-
-
-MWIS, coverage = score(y_test, y_pred_lower, y_pred_upper, alpha)
-print(f"MWI score           ", round(MWIS, 3))
-print("Predictions coverage    ", round(coverage * 100, 1), "%")
-
-# Calculate the lower and upper quantile values of the calibration set.
-y_pred_lower_upper_calib = qrf.predict(X_calib, quantiles=[alpha / 2, 1 - alpha / 2])
-y_pred_lower_calib = y_pred_lower_upper_calib[:, 0]
-y_pred_upper_calib = y_pred_lower_upper_calib[:, 1]
-
-a = y_pred_lower_calib - y_calib
-b = y_calib - y_pred_upper_calib
-conf_scores = (np.vstack((a, b)).T).max(axis=1)
-
-s = np.quantile(conf_scores, (1 - alpha) * (1 + (1 / (len(y_calib)))))
-
-y_conf_lower = y_pred_lower - s
-y_conf_upper = y_pred_upper + s
-
-MWIS, coverage = score(y_test, y_conf_lower, y_conf_upper, alpha)
-print(f"MWI score           ", round(MWIS, 3))
-print("Predictions coverage    ", round(coverage * 100, 1), "%")
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=UserWarning)
+            y_pred[strategy], y_pis[strategy] = mapie.predict(X_test)
+    else:
+        y_pred_all = est.fit(X_train, y_train).predict(
+            X_test, quantiles=[alpha / 2, 1 - (alpha / 2), 0.5]
+        )
+        y_pred[strategy] = y_pred_all[:, 2]
+        y_pis[strategy] = np.stack(
+            [y_pred_all[:, 0, np.newaxis], y_pred_all[:, 1, np.newaxis]], axis=1
+        )
+    (
+        y_test_sorted[strategy],
+        y_pred_sorted[strategy],
+        lower_bound[strategy],
+        upper_bound[strategy],
+    ) = sort_y_values(y_test, y_pred[strategy], y_pis[strategy])
+    coverage[strategy] = regression_coverage_score(
+        y_test,
+        y_pis[strategy][:, 0, 0],
+        y_pis[strategy][:, 1, 0],
+    )
+    width[strategy] = regression_mean_width_score(
+        y_pis[strategy][:, 0, 0],
+        y_pis[strategy][:, 1, 0],
+    )
 
 
 def plot_prediction_intervals(
@@ -181,29 +184,28 @@ def plot_prediction_intervals(
     ax.set_title(title)
 
 
-def temp():
-    fig, axs = plt.subplots(nrows=1, ncols=2, figsize=(10, 4.15))
+fig, axs = plt.subplots(nrows=1, ncols=2, figsize=(10, 4.15))
 
-    coords = [axs[0], axs[1]]
-    num_plots = rng.choice(len(y_test), int(len(y_test)), replace=False)
-    usd_formatter = FuncFormatter(lambda x, p: f"${format(int(x * 100), ',')}k")
+coords = [axs[0], axs[1]]
+num_plots = rng.choice(len(y_test), int(len(y_test)), replace=False)
+usd_formatter = FuncFormatter(lambda x, p: f"${format(int(x * 100), ',')}k")
 
-    for strategy, coord in zip(strategies.keys(), coords):
-        plot_prediction_intervals(
-            strategy,
-            alpha,
-            coord,
-            y_test_sorted[strategy],
-            y_pred_sorted[strategy],
-            lower_bound[strategy],
-            upper_bound[strategy],
-            coverage[strategy],
-            width[strategy],
-            num_plots,
-            usd_formatter,
-        )
+for strategy, coord in zip(strategies.keys(), coords):
+    plot_prediction_intervals(
+        strategy,
+        alpha,
+        coord,
+        y_test_sorted[strategy],
+        y_pred_sorted[strategy],
+        lower_bound[strategy],
+        upper_bound[strategy],
+        coverage[strategy],
+        width[strategy],
+        num_plots,
+        usd_formatter,
+    )
 
-    plt.subplots_adjust(top=0.15)
-    fig.tight_layout(pad=3)
+plt.subplots_adjust(top=0.15)
+fig.tight_layout(pad=3)
 
-    plt.show()
+plt.show()
