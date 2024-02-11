@@ -56,7 +56,7 @@ def coverage_score(y_true, y_pred_low, y_pred_upp):
     return float(coverage)
 
 
-def width_score(y_pred_low, y_pred_upp) -> float:
+def width_score(y_pred_low, y_pred_upp):
     mean_width = np.abs(y_pred_upp - y_pred_low).mean()
     return float(mean_width)
 
@@ -191,10 +191,6 @@ for strategy, coord in zip(strategies.keys(), coords):
         strategies[strategy],
         alpha,
         coord,
-        # y_test_sorted[strategy],
-        # y_pred_sorted[strategy],
-        # lower_bound[strategy],
-        # upper_bound[strategy],
         *y_sorted[strategy],
         coverage[strategy],
         width[strategy],
