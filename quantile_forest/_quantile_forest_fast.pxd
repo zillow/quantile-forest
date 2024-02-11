@@ -14,8 +14,8 @@ cdef class QuantileForest:
     # The QuantileForest object.
 
     # Input/Output layout
-    cdef public vector[DOUBLE_t] y_train
-    cdef public SIZE_t[:, :, :] y_train_leaves
+    cdef public vector[vector[DOUBLE_t]] y_train
+    cdef public SIZE_t[:, :, :, :] y_train_leaves
     cdef public bint sparse_pickle
 
     # Methods
@@ -32,7 +32,7 @@ cdef class QuantileForest:
 
     cpdef np.ndarray quantile_ranks(
         self,
-        double[:] y_scores,
+        double[:, :] y_scores,
         SIZE_t[:, :] X_leaves,
         UINT8_t[:, :] X_indices=*,
         char* kind=*,
@@ -44,5 +44,5 @@ cdef class QuantileForest:
         SIZE_t[:, :] X_leaves,
         UINT8_t[:, :] X_indices=*,
         UINT32_t max_proximities=*,
-        SIZE_t[:] sorter=*,
+        SIZE_t[:, :] sorter=*,
     )

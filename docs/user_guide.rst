@@ -37,7 +37,10 @@ This approach was first proposed by :cite:t:`2006:meinshausen`.
 Fitting and Predicting
 ----------------------
 
-Quantile forests can be fit and used to predict like standard scikit-learn estimators.
+Quantile forests can be fit and used to predict like standard scikit-learn estimators. In this package, the quantile forests extend standard scikit-learn forest regressors and inherent their model parameters, in addition to offering additional parameters related to quantile regression. We'll discuss many of the important model parameters below.
+
+Fitting a Model
+~~~~~~~~~~~~~~~
 
 Let's fit a quantile forest on a simple regression dataset::
 
@@ -51,6 +54,9 @@ Let's fit a quantile forest on a simple regression dataset::
     RandomForestQuantileRegressor(...)
 
 During model initialization, the parameter `max_samples_leaf` can be specified, which determines the maximum number of samples per leaf node to retain. If `max_samples_leaf` is smaller than the number of samples in a given leaf node, then a subset of values are randomly selected. By default, the model retains one randomly selected sample per leaf node (`max_samples_leaf = 1`), which enables the use of optimizations at prediction time that are not available when a variable number of samples may be retained per leaf. All samples can be retained by specifying `max_samples_leaf = None`. Note that the number of retained samples can materially impact the size of the model object.
+
+Making Predictions
+~~~~~~~~~~~~~~~~~~
 
 A notable advantage of quantile forests is that they can be fit once, while arbitrary quantiles can be estimated at prediction time. Accordingly, since the quantiles can be specified at prediction time, the model accepts an optional parameter during the call to the `predict` method, which can be a float or list of floats that specify the empirical quantiles to return::
 
@@ -80,6 +86,29 @@ The output of the `predict` method is an array with one column for each specifie
     >>> (y_pred[:, 0] >= y_pred[:, 1]).all()
     True
 
+Multi-target quantile regression is also supported. If the target values are multi-dimensional, then the final output column will correspond to the number of targets::
+
+    >>> from sklearn import datasets
+    >>> from sklearn.model_selection import train_test_split
+    >>> from quantile_forest import RandomForestQuantileRegressor
+    >>> X, y = datasets.make_regression(n_samples=10, n_features=5, n_targets=2, random_state=0)
+    >>> reg_multi = RandomForestQuantileRegressor()
+    >>> reg_multi.fit(X, y)
+    RandomForestQuantileRegressor()
+    >>> quantiles = [0.25, 0.5, 0.75]
+    >>> y_pred = reg_multi.predict(X, quantiles=quantiles)
+    >>> y_pred.ndim == 3
+    True
+    >>> y_pred.shape[0] == len(X)
+    True
+    >>> y_pred.shape[1] == len(quantiles)
+    True
+    >>> y_pred.shape[-1] == y.shape[1]
+    True
+
+Quantile Weighting
+~~~~~~~~~~~~~~~~~~
+
 By default, the predict method calculates quantiles by weighting each sample inversely according to the size of its leaf node (`weighted_leaves = True`). If `weighted_leaves = False`, each sample in a leaf (including repeated bootstrap samples) will be given equal weight. Note that this leaf-based weighting can only be used with weighted quantiles.
 
 By default, the predict method calculates quantiles using a weighted quantile method (`weighted_quantile = True`), which assigns a weight to each sample in the training set based on the number of times that it co-occurs in the same leaves as the test sample. When the number of samples in the training set is larger than the expected size of this list (i.e., :math:`n_{train} \gg n_{trees} \cdot n_{leaves} \cdot n_{leafsamples}`), it can be more efficient to calculate an unweighted quantile (`weighted_quantile = False`), which aggregates the list of training `y` values for each leaf node to which the test sample belongs across all trees. For a given input, both methods can return the same output values::
@@ -90,6 +119,9 @@ By default, the predict method calculates quantiles using a weighted quantile me
     >>> y_pred_unweighted = reg.predict(X_test, weighted_quantile=False, **kwargs)  # unweighted quantile
     >>> np.allclose(y_pred_weighted, y_pred_unweighted)
     True
+
+Out-of-Bag Estimation
+~~~~~~~~~~~~~~~~~~~~~
 
 Out-of-bag (OOB) predictions can be returned by specifying `oob_score = True`::
 
@@ -105,6 +137,9 @@ By default, when the `predict` method is called with the OOB flag set to True, i
     >>> y_pred_test = y_pred_mix[-len(X_test):]  # predictions on the new test data are IB
 
 This allows all samples, both from the training and test sets, to be scored with a single call to `predict`, whereby OOB predictions are returned for the training samples and IB (i.e., non-OOB) predictions are returned for the test samples.
+
+Random Forest Predictions
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The predictions of a standard random forest can also be recovered from a quantile forest without retraining by passing `quantiles = "mean"` and `aggregate_leaves_first = False`, the latter which specifies a Boolean flag to average the leaf values before aggregating the leaves across trees. This configuration essentially replicates the prediction process used by a standard random forest regressor, which is an averaging of mean leaf values across trees::
 
