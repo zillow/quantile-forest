@@ -5,7 +5,7 @@ Multi-target Quantile Regression
 
 An example on a toy dataset that demonstrates fitting a single quantile
 regressor for multiple target variables. For each target, multiple quantiles
-can be estimated simulatenously.
+can be estimated simultaneously.
 
 """
 
