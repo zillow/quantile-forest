@@ -535,13 +535,6 @@ class BaseForestQuantileRegressor(ForestRegressor):
         if not isinstance(interpolation, (bytes, bytearray)):
             interpolation = interpolation.encode()
 
-        if weighted_leaves and not weighted_quantile:
-            warn(
-                "`weighted_leaves` is True, but is only used if `weighted_quantile=True`. "
-                "`weighted_leaves` will be set to False."
-            )
-            weighted_leaves = False
-
         if oob_score:
             if not self.bootstrap:
                 raise ValueError("Out-of-bag estimation only available if bootstrap=True.")

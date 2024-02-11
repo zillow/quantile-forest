@@ -5,7 +5,7 @@ Multi-target Quantile Regression
 
 An example on a toy dataset that demonstrates fitting a single quantile
 regressor for multiple target variables. For each target, multiple quantiles
-can be estimated.
+can be estimated simulatenously.
 
 """
 
@@ -29,7 +29,7 @@ funcs = [
 ]
 
 
-def make_func_Xy(funcs, bounds, n_samples):
+def make_Xy(funcs, bounds, n_samples):
     x = np.linspace(bounds[0], bounds[1], n_samples)
     y = np.empty((len(x), 3))
     y[:, 0] = funcs[0](x) + np.random.normal(scale=0.01 * np.abs(x))
@@ -38,7 +38,7 @@ def make_func_Xy(funcs, bounds, n_samples):
     return x, y
 
 
-X, y = make_func_Xy(funcs, bounds, n_samples)
+X, y = make_Xy(funcs, bounds, n_samples)
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.5, random_state=0)
 
 qrf = RandomForestQuantileRegressor(random_state=0)
@@ -49,7 +49,9 @@ y_pred = qrf.predict(X.reshape(-1, 1), quantiles=[0.025, 0.5, 0.975])
 
 def plot_multioutputs(colors, funcs, X, y):
     for i in range(y.shape[-1]):
-        plt.fill_between(X, y_pred[:, 0, i], y_pred[:, 2, i], color=colors[i], label=f"Target {i}")
+        y1 = y_pred[:, 0, i]
+        y2 = y_pred[:, 2, i]
+        plt.fill_between(X, y1, y2, color=colors[i], label=f"Target {i}")
         plt.plot(X, funcs[i](X), c="black")
     plt.xlim(bounds)
     plt.ylim([-8, 8])

@@ -37,7 +37,7 @@ This approach was first proposed by :cite:t:`2006:meinshausen`.
 Fitting and Predicting
 ----------------------
 
-Quantile forests can be fit and used to predict like standard scikit-learn estimators. In this package, the quantile forests extend standard scikit-learn forest regressors and inherent their model parameters, in addition to offering additional parameters related to quantile regression. We'll discuss the many of the important model parameters below.
+Quantile forests can be fit and used to predict like standard scikit-learn estimators. In this package, the quantile forests extend standard scikit-learn forest regressors and inherent their model parameters, in addition to offering additional parameters related to quantile regression. We'll discuss many of the important model parameters below.
 
 Fitting a Model
 ~~~~~~~~~~~~~~~
