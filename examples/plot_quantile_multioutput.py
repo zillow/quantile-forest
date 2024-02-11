@@ -51,7 +51,7 @@ def plot_multioutputs(colors, funcs, X, y):
     for i in range(y.shape[-1]):
         y1 = y_pred[:, 0, i]
         y2 = y_pred[:, 2, i]
-        plt.fill_between(X, y1, y2, color=colors[i], label=f"Target {i}")
+        plt.fill_between(X, y1, y2, alpha=0.4, color=colors[i], label=f"Target {i}")
         plt.plot(X, funcs[i](X), c="black")
     plt.xlim(bounds)
     plt.ylim([-8, 8])
