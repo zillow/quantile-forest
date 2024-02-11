@@ -91,7 +91,7 @@ Multi-target quantile regression is also supported. If the target values are mul
     >>> from sklearn import datasets
     >>> from sklearn.model_selection import train_test_split
     >>> from quantile_forest import RandomForestQuantileRegressor
-    >>> X, y = datasets.make_regression(n_samples=10, n_features=5, n_targets=2, random_state=0)
+    >>> X, y = datasets.make_regression(n_targets=2, random_state=0)  # 2 targets
     >>> reg_multi = RandomForestQuantileRegressor()
     >>> reg_multi.fit(X, y)
     RandomForestQuantileRegressor()
