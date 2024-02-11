@@ -68,22 +68,26 @@ def check_regression_toy(name, weighted_quantile):
 
     # Check aggregated quantile predictions.
     y_true = [[0.0, 0.5, 1.0], [2.0, 2.0, 2.0], [2.0, 2.0, 2.0]]
-    y_pred = regr.predict(
-        y_test,
-        quantiles=quantiles,
-        weighted_quantile=weighted_quantile,
-        aggregate_leaves_first=True,
-    )
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", UserWarning)
+        y_pred = regr.predict(
+            y_test,
+            quantiles=quantiles,
+            weighted_quantile=weighted_quantile,
+            aggregate_leaves_first=True,
+        )
     assert_allclose(y_pred, y_true)
 
     # Check unaggregated quantile predictions.
     y_true = [[0.25, 0.5, 0.75], [2.0, 2.0, 2.0], [2.0, 2.0, 2.0]]
-    y_pred = regr.predict(
-        y_test,
-        quantiles=quantiles,
-        weighted_quantile=weighted_quantile,
-        aggregate_leaves_first=False,
-    )
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", UserWarning)
+        y_pred = regr.predict(
+            y_test,
+            quantiles=quantiles,
+            weighted_quantile=weighted_quantile,
+            aggregate_leaves_first=False,
+        )
     assert_allclose(y_pred, y_true)
 
     assert regr._more_tags()
@@ -203,54 +207,60 @@ def check_predict_quantiles_toy(name):
         est.fit(X, y)
 
         # Check that weighted and unweighted quantiles are approximately equal.
-        y_pred1 = est.predict(
-            X,
-            quantiles=quantiles,
-            weighted_quantile=True,
-            weighted_leaves=False,
-            oob_score=oob_score,
-        )
-        y_pred2 = est.predict(
-            X,
-            quantiles=quantiles,
-            weighted_quantile=False,
-            weighted_leaves=False,
-            oob_score=oob_score,
-        )
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", UserWarning)
+            y_pred1 = est.predict(
+                X,
+                quantiles=quantiles,
+                weighted_quantile=True,
+                weighted_leaves=False,
+                oob_score=oob_score,
+            )
+            y_pred2 = est.predict(
+                X,
+                quantiles=quantiles,
+                weighted_quantile=False,
+                weighted_leaves=False,
+                oob_score=oob_score,
+            )
         assert_allclose(y_pred1, y_pred2)
 
         # Check that weighted and unweighted leaves are not equal.
-        y_pred1 = est.predict(
-            X,
-            quantiles=quantiles,
-            weighted_quantile=True,
-            weighted_leaves=True,
-            oob_score=oob_score,
-        )
-        y_pred2 = est.predict(
-            X,
-            quantiles=quantiles,
-            weighted_quantile=True,
-            weighted_leaves=False,
-            oob_score=oob_score,
-        )
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", UserWarning)
+            y_pred1 = est.predict(
+                X,
+                quantiles=quantiles,
+                weighted_quantile=True,
+                weighted_leaves=True,
+                oob_score=oob_score,
+            )
+            y_pred2 = est.predict(
+                X,
+                quantiles=quantiles,
+                weighted_quantile=True,
+                weighted_leaves=False,
+                oob_score=oob_score,
+            )
         assert_raises(AssertionError, assert_allclose, y_pred1, y_pred2)
 
         # Check that leaf weighting without weighted quantiles does nothing.
-        y_pred1 = est.predict(
-            X,
-            quantiles=quantiles,
-            weighted_quantile=False,
-            weighted_leaves=True,
-            oob_score=oob_score,
-        )
-        y_pred2 = est.predict(
-            X,
-            quantiles=quantiles,
-            weighted_quantile=False,
-            weighted_leaves=False,
-            oob_score=oob_score,
-        )
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", UserWarning)
+            y_pred1 = est.predict(
+                X,
+                quantiles=quantiles,
+                weighted_quantile=False,
+                weighted_leaves=True,
+                oob_score=oob_score,
+            )
+            y_pred2 = est.predict(
+                X,
+                quantiles=quantiles,
+                weighted_quantile=False,
+                weighted_leaves=False,
+                oob_score=oob_score,
+            )
         assert_array_equal(y_pred1, y_pred2)
 
 
@@ -262,12 +272,10 @@ def test_predict_quantiles_toy(name):
 def check_predict_quantiles(
     name,
     max_samples_leaf,
+    quantiles,
     weighted_quantile,
     aggregate_leaves_first,
 ):
-    # Check quantiles predictions.
-    quantiles = [0.25, 0.5, 0.75]
-
     ForestRegressor = FOREST_REGRESSORS[name]
 
     # Check predicted quantiles on (semi-)random data.
@@ -288,14 +296,20 @@ def check_predict_quantiles(
 
     est = ForestRegressor(n_estimators=10, max_samples_leaf=max_samples_leaf, random_state=0)
     est.fit(X_train, y_train)
-    y_pred = est.predict(
-        X_test,
-        quantiles=quantiles,
-        weighted_quantile=weighted_quantile,
-        aggregate_leaves_first=aggregate_leaves_first,
-    )
-    assert y_pred.shape == (X_test.shape[0], len(quantiles))
-    assert_array_almost_equal(y_pred[:, 1], y_test, -e1_high)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", UserWarning)
+        y_pred = est.predict(
+            X_test,
+            quantiles=quantiles,
+            weighted_quantile=weighted_quantile,
+            aggregate_leaves_first=aggregate_leaves_first,
+        )
+    if isinstance(quantiles, list):
+        assert y_pred.shape == (X_test.shape[0], len(quantiles))
+        assert_array_almost_equal(y_pred[:, 1], y_test, -e1_high)
+    else:
+        assert y_pred.shape == (X_test.shape[0],)
+        assert_array_almost_equal(y_pred, y_test, -e1_high)
 
     # Check predicted quantiles on the California Housing Prices dataset.
     X_train, X_test, y_train, y_test = train_test_split(
@@ -304,17 +318,23 @@ def check_predict_quantiles(
 
     est = ForestRegressor(n_estimators=10, max_samples_leaf=max_samples_leaf, random_state=0)
     est.fit(X_train, y_train)
-    y_pred = est.predict(
-        X_test,
-        quantiles=quantiles,
-        weighted_quantile=weighted_quantile,
-        aggregate_leaves_first=aggregate_leaves_first,
-    )
-    assert y_pred.shape == (X_test.shape[0], len(quantiles))
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", UserWarning)
+        y_pred = est.predict(
+            X_test,
+            quantiles=quantiles,
+            weighted_quantile=weighted_quantile,
+            aggregate_leaves_first=aggregate_leaves_first,
+        )
+    if isinstance(quantiles, list):
+        assert y_pred.shape == (X_test.shape[0], len(quantiles))
+    else:
+        assert y_pred.shape == (X_test.shape[0],)
 
-    # Check that predicted values are monotonic.
-    assert np.all(np.less_equal(y_pred[:, 0], y_pred[:, 1]))
-    assert np.all(np.less_equal(y_pred[:, 1], y_pred[:, 2]))
+    if isinstance(quantiles, list):
+        # Check that predicted values are monotonic.
+        assert np.all(np.less_equal(y_pred[:, 0], y_pred[:, 1]))
+        assert np.all(np.less_equal(y_pred[:, 1], y_pred[:, 2]))
 
     # Check that weighted and unweighted quantiles are all equal.
     est = ForestRegressor(n_estimators=10, max_samples_leaf=max_samples_leaf, random_state=0)
@@ -338,20 +358,22 @@ def check_predict_quantiles(
     # Check that weighted and unweighted leaves are all equal.
     est = ForestRegressor(n_estimators=1, max_samples_leaf=max_samples_leaf, random_state=0)
     est.fit(X_train, y_train)
-    y_pred_1 = est.predict(
-        X_test,
-        quantiles=quantiles,
-        weighted_quantile=weighted_quantile,
-        weighted_leaves=True,
-        aggregate_leaves_first=False,
-    )
-    y_pred_2 = est.predict(
-        X_test,
-        quantiles=quantiles,
-        weighted_quantile=weighted_quantile,
-        weighted_leaves=False,
-        aggregate_leaves_first=False,
-    )
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", UserWarning)
+        y_pred_1 = est.predict(
+            X_test,
+            quantiles=quantiles,
+            weighted_quantile=weighted_quantile,
+            weighted_leaves=True,
+            aggregate_leaves_first=False,
+        )
+        y_pred_2 = est.predict(
+            X_test,
+            quantiles=quantiles,
+            weighted_quantile=weighted_quantile,
+            weighted_leaves=False,
+            aggregate_leaves_first=False,
+        )
     assert_allclose(y_pred_1, y_pred_2)
 
     # Check that aggregated and unaggregated quantiles are all equal.
@@ -425,20 +447,25 @@ def check_predict_quantiles(
         )
         assert_allclose(y_pred_1, y_pred_2)
 
-    # Check multi-target outputs.
-    X, y = datasets.load_linnerud(return_X_y=True)
-    est = ForestRegressor(n_estimators=1, max_samples_leaf=1, random_state=0)
-    est.fit(X, y)
-    y_pred = est.predict(
-        X,
-        quantiles=quantiles,
-        weighted_quantile=True,
-        aggregate_leaves_first=True,
-    )
-    assert y_pred.ndim == 3
-    assert y_pred.shape[2] == y.shape[1]
-    score = est.score(X, y, quantiles=0.5)
-    assert score > 0.4
+        # Check multi-target outputs.
+        X = np.arange(20).reshape(2, 10).T
+        y = np.arange(30).reshape(3, 10).T
+        est = ForestRegressor(n_estimators=1, max_samples_leaf=max_samples_leaf, random_state=0)
+        est.fit(X, y)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", UserWarning)
+            y_pred = est.predict(
+                X,
+                quantiles=quantiles,
+                weighted_quantile=weighted_quantile,
+                aggregate_leaves_first=aggregate_leaves_first,
+            )
+        score = est.score(X, y, quantiles=0.5)
+        assert y_pred.ndim == (3 if isinstance(quantiles, list) else 2)
+        assert y_pred.shape[-1] == y.shape[1]
+        assert np.any(y_pred[..., 0] != y_pred[..., 1])
+        assert np.any(y_pred[..., 1] != y_pred[..., 2])
+        assert score > 0.9
 
     est = ForestRegressor(n_estimators=1, max_samples_leaf=max_samples_leaf, random_state=0)
     est.fit(X_train, y_train)
@@ -471,15 +498,19 @@ def check_predict_quantiles(
 
 @pytest.mark.parametrize("name", FOREST_REGRESSORS)
 @pytest.mark.parametrize("max_samples_leaf", [None, 1])
+@pytest.mark.parametrize("quantiles", [None, "mean", 0.5, [0.2, 0.5, 0.8]])
 @pytest.mark.parametrize("weighted_quantile", [True, False])
 @pytest.mark.parametrize("aggregate_leaves_first", [True, False])
 def test_predict_quantiles(
     name,
     max_samples_leaf,
+    quantiles,
     weighted_quantile,
     aggregate_leaves_first,
 ):
-    check_predict_quantiles(name, max_samples_leaf, weighted_quantile, aggregate_leaves_first)
+    check_predict_quantiles(
+        name, max_samples_leaf, quantiles, weighted_quantile, aggregate_leaves_first
+    )
 
 
 def check_quantile_ranks_toy(name):
@@ -744,7 +775,7 @@ def check_oob_samples(name):
     est = ForestRegressor(n_estimators=5, bootstrap=True, random_state=0)
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", UserWarning)
-        X_leaves, X_indices = est.fit(X, y)._oob_samples(X)
+        _, X_indices = est.fit(X, y)._oob_samples(X)
 
     assert len(X_indices) == len(y)
 
@@ -778,8 +809,8 @@ def check_oob_samples_duplicates(name):
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", UserWarning)
         est.fit(X, y)
-        X_leaves1, X_indices1 = est._oob_samples(X, duplicates=None)
-        X_leaves2, X_indices2 = est._oob_samples(X, duplicates=[[4, 5]])
+        _, X_indices1 = est._oob_samples(X, duplicates=None)
+        _, X_indices2 = est._oob_samples(X, duplicates=[[4, 5]])
     assert len(X_indices1) == len(y)
     assert len(X_indices2) == len(y)
     assert np.all(X_indices1[:4] == X_indices2[:4])
@@ -820,13 +851,15 @@ def check_predict_oob(
         median_idx = quantiles.index(0.5)
 
     # Check that `R^2` score from OOB predictions is close to `oob_score_`.
-    y_pred = est.predict(
-        X,
-        quantiles=quantiles,
-        weighted_quantile=weighted_quantile,
-        aggregate_leaves_first=aggregate_leaves_first,
-        oob_score=True,
-    )
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", UserWarning)
+        y_pred = est.predict(
+            X,
+            quantiles=quantiles,
+            weighted_quantile=weighted_quantile,
+            aggregate_leaves_first=aggregate_leaves_first,
+            oob_score=True,
+        )
     y_pred_score = r2_score(y, y_pred[:, median_idx])
     if n_quantiles is not None:
         assert y_pred.shape == (len(X), n_quantiles)
@@ -845,14 +878,16 @@ def check_predict_oob(
     perm = np.random.permutation(len(X))
     for indices in np.split(np.arange(len(X)), range(100, len(X), 100)):
         X_chunk = X[perm[indices]]
-        y_pred_chunk = est.predict(
-            X_chunk,
-            quantiles=quantiles,
-            weighted_quantile=weighted_quantile,
-            aggregate_leaves_first=aggregate_leaves_first,
-            oob_score=True,
-            indices=perm[indices],
-        )
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", UserWarning)
+            y_pred_chunk = est.predict(
+                X_chunk,
+                quantiles=quantiles,
+                weighted_quantile=weighted_quantile,
+                aggregate_leaves_first=aggregate_leaves_first,
+                oob_score=True,
+                indices=perm[indices],
+            )
         y_pred_chunks[indices, ...] = y_pred_chunk
         if n_quantiles is not None:
             assert y_pred_chunk.shape == (len(X_chunk), n_quantiles)
@@ -868,42 +903,48 @@ def check_predict_oob(
     for i, estimator in enumerate(est.estimators_):
         unsampled_indices[i] = est._get_unsampled_indices(estimator)
     est.unsampled_indices_ = unsampled_indices
-    y_pred_precomputed_indices = est.predict(
-        X,
-        quantiles=quantiles,
-        weighted_quantile=weighted_quantile,
-        aggregate_leaves_first=aggregate_leaves_first,
-        oob_score=True,
-    )
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", UserWarning)
+        y_pred_precomputed_indices = est.predict(
+            X,
+            quantiles=quantiles,
+            weighted_quantile=weighted_quantile,
+            aggregate_leaves_first=aggregate_leaves_first,
+            oob_score=True,
+        )
     assert np.all(y_pred == y_pred_precomputed_indices)
 
     # Check single-row OOB scoring.
-    y_pred_single_row = est.predict(
-        X[:1],
-        quantiles=quantiles,
-        weighted_quantile=weighted_quantile,
-        aggregate_leaves_first=aggregate_leaves_first,
-        oob_score=True,
-        indices=np.zeros(1),
-    )
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", UserWarning)
+        y_pred_single_row = est.predict(
+            X[:1],
+            quantiles=quantiles,
+            weighted_quantile=weighted_quantile,
+            aggregate_leaves_first=aggregate_leaves_first,
+            oob_score=True,
+            indices=np.zeros(1),
+        )
     assert np.all(y_pred[:1] == y_pred_single_row)
 
     # Check that OOB predictions indexed by -1 return IB predictions.
-    y_pred_ib = est.predict(
-        X,
-        quantiles=quantiles,
-        weighted_quantile=weighted_quantile,
-        aggregate_leaves_first=aggregate_leaves_first,
-        oob_score=False,
-    )
-    y_pred_oob = est.predict(
-        X,
-        quantiles=quantiles,
-        weighted_quantile=weighted_quantile,
-        aggregate_leaves_first=aggregate_leaves_first,
-        oob_score=True,
-        indices=-np.ones(len(X)),
-    )
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", UserWarning)
+        y_pred_ib = est.predict(
+            X,
+            quantiles=quantiles,
+            weighted_quantile=weighted_quantile,
+            aggregate_leaves_first=aggregate_leaves_first,
+            oob_score=False,
+        )
+        y_pred_oob = est.predict(
+            X,
+            quantiles=quantiles,
+            weighted_quantile=weighted_quantile,
+            aggregate_leaves_first=aggregate_leaves_first,
+            oob_score=True,
+            indices=-np.ones(len(X)),
+        )
     assert np.all(y_pred_ib == y_pred_oob)
 
     # Check OOB predictions with `default_quantiles`.
@@ -911,8 +952,10 @@ def check_predict_oob(
     est1.fit(X, y)
     est2 = ForestRegressor(n_estimators=1, default_quantiles=quantiles, random_state=0)
     est2.fit(X, y)
-    y_pred_oob1 = est1.predict(X, quantiles=quantiles)
-    y_pred_oob2 = est2.predict(X)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", UserWarning)
+        y_pred_oob1 = est1.predict(X, quantiles=quantiles)
+        y_pred_oob2 = est2.predict(X)
     assert_allclose(y_pred_oob1, y_pred_oob2)
 
     # Check error if OOB score without `indices` do not match training count.
