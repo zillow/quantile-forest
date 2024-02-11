@@ -1,6 +1,6 @@
 """
 ================================
-Multi-target Quantile Regression
+Multi-target quantile regression
 ================================
 
 An example on a toy dataset that demonstrates fitting a single quantile
