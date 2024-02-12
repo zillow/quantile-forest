@@ -279,6 +279,8 @@ class BaseForestQuantileRegressor(ForestRegressor):
         if sorter is not None:
             # Reassign bootstrap indices to account for target sorting.
             bootstrap_indices = np.argsort(sorter, axis=0)[bootstrap_indices]
+            if bootstrap_indices.shape[-1] == 1:
+                bootstrap_indices = np.squeeze(bootstrap_indices, -1)
 
         bootstrap_indices += 1  # for sparse matrix (0s as empty)
 
@@ -319,10 +321,15 @@ class BaseForestQuantileRegressor(ForestRegressor):
                     if not isinstance(y_indices, list):
                         y_indices = list(y_indices)
                     y_indices = random.sample(y_indices, max_samples_leaf)
-                y_indices = np.asarray(y_indices).reshape(y_dim, -1)
 
-                for j in range(y_dim):
-                    y_train_leaves[i, leaf_idx, j, : len(y_indices[j])] = y_indices[j]
+                if sorter is not None:
+                    y_indices = np.asarray(y_indices).reshape(y_dim, -1)
+
+                    for j in range(y_dim):
+                        y_train_leaves[i, leaf_idx, j, : len(y_indices[j])] = y_indices[j]
+                else:
+                    for j in range(y_dim):
+                        y_train_leaves[i, leaf_idx, j, : len(y_indices)] = y_indices
 
         return y_train_leaves
 
