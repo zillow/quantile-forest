@@ -33,6 +33,8 @@ from quantile_forest._quantile_forest_fast import (
     generate_unsampled_indices,
 )
 
+np.random.seed(0)
+
 rng = check_random_state(0)
 
 # Load the California Housing Prices dataset.
