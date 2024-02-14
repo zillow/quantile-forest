@@ -323,7 +323,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
                     y_indices = random.sample(y_indices, max_samples_leaf)
 
                 if sorter is not None:
-                    y_indices = np.asarray(y_indices).reshape(y_dim, -1)
+                    y_indices = np.asarray(y_indices).reshape(-1, y_dim).swapaxes(0, 1)
 
                     for j in range(y_dim):
                         y_train_leaves[i, leaf_idx, j, : len(y_indices[j])] = y_indices[j]

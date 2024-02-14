@@ -448,27 +448,29 @@ def check_predict_quantiles(
         assert_allclose(y_pred_1, y_pred_2)
 
         # Check multi-target outputs.
-        X = np.arange(20).reshape(2, 10).T
-        y = np.arange(30).reshape(3, 10).T
+        X = np.linspace(-1, 0.3, 500)
+        y = np.empty((len(X), 2))
+        y[:, 0] = (X**3) + 3 * np.exp(-6 * (X - 0.3) ** 2)
+        y[:, 0] += np.random.normal(0, 0.2 * np.abs(X), len(X))
+        y[:, 1] = np.log1p(X + 1)
+        y[:, 1] += np.log1p(X + 1) * np.random.uniform(size=len(X))
+
         est = ForestRegressor(n_estimators=1, max_samples_leaf=max_samples_leaf, random_state=0)
-        est.fit(X, y)
+        est.fit(X.reshape(-1, 1), y)
+
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", UserWarning)
             y_pred = est.predict(
-                X,
+                X.reshape(-1, 1),
                 quantiles=quantiles,
                 weighted_quantile=weighted_quantile,
                 aggregate_leaves_first=aggregate_leaves_first,
             )
-        score = est.score(X, y, quantiles=0.5)
+        score = est.score(X.reshape(-1, 1), y, quantiles=0.5)
         assert y_pred.ndim == (3 if isinstance(quantiles, list) else 2)
         assert y_pred.shape[-1] == y.shape[1]
         assert np.any(y_pred[..., 0] != y_pred[..., 1])
-        assert np.any(y_pred[..., 1] != y_pred[..., 2])
-        assert score > 0.9
-
-    est = ForestRegressor(n_estimators=1, max_samples_leaf=max_samples_leaf, random_state=0)
-    est.fit(X_train, y_train)
+        assert score > 0.98
 
     # Check that specifying `quantiles` overwrites `default_quantiles`.
     est1 = ForestRegressor(n_estimators=1, max_samples_leaf=max_samples_leaf, random_state=0)
