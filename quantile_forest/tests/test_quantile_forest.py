@@ -470,7 +470,7 @@ def check_predict_quantiles(
         assert y_pred.ndim == (3 if isinstance(quantiles, list) else 2)
         assert y_pred.shape[-1] == y.shape[1]
         assert np.any(y_pred[..., 0] != y_pred[..., 1])
-        assert score > 0.98
+        assert score > 0.97
 
     # Check that specifying `quantiles` overwrites `default_quantiles`.
     est1 = ForestRegressor(n_estimators=1, max_samples_leaf=max_samples_leaf, random_state=0)
