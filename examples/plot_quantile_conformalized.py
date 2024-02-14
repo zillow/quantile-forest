@@ -1,7 +1,6 @@
 """
-=================================================================
-Quantile regression forests for conformalized quantile regression
-=================================================================
+QRFs for Conformalized Quantile Regression
+==========================================
 
 An example that demonstrates the use of a quantile regression forest (QRF) to
 construct reliable prediction intervals using conformalized quantile
@@ -10,20 +9,21 @@ while QRF may require additional calibration for reliable interval estimates.
 Based on "Prediction intervals: Quantile Regression Forests" by Carl McBride
 Ellis:
 https://www.kaggle.com/code/carlmcbrideellis/prediction-intervals-quantile-regression-forests.
-
 """
 
-print(__doc__)
-
-import matplotlib.pyplot as plt
+import altair as alt
 import numpy as np
-from matplotlib.offsetbox import AnchoredText
-from matplotlib.ticker import FuncFormatter
+import pandas as pd
 from sklearn import datasets
 from sklearn.model_selection import train_test_split
 from sklearn.utils.validation import check_random_state
 
 from quantile_forest import RandomForestQuantileRegressor
+
+strategies = {
+    "qrf": "Quantile Regression Forest (QRF)",
+    "cqr": "Conformalized Quantile Regression (CQR)",
+}
 
 random_state = 0
 rng = check_random_state(random_state)
@@ -42,13 +42,18 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
 
 def sort_y_values(y_test, y_pred, y_pis):
-    """Sort the dataset for making plots using the `fill_between` function."""
+    """Sort the target values and predictions"""
     indices = np.argsort(y_test)
     y_test_sorted = np.array(y_test)[indices]
     y_pred_sorted = y_pred[indices]
     y_lower_bound = y_pis[:, 0][indices]
     y_upper_bound = y_pis[:, 1][indices]
-    return y_test_sorted, y_pred_sorted, y_lower_bound, y_upper_bound
+    return {
+        "y_test": y_test_sorted,
+        "y_pred": y_pred_sorted,
+        "y_pred_low": y_lower_bound,
+        "y_pred_upp": y_upper_bound,
+    }
 
 
 def coverage_score(y_true, y_pred_low, y_pred_upp):
@@ -61,12 +66,6 @@ def mean_width_score(y_pred_low, y_pred_upp):
     """Effective mean width score obtained by the prediction intervals."""
     mean_width = np.abs(y_pred_upp - y_pred_low).mean()
     return float(mean_width)
-
-
-strategies = {
-    "qrf": "Quantile Regression Forest (QRF)",
-    "cqr": "Conformalized Quantile Regression (CQR)",
-}
 
 
 def qrf_strategy(alpha, X_train, X_test, y_train, y_test):
@@ -84,10 +83,7 @@ def qrf_strategy(alpha, X_train, X_test, y_train, y_test):
     # Calculate the point predictions on the test data.
     y_pred = qrf.predict(X_test, quantiles="mean", aggregate_leaves_first=False)
 
-    coverage = coverage_score(y_test, y_pred_low, y_pred_upp)
-    width = mean_width_score(y_pred_low, y_pred_upp)
-
-    return *sort_y_values(y_test, y_pred, y_pis), coverage, width
+    return sort_y_values(y_test, y_pred, y_pis)
 
 
 def cqr_strategy(alpha, X_train, X_test, y_train, y_test):
@@ -127,86 +123,123 @@ def cqr_strategy(alpha, X_train, X_test, y_train, y_test):
     # Calculate the point predictions on the test data.
     y_pred = qrf.predict(X_test, quantiles="mean", aggregate_leaves_first=False)
 
-    coverage = coverage_score(y_test, y_conf_low, y_conf_upp)
-    width = mean_width_score(y_conf_low, y_conf_upp)
-
-    return *sort_y_values(y_test, y_pred, y_pis), coverage, width
+    return sort_y_values(y_test, y_pred, y_pis)
 
 
-results = {}
-results["qrf"] = qrf_strategy(alpha, X_train, X_test, y_train, y_test)
-results["cqr"] = cqr_strategy(alpha, X_train, X_test, y_train, y_test)
-
-
-def plot_prediction_intervals(
-    title,
-    alpha,
-    ax,
-    y_test,
-    y_pred,
-    y_pred_low,
-    y_pred_upp,
-    coverage,
-    width,
-    num_plots_idx,
-    round_to,
-    price_formatter,
-):
-    """Plot of the prediction intervals for each method."""
-    y_pred_low_ = np.take(y_pred_low, num_plots_idx)
-    y_pred_upp_ = np.take(y_pred_upp, num_plots_idx)
-    y_pred_ = np.take(y_pred, num_plots_idx)
-    y_test_ = np.take(y_test, num_plots_idx)
-
-    for low, mid, upp in zip(y_pred_low_, y_pred_, y_pred_upp_):
-        ax.plot([mid, mid], [low, upp], lw=4, c="#e0f2ff")
-    ax.plot(y_pred_, y_test_, c="#f2a619", lw=0, marker=".", ms=5)
-    ax.plot(y_pred_, y_pred_low_, alpha=0.4, c="#006aff", lw=0, marker="_", ms=4)
-    ax.plot(y_pred_, y_pred_upp_, alpha=0.4, c="#006aff", lw=0, marker="_", ms=4)
-
-    ax.set_xlabel("True House Prices")
-    ax.set_ylabel("Predicted House Prices")
-    lims = [
-        np.min(np.minimum(y_test, y_pred)),  # min of both axes
-        np.max(np.maximum(y_test, y_pred)),  # max of both axes
+# Get strategy outputs as a data frame.
+args = (alpha, X_train, X_test, y_train, y_test)
+df = pd.concat(
+    [
+        pd.DataFrame(qrf_strategy(*args)).map(lambda x: x * 100_000).assign(strategy="qrf"),
+        pd.DataFrame(cqr_strategy(*args)).map(lambda x: x * 100_000).assign(strategy="cqr"),
     ]
-    ax.plot(lims, lims, ls="--", lw=1, c="grey", label=None)
-    at = AnchoredText(
-        (
-            f"PICP: {np.round(coverage, round_to)} (target = {1 - alpha})\n"
-            + f"Mean Interval Width: {np.round(width, round_to)}"
+)
+
+# Add coverage and mean width metrics to the data frame.
+df = df.merge(
+    df.groupby("strategy")
+    .apply(
+        lambda x: pd.Series(
+            {
+                "coverage": coverage_score(x["y_test"], x["y_pred_low"], x["y_pred_upp"]),
+                "width": mean_width_score(x["y_pred_low"], x["y_pred_upp"]),
+            }
+        )
+    )
+    .reset_index()
+)
+
+
+def plot_prediction_intervals(df):
+    domain = [
+        int(np.min(np.minimum(df["y_test"], df["y_pred"]))),  # min of both axes
+        int(np.max(np.maximum(df["y_test"], df["y_pred"]))),  # max of both axes
+    ]
+
+    tooltip = [
+        alt.Tooltip("y_test:Q", format="$,d", title="True Price"),
+        alt.Tooltip("y_pred:Q", format="$,d", title="Predicted Price"),
+        alt.Tooltip("y_pred_low:Q", format="$,d", title="Predicted Lower Price"),
+        alt.Tooltip("y_pred_upp:Q", format="$,d", title="Predicted Upper Price"),
+    ]
+
+    base = alt.Chart(df)
+
+    circle = base.mark_circle(size=30).encode(
+        x=alt.X(
+            "y_pred:Q",
+            axis=alt.Axis(format="$,d"),
+            scale=alt.Scale(domain=domain, nice=False),
+            title="True Prices",
         ),
-        frameon=False,
-        loc=2,
-    )
-    ax.add_artist(at)
-    ax.grid(axis="x", color="0.95")
-    ax.grid(axis="y", color="0.95")
-    ax.yaxis.set_major_formatter(price_formatter)
-    ax.xaxis.set_major_formatter(price_formatter)
-    ax.set_xlim(lims)
-    ax.set_ylim(lims)
-    ax.set_title(title)
-
-
-fig, axs = plt.subplots(nrows=1, ncols=2, figsize=(10, 4.15))
-
-coords = [axs[0], axs[1]]
-num_plots = rng.choice(len(y_test), int(len(y_test)), replace=False)
-usd_formatter = FuncFormatter(lambda x, p: f"${format(int(x * 100), ',')}k")
-
-for strategy, coord in zip(strategies.keys(), coords):
-    plot_prediction_intervals(
-        strategies[strategy],
-        alpha,
-        coord,
-        *results[strategy],
-        num_plots,
-        round_to,
-        usd_formatter,
+        y=alt.Y(
+            "y_test:Q",
+            axis=alt.Axis(format="$,d"),
+            scale=alt.Scale(domain=domain, nice=False),
+            title="Predicted Prices",
+        ),
+        color=alt.value("#f2a619"),
+        tooltip=tooltip,
     )
 
-plt.subplots_adjust(top=0.15)
-fig.tight_layout(pad=3)
+    bar = base.mark_bar(opacity=0.8, width=2).encode(
+        x=alt.X("y_pred:Q", scale=alt.Scale(domain=domain, padding=0), title=""),
+        y=alt.Y("y_pred_low:Q", scale=alt.Scale(domain=domain, padding=0), title=""),
+        y2=alt.Y2("y_pred_upp:Q", title=None),
+        color=alt.value("#e0f2ff"),
+        tooltip=tooltip,
+    )
 
-plt.show()
+    tick = base.mark_tick(opacity=0.4, orient="horizontal", thickness=1, width=5).encode(
+        x=alt.X("y_pred:Q", title=""), color=alt.value("#006aff")
+    )
+    tick_low = tick.encode(y=alt.Y("y_pred_low:Q", title=""))
+    tick_upp = tick.encode(y=alt.Y("y_pred_upp:Q", title=""))
+
+    diagonal = (
+        alt.Chart(pd.DataFrame({"var1": [domain[0], domain[1]], "var2": [domain[0], domain[1]]}))
+        .mark_line(color="black", opacity=0.4, strokeDash=[2, 2])
+        .encode(
+            x=alt.X("var1:Q"),
+            y=alt.Y("var2:Q"),
+        )
+    )
+
+    text_coverage = (
+        base.transform_aggregate(
+            coverage="mean(coverage)", width="mean(width)", groupby=["strategy"]
+        )
+        .transform_calculate(
+            cov_text=f"'PICP: ' + format(datum.coverage, '.3f') + ' (target = {cov_pct / 100})'"
+        )
+        .mark_text(align="left", baseline="top")
+        .encode(
+            x=alt.value(5),
+            y=alt.value(5),
+            text=alt.Text("cov_text:N"),
+        )
+    )
+    text_with = (
+        base.transform_aggregate(
+            coverage="mean(coverage)", width="mean(width)", groupby=["strategy"]
+        )
+        .transform_calculate(width_text="'Mean Interval Width: ' + format(datum.width, '$,d')")
+        .mark_text(align="left", baseline="top")
+        .encode(
+            x=alt.value(5),
+            y=alt.value(20),
+            text=alt.Text("width_text:N"),
+        )
+    )
+
+    chart = bar + tick_low + tick_upp + circle + diagonal + text_coverage + text_with
+
+    return chart
+
+
+chart = alt.hconcat()
+for strategy in strategies.keys():
+    df_i = df.query(f"strategy == '{strategy}'").reset_index(drop=True)
+    base = plot_prediction_intervals(df_i)
+    chart |= base.properties(height=250, width=325, title=strategies[strategy])
+chart

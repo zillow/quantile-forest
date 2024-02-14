@@ -15,6 +15,8 @@ import os
 import sys
 from datetime import datetime
 
+sys.path.insert(0, os.path.abspath("."))
+
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
@@ -33,8 +35,9 @@ extensions = [
     "sphinx.ext.doctest",
     "sphinx.ext.intersphinx",
     "numpydoc",
-    "sphinx_gallery.gen_gallery",
     "sphinxcontrib.bibtex",
+    "sphinxext_altair.altairplot",
+    "sphinxext.gallery",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -100,6 +103,7 @@ html_title = f"Version {version}"
 html_style = "css/quantile-forest.css"
 html_css_files = [
     "css/quantile-forest.css",
+    "css/gallery.css",
 ]
 html_sidebars = {
     "changelog": [],
@@ -184,13 +188,15 @@ latex_documents = [
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [(
-    "index",
-    "quantile-forest",
-    "quantile-forest Documentation",
-    ["Zillow Group"],
-    1,
-)]
+man_pages = [
+    (
+        "index",
+        "quantile-forest",
+        "quantile-forest Documentation",
+        ["Zillow Group"],
+        1,
+    )
+]
 
 # If true, show URL addresses after external links.
 # man_show_urls = False

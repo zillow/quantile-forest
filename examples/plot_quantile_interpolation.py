@@ -1,19 +1,26 @@
 """
-========================================================
-Predicting with different quantile interpolation methods
-========================================================
+Comparing Quantile Interpolation Methods
+========================================
 
 An example comparison of interpolation methods that can be applied during
 prediction when the desired quantile lies between two data points.
-
 """
 
-print(__doc__)
-
-import matplotlib.pyplot as plt
+import altair as alt
 import numpy as np
+import pandas as pd
 
 from quantile_forest import RandomForestQuantileRegressor
+
+interpolations = {
+    "Linear": "#006aff",
+    "Lower": "#ffd237",
+    "Higher": "#0d4599",
+    "Midpoint": "#f2a619",
+    "Nearest": "#a6e5ff",
+}
+
+legend = {"Actual": "#000000"} | interpolations
 
 # Create toy dataset.
 X = np.array([[-1, -1], [-1, -1], [-1, -1], [1, 1], [1, 1]])
@@ -27,12 +34,8 @@ est = RandomForestQuantileRegressor(
 )
 est.fit(X, y)
 
-interpolations = ["Linear", "Lower", "Higher", "Midpoint", "Nearest"]
-colors = ["#006aff", "#ffd237", "#0d4599", "#f2a619", "#a6e5ff"]
-
 y_medians = []
 y_errs = []
-
 for interpolation in interpolations:
     y_pred = est.predict(
         X,
@@ -50,27 +53,85 @@ for interpolation in interpolations:
         )
     )
 
+data = {
+    "method": ["Actual"] * len(y),
+    "x": [f"Sample {idx + 1} ({x})" for idx, x in enumerate(X.tolist())],
+    "y_med": y.tolist(),
+    "y_low": y.tolist(),
+    "y_upp": y.tolist(),
+}
+for idx, interpolation in enumerate(interpolations):
+    data["method"].extend([interpolation] * len(y))
+    data["x"].extend([f"Sample {idx + 1} ({x})" for idx, x in enumerate(X.tolist())])
+    data["y_med"].extend(y_medians[idx])
+    data["y_low"].extend(y_medians[idx] - y_errs[idx][0])
+    data["y_upp"].extend(y_medians[idx] + y_errs[idx][1])
+df = pd.DataFrame(data)
 
-def plot_interpolations(names, colors, X, y, y_medians, y_errs):
-    sc = plt.scatter(np.arange(len(y)) - 0.35, y, color="k", zorder=10)
-    ebs = []
-    for i, (median, y_err) in enumerate(zip(y_medians, y_errs)):
-        ebs.append(
-            plt.errorbar(
-                np.arange(len(y)) + (0.15 * (i + 1)) - 0.35,
-                median,
-                yerr=y_err,
-                color=colors[i],
-                ecolor=colors[i],
-                fmt="o",
+
+def plot_interpolations(df, legend):
+    point = (
+        alt.Chart(df, width=alt.Step(20))
+        .mark_circle(opacity=1, size=75)
+        .encode(
+            x=alt.X(
+                "method:N",
+                axis=alt.Axis(labels=False, tickSize=0),
+                sort=list(legend.keys()),
+                title=None,
+            ),
+            y=alt.Y("y_med:Q", title="Actual and Predicted Values"),
+            color=alt.Color("method:N", sort=list(legend.keys()), title=None),
+            tooltip=[
+                alt.Tooltip("method:N", title="Method"),
+                alt.Tooltip("x:N", title="X Values"),
+                alt.Tooltip("y_med:N", format=".3f", title="Median Y Value"),
+                alt.Tooltip("y_low:N", format=".3f", title="Lower Y Value"),
+                alt.Tooltip("y_upp:N", format=".3f", title="Upper Y Value"),
+            ],
+        )
+    )
+
+    area = (
+        alt.Chart(df)
+        .mark_bar()
+        .encode(
+            x=alt.X(
+                "method:N",
+                axis=alt.Axis(labels=False, tickSize=0),
+                sort=list(legend.keys()),
+                title=None,
+            ),
+            y=alt.Y("y_low:Q", title=""),
+            y2=alt.Y2("y_upp:Q", title=None),
+            color=alt.Color("method:N", sort=list(legend.keys()), title=None),
+            tooltip=[
+                alt.Tooltip("method:N", title="Method"),
+                alt.Tooltip("x:N", title="X Values"),
+                alt.Tooltip("y_med:N", format=".3f", title="Median Y Value"),
+                alt.Tooltip("y_low:N", format=".3f", title="Lower Y Value"),
+                alt.Tooltip("y_upp:N", format=".3f", title="Upper Y Value"),
+            ],
+        )
+    )
+
+    chart = (
+        (area + point)
+        .properties(height=400)
+        .facet(
+            column=alt.Column(
+                "x:N",
+                header=alt.Header(labelOrient="bottom", titleOrient="bottom"),
+                title="Samples (Feature Values)",
             )
         )
-    plt.xlim([-0.75, len(y) - 0.25])
-    plt.xticks(np.arange(len(y)), X.tolist())
-    plt.xlabel("Samples (Feature Values)")
-    plt.ylabel("Actual and Predicted Values")
-    plt.legend([sc] + ebs, ["Actual"] + names, loc=2)
-    plt.show()
+        .configure_facet(spacing=15)
+        .configure_range(category=alt.RangeScheme(list(legend.values())))
+        .configure_scale(bandPaddingInner=0.9)
+        .configure_view(stroke=None)
+    )
+
+    return chart
 
 
-plot_interpolations(interpolations, colors, X, y, y_medians, y_errs)
+plot_interpolations(df, legend)
