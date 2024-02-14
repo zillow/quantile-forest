@@ -792,14 +792,16 @@ def test_oob_samples(name):
 
 def check_oob_samples_duplicates(name):
     # Check OOB sampling with duplicates.
-    X = np.array([
-        [1, 2, 3],
-        [4, 5, 6],
-        [7, 8, 9],
-        [10, 11, 12],
-        [13, 14, 15],
-        [13, 14, 15],
-    ])
+    X = np.array(
+        [
+            [1, 2, 3],
+            [4, 5, 6],
+            [7, 8, 9],
+            [10, 11, 12],
+            [13, 14, 15],
+            [13, 14, 15],
+        ]
+    )
     y = np.array([-1, 10, 20, 30, 40, 41], dtype=np.float64)
 
     ForestRegressor = FOREST_REGRESSORS[name]
