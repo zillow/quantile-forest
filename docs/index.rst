@@ -27,7 +27,7 @@ Quantile regression forests (QRF) are a non-parametric, tree-based ensemble meth
    :maxdepth: 2
    :hidden:
 
-   auto_examples/index
+   gallery/index
 
 `Getting Started <install.html>`_
 -------------------------------------

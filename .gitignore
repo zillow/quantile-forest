@@ -77,3 +77,8 @@ target/
 paper/paper.pdf
 paper/paper.jats
 docs/sg_execution_times.rst
+docs/_images/*.png
+docs/_static/*.png
+docs/_images/_image_hashes.json
+docs/_static/_image_hashes.json
+docs/gallery/*.rst
