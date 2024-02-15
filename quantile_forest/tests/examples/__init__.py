@@ -12,13 +12,13 @@ def iter_examples():
     - "use_svg": Flag indicating whether the static image for the
         example should be an SVG instead of a PNG
     """
-    examples_arguments_syntax_dir = os.path.abspath(os.path.dirname(__file__))
-    for filename in os.listdir(examples_arguments_syntax_dir):
+    examples_dir = os.path.abspath(os.path.dirname(__file__))
+    for filename in os.listdir(examples_dir):
         name, ext = os.path.splitext(filename)
         if name.startswith("_") or ext != ".py":
             continue
         yield {
             "name": name,
-            "filename": os.path.join(examples_arguments_syntax_dir, filename),
+            "filename": os.path.join(examples_dir, filename),
             "use_svg": name in SVG_EXAMPLES,
         }
