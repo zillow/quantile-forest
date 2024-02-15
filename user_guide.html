@@ -2,18 +2,18 @@
 <!DOCTYPE html>
 
 
-<html lang="en" data-content_root="./" >
+<html lang="en" data-content_root="./" data-theme="light">
 
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>User Guide &#8212; Version 1.3.dev</title>
+    <title>User Guide &#8212; quantile-forest 1.3.dev documentation</title>
   
   
   
   <script data-cfasync="false">
-    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "light";
     document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
   </script>
   
@@ -29,11 +29,10 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.5.1/webfonts/fa-regular-400.woff2" />
 
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
-    <link rel="stylesheet" type="text/css" href="_static/css/quantile-forest.css?v=99eb3432" />
     <link rel="stylesheet" type="text/css" href="_static/altair-plot.css" />
     <link rel="stylesheet" type="text/css" href="_static/gallery.css" />
-    <link rel="stylesheet" type="text/css" href="_static/basic.css?v=c72506b3" />
-    <link rel="stylesheet" type="text/css" href="_static/css/quantile-forest.css?v=99eb3432" />
+    <link rel="stylesheet" type="text/css" href="_static/theme_overrides.css" />
+    <link rel="stylesheet" type="text/css" href="_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css?v=0a3b3ea7" />
     <link rel="stylesheet" type="text/css" href="_static/css/gallery.css?v=c8ff873b" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
@@ -44,7 +43,7 @@
     <script src="_static/documentation_options.js?v=49c989be"></script>
     <script src="_static/doctools.js?v=888ff710"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
-    <script src="_static/js/copybutton.js?v=26522df0"></script>
+    <script src="_static/design-tabs.js?v=36754332"></script>
     <script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
     <script src="https://cdn.jsdelivr.net/npm/vega-lite@5.16.3"></script>
     <script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
@@ -52,14 +51,14 @@
     <script>DOCUMENTATION_OPTIONS.pagename = 'user_guide';</script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="API Reference" href="api.html" />
+    <link rel="next" title="General Examples" href="gallery/index.html" />
     <link rel="prev" title="Getting Started" href="install.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
   
   
-  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="light">
 
   
   
@@ -115,20 +114,10 @@
   
   <div class="col-lg-3 navbar-header-items__start">
     
-      <div class="navbar-item">
-
-  
-
-<a class="navbar-brand logo" href="index.html">
-  
-  
-  
-  
-  
-  
-    <p class="title logo__title">Version 1.3.dev</p>
-  
-</a></div>
+      <div class="navbar-item"><a class="navbar-brand" href="index.html">
+<p class="title">quantile-forest</p>
+</a>
+</div>
     
   </div>
   
@@ -155,15 +144,15 @@
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="api.html">
-                        API Reference
+                      <a class="nav-link nav-internal" href="gallery/index.html">
+                        Examples
                       </a>
                     </li>
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="gallery/index.html">
-                        General Examples
+                      <a class="nav-link nav-internal" href="api.html">
+                        API
                       </a>
                     </li>
                 
@@ -201,6 +190,22 @@ document.write(`
   </button>
 `);
 </script></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links navbar-nav"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/zillow/quantile-forest" title="GitHub" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fab fa-github fa-lg fa-lg" aria-hidden="true"></i></span>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+</ul></div>
       
     </div>
     
@@ -264,15 +269,15 @@ document.write(`
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="api.html">
-                        API Reference
+                      <a class="nav-link nav-internal" href="gallery/index.html">
+                        Examples
                       </a>
                     </li>
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="gallery/index.html">
-                        General Examples
+                      <a class="nav-link nav-internal" href="api.html">
+                        API
                       </a>
                     </li>
                 
@@ -297,6 +302,22 @@ document.write(`
 `);
 </script></div>
         
+          <div class="navbar-item"><ul class="navbar-icon-links navbar-nav"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/zillow/quantile-forest" title="GitHub" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fab fa-github fa-lg fa-lg" aria-hidden="true"></i></span>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+</ul></div>
+        
       </div>
     
   </div>
@@ -306,7 +327,11 @@ document.write(`
 <nav class="bd-docs-nav bd-links"
      aria-label="Section Navigation">
   <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
-  <div class="bd-toc-item navbar-nav"></div>
+  <div class="bd-toc-item navbar-nav"><p aria-level="2" class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">User Guide</a></li>
+</ul>
+</div>
 </nav></div>
     </div>
   
@@ -399,25 +424,31 @@ document.write(`
 <section id="making-predictions">
 <h3>Making Predictions<a class="headerlink" href="#making-predictions" title="Link to this heading">#</a></h3>
 <p>A notable advantage of quantile forests is that they can be fit once, while arbitrary quantiles can be estimated at prediction time. Accordingly, since the quantiles can be specified at prediction time, the model accepts an optional parameter during the call to the <code class="docutils literal notranslate"><span class="pre">predict</span></code> method, which can be a float or list of floats that specify the empirical quantiles to return:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">y_pred</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">,</span> <span class="n">quantiles</span><span class="o">=</span><span class="p">[</span><span class="mf">0.25</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.75</span><span class="p">])</span>  <span class="c1"># returns three columns per row</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">y_pred</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">,</span> <span class="n">quantiles</span><span class="o">=</span><span class="p">[</span><span class="mf">0.25</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.75</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">y_pred</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+<span class="go">3</span>
 </pre></div>
 </div>
 <p>If the <code class="docutils literal notranslate"><span class="pre">predict</span></code> method is called without quantiles, the prediction defaults to the empirical median (<code class="docutils literal notranslate"><span class="pre">quantiles</span> <span class="pre">=</span> <span class="pre">0.5</span></code>):</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">y_pred</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">)</span>  <span class="c1"># returns empirical median prediction for each test sample</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">y_pred</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">)</span>  <span class="c1"># returns empirical median prediction</span>
 </pre></div>
 </div>
 <p>If the <code class="docutils literal notranslate"><span class="pre">predict</span></code> method is explicitly called with <code class="docutils literal notranslate"><span class="pre">quantiles</span> <span class="pre">=</span> <span class="pre">&quot;mean&quot;</span></code>, the prediction returns the empirical mean:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">y_pred</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">,</span> <span class="n">quantiles</span><span class="o">=</span><span class="s2">&quot;mean&quot;</span><span class="p">)</span>  <span class="c1"># returns mean prediction for each test sample</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">y_pred</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">,</span> <span class="n">quantiles</span><span class="o">=</span><span class="s2">&quot;mean&quot;</span><span class="p">)</span>  <span class="c1"># returns mean prediction</span>
 </pre></div>
 </div>
 <p>Default quantiles can be specified at model initialization using the <code class="docutils literal notranslate"><span class="pre">default_quantiles</span></code> parameter:</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">reg</span> <span class="o">=</span> <span class="n">RandomForestQuantileRegressor</span><span class="p">(</span><span class="n">default_quantiles</span><span class="o">=</span><span class="p">[</span><span class="mf">0.25</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.75</span><span class="p">])</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">)</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">reg</span> <span class="o">=</span> <span class="n">RandomForestQuantileRegressor</span><span class="p">(</span><span class="n">default_quantiles</span><span class="o">=</span><span class="p">[</span><span class="mf">0.25</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.75</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">reg</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">)</span>
+<span class="go">RandomForestQuantileRegressor(default_quantiles=[0.25, 0.5, 0.75])</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">y_pred</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">)</span>  <span class="c1"># predicts using the default quantiles</span>
 </pre></div>
 </div>
 <p>The default quantiles can be overwritten at prediction time by specifying a value for <code class="docutils literal notranslate"><span class="pre">quantiles</span></code>:</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">reg</span> <span class="o">=</span> <span class="n">RandomForestQuantileRegressor</span><span class="p">(</span><span class="n">default_quantiles</span><span class="o">=</span><span class="p">[</span><span class="mf">0.25</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.75</span><span class="p">])</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">y_pred</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">,</span> <span class="n">quantiles</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>  <span class="c1"># predicts using the override quantiles</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">reg</span> <span class="o">=</span> <span class="n">RandomForestQuantileRegressor</span><span class="p">(</span><span class="n">default_quantiles</span><span class="o">=</span><span class="p">[</span><span class="mf">0.25</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.75</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">reg</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">)</span>
+<span class="go">RandomForestQuantileRegressor(default_quantiles=[0.25, 0.5, 0.75])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">y_pred</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">,</span> <span class="n">quantiles</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>  <span class="c1"># uses override quantiles</span>
 </pre></div>
 </div>
 <p>The output of the <code class="docutils literal notranslate"><span class="pre">predict</span></code> method is an array with one column for each specified quantile or a single column if no quantiles are specified. The order of the output columns corresponds to the order of the quantiles, which can be specified in any order (i.e., they do not need to be monotonically ordered):</p>
@@ -454,8 +485,8 @@ document.write(`
 <p>By default, the predict method calculates quantiles using a weighted quantile method (<code class="docutils literal notranslate"><span class="pre">weighted_quantile</span> <span class="pre">=</span> <span class="pre">True</span></code>), which assigns a weight to each sample in the training set based on the number of times that it co-occurs in the same leaves as the test sample. When the number of samples in the training set is larger than the expected size of this list (i.e., <span class="math notranslate nohighlight">\(n_{train} \gg n_{trees} \cdot n_{leaves} \cdot n_{leafsamples}\)</span>), it can be more efficient to calculate an unweighted quantile (<code class="docutils literal notranslate"><span class="pre">weighted_quantile</span> <span class="pre">=</span> <span class="pre">False</span></code>), which aggregates the list of training <code class="docutils literal notranslate"><span class="pre">y</span></code> values for each leaf node to which the test sample belongs across all trees. For a given input, both methods can return the same output values:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;weighted_leaves&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">}</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">y_pred_weighted</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">,</span> <span class="n">weighted_quantile</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>  <span class="c1"># weighted quantile</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">y_pred_unweighted</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">,</span> <span class="n">weighted_quantile</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>  <span class="c1"># unweighted quantile</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">y_pred_weighted</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">,</span> <span class="n">weighted_quantile</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">y_pred_unweighted</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">,</span> <span class="n">weighted_quantile</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">y_pred_weighted</span><span class="p">,</span> <span class="n">y_pred_unweighted</span><span class="p">)</span>
 <span class="go">True</span>
 </pre></div>
@@ -464,16 +495,17 @@ document.write(`
 <section id="out-of-bag-estimation">
 <h3>Out-of-Bag Estimation<a class="headerlink" href="#out-of-bag-estimation" title="Link to this heading">#</a></h3>
 <p>Out-of-bag (OOB) predictions can be returned by specifying <code class="docutils literal notranslate"><span class="pre">oob_score</span> <span class="pre">=</span> <span class="pre">True</span></code>:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">y_pred_oob</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">quantiles</span><span class="o">=</span><span class="p">[</span><span class="mf">0.25</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.75</span><span class="p">],</span> <span class="n">oob_score</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">y_pred_oob</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">quantiles</span><span class="o">=</span><span class="p">[</span><span class="mf">0.5</span><span class="p">],</span> <span class="n">oob_score</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>By default, when the <code class="docutils literal notranslate"><span class="pre">predict</span></code> method is called with the OOB flag set to True, it assumes that the input samples are the training samples, arranged in the same order as during model fitting. It accepts an optional parameter that can be used to specify the training index of each input sample, with -1 used to specify non-training samples that can in effect be scored in-bag (IB) during the same call:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">X_mixed</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">X_train</span><span class="p">,</span> <span class="n">X_test</span><span class="p">])</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">X_train</span><span class="p">)),</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">X_test</span><span class="p">),</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)])</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">y_pred_mix</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_mixed</span><span class="p">,</span> <span class="n">quantiles</span><span class="o">=</span><span class="p">[</span><span class="mf">0.25</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.75</span><span class="p">],</span> <span class="n">oob_score</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">indices</span><span class="o">=</span><span class="n">indices</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">y_pred_train_oob</span> <span class="o">=</span> <span class="n">y_pred_mix</span><span class="p">[:</span><span class="nb">len</span><span class="p">(</span><span class="n">X_train</span><span class="p">)]</span>  <span class="c1"># predictions on the training data are OOB</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">y_pred_test</span> <span class="o">=</span> <span class="n">y_pred_mix</span><span class="p">[</span><span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="n">X_test</span><span class="p">):]</span>  <span class="c1"># predictions on the new test data are IB</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">X_train</span><span class="p">)),</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">X_test</span><span class="p">),</span> <span class="o">-</span><span class="mi">1</span><span class="p">)])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;oob_score&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;indices&quot;</span><span class="p">:</span> <span class="n">indices</span><span class="p">}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">y_pred_mix</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_mixed</span><span class="p">,</span> <span class="n">quantiles</span><span class="o">=</span><span class="p">[</span><span class="mf">0.25</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.75</span><span class="p">],</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">y_pred_train_oob</span> <span class="o">=</span> <span class="n">y_pred_mix</span><span class="p">[:</span><span class="nb">len</span><span class="p">(</span><span class="n">X_train</span><span class="p">)]</span>  <span class="c1"># training predictions are OOB</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">y_pred_test</span> <span class="o">=</span> <span class="n">y_pred_mix</span><span class="p">[</span><span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="n">X_test</span><span class="p">):]</span>  <span class="c1"># new test data predictions are IB</span>
 </pre></div>
 </div>
 <p>This allows all samples, both from the training and test sets, to be scored with a single call to <code class="docutils literal notranslate"><span class="pre">predict</span></code>, whereby OOB predictions are returned for the training samples and IB (i.e., non-OOB) predictions are returned for the test samples.</p>
@@ -494,8 +526,9 @@ document.write(`
 <span class="go">RandomForestRegressor(random_state=0)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">qrf</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">)</span>
 <span class="go">RandomForestQuantileRegressor(max_samples_leaf=None, random_state=0)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;quantiles&quot;</span><span class="p">:</span> <span class="s2">&quot;mean&quot;</span><span class="p">,</span> <span class="s2">&quot;aggregate_leaves_first&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">}</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">y_pred_rf</span> <span class="o">=</span> <span class="n">rf</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">y_pred_qrf</span> <span class="o">=</span> <span class="n">qrf</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">,</span> <span class="n">quantiles</span><span class="o">=</span><span class="s2">&quot;mean&quot;</span><span class="p">,</span> <span class="n">aggregate_leaves_first</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">y_pred_qrf</span> <span class="o">=</span> <span class="n">qrf</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">y_pred_rf</span><span class="p">,</span> <span class="n">y_pred_qrf</span><span class="p">)</span>
 <span class="go">True</span>
 </pre></div>
@@ -540,6 +573,8 @@ document.write(`
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">proximities</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">proximity_counts</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">oob_score</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
+<div class="toctree-wrapper compound">
+</div>
 </section>
 </section>
 
@@ -563,11 +598,11 @@ document.write(`
       </div>
     </a>
     <a class="right-next"
-       href="api.html"
+       href="gallery/index.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">API Reference</p>
+        <p class="prev-next-title">General Examples</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>

@@ -55,8 +55,6 @@
    
    
 
-.. include:: quantile_forest.RandomForestQuantileRegressor.examples
-
 .. raw:: html
 
-    <div style='clear:both'></div>
+    <div class="clearer"></div>

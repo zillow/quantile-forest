@@ -2,18 +2,18 @@
 <!DOCTYPE html>
 
 
-<html lang="en" data-content_root="../" >
+<html lang="en" data-content_root="../" data-theme="light">
 
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Weighted vs. Unweighted Quantile Estimates &#8212; Version 1.3.dev</title>
+    <title>Weighted vs. Unweighted Quantile Estimates &#8212; quantile-forest 1.3.dev documentation</title>
   
   
   
   <script data-cfasync="false">
-    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "light";
     document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
   </script>
   
@@ -29,11 +29,10 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.1/webfonts/fa-regular-400.woff2" />
 
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
-    <link rel="stylesheet" type="text/css" href="../_static/css/quantile-forest.css?v=99eb3432" />
     <link rel="stylesheet" type="text/css" href="../_static/altair-plot.css" />
     <link rel="stylesheet" type="text/css" href="../_static/gallery.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/basic.css?v=c72506b3" />
-    <link rel="stylesheet" type="text/css" href="../_static/css/quantile-forest.css?v=99eb3432" />
+    <link rel="stylesheet" type="text/css" href="../_static/theme_overrides.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css?v=0a3b3ea7" />
     <link rel="stylesheet" type="text/css" href="../_static/css/gallery.css?v=c8ff873b" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
@@ -44,7 +43,7 @@
     <script src="../_static/documentation_options.js?v=49c989be"></script>
     <script src="../_static/doctools.js?v=888ff710"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
-    <script src="../_static/js/copybutton.js?v=26522df0"></script>
+    <script src="../_static/design-tabs.js?v=36754332"></script>
     <script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
     <script src="https://cdn.jsdelivr.net/npm/vega-lite@5.16.3"></script>
     <script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
@@ -56,7 +55,7 @@
   </head>
   
   
-  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="light">
 
   
   
@@ -112,20 +111,10 @@
   
   <div class="col-lg-3 navbar-header-items__start">
     
-      <div class="navbar-item">
-
-  
-
-<a class="navbar-brand logo" href="../index.html">
-  
-  
-  
-  
-  
-  
-    <p class="title logo__title">Version 1.3.dev</p>
-  
-</a></div>
+      <div class="navbar-item"><a class="navbar-brand" href="../index.html">
+<p class="title">quantile-forest</p>
+</a>
+</div>
     
   </div>
   
@@ -152,15 +141,15 @@
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../api.html">
-                        API Reference
+                      <a class="nav-link nav-internal" href="index.html">
+                        Examples
                       </a>
                     </li>
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="index.html">
-                        General Examples
+                      <a class="nav-link nav-internal" href="../api.html">
+                        API
                       </a>
                     </li>
                 
@@ -198,6 +187,22 @@ document.write(`
   </button>
 `);
 </script></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links navbar-nav"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/zillow/quantile-forest" title="GitHub" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fab fa-github fa-lg fa-lg" aria-hidden="true"></i></span>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+</ul></div>
       
     </div>
     
@@ -259,15 +264,15 @@ document.write(`
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../api.html">
-                        API Reference
+                      <a class="nav-link nav-internal" href="index.html">
+                        Examples
                       </a>
                     </li>
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="index.html">
-                        General Examples
+                      <a class="nav-link nav-internal" href="../api.html">
+                        API
                       </a>
                     </li>
                 
@@ -291,6 +296,22 @@ document.write(`
   </button>
 `);
 </script></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links navbar-nav"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/zillow/quantile-forest" title="GitHub" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fab fa-github fa-lg fa-lg" aria-hidden="true"></i></span>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+</ul></div>
         
       </div>
     
@@ -357,7 +378,7 @@ comparison.</p>
   // embed when document is loaded, to ensure vega library is available
   // this works on all modern browsers, except IE8 and older
   document.addEventListener("DOMContentLoaded", function(event) {
-      var spec = {"config": {"view": {"continuousWidth": 300, "continuousHeight": 300}, "range": {"category": ["#f2a619", "#006aff", "#001751"]}}, "layer": [{"mark": {"type": "line"}, "encoding": {"color": {"condition": {"param": "param_12", "field": "name", "legend": {"symbolOpacity": 1}, "sort": ["RF", "QRF Weighted Quantile", "QRF Unweighted Quantile"], "title": null, "type": "nominal"}, "value": "lightgray"}, "x": {"field": "n_estimators", "title": "Number of Estimators", "type": "quantitative"}, "y": {"field": "mean", "title": "Prediction Runtime (seconds)", "type": "quantitative"}}, "name": "view_10"}, {"mark": {"type": "area", "opacity": 0.1}, "encoding": {"color": {"condition": {"param": "param_12", "field": "name", "legend": {"symbolOpacity": 1}, "sort": ["RF", "QRF Weighted Quantile", "QRF Unweighted Quantile"], "title": null, "type": "nominal"}, "value": "lightgray"}, "tooltip": [{"field": "name", "title": "Estimator Name", "type": "nominal"}, {"field": "n_estimators", "format": ",d", "title": "Number of Estimators", "type": "quantitative"}, {"field": "mean", "format": ",.3f", "title": "Average Runtime", "type": "quantitative"}, {"field": "ymin", "format": ",.3f", "title": "Minimum Runtime", "type": "quantitative"}, {"field": "ymax", "format": ",.3f", "title": "Maximum Runtime", "type": "quantitative"}], "x": {"field": "n_estimators", "type": "quantitative"}, "y": {"field": "ymin", "type": "quantitative"}, "y2": {"field": "ymax"}}}], "data": {"name": "data-3167d1bb9c215fdd74789e3e4828e874"}, "height": 400, "params": [{"name": "param_12", "select": {"type": "point", "fields": ["name"]}, "bind": "legend", "views": ["view_10"]}], "width": 650, "$schema": "https://vega.github.io/schema/vega-lite/v5.16.3.json", "datasets": {"data-3167d1bb9c215fdd74789e3e4828e874": [{"name": "QRF Unweighted Quantile", "n_estimators": 1, "runtime_mean": 0.35920143127441406, "runtime_std": 0.05876975793366869, "mean": 0.35920143127441406, "std": 0.05876975793366869, "ymin": 0.3298165523075797, "ymax": 0.3885863102412484}, {"name": "QRF Unweighted Quantile", "n_estimators": 5, "runtime_mean": 0.6062030792236328, "runtime_std": 0.08969498619389919, "mean": 0.6062030792236328, "std": 0.08969498619389919, "ymin": 0.5613555861266832, "ymax": 0.6510505723205824}, {"name": "QRF Unweighted Quantile", "n_estimators": 10, "runtime_mean": 0.861811637878418, "runtime_std": 0.014464082298681543, "mean": 0.861811637878418, "std": 0.014464082298681543, "ymin": 0.8545795967290772, "ymax": 0.8690436790277587}, {"name": "QRF Unweighted Quantile", "n_estimators": 25, "runtime_mean": 1.7845392227172852, "runtime_std": 0.056965628059977486, "mean": 1.7845392227172852, "std": 0.056965628059977486, "ymin": 1.7560564086872965, "ymax": 1.8130220367472738}, {"name": "QRF Unweighted Quantile", "n_estimators": 50, "runtime_mean": 3.2529830932617188, "runtime_std": 0.04388744317480041, "mean": 3.2529830932617188, "std": 0.04388744317480041, "ymin": 3.2310393716743184, "ymax": 3.274926814849119}, {"name": "QRF Unweighted Quantile", "n_estimators": 100, "runtime_mean": 6.202173233032227, "runtime_std": 0.10884508397310377, "mean": 6.202173233032227, "std": 0.10884508397310377, "ymin": 6.147750691045674, "ymax": 6.256595775018779}, {"name": "QRF Weighted Quantile", "n_estimators": 1, "runtime_mean": 0.5167007446289062, "runtime_std": 0.06120646545888952, "mean": 0.5167007446289062, "std": 0.06120646545888952, "ymin": 0.4860975118994615, "ymax": 0.547303977358351}, {"name": "QRF Weighted Quantile", "n_estimators": 5, "runtime_mean": 0.7106781005859375, "runtime_std": 0.018847906455735672, "mean": 0.7106781005859375, "std": 0.018847906455735672, "ymin": 0.7012541473580697, "ymax": 0.7201020538138053}, {"name": "QRF Weighted Quantile", "n_estimators": 10, "runtime_mean": 1.0912895202636719, "runtime_std": 0.11427179175364728, "mean": 1.0912895202636719, "std": 0.11427179175364728, "ymin": 1.0341536243868483, "ymax": 1.1484254161404954}, {"name": "QRF Weighted Quantile", "n_estimators": 25, "runtime_mean": 1.940774917602539, "runtime_std": 0.18785527557675297, "mean": 1.940774917602539, "std": 0.18785527557675297, "ymin": 1.8468472798141626, "ymax": 2.0347025553909157}, {"name": "QRF Weighted Quantile", "n_estimators": 50, "runtime_mean": 3.273153305053711, "runtime_std": 0.13071665426755436, "mean": 3.273153305053711, "std": 0.13071665426755436, "ymin": 3.2077949779199337, "ymax": 3.338511632187488}, {"name": "QRF Weighted Quantile", "n_estimators": 100, "runtime_mean": 5.9581756591796875, "runtime_std": 0.22643320382554472, "mean": 5.9581756591796875, "std": 0.22643320382554472, "ymin": 5.844959057266915, "ymax": 6.07139226109246}, {"name": "RF", "n_estimators": 1, "runtime_mean": 0.2990245819091797, "runtime_std": 0.022196643092359622, "mean": 0.2990245819091797, "std": 0.022196643092359622, "ymin": 0.2879262603629999, "ymax": 0.3101229034553595}, {"name": "RF", "n_estimators": 5, "runtime_mean": 0.5681514739990234, "runtime_std": 0.012540102085338505, "mean": 0.5681514739990234, "std": 0.012540102085338505, "ymin": 0.5618814229563542, "ymax": 0.5744215250416926}, {"name": "RF", "n_estimators": 10, "runtime_mean": 0.9401798248291016, "runtime_std": 0.01892428854853254, "mean": 0.9401798248291016, "std": 0.01892428854853254, "ymin": 0.9307176805548353, "ymax": 0.9496419691033678}, {"name": "RF", "n_estimators": 25, "runtime_mean": 1.7288923263549805, "runtime_std": 0.09295153620573439, "mean": 1.7288923263549805, "std": 0.09295153620573439, "ymin": 1.6824165582521133, "ymax": 1.7753680944578476}, {"name": "RF", "n_estimators": 50, "runtime_mean": 3.064751625061035, "runtime_std": 0.07168859430052972, "mean": 3.064751625061035, "std": 0.07168859430052972, "ymin": 3.0289073279107703, "ymax": 3.1005959222113}, {"name": "RF", "n_estimators": 100, "runtime_mean": 5.607843399047852, "runtime_std": 0.08371416186660381, "mean": 5.607843399047852, "std": 0.08371416186660381, "ymin": 5.5659863181145495, "ymax": 5.649700479981154}]}};
+      var spec = {"config": {"view": {"continuousWidth": 300, "continuousHeight": 300}, "range": {"category": ["#f2a619", "#006aff", "#001751"]}}, "layer": [{"mark": {"type": "line"}, "encoding": {"color": {"condition": {"param": "param_12", "field": "name", "legend": {"symbolOpacity": 1}, "sort": ["RF", "QRF Weighted Quantile", "QRF Unweighted Quantile"], "title": null, "type": "nominal"}, "value": "lightgray"}, "x": {"field": "n_estimators", "title": "Number of Estimators", "type": "quantitative"}, "y": {"field": "mean", "title": "Prediction Runtime (seconds)", "type": "quantitative"}}, "name": "view_10"}, {"mark": {"type": "area", "opacity": 0.1}, "encoding": {"color": {"condition": {"param": "param_12", "field": "name", "legend": {"symbolOpacity": 1}, "sort": ["RF", "QRF Weighted Quantile", "QRF Unweighted Quantile"], "title": null, "type": "nominal"}, "value": "lightgray"}, "tooltip": [{"field": "name", "title": "Estimator Name", "type": "nominal"}, {"field": "n_estimators", "format": ",d", "title": "Number of Estimators", "type": "quantitative"}, {"field": "mean", "format": ",.3f", "title": "Average Runtime", "type": "quantitative"}, {"field": "ymin", "format": ",.3f", "title": "Minimum Runtime", "type": "quantitative"}, {"field": "ymax", "format": ",.3f", "title": "Maximum Runtime", "type": "quantitative"}], "x": {"field": "n_estimators", "type": "quantitative"}, "y": {"field": "ymin", "type": "quantitative"}, "y2": {"field": "ymax"}}}], "data": {"name": "data-6393f9d28f06ff22ab746b5ce6294ae6"}, "height": 400, "params": [{"name": "param_12", "select": {"type": "point", "fields": ["name"]}, "bind": "legend", "views": ["view_10"]}], "width": 650, "$schema": "https://vega.github.io/schema/vega-lite/v5.16.3.json", "datasets": {"data-6393f9d28f06ff22ab746b5ce6294ae6": [{"name": "QRF Unweighted Quantile", "n_estimators": 1, "runtime_mean": 0.36902427673339844, "runtime_std": 0.03795805484249895, "mean": 0.36902427673339844, "std": 0.03795805484249895, "ymin": 0.350045249312149, "ymax": 0.3880033041546479}, {"name": "QRF Unweighted Quantile", "n_estimators": 5, "runtime_mean": 0.5994558334350586, "runtime_std": 0.01112679638855599, "mean": 0.5994558334350586, "std": 0.01112679638855599, "ymin": 0.5938924352407806, "ymax": 0.6050192316293366}, {"name": "QRF Unweighted Quantile", "n_estimators": 10, "runtime_mean": 0.9317874908447266, "runtime_std": 0.05454163940333956, "mean": 0.9317874908447266, "std": 0.05454163940333956, "ymin": 0.9045166711430568, "ymax": 0.9590583105463963}, {"name": "QRF Unweighted Quantile", "n_estimators": 25, "runtime_mean": 1.7720699310302734, "runtime_std": 0.032159358218076584, "mean": 1.7720699310302734, "std": 0.032159358218076584, "ymin": 1.7559902519212351, "ymax": 1.7881496101393117}, {"name": "QRF Unweighted Quantile", "n_estimators": 50, "runtime_mean": 3.230452537536621, "runtime_std": 0.025289919795203262, "mean": 3.230452537536621, "std": 0.025289919795203262, "ymin": 3.2178075776390194, "ymax": 3.243097497434223}, {"name": "QRF Unweighted Quantile", "n_estimators": 100, "runtime_mean": 6.139564514160156, "runtime_std": 0.05453665976530858, "mean": 6.139564514160156, "std": 0.05453665976530858, "ymin": 6.112296184277502, "ymax": 6.16683284404281}, {"name": "QRF Weighted Quantile", "n_estimators": 1, "runtime_mean": 0.5032539367675781, "runtime_std": 0.0028803841374904055, "mean": 0.5032539367675781, "std": 0.0028803841374904055, "ymin": 0.5018137446988329, "ymax": 0.5046941288363234}, {"name": "QRF Weighted Quantile", "n_estimators": 5, "runtime_mean": 0.7245302200317383, "runtime_std": 0.01751883611164902, "mean": 0.7245302200317383, "std": 0.01751883611164902, "ymin": 0.7157708019759138, "ymax": 0.7332896380875628}, {"name": "QRF Weighted Quantile", "n_estimators": 10, "runtime_mean": 1.0361909866333008, "runtime_std": 0.057993132392210475, "mean": 1.0361909866333008, "std": 0.057993132392210475, "ymin": 1.0071944204371956, "ymax": 1.065187552829406}, {"name": "QRF Weighted Quantile", "n_estimators": 25, "runtime_mean": 1.8214225769042969, "runtime_std": 0.1690024398295322, "mean": 1.8214225769042969, "std": 0.1690024398295322, "ymin": 1.7369213569895308, "ymax": 1.905923796819063}, {"name": "QRF Weighted Quantile", "n_estimators": 50, "runtime_mean": 3.025937080383301, "runtime_std": 0.026101493337481955, "mean": 3.025937080383301, "std": 0.026101493337481955, "ymin": 3.01288633371456, "ymax": 3.0389878270520416}, {"name": "QRF Weighted Quantile", "n_estimators": 100, "runtime_mean": 5.617737770080566, "runtime_std": 0.08599648313223691, "mean": 5.617737770080566, "std": 0.08599648313223691, "ymin": 5.574739528514448, "ymax": 5.6607360116466845}, {"name": "RF", "n_estimators": 1, "runtime_mean": 0.29599666595458984, "runtime_std": 0.008327034112278055, "mean": 0.29599666595458984, "std": 0.008327034112278055, "ymin": 0.2918331488984508, "ymax": 0.3001601830107289}, {"name": "RF", "n_estimators": 5, "runtime_mean": 0.5390644073486328, "runtime_std": 0.008164458495052858, "mean": 0.5390644073486328, "std": 0.008164458495052858, "ymin": 0.5349821781011064, "ymax": 0.5431466365961592}, {"name": "RF", "n_estimators": 10, "runtime_mean": 0.8234262466430664, "runtime_std": 0.012694306130250079, "mean": 0.8234262466430664, "std": 0.012694306130250079, "ymin": 0.8170790935779414, "ymax": 0.8297733997081914}, {"name": "RF", "n_estimators": 25, "runtime_mean": 1.5694618225097656, "runtime_std": 0.0943636252717629, "mean": 1.5694618225097656, "std": 0.0943636252717629, "ymin": 1.5222800098738842, "ymax": 1.616643635145647}, {"name": "RF", "n_estimators": 50, "runtime_mean": 2.746295928955078, "runtime_std": 0.02023510730108729, "mean": 2.746295928955078, "std": 0.02023510730108729, "ymin": 2.7361783753045343, "ymax": 2.756413482605622}, {"name": "RF", "n_estimators": 100, "runtime_mean": 5.287599563598633, "runtime_std": 0.1888888419496641, "mean": 5.287599563598633, "std": 0.1888888419496641, "ymin": 5.193155142623801, "ymax": 5.382043984573465}]}};
       var opt = {
         "mode": "vega-lite",
         "renderer": "canvas",

@@ -2,18 +2,18 @@
 <!DOCTYPE html>
 
 
-<html lang="en" data-content_root="../" >
+<html lang="en" data-content_root="../" data-theme="light">
 
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>RandomForestQuantileRegressor &#8212; Version 1.3.dev</title>
+    <title>RandomForestQuantileRegressor &#8212; quantile-forest 1.3.dev documentation</title>
   
   
   
   <script data-cfasync="false">
-    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "light";
     document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
   </script>
   
@@ -29,11 +29,10 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.1/webfonts/fa-regular-400.woff2" />
 
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
-    <link rel="stylesheet" type="text/css" href="../_static/css/quantile-forest.css?v=99eb3432" />
     <link rel="stylesheet" type="text/css" href="../_static/altair-plot.css" />
     <link rel="stylesheet" type="text/css" href="../_static/gallery.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/basic.css?v=c72506b3" />
-    <link rel="stylesheet" type="text/css" href="../_static/css/quantile-forest.css?v=99eb3432" />
+    <link rel="stylesheet" type="text/css" href="../_static/theme_overrides.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css?v=0a3b3ea7" />
     <link rel="stylesheet" type="text/css" href="../_static/css/gallery.css?v=c8ff873b" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
@@ -44,22 +43,20 @@
     <script src="../_static/documentation_options.js?v=49c989be"></script>
     <script src="../_static/doctools.js?v=888ff710"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
-    <script src="../_static/js/copybutton.js?v=26522df0"></script>
+    <script src="../_static/design-tabs.js?v=36754332"></script>
     <script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
     <script src="https://cdn.jsdelivr.net/npm/vega-lite@5.16.3"></script>
     <script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
-    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'generated/quantile_forest.RandomForestQuantileRegressor';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="General Examples" href="../gallery/index.html" />
     <link rel="prev" title="ExtraTreesQuantileRegressor" href="quantile_forest.ExtraTreesQuantileRegressor.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
   
   
-  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="light">
 
   
   
@@ -115,20 +112,10 @@
   
   <div class="col-lg-3 navbar-header-items__start">
     
-      <div class="navbar-item">
-
-  
-
-<a class="navbar-brand logo" href="../index.html">
-  
-  
-  
-  
-  
-  
-    <p class="title logo__title">Version 1.3.dev</p>
-  
-</a></div>
+      <div class="navbar-item"><a class="navbar-brand" href="../index.html">
+<p class="title">quantile-forest</p>
+</a>
+</div>
     
   </div>
   
@@ -154,16 +141,16 @@
                     </li>
                 
 
-                    <li class="nav-item current active">
-                      <a class="nav-link nav-internal" href="../api.html">
-                        API Reference
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../gallery/index.html">
+                        Examples
                       </a>
                     </li>
                 
 
-                    <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../gallery/index.html">
-                        General Examples
+                    <li class="nav-item current active">
+                      <a class="nav-link nav-internal" href="../api.html">
+                        API
                       </a>
                     </li>
                 
@@ -201,6 +188,22 @@ document.write(`
   </button>
 `);
 </script></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links navbar-nav"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/zillow/quantile-forest" title="GitHub" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fab fa-github fa-lg fa-lg" aria-hidden="true"></i></span>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+</ul></div>
       
     </div>
     
@@ -263,16 +266,16 @@ document.write(`
                     </li>
                 
 
-                    <li class="nav-item current active">
-                      <a class="nav-link nav-internal" href="../api.html">
-                        API Reference
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../gallery/index.html">
+                        Examples
                       </a>
                     </li>
                 
 
-                    <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../gallery/index.html">
-                        General Examples
+                    <li class="nav-item current active">
+                      <a class="nav-link nav-internal" href="../api.html">
+                        API
                       </a>
                     </li>
                 
@@ -296,6 +299,22 @@ document.write(`
   </button>
 `);
 </script></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links navbar-nav"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/zillow/quantile-forest" title="GitHub" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fab fa-github fa-lg fa-lg" aria-hidden="true"></i></span>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+</ul></div>
         
       </div>
     
@@ -480,8 +499,8 @@ By default, <a class="reference external" href="https://scikit-learn.org/stable/
 Provide a callable with signature <code class="docutils literal notranslate"><span class="pre">metric(y_true,</span> <span class="pre">y_pred)</span></code> to use a
 custom metric. Only available if <code class="docutils literal notranslate"><span class="pre">bootstrap=True</span></code>.</p>
 </dd>
-<dt><strong>n_jobs</strong><span class="classifier">int, default=None</span></dt><dd><p>The number of jobs to run in parallel. <a class="reference internal" href="#quantile_forest.RandomForestQuantileRegressor.fit" title="quantile_forest.RandomForestQuantileRegressor.fit"><code class="xref py py-meth docutils literal notranslate"><span class="pre">fit</span></code></a>, <a class="reference internal" href="#quantile_forest.RandomForestQuantileRegressor.predict" title="quantile_forest.RandomForestQuantileRegressor.predict"><code class="xref py py-meth docutils literal notranslate"><span class="pre">predict</span></code></a>,
-<a class="reference internal" href="#quantile_forest.RandomForestQuantileRegressor.decision_path" title="quantile_forest.RandomForestQuantileRegressor.decision_path"><code class="xref py py-meth docutils literal notranslate"><span class="pre">decision_path</span></code></a> and <a class="reference internal" href="#quantile_forest.RandomForestQuantileRegressor.apply" title="quantile_forest.RandomForestQuantileRegressor.apply"><code class="xref py py-meth docutils literal notranslate"><span class="pre">apply</span></code></a> are all parallelized over the
+<dt><strong>n_jobs</strong><span class="classifier">int, default=None</span></dt><dd><p>The number of jobs to run in parallel. <code class="xref py py-meth docutils literal notranslate"><span class="pre">fit</span></code>, <code class="xref py py-meth docutils literal notranslate"><span class="pre">predict</span></code>,
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">decision_path</span></code> and <code class="xref py py-meth docutils literal notranslate"><span class="pre">apply</span></code> are all parallelized over the
 trees. <code class="docutils literal notranslate"><span class="pre">None</span></code> means 1 unless in a <code class="xref py py-obj docutils literal notranslate"><span class="pre">joblib.parallel_backend</span></code>
 context. <code class="docutils literal notranslate"><span class="pre">-1</span></code> means using all processors.</p>
 </dd>
@@ -508,30 +527,6 @@ to train each base estimator.</p>
 <li><p>If float, then draw <code class="docutils literal notranslate"><span class="pre">max(round(n_samples</span> <span class="pre">*</span> <span class="pre">max_samples),</span> <span class="pre">1)</span></code> samples.
 Thus, <code class="docutils literal notranslate"><span class="pre">max_samples</span></code> should be in the interval <code class="docutils literal notranslate"><span class="pre">(0.0,</span> <span class="pre">1.0]</span></code>.</p></li>
 </ul>
-</dd>
-</dl>
-</dd>
-<dt class="field-even">Attributes<span class="colon">:</span></dt>
-<dd class="field-even"><dl>
-<dt><strong>estimator_</strong><span class="classifier">DecisionTreeRegressor</span></dt><dd><p>The child estimator template used to create the collection of fitted
-sub-estimators.</p>
-</dd>
-<dt><strong>estimators_</strong><span class="classifier">list of DecisionTreeRegressor</span></dt><dd><p>The collection of fitted sub-estimators.</p>
-</dd>
-<dt><a class="reference internal" href="#quantile_forest.RandomForestQuantileRegressor.feature_importances_" title="quantile_forest.RandomForestQuantileRegressor.feature_importances_"><code class="xref py py-obj docutils literal notranslate"><span class="pre">feature_importances_</span></code></a><span class="classifier">ndarray of shape (n_features,)</span></dt><dd><p>The impurity-based feature importances.</p>
-</dd>
-<dt><strong>n_features_in_</strong><span class="classifier">int</span></dt><dd><p>Number of features seen during <a class="reference external" href="https://scikit-learn.org/stable/glossary.html#term-fit" title="(in scikit-learn v1.4)"><span class="xref std std-term">fit</span></a>.</p>
-</dd>
-<dt><strong>feature_names_in_</strong><span class="classifier">ndarray of shape (<code class="docutils literal notranslate"><span class="pre">n_features_in_</span></code>,)</span></dt><dd><p>Names of features seen during <a class="reference external" href="https://scikit-learn.org/stable/glossary.html#term-fit" title="(in scikit-learn v1.4)"><span class="xref std std-term">fit</span></a>. Defined only when <code class="docutils literal notranslate"><span class="pre">X</span></code>
-has feature names that are all strings.</p>
-</dd>
-<dt><strong>n_outputs_</strong><span class="classifier">int</span></dt><dd><p>The number of outputs when <code class="docutils literal notranslate"><span class="pre">fit</span></code> is performed.</p>
-</dd>
-<dt><strong>oob_score_</strong><span class="classifier">float</span></dt><dd><p>Score of the training dataset obtained using an out-of-bag estimate.
-This attribute exists only when <code class="docutils literal notranslate"><span class="pre">oob_score</span></code> is True.</p>
-</dd>
-<dt><strong>oob_prediction_</strong><span class="classifier">ndarray of shape (n_samples,) or (n_samples, n_outputs)</span></dt><dd><p>Prediction computed with out-of-bag estimate on the training set.
-This attribute exists only when <code class="docutils literal notranslate"><span class="pre">oob_score</span></code> is True.</p>
 </dd>
 </dl>
 </dd>
@@ -563,594 +558,79 @@ Learning Research, 7(Jun), 983-999, 2006.
 <span class="go">0.3592...</span>
 </pre></div>
 </div>
+<dl class="field-list">
+<dt class="field-odd">Attributes<span class="colon">:</span></dt>
+<dd class="field-odd"><dl>
+<dt><strong>estimator_</strong><span class="classifier">DecisionTreeRegressor</span></dt><dd><p>The child estimator template used to create the collection of fitted
+sub-estimators.</p>
+</dd>
+<dt><strong>estimators_</strong><span class="classifier">list of DecisionTreeRegressor</span></dt><dd><p>The collection of fitted sub-estimators.</p>
+</dd>
+<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">feature_importances_</span></code><span class="classifier">ndarray of shape (n_features,)</span></dt><dd><p>The impurity-based feature importances.</p>
+</dd>
+<dt><strong>n_features_in_</strong><span class="classifier">int</span></dt><dd><p>Number of features seen during <a class="reference external" href="https://scikit-learn.org/stable/glossary.html#term-fit" title="(in scikit-learn v1.4)"><span class="xref std std-term">fit</span></a>.</p>
+</dd>
+<dt><strong>feature_names_in_</strong><span class="classifier">ndarray of shape (<code class="docutils literal notranslate"><span class="pre">n_features_in_</span></code>,)</span></dt><dd><p>Names of features seen during <a class="reference external" href="https://scikit-learn.org/stable/glossary.html#term-fit" title="(in scikit-learn v1.4)"><span class="xref std std-term">fit</span></a>. Defined only when <code class="docutils literal notranslate"><span class="pre">X</span></code>
+has feature names that are all strings.</p>
+</dd>
+<dt><strong>n_outputs_</strong><span class="classifier">int</span></dt><dd><p>The number of outputs when <code class="docutils literal notranslate"><span class="pre">fit</span></code> is performed.</p>
+</dd>
+<dt><strong>oob_score_</strong><span class="classifier">float</span></dt><dd><p>Score of the training dataset obtained using an out-of-bag estimate.
+This attribute exists only when <code class="docutils literal notranslate"><span class="pre">oob_score</span></code> is True.</p>
+</dd>
+<dt><strong>oob_prediction_</strong><span class="classifier">ndarray of shape (n_samples,) or (n_samples, n_outputs)</span></dt><dd><p>Prediction computed with out-of-bag estimate on the training set.
+This attribute exists only when <code class="docutils literal notranslate"><span class="pre">oob_score</span></code> is True.</p>
+</dd>
+</dl>
+</dd>
+</dl>
 <p class="rubric">Methods</p>
 <table class="autosummary longtable table autosummary">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#quantile_forest.RandomForestQuantileRegressor.apply" title="quantile_forest.RandomForestQuantileRegressor.apply"><code class="xref py py-obj docutils literal notranslate"><span class="pre">apply</span></code></a>(X)</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">apply</span></code>(X)</p></td>
 <td><p>Apply trees in the forest to X, return leaf indices.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#quantile_forest.RandomForestQuantileRegressor.decision_path" title="quantile_forest.RandomForestQuantileRegressor.decision_path"><code class="xref py py-obj docutils literal notranslate"><span class="pre">decision_path</span></code></a>(X)</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">decision_path</span></code>(X)</p></td>
 <td><p>Return the decision path in the forest.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#quantile_forest.RandomForestQuantileRegressor.fit" title="quantile_forest.RandomForestQuantileRegressor.fit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fit</span></code></a>(X, y[, sample_weight, sparse_pickle])</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">fit</span></code>(X, y[, sample_weight, sparse_pickle])</p></td>
 <td><p>Build a forest from the training set (X, y).</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#quantile_forest.RandomForestQuantileRegressor.get_metadata_routing" title="quantile_forest.RandomForestQuantileRegressor.get_metadata_routing"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_metadata_routing</span></code></a>()</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_metadata_routing</span></code>()</p></td>
 <td><p>Get metadata routing of this object.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#quantile_forest.RandomForestQuantileRegressor.get_params" title="quantile_forest.RandomForestQuantileRegressor.get_params"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_params</span></code></a>([deep])</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_params</span></code>([deep])</p></td>
 <td><p>Get parameters for this estimator.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#quantile_forest.RandomForestQuantileRegressor.predict" title="quantile_forest.RandomForestQuantileRegressor.predict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">predict</span></code></a>(X[, quantiles, interpolation, ...])</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">predict</span></code>(X[, quantiles, interpolation, ...])</p></td>
 <td><p>Predict quantiles for X.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#quantile_forest.RandomForestQuantileRegressor.proximity_counts" title="quantile_forest.RandomForestQuantileRegressor.proximity_counts"><code class="xref py py-obj docutils literal notranslate"><span class="pre">proximity_counts</span></code></a>(X[, max_proximities, ...])</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">proximity_counts</span></code>(X[, max_proximities, ...])</p></td>
 <td><p>Return training proximity counts for input samples.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#quantile_forest.RandomForestQuantileRegressor.quantile_ranks" title="quantile_forest.RandomForestQuantileRegressor.quantile_ranks"><code class="xref py py-obj docutils literal notranslate"><span class="pre">quantile_ranks</span></code></a>(X, y[, kind, ...])</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">quantile_ranks</span></code>(X, y[, kind, ...])</p></td>
 <td><p>Return quantile ranks for X with scores y.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#quantile_forest.RandomForestQuantileRegressor.score" title="quantile_forest.RandomForestQuantileRegressor.score"><code class="xref py py-obj docutils literal notranslate"><span class="pre">score</span></code></a>(X, y[, quantiles, sample_weight])</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">score</span></code>(X, y[, quantiles, sample_weight])</p></td>
 <td><p>Return the coefficient of determination R^2 of the prediction.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#quantile_forest.RandomForestQuantileRegressor.set_fit_request" title="quantile_forest.RandomForestQuantileRegressor.set_fit_request"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_fit_request</span></code></a>(*[, sample_weight, ...])</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_fit_request</span></code>(*[, sample_weight, ...])</p></td>
 <td><p>Request metadata passed to the <code class="docutils literal notranslate"><span class="pre">fit</span></code> method.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#quantile_forest.RandomForestQuantileRegressor.set_params" title="quantile_forest.RandomForestQuantileRegressor.set_params"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_params</span></code></a>(**params)</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_params</span></code>(**params)</p></td>
 <td><p>Set the parameters of this estimator.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#quantile_forest.RandomForestQuantileRegressor.set_predict_request" title="quantile_forest.RandomForestQuantileRegressor.set_predict_request"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_predict_request</span></code></a>(*[, ...])</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_predict_request</span></code>(*[, ...])</p></td>
 <td><p>Request metadata passed to the <code class="docutils literal notranslate"><span class="pre">predict</span></code> method.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#quantile_forest.RandomForestQuantileRegressor.set_score_request" title="quantile_forest.RandomForestQuantileRegressor.set_score_request"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_score_request</span></code></a>(*[, quantiles, sample_weight])</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_score_request</span></code>(*[, quantiles, sample_weight])</p></td>
 <td><p>Request metadata passed to the <code class="docutils literal notranslate"><span class="pre">score</span></code> method.</p></td>
 </tr>
 </tbody>
 </table>
-<dl class="py method">
-<dt class="sig sig-object py" id="quantile_forest.RandomForestQuantileRegressor.apply">
-<span class="sig-name descname"><span class="pre">apply</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#quantile_forest.RandomForestQuantileRegressor.apply" title="Link to this definition">#</a></dt>
-<dd><p>Apply trees in the forest to X, return leaf indices.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>X</strong><span class="classifier">{array-like, sparse matrix} of shape (n_samples, n_features)</span></dt><dd><p>The input samples. Internally, its dtype will be converted to
-<code class="docutils literal notranslate"><span class="pre">dtype=np.float32</span></code>. If a sparse matrix is provided, it will be
-converted into a sparse <code class="docutils literal notranslate"><span class="pre">csr_matrix</span></code>.</p>
-</dd>
-</dl>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><dl class="simple">
-<dt><strong>X_leaves</strong><span class="classifier">ndarray of shape (n_samples, n_estimators)</span></dt><dd><p>For each datapoint x in X and for each tree in the forest,
-return the index of the leaf x ends up in.</p>
-</dd>
-</dl>
-</dd>
-</dl>
 </dd></dl>
 
-<dl class="py method">
-<dt class="sig sig-object py" id="quantile_forest.RandomForestQuantileRegressor.decision_path">
-<span class="sig-name descname"><span class="pre">decision_path</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#quantile_forest.RandomForestQuantileRegressor.decision_path" title="Link to this definition">#</a></dt>
-<dd><p>Return the decision path in the forest.</p>
-<div class="versionadded">
-<p><span class="versionmodified added">New in version 0.18.</span></p>
-</div>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>X</strong><span class="classifier">{array-like, sparse matrix} of shape (n_samples, n_features)</span></dt><dd><p>The input samples. Internally, its dtype will be converted to
-<code class="docutils literal notranslate"><span class="pre">dtype=np.float32</span></code>. If a sparse matrix is provided, it will be
-converted into a sparse <code class="docutils literal notranslate"><span class="pre">csr_matrix</span></code>.</p>
-</dd>
-</dl>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><dl class="simple">
-<dt><strong>indicator</strong><span class="classifier">sparse matrix of shape (n_samples, n_nodes)</span></dt><dd><p>Return a node indicator matrix where non zero elements indicates
-that the samples goes through the nodes. The matrix is of CSR
-format.</p>
-</dd>
-<dt><strong>n_nodes_ptr</strong><span class="classifier">ndarray of shape (n_estimators + 1,)</span></dt><dd><p>The columns from indicator[n_nodes_ptr[i]:n_nodes_ptr[i+1]]
-gives the indicator value for the i-th estimator.</p>
-</dd>
-</dl>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="quantile_forest.RandomForestQuantileRegressor.estimators_samples_">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">estimators_samples_</span></span><a class="headerlink" href="#quantile_forest.RandomForestQuantileRegressor.estimators_samples_" title="Link to this definition">#</a></dt>
-<dd><p>The subset of drawn samples for each base estimator.</p>
-<p>Returns a dynamically generated list of indices identifying
-the samples used for fitting each member of the ensemble, i.e.,
-the in-bag samples.</p>
-<p>Note: the list is re-created at each call to the property in order
-to reduce the object memory footprint by not storing the sampling
-data. Thus fetching the property may be slower than expected.</p>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="quantile_forest.RandomForestQuantileRegressor.feature_importances_">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">feature_importances_</span></span><a class="headerlink" href="#quantile_forest.RandomForestQuantileRegressor.feature_importances_" title="Link to this definition">#</a></dt>
-<dd><p>The impurity-based feature importances.</p>
-<p>The higher, the more important the feature.
-The importance of a feature is computed as the (normalized)
-total reduction of the criterion brought by that feature.  It is also
-known as the Gini importance.</p>
-<p>Warning: impurity-based feature importances can be misleading for
-high cardinality features (many unique values). See
-<a class="reference external" href="https://scikit-learn.org/stable/modules/generated/sklearn.inspection.permutation_importance.html#sklearn.inspection.permutation_importance" title="(in scikit-learn v1.4)"><code class="xref py py-func docutils literal notranslate"><span class="pre">sklearn.inspection.permutation_importance</span></code></a> as an alternative.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>feature_importances_</strong><span class="classifier">ndarray of shape (n_features,)</span></dt><dd><p>The values of this array sum to 1, unless all trees are single node
-trees consisting of only the root node, in which case it will be an
-array of zeros.</p>
-</dd>
-</dl>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="quantile_forest.RandomForestQuantileRegressor.fit">
-<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_weight</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sparse_pickle</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#quantile_forest.RandomForestQuantileRegressor.fit" title="Link to this definition">#</a></dt>
-<dd><p>Build a forest from the training set (X, y).</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>X</strong><span class="classifier">{array-like, sparse matrix} of shape (n_samples, n_features)</span></dt><dd><p>The training input samples. Internally, its dtype will be converted
-to <code class="docutils literal notranslate"><span class="pre">dtype=np.float32</span></code>. If a sparse matrix is provided, it will be
-converted into a sparse <code class="docutils literal notranslate"><span class="pre">csc_matrix</span></code>.</p>
-</dd>
-<dt><strong>y</strong><span class="classifier">array-like of shape (n_samples,) or (n_samples, n_outputs)</span></dt><dd><p>The target values (real numbers).</p>
-</dd>
-<dt><strong>sample_weight</strong><span class="classifier">array-like of shape (n_samples,), default=None</span></dt><dd><p>Sample weights. If None, then samples are equally weighted. Splits
-that would create child nodes with net zero or negative weight are
-ignored while searching for a split in each node. In the case of
-classification, splits are also ignored if they would result in any
-single class carrying a negative weight in either child node.</p>
-</dd>
-<dt><strong>sparse_pickle</strong><span class="classifier">bool, default=False</span></dt><dd><p>Pickle the underlying data structure using a SciPy sparse matrix.</p>
-</dd>
-</dl>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><dl class="simple">
-<dt><strong>self</strong><span class="classifier">object</span></dt><dd><p>Fitted estimator.</p>
-</dd>
-</dl>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="quantile_forest.RandomForestQuantileRegressor.get_metadata_routing">
-<span class="sig-name descname"><span class="pre">get_metadata_routing</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#quantile_forest.RandomForestQuantileRegressor.get_metadata_routing" title="Link to this definition">#</a></dt>
-<dd><p>Get metadata routing of this object.</p>
-<p>Please check <a class="reference external" href="https://scikit-learn.org/stable/metadata_routing.html#metadata-routing" title="(in scikit-learn v1.4)"><span class="xref std std-ref">User Guide</span></a> on how the routing
-mechanism works.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>routing</strong><span class="classifier">MetadataRequest</span></dt><dd><p>A <a class="reference external" href="https://scikit-learn.org/stable/modules/generated/sklearn.utils.metadata_routing.MetadataRequest.html#sklearn.utils.metadata_routing.MetadataRequest" title="(in scikit-learn v1.4)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MetadataRequest</span></code></a> encapsulating
-routing information.</p>
-</dd>
-</dl>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="quantile_forest.RandomForestQuantileRegressor.get_params">
-<span class="sig-name descname"><span class="pre">get_params</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">deep</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#quantile_forest.RandomForestQuantileRegressor.get_params" title="Link to this definition">#</a></dt>
-<dd><p>Get parameters for this estimator.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>deep</strong><span class="classifier">bool, default=True</span></dt><dd><p>If True, will return the parameters for this estimator and
-contained subobjects that are estimators.</p>
-</dd>
-</dl>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><dl class="simple">
-<dt><strong>params</strong><span class="classifier">dict</span></dt><dd><p>Parameter names mapped to their values.</p>
-</dd>
-</dl>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="quantile_forest.RandomForestQuantileRegressor.predict">
-<span class="sig-name descname"><span class="pre">predict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantiles</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interpolation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'linear'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weighted_quantile</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weighted_leaves</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">aggregate_leaves_first</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">oob_score</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">indices</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">duplicates</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#quantile_forest.RandomForestQuantileRegressor.predict" title="Link to this definition">#</a></dt>
-<dd><p>Predict quantiles for X.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>X</strong><span class="classifier">{array-like, sparse matrix} of shape (n_samples, n_features)</span></dt><dd><p>The input samples. Internally, its dtype will be converted to
-<code class="docutils literal notranslate"><span class="pre">dtype=np.float32</span></code>. If a sparse matrix is provided, it will be
-converted into a sparse <code class="docutils literal notranslate"><span class="pre">csr_matrix</span></code>.</p>
-</dd>
-<dt><strong>quantiles</strong><span class="classifier">float, list, or “mean”, default=None</span></dt><dd><p>The quantile or list of quantiles that the model tries to predict.
-Each quantile must be strictly between 0 and 1. If “mean”, the
-model predicts the mean. If None, the model uses the value of
-<code class="docutils literal notranslate"><span class="pre">default_quantiles</span></code>.</p>
-</dd>
-<dt><strong>interpolation</strong><span class="classifier">{“linear”, “lower”, “higher”, “midpoint”, “nearest”},                 default=”linear”</span></dt><dd><p>Specifies the interpolation method to use when the desired
-quantile lies between two data points <code class="docutils literal notranslate"><span class="pre">i</span> <span class="pre">&lt;</span> <span class="pre">j</span></code>:</p>
-<ul class="simple">
-<li><p>If “linear”, then <code class="docutils literal notranslate"><span class="pre">i</span> <span class="pre">+</span> <span class="pre">(j</span> <span class="pre">-</span> <span class="pre">i)</span> <span class="pre">*</span> <span class="pre">fraction</span></code>, where <code class="docutils literal notranslate"><span class="pre">fraction</span></code>
-is the fractional part of the index surrounded by <code class="docutils literal notranslate"><span class="pre">i</span></code> and
-<code class="docutils literal notranslate"><span class="pre">j</span></code>.</p></li>
-<li><p>If “lower”, then <code class="docutils literal notranslate"><span class="pre">i</span></code>.</p></li>
-<li><p>If “higher”, then <code class="docutils literal notranslate"><span class="pre">j</span></code>.</p></li>
-<li><p>If “nearest”, then <code class="docutils literal notranslate"><span class="pre">i</span></code> or <code class="docutils literal notranslate"><span class="pre">j</span></code>, whichever is nearest.</p></li>
-<li><p>If “midpoint”, then <code class="docutils literal notranslate"><span class="pre">(i</span> <span class="pre">+</span> <span class="pre">j)</span> <span class="pre">/</span> <span class="pre">2</span></code>.</p></li>
-</ul>
-</dd>
-<dt><strong>weighted_quantile</strong><span class="classifier">bool, default=True</span></dt><dd><p>Calculate a weighted quantile. Weighted quantiles are computed by
-assigning weights to each training sample, while unweighted
-quantiles are computed by aggregating sibling samples. When the
-number of training samples relative to siblings is small, weighted
-quantiles can be more efficient to compute than unweighted ones.</p>
-</dd>
-<dt><strong>weighted_leaves</strong><span class="classifier">bool, default=True</span></dt><dd><p>Weight samples inversely to the size of their leaf node.
-Only used if <code class="docutils literal notranslate"><span class="pre">weighted_quantile=True</span></code> and <code class="docutils literal notranslate"><span class="pre">max_samples_leaf!=1</span></code>.</p>
-</dd>
-<dt><strong>aggregate_leaves_first</strong><span class="classifier">bool, default=True</span></dt><dd><p>Calculate predictions using aggregated leaf values. If True, a
-single prediction is calculated over the aggregated leaf values.
-If False, a prediction is calculated for each leaf and aggregated.</p>
-</dd>
-<dt><strong>oob_score</strong><span class="classifier">bool, default=False</span></dt><dd><p>Only use out-of-bag (OOB) samples to predict quantiles.</p>
-</dd>
-</dl>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><dl class="simple">
-<dt><strong>y_pred</strong><span class="classifier">array of shape (n_samples, n_quantiles, n_outputs)</span></dt><dd><p>If quantiles is set to None, then return <code class="docutils literal notranslate"><span class="pre">E(Y</span> <span class="pre">|</span> <span class="pre">X)</span></code>. Else, for
-all quantiles, return <code class="docutils literal notranslate"><span class="pre">y</span></code> at <code class="docutils literal notranslate"><span class="pre">q</span></code> for which <code class="docutils literal notranslate"><span class="pre">F(Y=y|x)</span> <span class="pre">=</span> <span class="pre">q</span></code>,
-where <code class="docutils literal notranslate"><span class="pre">q</span></code> is the quantile.</p>
-</dd>
-</dl>
-</dd>
-<dt class="field-odd">Other Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>indices</strong><span class="classifier">list, default=None</span></dt><dd><p>List of training indices that correspond to X indices. An index of
--1 can be used to specify rows omitted from the training set. By
-default, assumes all X indices correspond to all training indices.
-Only used if <code class="docutils literal notranslate"><span class="pre">oob_score=True</span></code>.</p>
-</dd>
-<dt><strong>duplicates</strong><span class="classifier">list of lists, default=None</span></dt><dd><p>List of sets of functionally identical indices.
-Only used if <code class="docutils literal notranslate"><span class="pre">oob_score=True</span></code>.</p>
-</dd>
-</dl>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="quantile_forest.RandomForestQuantileRegressor.proximity_counts">
-<span class="sig-name descname"><span class="pre">proximity_counts</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_proximities</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_sorted</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">oob_score</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">indices</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">duplicates</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#quantile_forest.RandomForestQuantileRegressor.proximity_counts" title="Link to this definition">#</a></dt>
-<dd><p>Return training proximity counts for input samples.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>X</strong><span class="classifier">{array-like, sparse matrix} of shape (n_samples, n_features)</span></dt><dd><p>The input samples. Internally, its dtype will be converted to
-<code class="docutils literal notranslate"><span class="pre">dtype=np.float32</span></code>. If a sparse matrix is provided, it will be
-converted into a sparse <code class="docutils literal notranslate"><span class="pre">csr_matrix</span></code>.</p>
-</dd>
-<dt><strong>max_proximities</strong><span class="classifier">int, default=None</span></dt><dd><p>Maximum number of proximities to return for each scoring sample,
-prioritized by proximity count. By default, return all proximity
-counts for each sample.</p>
-</dd>
-<dt><strong>return_sorted</strong><span class="classifier">bool, default=True</span></dt><dd><p>For each sample, sort its proximity counts in descending order.
-If False, the proximities will be returned in arbitrary order.</p>
-</dd>
-<dt><strong>oob_score</strong><span class="classifier">bool, default=False</span></dt><dd><p>Only use out-of-bag (OOB) samples to generate proximity counts.</p>
-</dd>
-</dl>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><dl class="simple">
-<dt><strong>proximities</strong><span class="classifier">list of tuples</span></dt><dd><p>List of tuples mapping sample indices to proximity counts.</p>
-</dd>
-</dl>
-</dd>
-<dt class="field-odd">Other Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>indices</strong><span class="classifier">list, default=None</span></dt><dd><p>List of training indices that correspond to X indices. An index of
--1 can be used to specify rows omitted from the training set. By
-default, assumes all X indices correspond to all training indices.
-Only used if <code class="docutils literal notranslate"><span class="pre">oob_score=True</span></code>.</p>
-</dd>
-<dt><strong>duplicates</strong><span class="classifier">list of lists, default=None</span></dt><dd><p>List of sets of functionally identical indices.
-Only used if <code class="docutils literal notranslate"><span class="pre">oob_score=True</span></code>.</p>
-</dd>
-</dl>
-</dd>
-</dl>
-<p class="rubric">Notes</p>
-<dl class="simple">
-<dt>For details on the calculation and use of random forest proximities:</dt><dd><ul class="simple">
-<li><p><a class="reference external" href="https://www.stat.berkeley.edu/~breiman/RandomForests/cc_home.htm#prox">https://www.stat.berkeley.edu/~breiman/RandomForests/cc_home.htm#prox</a></p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="quantile_forest.RandomForestQuantileRegressor.quantile_ranks">
-<span class="sig-name descname"><span class="pre">quantile_ranks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kind</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'rank'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">aggregate_leaves_first</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">oob_score</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">indices</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">duplicates</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#quantile_forest.RandomForestQuantileRegressor.quantile_ranks" title="Link to this definition">#</a></dt>
-<dd><p>Return quantile ranks for X with scores y.</p>
-<p>A quantile rank of, for example, 0.8 means that 80% of the scores in
-<code class="docutils literal notranslate"><span class="pre">inputs</span></code> are below the given score.</p>
-<p>In the case of gaps or ties, the exact definition depends on the
-optional keyword <code class="docutils literal notranslate"><span class="pre">kind</span></code>.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>X</strong><span class="classifier">{array-like, sparse matrix} of shape (n_samples, n_features)</span></dt><dd><p>The input samples. Internally, its dtype will be converted to
-<code class="docutils literal notranslate"><span class="pre">dtype=np.float32</span></code>. If a sparse matrix is provided, it will be
-converted into a sparse <code class="docutils literal notranslate"><span class="pre">csr_matrix</span></code>.</p>
-</dd>
-<dt><strong>y</strong><span class="classifier">array-like of shape (n_samples) or (n_samples, n_outputs)</span></dt><dd><p>The target values for which to calculate ranks.</p>
-</dd>
-<dt><strong>kind</strong><span class="classifier">{“rank”, “weak”, “strict”, “mean”}, default=”rank”</span></dt><dd><p>Specifies the interpretation of the resulting score:</p>
-<ul class="simple">
-<li><p>If “rank”, then average percentage ranking of score. If multiple
-matches, average the percentage rankings of all matching scores.</p></li>
-<li><p>If “weak”, then only values that are less than or equal to the
-provided score are counted. Corresponds to the definition of a
-cumulative distribution function.</p></li>
-<li><p>If “strict”, then similar to “weak”, except that only values
-that are strictly less than the provided score are counted.</p></li>
-<li><p>If “mean”, then the average of the “weak” and “strict” scores.</p></li>
-</ul>
-</dd>
-<dt><strong>aggregate_leaves_first</strong><span class="classifier">bool, default=True</span></dt><dd><p>Calculate quantile ranks using aggregated leaf values. If True, a
-single rank is calculated over the aggregated leaf values. If
-False, a rank is calculated for each leaf and aggregated.</p>
-</dd>
-<dt><strong>oob_score</strong><span class="classifier">bool, default=False</span></dt><dd><p>Only use out-of-bag (OOB) samples to predict quantile ranks.</p>
-</dd>
-</dl>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><dl class="simple">
-<dt><strong>y_ranks</strong><span class="classifier">array of shape (n_train) or (n_train, n_outputs)</span></dt><dd><p>Quantile ranks in range [0, 1].</p>
-</dd>
-</dl>
-</dd>
-<dt class="field-odd">Other Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>indices</strong><span class="classifier">list, default=None</span></dt><dd><p>List of training indices that correspond to X indices. An index of
--1 can be used to specify rows omitted from the training set. By
-default, assumes all X indices correspond to all training indices.
-Only used if <code class="docutils literal notranslate"><span class="pre">oob_score=True</span></code>.</p>
-</dd>
-<dt><strong>duplicates</strong><span class="classifier">list, default=None</span></dt><dd><p>List of sets of functionally identical indices.
-Only used if <code class="docutils literal notranslate"><span class="pre">oob_score=True</span></code>.</p>
-</dd>
-</dl>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="quantile_forest.RandomForestQuantileRegressor.score">
-<span class="sig-name descname"><span class="pre">score</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantiles</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_weight</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#quantile_forest.RandomForestQuantileRegressor.score" title="Link to this definition">#</a></dt>
-<dd><p>Return the coefficient of determination R^2 of the prediction.</p>
-<p>The coefficient R^2 is defined as (1 - u/v), where u is the residual
-sum of squares ((y_true - y_pred) ** 2).sum() and v is the total
-sum of squares ((y_true - y_true.mean()) ** 2).sum().
-The best possible score is 1.0 and it can be negative (because the
-model can be arbitrarily worse). A constant model that always
-predicts the expected value of y, disregarding the input features,
-would get a R^2 score of 0.0.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>X</strong><span class="classifier">array-like of shape (n_samples, n_features)</span></dt><dd><p>Test samples. For some estimators this may be a precomputed
-kernel matrix or a list of generic objects instead with shape
-<code class="docutils literal notranslate"><span class="pre">(n_samples,</span> <span class="pre">n_samples_fitted)</span></code>, where <code class="docutils literal notranslate"><span class="pre">n_samples_fitted</span></code>
-is the number of samples used in the fitting for the estimator.</p>
-</dd>
-<dt><strong>y</strong><span class="classifier">array-like of shape (n_samples,) or (n_samples, n_outputs)</span></dt><dd><p>True values for <code class="docutils literal notranslate"><span class="pre">X</span></code>.</p>
-</dd>
-<dt><strong>quantiles</strong><span class="classifier">float or list, default=0.5</span></dt><dd><p>The quantile or list of quantiles that the model tries to predict.</p>
-</dd>
-<dt><strong>sample_weight</strong><span class="classifier">array-like of shape (n_samples,), default=None</span></dt><dd><p>Sample weights.</p>
-</dd>
-</dl>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><dl class="simple">
-<dt><strong>score</strong><span class="classifier">float</span></dt><dd><p><span class="math notranslate nohighlight">\(R^2\)</span> of <code class="docutils literal notranslate"><span class="pre">self.predict(X)</span></code> wrt. <code class="docutils literal notranslate"><span class="pre">y</span></code>.</p>
-</dd>
-</dl>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="quantile_forest.RandomForestQuantileRegressor.set_fit_request">
-<span class="sig-name descname"><span class="pre">set_fit_request</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_weight</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><span class="pre">bool</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.12)"><span class="pre">None</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'$UNCHANGED$'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sparse_pickle</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><span class="pre">bool</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.12)"><span class="pre">None</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'$UNCHANGED$'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#quantile_forest.RandomForestQuantileRegressor" title="quantile_forest._quantile_forest.RandomForestQuantileRegressor"><span class="pre">RandomForestQuantileRegressor</span></a></span></span><a class="headerlink" href="#quantile_forest.RandomForestQuantileRegressor.set_fit_request" title="Link to this definition">#</a></dt>
-<dd><p>Request metadata passed to the <code class="docutils literal notranslate"><span class="pre">fit</span></code> method.</p>
-<p>Note that this method is only relevant if
-<code class="docutils literal notranslate"><span class="pre">enable_metadata_routing=True</span></code> (see <a class="reference external" href="https://scikit-learn.org/stable/modules/generated/sklearn.set_config.html#sklearn.set_config" title="(in scikit-learn v1.4)"><code class="xref py py-func docutils literal notranslate"><span class="pre">sklearn.set_config</span></code></a>).
-Please see <a class="reference external" href="https://scikit-learn.org/stable/metadata_routing.html#metadata-routing" title="(in scikit-learn v1.4)"><span class="xref std std-ref">User Guide</span></a> on how the routing
-mechanism works.</p>
-<p>The options for each parameter are:</p>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">True</span></code>: metadata is requested, and passed to <code class="docutils literal notranslate"><span class="pre">fit</span></code> if provided. The request is ignored if metadata is not provided.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">False</span></code>: metadata is not requested and the meta-estimator will not pass it to <code class="docutils literal notranslate"><span class="pre">fit</span></code>.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">None</span></code>: metadata is not requested, and the meta-estimator will raise an error if the user provides it.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">str</span></code>: metadata should be passed to the meta-estimator with this given alias instead of the original name.</p></li>
-</ul>
-<p>The default (<code class="docutils literal notranslate"><span class="pre">sklearn.utils.metadata_routing.UNCHANGED</span></code>) retains the
-existing request. This allows you to change the request for some
-parameters and not others.</p>
-<div class="versionadded">
-<p><span class="versionmodified added">New in version 1.3.</span></p>
-</div>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>This method is only relevant if this estimator is used as a
-sub-estimator of a meta-estimator, e.g. used inside a
-<a class="reference external" href="https://scikit-learn.org/stable/modules/generated/sklearn.pipeline.Pipeline.html#sklearn.pipeline.Pipeline" title="(in scikit-learn v1.4)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Pipeline</span></code></a>. Otherwise it has no effect.</p>
-</div>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>sample_weight</strong><span class="classifier">str, True, False, or None,                     default=sklearn.utils.metadata_routing.UNCHANGED</span></dt><dd><p>Metadata routing for <code class="docutils literal notranslate"><span class="pre">sample_weight</span></code> parameter in <code class="docutils literal notranslate"><span class="pre">fit</span></code>.</p>
-</dd>
-<dt><strong>sparse_pickle</strong><span class="classifier">str, True, False, or None,                     default=sklearn.utils.metadata_routing.UNCHANGED</span></dt><dd><p>Metadata routing for <code class="docutils literal notranslate"><span class="pre">sparse_pickle</span></code> parameter in <code class="docutils literal notranslate"><span class="pre">fit</span></code>.</p>
-</dd>
-</dl>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><dl class="simple">
-<dt><strong>self</strong><span class="classifier">object</span></dt><dd><p>The updated object.</p>
-</dd>
-</dl>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="quantile_forest.RandomForestQuantileRegressor.set_params">
-<span class="sig-name descname"><span class="pre">set_params</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">params</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#quantile_forest.RandomForestQuantileRegressor.set_params" title="Link to this definition">#</a></dt>
-<dd><p>Set the parameters of this estimator.</p>
-<p>The method works on simple estimators as well as on nested objects
-(such as <a class="reference external" href="https://scikit-learn.org/stable/modules/generated/sklearn.pipeline.Pipeline.html#sklearn.pipeline.Pipeline" title="(in scikit-learn v1.4)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Pipeline</span></code></a>). The latter have
-parameters of the form <code class="docutils literal notranslate"><span class="pre">&lt;component&gt;__&lt;parameter&gt;</span></code> so that it’s
-possible to update each component of a nested object.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>**params</strong><span class="classifier">dict</span></dt><dd><p>Estimator parameters.</p>
-</dd>
-</dl>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><dl class="simple">
-<dt><strong>self</strong><span class="classifier">estimator instance</span></dt><dd><p>Estimator instance.</p>
-</dd>
-</dl>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="quantile_forest.RandomForestQuantileRegressor.set_predict_request">
-<span class="sig-name descname"><span class="pre">set_predict_request</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">aggregate_leaves_first</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><span class="pre">bool</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.12)"><span class="pre">None</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'$UNCHANGED$'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">duplicates</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><span class="pre">bool</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.12)"><span class="pre">None</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'$UNCHANGED$'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">indices</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><span class="pre">bool</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.12)"><span class="pre">None</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'$UNCHANGED$'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interpolation</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><span class="pre">bool</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.12)"><span class="pre">None</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'$UNCHANGED$'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">oob_score</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><span class="pre">bool</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.12)"><span class="pre">None</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'$UNCHANGED$'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantiles</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><span class="pre">bool</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.12)"><span class="pre">None</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'$UNCHANGED$'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weighted_leaves</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><span class="pre">bool</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.12)"><span class="pre">None</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'$UNCHANGED$'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weighted_quantile</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><span class="pre">bool</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.12)"><span class="pre">None</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'$UNCHANGED$'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#quantile_forest.RandomForestQuantileRegressor" title="quantile_forest._quantile_forest.RandomForestQuantileRegressor"><span class="pre">RandomForestQuantileRegressor</span></a></span></span><a class="headerlink" href="#quantile_forest.RandomForestQuantileRegressor.set_predict_request" title="Link to this definition">#</a></dt>
-<dd><p>Request metadata passed to the <code class="docutils literal notranslate"><span class="pre">predict</span></code> method.</p>
-<p>Note that this method is only relevant if
-<code class="docutils literal notranslate"><span class="pre">enable_metadata_routing=True</span></code> (see <a class="reference external" href="https://scikit-learn.org/stable/modules/generated/sklearn.set_config.html#sklearn.set_config" title="(in scikit-learn v1.4)"><code class="xref py py-func docutils literal notranslate"><span class="pre">sklearn.set_config</span></code></a>).
-Please see <a class="reference external" href="https://scikit-learn.org/stable/metadata_routing.html#metadata-routing" title="(in scikit-learn v1.4)"><span class="xref std std-ref">User Guide</span></a> on how the routing
-mechanism works.</p>
-<p>The options for each parameter are:</p>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">True</span></code>: metadata is requested, and passed to <code class="docutils literal notranslate"><span class="pre">predict</span></code> if provided. The request is ignored if metadata is not provided.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">False</span></code>: metadata is not requested and the meta-estimator will not pass it to <code class="docutils literal notranslate"><span class="pre">predict</span></code>.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">None</span></code>: metadata is not requested, and the meta-estimator will raise an error if the user provides it.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">str</span></code>: metadata should be passed to the meta-estimator with this given alias instead of the original name.</p></li>
-</ul>
-<p>The default (<code class="docutils literal notranslate"><span class="pre">sklearn.utils.metadata_routing.UNCHANGED</span></code>) retains the
-existing request. This allows you to change the request for some
-parameters and not others.</p>
-<div class="versionadded">
-<p><span class="versionmodified added">New in version 1.3.</span></p>
-</div>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>This method is only relevant if this estimator is used as a
-sub-estimator of a meta-estimator, e.g. used inside a
-<a class="reference external" href="https://scikit-learn.org/stable/modules/generated/sklearn.pipeline.Pipeline.html#sklearn.pipeline.Pipeline" title="(in scikit-learn v1.4)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Pipeline</span></code></a>. Otherwise it has no effect.</p>
-</div>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>aggregate_leaves_first</strong><span class="classifier">str, True, False, or None,                     default=sklearn.utils.metadata_routing.UNCHANGED</span></dt><dd><p>Metadata routing for <code class="docutils literal notranslate"><span class="pre">aggregate_leaves_first</span></code> parameter in <code class="docutils literal notranslate"><span class="pre">predict</span></code>.</p>
-</dd>
-<dt><strong>duplicates</strong><span class="classifier">str, True, False, or None,                     default=sklearn.utils.metadata_routing.UNCHANGED</span></dt><dd><p>Metadata routing for <code class="docutils literal notranslate"><span class="pre">duplicates</span></code> parameter in <code class="docutils literal notranslate"><span class="pre">predict</span></code>.</p>
-</dd>
-<dt><strong>indices</strong><span class="classifier">str, True, False, or None,                     default=sklearn.utils.metadata_routing.UNCHANGED</span></dt><dd><p>Metadata routing for <code class="docutils literal notranslate"><span class="pre">indices</span></code> parameter in <code class="docutils literal notranslate"><span class="pre">predict</span></code>.</p>
-</dd>
-<dt><strong>interpolation</strong><span class="classifier">str, True, False, or None,                     default=sklearn.utils.metadata_routing.UNCHANGED</span></dt><dd><p>Metadata routing for <code class="docutils literal notranslate"><span class="pre">interpolation</span></code> parameter in <code class="docutils literal notranslate"><span class="pre">predict</span></code>.</p>
-</dd>
-<dt><strong>oob_score</strong><span class="classifier">str, True, False, or None,                     default=sklearn.utils.metadata_routing.UNCHANGED</span></dt><dd><p>Metadata routing for <code class="docutils literal notranslate"><span class="pre">oob_score</span></code> parameter in <code class="docutils literal notranslate"><span class="pre">predict</span></code>.</p>
-</dd>
-<dt><strong>quantiles</strong><span class="classifier">str, True, False, or None,                     default=sklearn.utils.metadata_routing.UNCHANGED</span></dt><dd><p>Metadata routing for <code class="docutils literal notranslate"><span class="pre">quantiles</span></code> parameter in <code class="docutils literal notranslate"><span class="pre">predict</span></code>.</p>
-</dd>
-<dt><strong>weighted_leaves</strong><span class="classifier">str, True, False, or None,                     default=sklearn.utils.metadata_routing.UNCHANGED</span></dt><dd><p>Metadata routing for <code class="docutils literal notranslate"><span class="pre">weighted_leaves</span></code> parameter in <code class="docutils literal notranslate"><span class="pre">predict</span></code>.</p>
-</dd>
-<dt><strong>weighted_quantile</strong><span class="classifier">str, True, False, or None,                     default=sklearn.utils.metadata_routing.UNCHANGED</span></dt><dd><p>Metadata routing for <code class="docutils literal notranslate"><span class="pre">weighted_quantile</span></code> parameter in <code class="docutils literal notranslate"><span class="pre">predict</span></code>.</p>
-</dd>
-</dl>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><dl class="simple">
-<dt><strong>self</strong><span class="classifier">object</span></dt><dd><p>The updated object.</p>
-</dd>
-</dl>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="quantile_forest.RandomForestQuantileRegressor.set_score_request">
-<span class="sig-name descname"><span class="pre">set_score_request</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantiles</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><span class="pre">bool</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.12)"><span class="pre">None</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'$UNCHANGED$'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_weight</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><span class="pre">bool</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.12)"><span class="pre">None</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'$UNCHANGED$'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#quantile_forest.RandomForestQuantileRegressor" title="quantile_forest._quantile_forest.RandomForestQuantileRegressor"><span class="pre">RandomForestQuantileRegressor</span></a></span></span><a class="headerlink" href="#quantile_forest.RandomForestQuantileRegressor.set_score_request" title="Link to this definition">#</a></dt>
-<dd><p>Request metadata passed to the <code class="docutils literal notranslate"><span class="pre">score</span></code> method.</p>
-<p>Note that this method is only relevant if
-<code class="docutils literal notranslate"><span class="pre">enable_metadata_routing=True</span></code> (see <a class="reference external" href="https://scikit-learn.org/stable/modules/generated/sklearn.set_config.html#sklearn.set_config" title="(in scikit-learn v1.4)"><code class="xref py py-func docutils literal notranslate"><span class="pre">sklearn.set_config</span></code></a>).
-Please see <a class="reference external" href="https://scikit-learn.org/stable/metadata_routing.html#metadata-routing" title="(in scikit-learn v1.4)"><span class="xref std std-ref">User Guide</span></a> on how the routing
-mechanism works.</p>
-<p>The options for each parameter are:</p>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">True</span></code>: metadata is requested, and passed to <code class="docutils literal notranslate"><span class="pre">score</span></code> if provided. The request is ignored if metadata is not provided.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">False</span></code>: metadata is not requested and the meta-estimator will not pass it to <code class="docutils literal notranslate"><span class="pre">score</span></code>.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">None</span></code>: metadata is not requested, and the meta-estimator will raise an error if the user provides it.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">str</span></code>: metadata should be passed to the meta-estimator with this given alias instead of the original name.</p></li>
-</ul>
-<p>The default (<code class="docutils literal notranslate"><span class="pre">sklearn.utils.metadata_routing.UNCHANGED</span></code>) retains the
-existing request. This allows you to change the request for some
-parameters and not others.</p>
-<div class="versionadded">
-<p><span class="versionmodified added">New in version 1.3.</span></p>
-</div>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>This method is only relevant if this estimator is used as a
-sub-estimator of a meta-estimator, e.g. used inside a
-<a class="reference external" href="https://scikit-learn.org/stable/modules/generated/sklearn.pipeline.Pipeline.html#sklearn.pipeline.Pipeline" title="(in scikit-learn v1.4)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Pipeline</span></code></a>. Otherwise it has no effect.</p>
-</div>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>quantiles</strong><span class="classifier">str, True, False, or None,                     default=sklearn.utils.metadata_routing.UNCHANGED</span></dt><dd><p>Metadata routing for <code class="docutils literal notranslate"><span class="pre">quantiles</span></code> parameter in <code class="docutils literal notranslate"><span class="pre">score</span></code>.</p>
-</dd>
-<dt><strong>sample_weight</strong><span class="classifier">str, True, False, or None,                     default=sklearn.utils.metadata_routing.UNCHANGED</span></dt><dd><p>Metadata routing for <code class="docutils literal notranslate"><span class="pre">sample_weight</span></code> parameter in <code class="docutils literal notranslate"><span class="pre">score</span></code>.</p>
-</dd>
-</dl>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><dl class="simple">
-<dt><strong>self</strong><span class="classifier">object</span></dt><dd><p>The updated object.</p>
-</dd>
-</dl>
-</dd>
-</dl>
-</dd></dl>
-
-</dd></dl>
-
-<div style='clear:both'></div></section>
+<div class="clearer"></div></section>
 
 
                 </article>
@@ -1171,15 +651,6 @@ sub-estimator of a meta-estimator, e.g. used inside a
         <p class="prev-next-title">ExtraTreesQuantileRegressor</p>
       </div>
     </a>
-    <a class="right-next"
-       href="../gallery/index.html"
-       title="next page">
-      <div class="prev-next-info">
-        <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">General Examples</p>
-      </div>
-      <i class="fa-solid fa-angle-right"></i>
-    </a>
 </div>
                 </footer>
               
@@ -1198,24 +669,7 @@ sub-estimator of a meta-estimator, e.g. used inside a
   </div>
   <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#quantile_forest.RandomForestQuantileRegressor"><code class="docutils literal notranslate"><span class="pre">RandomForestQuantileRegressor</span></code></a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#quantile_forest.RandomForestQuantileRegressor.apply"><code class="docutils literal notranslate"><span class="pre">RandomForestQuantileRegressor.apply</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#quantile_forest.RandomForestQuantileRegressor.decision_path"><code class="docutils literal notranslate"><span class="pre">RandomForestQuantileRegressor.decision_path</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#quantile_forest.RandomForestQuantileRegressor.estimators_samples_"><code class="docutils literal notranslate"><span class="pre">RandomForestQuantileRegressor.estimators_samples_</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#quantile_forest.RandomForestQuantileRegressor.feature_importances_"><code class="docutils literal notranslate"><span class="pre">RandomForestQuantileRegressor.feature_importances_</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#quantile_forest.RandomForestQuantileRegressor.fit"><code class="docutils literal notranslate"><span class="pre">RandomForestQuantileRegressor.fit</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#quantile_forest.RandomForestQuantileRegressor.get_metadata_routing"><code class="docutils literal notranslate"><span class="pre">RandomForestQuantileRegressor.get_metadata_routing</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#quantile_forest.RandomForestQuantileRegressor.get_params"><code class="docutils literal notranslate"><span class="pre">RandomForestQuantileRegressor.get_params</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#quantile_forest.RandomForestQuantileRegressor.predict"><code class="docutils literal notranslate"><span class="pre">RandomForestQuantileRegressor.predict</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#quantile_forest.RandomForestQuantileRegressor.proximity_counts"><code class="docutils literal notranslate"><span class="pre">RandomForestQuantileRegressor.proximity_counts</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#quantile_forest.RandomForestQuantileRegressor.quantile_ranks"><code class="docutils literal notranslate"><span class="pre">RandomForestQuantileRegressor.quantile_ranks</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#quantile_forest.RandomForestQuantileRegressor.score"><code class="docutils literal notranslate"><span class="pre">RandomForestQuantileRegressor.score</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#quantile_forest.RandomForestQuantileRegressor.set_fit_request"><code class="docutils literal notranslate"><span class="pre">RandomForestQuantileRegressor.set_fit_request</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#quantile_forest.RandomForestQuantileRegressor.set_params"><code class="docutils literal notranslate"><span class="pre">RandomForestQuantileRegressor.set_params</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#quantile_forest.RandomForestQuantileRegressor.set_predict_request"><code class="docutils literal notranslate"><span class="pre">RandomForestQuantileRegressor.set_predict_request</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#quantile_forest.RandomForestQuantileRegressor.set_score_request"><code class="docutils literal notranslate"><span class="pre">RandomForestQuantileRegressor.set_score_request</span></code></a></li>
-</ul>
-</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#quantile_forest.RandomForestQuantileRegressor"><code class="docutils literal notranslate"><span class="pre">RandomForestQuantileRegressor</span></code></a></li>
 </ul>
   </nav></div>
 

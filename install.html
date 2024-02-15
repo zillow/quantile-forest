@@ -2,18 +2,18 @@
 <!DOCTYPE html>
 
 
-<html lang="en" data-content_root="./" >
+<html lang="en" data-content_root="./" data-theme="light">
 
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Getting Started &#8212; Version 1.3.dev</title>
+    <title>Getting Started &#8212; quantile-forest 1.3.dev documentation</title>
   
   
   
   <script data-cfasync="false">
-    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "light";
     document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
   </script>
   
@@ -29,11 +29,10 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.5.1/webfonts/fa-regular-400.woff2" />
 
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
-    <link rel="stylesheet" type="text/css" href="_static/css/quantile-forest.css?v=99eb3432" />
     <link rel="stylesheet" type="text/css" href="_static/altair-plot.css" />
     <link rel="stylesheet" type="text/css" href="_static/gallery.css" />
-    <link rel="stylesheet" type="text/css" href="_static/basic.css?v=c72506b3" />
-    <link rel="stylesheet" type="text/css" href="_static/css/quantile-forest.css?v=99eb3432" />
+    <link rel="stylesheet" type="text/css" href="_static/theme_overrides.css" />
+    <link rel="stylesheet" type="text/css" href="_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css?v=0a3b3ea7" />
     <link rel="stylesheet" type="text/css" href="_static/css/gallery.css?v=c8ff873b" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
@@ -44,7 +43,7 @@
     <script src="_static/documentation_options.js?v=49c989be"></script>
     <script src="_static/doctools.js?v=888ff710"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
-    <script src="_static/js/copybutton.js?v=26522df0"></script>
+    <script src="_static/design-tabs.js?v=36754332"></script>
     <script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
     <script src="https://cdn.jsdelivr.net/npm/vega-lite@5.16.3"></script>
     <script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
@@ -58,7 +57,7 @@
   </head>
   
   
-  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="light">
 
   
   
@@ -114,20 +113,10 @@
   
   <div class="col-lg-3 navbar-header-items__start">
     
-      <div class="navbar-item">
-
-  
-
-<a class="navbar-brand logo" href="index.html">
-  
-  
-  
-  
-  
-  
-    <p class="title logo__title">Version 1.3.dev</p>
-  
-</a></div>
+      <div class="navbar-item"><a class="navbar-brand" href="index.html">
+<p class="title">quantile-forest</p>
+</a>
+</div>
     
   </div>
   
@@ -154,15 +143,15 @@
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="api.html">
-                        API Reference
+                      <a class="nav-link nav-internal" href="gallery/index.html">
+                        Examples
                       </a>
                     </li>
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="gallery/index.html">
-                        General Examples
+                      <a class="nav-link nav-internal" href="api.html">
+                        API
                       </a>
                     </li>
                 
@@ -200,6 +189,22 @@ document.write(`
   </button>
 `);
 </script></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links navbar-nav"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/zillow/quantile-forest" title="GitHub" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fab fa-github fa-lg fa-lg" aria-hidden="true"></i></span>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+</ul></div>
       
     </div>
     
@@ -263,15 +268,15 @@ document.write(`
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="api.html">
-                        API Reference
+                      <a class="nav-link nav-internal" href="gallery/index.html">
+                        Examples
                       </a>
                     </li>
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="gallery/index.html">
-                        General Examples
+                      <a class="nav-link nav-internal" href="api.html">
+                        API
                       </a>
                     </li>
                 
@@ -296,6 +301,22 @@ document.write(`
 `);
 </script></div>
         
+          <div class="navbar-item"><ul class="navbar-icon-links navbar-nav"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/zillow/quantile-forest" title="GitHub" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fab fa-github fa-lg fa-lg" aria-hidden="true"></i></span>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+</ul></div>
+        
       </div>
     
   </div>
@@ -305,7 +326,11 @@ document.write(`
 <nav class="bd-docs-nav bd-links"
      aria-label="Section Navigation">
   <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
-  <div class="bd-toc-item navbar-nav"></div>
+  <div class="bd-toc-item navbar-nav"><p aria-level="2" class="caption" role="heading"><span class="caption-text">Install</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Getting Started</a></li>
+</ul>
+</div>
 </nav></div>
     </div>
   
@@ -359,7 +384,7 @@ document.write(`
                 <article class="bd-article">
                   
   <section id="getting-started">
-<h1>Getting Started<a class="headerlink" href="#getting-started" title="Link to this heading">#</a></h1>
+<span id="install"></span><h1>Getting Started<a class="headerlink" href="#getting-started" title="Link to this heading">#</a></h1>
 <section id="prerequisites">
 <h2>Prerequisites<a class="headerlink" href="#prerequisites" title="Link to this heading">#</a></h2>
 <p>The quantile-forest package requires the following dependencies:</p>
@@ -370,8 +395,8 @@ document.write(`
 <li><p>scipy (&gt;=1.4)</p></li>
 </ul>
 </section>
-<section id="install">
-<h2>Install<a class="headerlink" href="#install" title="Link to this heading">#</a></h2>
+<section id="id1">
+<h2>Install<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
 <p>quantile-forest can be installed using <code class="docutils literal notranslate"><span class="pre">pip</span></code>:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">quantile</span><span class="o">-</span><span class="n">forest</span>
 </pre></div>
@@ -415,6 +440,8 @@ document.write(`
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ pip install -r ./docs/sphinx_requirements.txt
 $ sphinx-build -b html ./docs ./docs/_build
 </pre></div>
+</div>
+<div class="toctree-wrapper compound">
 </div>
 </section>
 </section>
@@ -466,7 +493,7 @@ $ sphinx-build -b html ./docs ./docs/_build
   <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#prerequisites">Prerequisites</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#install">Install</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">Install</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#developer-install">Developer Install</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#troubleshooting">Troubleshooting</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#test-and-coverage">Test and Coverage</a></li>

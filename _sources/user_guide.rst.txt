@@ -1,8 +1,5 @@
-.. title:: User Guide
-
 .. _user_guide:
 
-==========
 User Guide
 ==========
 
@@ -60,25 +57,31 @@ Making Predictions
 
 A notable advantage of quantile forests is that they can be fit once, while arbitrary quantiles can be estimated at prediction time. Accordingly, since the quantiles can be specified at prediction time, the model accepts an optional parameter during the call to the `predict` method, which can be a float or list of floats that specify the empirical quantiles to return::
 
-    >>> y_pred = reg.predict(X_test, quantiles=[0.25, 0.5, 0.75])  # returns three columns per row
+    >>> y_pred = reg.predict(X_test, quantiles=[0.25, 0.5, 0.75])
+    >>> y_pred.shape[1]
+    3
 
 If the `predict` method is called without quantiles, the prediction defaults to the empirical median (`quantiles = 0.5`)::
 
-    >>> y_pred = reg.predict(X_test)  # returns empirical median prediction for each test sample
+    >>> y_pred = reg.predict(X_test)  # returns empirical median prediction
 
 If the `predict` method is explicitly called with `quantiles = "mean"`, the prediction returns the empirical mean::
 
-    >>> y_pred = reg.predict(X_test, quantiles="mean")  # returns mean prediction for each test sample
+    >>> y_pred = reg.predict(X_test, quantiles="mean")  # returns mean prediction
 
 Default quantiles can be specified at model initialization using the `default_quantiles` parameter:
 
-    >>> reg = RandomForestQuantileRegressor(default_quantiles=[0.25, 0.5, 0.75]).fit(X_train, y_train)
+    >>> reg = RandomForestQuantileRegressor(default_quantiles=[0.25, 0.5, 0.75])
+    >>> reg.fit(X_train, y_train)
+    RandomForestQuantileRegressor(default_quantiles=[0.25, 0.5, 0.75])
     >>> y_pred = reg.predict(X_test)  # predicts using the default quantiles
 
 The default quantiles can be overwritten at prediction time by specifying a value for `quantiles`:
 
-    >>> reg = RandomForestQuantileRegressor(default_quantiles=[0.25, 0.5, 0.75]).fit(X_train, y_train)
-    >>> y_pred = reg.predict(X_test, quantiles=0.5)  # predicts using the override quantiles
+    >>> reg = RandomForestQuantileRegressor(default_quantiles=[0.25, 0.5, 0.75])
+    >>> reg.fit(X_train, y_train)
+    RandomForestQuantileRegressor(default_quantiles=[0.25, 0.5, 0.75])
+    >>> y_pred = reg.predict(X_test, quantiles=0.5)  # uses override quantiles
 
 The output of the `predict` method is an array with one column for each specified quantile or a single column if no quantiles are specified. The order of the output columns corresponds to the order of the quantiles, which can be specified in any order (i.e., they do not need to be monotonically ordered)::
 
@@ -116,8 +119,8 @@ By default, the predict method calculates quantiles using a weighted quantile me
 
     >>> import numpy as np
     >>> kwargs = {"weighted_leaves": False}
-    >>> y_pred_weighted = reg.predict(X_test, weighted_quantile=True, **kwargs)  # weighted quantile
-    >>> y_pred_unweighted = reg.predict(X_test, weighted_quantile=False, **kwargs)  # unweighted quantile
+    >>> y_pred_weighted = reg.predict(X_test, weighted_quantile=True, **kwargs)
+    >>> y_pred_unweighted = reg.predict(X_test, weighted_quantile=False, **kwargs)
     >>> np.allclose(y_pred_weighted, y_pred_unweighted)
     True
 
@@ -126,16 +129,17 @@ Out-of-Bag Estimation
 
 Out-of-bag (OOB) predictions can be returned by specifying `oob_score = True`::
 
-    >>> y_pred_oob = reg.predict(X_train, quantiles=[0.25, 0.5, 0.75], oob_score=True)
+    >>> y_pred_oob = reg.predict(X_train, quantiles=[0.5], oob_score=True)
 
 By default, when the `predict` method is called with the OOB flag set to True, it assumes that the input samples are the training samples, arranged in the same order as during model fitting. It accepts an optional parameter that can be used to specify the training index of each input sample, with -1 used to specify non-training samples that can in effect be scored in-bag (IB) during the same call::
 
     >>> import numpy as np
     >>> X_mixed = np.concatenate([X_train, X_test])
-    >>> indices = np.concatenate([np.arange(len(X_train)), np.full(len(X_test), -1, dtype=int)])
-    >>> y_pred_mix = reg.predict(X_mixed, quantiles=[0.25, 0.5, 0.75], oob_score=True, indices=indices)
-    >>> y_pred_train_oob = y_pred_mix[:len(X_train)]  # predictions on the training data are OOB
-    >>> y_pred_test = y_pred_mix[-len(X_test):]  # predictions on the new test data are IB
+    >>> indices = np.concatenate([np.arange(len(X_train)), np.full(len(X_test), -1)])
+    >>> kwargs = {"oob_score": True, "indices": indices}
+    >>> y_pred_mix = reg.predict(X_mixed, quantiles=[0.25, 0.5, 0.75], **kwargs)
+    >>> y_pred_train_oob = y_pred_mix[:len(X_train)]  # training predictions are OOB
+    >>> y_pred_test = y_pred_mix[-len(X_test):]  # new test data predictions are IB
 
 This allows all samples, both from the training and test sets, to be scored with a single call to `predict`, whereby OOB predictions are returned for the training samples and IB (i.e., non-OOB) predictions are returned for the test samples.
 
@@ -157,8 +161,9 @@ The predictions of a standard random forest can also be recovered from a quantil
     RandomForestRegressor(random_state=0)
     >>> qrf.fit(X_train, y_train)
     RandomForestQuantileRegressor(max_samples_leaf=None, random_state=0)
+    >>> kwargs = {"quantiles": "mean", "aggregate_leaves_first": False}
     >>> y_pred_rf = rf.predict(X_test)
-    >>> y_pred_qrf = qrf.predict(X_test, quantiles="mean", aggregate_leaves_first=False)
+    >>> y_pred_qrf = qrf.predict(X_test, **kwargs)
     >>> np.allclose(y_pred_rf, y_pred_qrf)
     True
 
@@ -201,3 +206,10 @@ The maximum number of proximity counts output per test sample can be limited by 
 Out-of-bag (OOB) proximity counts can be returned by specifying `oob_score = True`::
 
     >>> proximities = reg.proximity_counts(X_train, oob_score=True)
+
+.. toctree::
+   :maxdepth: 2
+   :caption: User Guide
+   :hidden:
+
+   User Guide <self>
