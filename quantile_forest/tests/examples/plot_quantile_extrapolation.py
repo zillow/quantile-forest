@@ -21,7 +21,7 @@ bounds = [0, 15]
 extrap_frac = 0.25
 
 func = lambda x: x * np.sin(x)
-func_str = "f = x * sin(x)"
+func_str = "f(x) = x sin(x)"
 
 
 def make_func_Xy(func, bounds, n_samples):
