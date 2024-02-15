@@ -225,8 +225,8 @@ def plot_prediction_intervals(df, domain):
         )
         .transform_calculate(
             coverage_text=(
-                "'PI Coverage: ' + format(datum.coverage, '.3f')"
-                f" + ' (target = {cov_pct / 100})'"
+                "'Coverage: ' + format(datum.coverage * 100, '.1f') + '%'"
+                f" + ' (target = {cov_pct}%)'"
             )
         )
         .mark_text(align="left", baseline="top")
@@ -240,7 +240,7 @@ def plot_prediction_intervals(df, domain):
         base.transform_aggregate(
             coverage="mean(coverage)", width="mean(width)", groupby=["strategy"]
         )
-        .transform_calculate(width_text="'Mean Interval Width: ' + format(datum.width, '$,d')")
+        .transform_calculate(width_text="'Interval Width: ' + format(datum.width, '$,d')")
         .mark_text(align="left", baseline="top")
         .encode(
             x=alt.value(5),
