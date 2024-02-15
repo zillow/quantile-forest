@@ -1,0 +1,583 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Comparing Quantile Interpolation Methods &#8212; Version 1.3.dev</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
+<link href="../_static/styles/bootstrap.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
+
+  
+  <link href="../_static/vendor/fontawesome/6.5.1/css/all.min.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.1/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.1/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.1/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/quantile-forest.css?v=99eb3432" />
+    <link rel="stylesheet" type="text/css" href="../_static/altair-plot.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/gallery.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/basic.css?v=c72506b3" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/quantile-forest.css?v=99eb3432" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/gallery.css?v=c8ff873b" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8d27b9dea8ad943066ae" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8d27b9dea8ad943066ae" />
+  <script src="../_static/vendor/fontawesome/6.5.1/js/all.min.js?digest=8d27b9dea8ad943066ae"></script>
+
+    <script src="../_static/documentation_options.js?v=49c989be"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/copybutton.js?v=26522df0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vega-lite@5.16.3"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'gallery/plot_quantile_interpolation';</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <a id="pst-skip-link" class="skip-link" href="#main-content">Skip to main content</a>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>
+    Back to top
+  </button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__primary"
+          id="__primary"/>
+  <label class="overlay overlay-primary" for="__primary"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__secondary"
+          id="__secondary"/>
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar">
+<div class="bd-header__inner bd-page-width">
+  <label class="sidebar-toggle primary-toggle" for="__primary">
+    <span class="fa-solid fa-bars"></span>
+  </label>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">Version 1.3.dev</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav class="navbar-nav">
+  <ul class="bd-navbar-elements navbar-nav">
+    
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../install.html">
+                        Getting Started
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../user_guide.html">
+                        User Guide
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../api.html">
+                        API Reference
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="index.html">
+                        General Examples
+                      </a>
+                    </li>
+                
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+ <script>
+ document.write(`
+   <button class="btn navbar-btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch nav-link" data-mode="light"><i class="fa-solid fa-sun fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="dark"><i class="fa-solid fa-moon fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg"></i></span>
+  </button>
+`);
+</script></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+ <script>
+ document.write(`
+   <button class="btn navbar-btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script>
+    </div>
+  
+
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <div class="bd-sidebar-primary bd-sidebar hide-on-wide">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          <div class="navbar-item">
+<nav class="navbar-nav">
+  <ul class="bd-navbar-elements navbar-nav">
+    
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../install.html">
+                        Getting Started
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../user_guide.html">
+                        User Guide
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../api.html">
+                        API Reference
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="index.html">
+                        General Examples
+                      </a>
+                    </li>
+                
+  </ul>
+</nav></div>
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch nav-link" data-mode="light"><i class="fa-solid fa-sun fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="dark"><i class="fa-solid fa-moon fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg"></i></span>
+  </button>
+`);
+</script></div>
+        
+      </div>
+    
+  </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+
+
+<nav aria-label="Breadcrumb">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    <li class="breadcrumb-item active" aria-current="page">Comparing...</li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="comparing-quantile-interpolation-methods">
+<span id="gallery-plot-quantile-interpolation"></span><h1>Comparing Quantile Interpolation Methods<a class="headerlink" href="#comparing-quantile-interpolation-methods" title="Link to this heading">#</a></h1>
+<p>An example comparison of interpolation methods that can be applied during
+prediction when the desired quantile lies between two data points.</p>
+
+<div id="plot_quantile_interpolation-rst-altair-plot-0">
+<script>
+  // embed when document is loaded, to ensure vega library is available
+  // this works on all modern browsers, except IE8 and older
+  document.addEventListener("DOMContentLoaded", function(event) {
+      var spec = {"config": {"view": {"continuousWidth": 300, "continuousHeight": 300, "stroke": null}, "facet": {"spacing": 15}, "range": {"category": ["#000000", "#006aff", "#ffd237", "#0d4599", "#f2a619", "#a6e5ff"]}, "scale": {"bandPaddingInner": 0.9}}, "data": {"name": "data-fe3b86676bc2ed9cf43b2cb8481e7a3b"}, "facet": {"column": {"field": "x", "header": {"labelOrient": "bottom", "titleOrient": "bottom"}, "title": "Samples (Feature Values)", "type": "nominal"}}, "spec": {"layer": [{"mark": {"type": "bar"}, "encoding": {"color": {"condition": {"param": "param_9", "field": "method", "sort": ["Actual", "Linear", "Lower", "Higher", "Midpoint", "Nearest"], "title": null, "type": "nominal"}, "value": "lightgray"}, "tooltip": [{"field": "method", "title": "Method", "type": "nominal"}, {"field": "x", "title": "X Values", "type": "nominal"}, {"field": "y_med", "format": ".3f", "title": "Median Y Value", "type": "nominal"}, {"field": "y_low", "format": ".3f", "title": "Lower Y Value", "type": "nominal"}, {"field": "y_upp", "format": ".3f", "title": "Upper Y Value", "type": "nominal"}], "x": {"axis": {"labels": false, "tickSize": 0}, "field": "method", "sort": ["Actual", "Linear", "Lower", "Higher", "Midpoint", "Nearest"], "title": null, "type": "nominal"}, "y": {"field": "y_low", "title": "", "type": "quantitative"}, "y2": {"field": "y_upp", "title": null}}, "name": "view_8"}, {"mark": {"type": "circle", "opacity": 1, "size": 75}, "encoding": {"color": {"condition": {"param": "param_9", "field": "method", "sort": ["Actual", "Linear", "Lower", "Higher", "Midpoint", "Nearest"], "title": null, "type": "nominal"}, "value": "lightgray"}, "tooltip": [{"field": "method", "title": "Method", "type": "nominal"}, {"field": "x", "title": "X Values", "type": "nominal"}, {"field": "y_med", "format": ".3f", "title": "Median Y Value", "type": "nominal"}, {"field": "y_low", "format": ".3f", "title": "Lower Y Value", "type": "nominal"}, {"field": "y_upp", "format": ".3f", "title": "Upper Y Value", "type": "nominal"}], "x": {"axis": {"labels": false, "tickSize": 0}, "field": "method", "sort": ["Actual", "Linear", "Lower", "Higher", "Midpoint", "Nearest"], "title": null, "type": "nominal"}, "y": {"field": "y_med", "title": "Actual and Predicted Values", "type": "quantitative"}}}], "height": 400, "width": {"step": 20}}, "params": [{"name": "param_9", "select": {"type": "point", "fields": ["method"]}, "bind": "legend", "views": ["view_8"]}], "$schema": "https://vega.github.io/schema/vega-lite/v5.16.3.json", "datasets": {"data-fe3b86676bc2ed9cf43b2cb8481e7a3b": [{"method": "Actual", "x": "Sample 1 ([-1, -1])", "y_med": -2.0, "y_low": -2.0, "y_upp": -2.0}, {"method": "Actual", "x": "Sample 2 ([-1, -1])", "y_med": -1.0, "y_low": -1.0, "y_upp": -1.0}, {"method": "Actual", "x": "Sample 3 ([-1, -1])", "y_med": 0.0, "y_low": 0.0, "y_upp": 0.0}, {"method": "Actual", "x": "Sample 4 ([1, 1])", "y_med": 1.0, "y_low": 1.0, "y_upp": 1.0}, {"method": "Actual", "x": "Sample 5 ([1, 1])", "y_med": 2.0, "y_low": 2.0, "y_upp": 2.0}, {"method": "Linear", "x": "Sample 1 ([-1, -1])", "y_med": -1.0, "y_low": -1.95, "y_upp": -0.050000000000000044}, {"method": "Linear", "x": "Sample 2 ([-1, -1])", "y_med": -1.0, "y_low": -1.95, "y_upp": -0.050000000000000044}, {"method": "Linear", "x": "Sample 3 ([-1, -1])", "y_med": -1.0, "y_low": -1.95, "y_upp": -0.050000000000000044}, {"method": "Linear", "x": "Sample 4 ([1, 1])", "y_med": 1.5, "y_low": 1.025, "y_upp": 1.975}, {"method": "Linear", "x": "Sample 5 ([1, 1])", "y_med": 1.5, "y_low": 1.025, "y_upp": 1.975}, {"method": "Lower", "x": "Sample 1 ([-1, -1])", "y_med": -1.0, "y_low": -2.0, "y_upp": -1.0}, {"method": "Lower", "x": "Sample 2 ([-1, -1])", "y_med": -1.0, "y_low": -2.0, "y_upp": -1.0}, {"method": "Lower", "x": "Sample 3 ([-1, -1])", "y_med": -1.0, "y_low": -2.0, "y_upp": -1.0}, {"method": "Lower", "x": "Sample 4 ([1, 1])", "y_med": 1.0, "y_low": 1.0, "y_upp": 1.0}, {"method": "Lower", "x": "Sample 5 ([1, 1])", "y_med": 1.0, "y_low": 1.0, "y_upp": 1.0}, {"method": "Higher", "x": "Sample 1 ([-1, -1])", "y_med": -1.0, "y_low": -1.0, "y_upp": 0.0}, {"method": "Higher", "x": "Sample 2 ([-1, -1])", "y_med": -1.0, "y_low": -1.0, "y_upp": 0.0}, {"method": "Higher", "x": "Sample 3 ([-1, -1])", "y_med": -1.0, "y_low": -1.0, "y_upp": 0.0}, {"method": "Higher", "x": "Sample 4 ([1, 1])", "y_med": 2.0, "y_low": 2.0, "y_upp": 2.0}, {"method": "Higher", "x": "Sample 5 ([1, 1])", "y_med": 2.0, "y_low": 2.0, "y_upp": 2.0}, {"method": "Midpoint", "x": "Sample 1 ([-1, -1])", "y_med": -1.0, "y_low": -1.5, "y_upp": -0.5}, {"method": "Midpoint", "x": "Sample 2 ([-1, -1])", "y_med": -1.0, "y_low": -1.5, "y_upp": -0.5}, {"method": "Midpoint", "x": "Sample 3 ([-1, -1])", "y_med": -1.0, "y_low": -1.5, "y_upp": -0.5}, {"method": "Midpoint", "x": "Sample 4 ([1, 1])", "y_med": 1.5, "y_low": 1.5, "y_upp": 1.5}, {"method": "Midpoint", "x": "Sample 5 ([1, 1])", "y_med": 1.5, "y_low": 1.5, "y_upp": 1.5}, {"method": "Nearest", "x": "Sample 1 ([-1, -1])", "y_med": -1.0, "y_low": -2.0, "y_upp": 0.0}, {"method": "Nearest", "x": "Sample 2 ([-1, -1])", "y_med": -1.0, "y_low": -2.0, "y_upp": 0.0}, {"method": "Nearest", "x": "Sample 3 ([-1, -1])", "y_med": -1.0, "y_low": -2.0, "y_upp": 0.0}, {"method": "Nearest", "x": "Sample 4 ([1, 1])", "y_med": 1.0, "y_low": 1.0, "y_upp": 2.0}, {"method": "Nearest", "x": "Sample 5 ([1, 1])", "y_med": 1.0, "y_low": 1.0, "y_upp": 2.0}]}};
+      var opt = {
+        "mode": "vega-lite",
+        "renderer": "canvas",
+        "actions": {"editor": true, "source": true, "export": true}
+      };
+      vegaEmbed('#plot_quantile_interpolation-rst-altair-plot-0', spec, opt).catch(console.err);
+  });
+</script>
+</div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">altair</span> <span class="k">as</span> <span class="nn">alt</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+
+<span class="kn">from</span> <span class="nn">quantile_forest</span> <span class="kn">import</span> <span class="n">RandomForestQuantileRegressor</span>
+
+<span class="n">interpolations</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;Linear&quot;</span><span class="p">:</span> <span class="s2">&quot;#006aff&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Lower&quot;</span><span class="p">:</span> <span class="s2">&quot;#ffd237&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Higher&quot;</span><span class="p">:</span> <span class="s2">&quot;#0d4599&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Midpoint&quot;</span><span class="p">:</span> <span class="s2">&quot;#f2a619&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Nearest&quot;</span><span class="p">:</span> <span class="s2">&quot;#a6e5ff&quot;</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="c1"># legend = {&quot;Actual&quot;: &quot;#000000&quot;} | interpolations</span>
+<span class="n">legend</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;Actual&quot;</span><span class="p">:</span> <span class="s2">&quot;#000000&quot;</span><span class="p">}</span>
+<span class="n">legend</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">interpolations</span><span class="p">)</span>
+
+<span class="c1"># Create toy dataset.</span>
+<span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]])</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span>
+
+<span class="n">est</span> <span class="o">=</span> <span class="n">RandomForestQuantileRegressor</span><span class="p">(</span>
+    <span class="n">n_estimators</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+    <span class="n">max_samples_leaf</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">bootstrap</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">random_state</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">est</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+
+<span class="n">y_medians</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">y_errs</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">interpolation</span> <span class="ow">in</span> <span class="n">interpolations</span><span class="p">:</span>
+    <span class="n">y_pred</span> <span class="o">=</span> <span class="n">est</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span>
+        <span class="n">X</span><span class="p">,</span>
+        <span class="n">quantiles</span><span class="o">=</span><span class="p">[</span><span class="mf">0.025</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.975</span><span class="p">],</span>
+        <span class="n">interpolation</span><span class="o">=</span><span class="n">interpolation</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span>
+    <span class="p">)</span>
+    <span class="n">y_medians</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">y_pred</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">])</span>
+    <span class="n">y_errs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span>
+            <span class="p">(</span>
+                <span class="p">[</span><span class="n">y_pred</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">y_pred</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]],</span>
+                <span class="p">[</span><span class="n">y_pred</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="n">y_pred</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]],</span>
+            <span class="p">),</span>
+            <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+<span class="n">data</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;method&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;Actual&quot;</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">y</span><span class="p">),</span>
+    <span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;Sample </span><span class="si">{</span><span class="n">idx</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">x</span><span class="si">}</span><span class="s2">)&quot;</span> <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">tolist</span><span class="p">())],</span>
+    <span class="s2">&quot;y_med&quot;</span><span class="p">:</span> <span class="n">y</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>
+    <span class="s2">&quot;y_low&quot;</span><span class="p">:</span> <span class="n">y</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>
+    <span class="s2">&quot;y_upp&quot;</span><span class="p">:</span> <span class="n">y</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>
+<span class="p">}</span>
+<span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">interpolation</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">interpolations</span><span class="p">):</span>
+    <span class="n">data</span><span class="p">[</span><span class="s2">&quot;method&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="n">interpolation</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">y</span><span class="p">))</span>
+    <span class="n">data</span><span class="p">[</span><span class="s2">&quot;x&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="sa">f</span><span class="s2">&quot;Sample </span><span class="si">{</span><span class="n">idx</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">x</span><span class="si">}</span><span class="s2">)&quot;</span> <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">tolist</span><span class="p">())])</span>
+    <span class="n">data</span><span class="p">[</span><span class="s2">&quot;y_med&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">y_medians</span><span class="p">[</span><span class="n">idx</span><span class="p">])</span>
+    <span class="n">data</span><span class="p">[</span><span class="s2">&quot;y_low&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">y_medians</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">-</span> <span class="n">y_errs</span><span class="p">[</span><span class="n">idx</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">data</span><span class="p">[</span><span class="s2">&quot;y_upp&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">y_medians</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">+</span> <span class="n">y_errs</span><span class="p">[</span><span class="n">idx</span><span class="p">][</span><span class="mi">1</span><span class="p">])</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">plot_interpolations</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">legend</span><span class="p">):</span>
+    <span class="n">click</span> <span class="o">=</span> <span class="n">alt</span><span class="o">.</span><span class="n">selection_point</span><span class="p">(</span><span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;method&quot;</span><span class="p">],</span> <span class="n">bind</span><span class="o">=</span><span class="s2">&quot;legend&quot;</span><span class="p">)</span>
+
+    <span class="n">color</span> <span class="o">=</span> <span class="n">alt</span><span class="o">.</span><span class="n">condition</span><span class="p">(</span>
+        <span class="n">click</span><span class="p">,</span>
+        <span class="n">alt</span><span class="o">.</span><span class="n">Color</span><span class="p">(</span><span class="s2">&quot;method:N&quot;</span><span class="p">,</span> <span class="n">sort</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">legend</span><span class="o">.</span><span class="n">keys</span><span class="p">()),</span> <span class="n">title</span><span class="o">=</span><span class="kc">None</span><span class="p">),</span>
+        <span class="n">alt</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="s2">&quot;lightgray&quot;</span><span class="p">),</span>
+    <span class="p">)</span>
+
+    <span class="n">point</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">alt</span><span class="o">.</span><span class="n">Chart</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="n">alt</span><span class="o">.</span><span class="n">Step</span><span class="p">(</span><span class="mi">20</span><span class="p">))</span>
+        <span class="o">.</span><span class="n">mark_circle</span><span class="p">(</span><span class="n">opacity</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">75</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">encode</span><span class="p">(</span>
+            <span class="n">x</span><span class="o">=</span><span class="n">alt</span><span class="o">.</span><span class="n">X</span><span class="p">(</span>
+                <span class="s2">&quot;method:N&quot;</span><span class="p">,</span>
+                <span class="n">axis</span><span class="o">=</span><span class="n">alt</span><span class="o">.</span><span class="n">Axis</span><span class="p">(</span><span class="n">labels</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">tickSize</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span>
+                <span class="n">sort</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">legend</span><span class="o">.</span><span class="n">keys</span><span class="p">()),</span>
+                <span class="n">title</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="n">y</span><span class="o">=</span><span class="n">alt</span><span class="o">.</span><span class="n">Y</span><span class="p">(</span><span class="s2">&quot;y_med:Q&quot;</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Actual and Predicted Values&quot;</span><span class="p">),</span>
+            <span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="p">,</span>
+            <span class="n">tooltip</span><span class="o">=</span><span class="p">[</span>
+                <span class="n">alt</span><span class="o">.</span><span class="n">Tooltip</span><span class="p">(</span><span class="s2">&quot;method:N&quot;</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Method&quot;</span><span class="p">),</span>
+                <span class="n">alt</span><span class="o">.</span><span class="n">Tooltip</span><span class="p">(</span><span class="s2">&quot;x:N&quot;</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;X Values&quot;</span><span class="p">),</span>
+                <span class="n">alt</span><span class="o">.</span><span class="n">Tooltip</span><span class="p">(</span><span class="s2">&quot;y_med:N&quot;</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;.3f&quot;</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Median Y Value&quot;</span><span class="p">),</span>
+                <span class="n">alt</span><span class="o">.</span><span class="n">Tooltip</span><span class="p">(</span><span class="s2">&quot;y_low:N&quot;</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;.3f&quot;</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Lower Y Value&quot;</span><span class="p">),</span>
+                <span class="n">alt</span><span class="o">.</span><span class="n">Tooltip</span><span class="p">(</span><span class="s2">&quot;y_upp:N&quot;</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;.3f&quot;</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Upper Y Value&quot;</span><span class="p">),</span>
+            <span class="p">],</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">area</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">alt</span><span class="o">.</span><span class="n">Chart</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">mark_bar</span><span class="p">()</span>
+        <span class="o">.</span><span class="n">encode</span><span class="p">(</span>
+            <span class="n">x</span><span class="o">=</span><span class="n">alt</span><span class="o">.</span><span class="n">X</span><span class="p">(</span>
+                <span class="s2">&quot;method:N&quot;</span><span class="p">,</span>
+                <span class="n">axis</span><span class="o">=</span><span class="n">alt</span><span class="o">.</span><span class="n">Axis</span><span class="p">(</span><span class="n">labels</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">tickSize</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span>
+                <span class="n">sort</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">legend</span><span class="o">.</span><span class="n">keys</span><span class="p">()),</span>
+                <span class="n">title</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="n">y</span><span class="o">=</span><span class="n">alt</span><span class="o">.</span><span class="n">Y</span><span class="p">(</span><span class="s2">&quot;y_low:Q&quot;</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">),</span>
+            <span class="n">y2</span><span class="o">=</span><span class="n">alt</span><span class="o">.</span><span class="n">Y2</span><span class="p">(</span><span class="s2">&quot;y_upp:Q&quot;</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="kc">None</span><span class="p">),</span>
+            <span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="p">,</span>
+            <span class="n">tooltip</span><span class="o">=</span><span class="p">[</span>
+                <span class="n">alt</span><span class="o">.</span><span class="n">Tooltip</span><span class="p">(</span><span class="s2">&quot;method:N&quot;</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Method&quot;</span><span class="p">),</span>
+                <span class="n">alt</span><span class="o">.</span><span class="n">Tooltip</span><span class="p">(</span><span class="s2">&quot;x:N&quot;</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;X Values&quot;</span><span class="p">),</span>
+                <span class="n">alt</span><span class="o">.</span><span class="n">Tooltip</span><span class="p">(</span><span class="s2">&quot;y_med:N&quot;</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;.3f&quot;</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Median Y Value&quot;</span><span class="p">),</span>
+                <span class="n">alt</span><span class="o">.</span><span class="n">Tooltip</span><span class="p">(</span><span class="s2">&quot;y_low:N&quot;</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;.3f&quot;</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Lower Y Value&quot;</span><span class="p">),</span>
+                <span class="n">alt</span><span class="o">.</span><span class="n">Tooltip</span><span class="p">(</span><span class="s2">&quot;y_upp:N&quot;</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;.3f&quot;</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Upper Y Value&quot;</span><span class="p">),</span>
+            <span class="p">],</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">chart</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="p">(</span><span class="n">area</span> <span class="o">+</span> <span class="n">point</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">add_params</span><span class="p">(</span><span class="n">click</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">properties</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="mi">400</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">facet</span><span class="p">(</span>
+            <span class="n">column</span><span class="o">=</span><span class="n">alt</span><span class="o">.</span><span class="n">Column</span><span class="p">(</span>
+                <span class="s2">&quot;x:N&quot;</span><span class="p">,</span>
+                <span class="n">header</span><span class="o">=</span><span class="n">alt</span><span class="o">.</span><span class="n">Header</span><span class="p">(</span><span class="n">labelOrient</span><span class="o">=</span><span class="s2">&quot;bottom&quot;</span><span class="p">,</span> <span class="n">titleOrient</span><span class="o">=</span><span class="s2">&quot;bottom&quot;</span><span class="p">),</span>
+                <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Samples (Feature Values)&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+        <span class="o">.</span><span class="n">configure_facet</span><span class="p">(</span><span class="n">spacing</span><span class="o">=</span><span class="mi">15</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">configure_range</span><span class="p">(</span><span class="n">category</span><span class="o">=</span><span class="n">alt</span><span class="o">.</span><span class="n">RangeScheme</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">legend</span><span class="o">.</span><span class="n">values</span><span class="p">())))</span>
+        <span class="o">.</span><span class="n">configure_scale</span><span class="p">(</span><span class="n">bandPaddingInner</span><span class="o">=</span><span class="mf">0.9</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">configure_view</span><span class="p">(</span><span class="n">stroke</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">chart</span>
+
+
+<span class="n">chart</span> <span class="o">=</span> <span class="n">plot_interpolations</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">legend</span><span class="p">)</span>
+<span class="n">chart</span>
+</pre></div>
+</div>
+</section>
+
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../_static/scripts/bootstrap.js?digest=8d27b9dea8ad943066ae"></script>
+<script src="../_static/scripts/pydata-sphinx-theme.js?digest=8d27b9dea8ad943066ae"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2022-2024, Zillow Group.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.2.6.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.15.2.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>
