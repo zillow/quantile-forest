@@ -6,7 +6,7 @@ An example that demonstrates the use of a quantile regression forest (QRF) to
 construct reliable prediction intervals using conformalized quantile
 regression (CQR). CQR offers prediction intervals that attain valid coverage,
 while QRF may require additional calibration for reliable interval estimates.
-Based on "Prediction intervals: Quantile Regression Forests" by Carl McBride
+Adapted from "Prediction intervals: Quantile Regression Forests" by Carl McBride
 Ellis:
 https://www.kaggle.com/code/carlmcbrideellis/prediction-intervals-quantile-regression-forests.
 """
@@ -27,8 +27,8 @@ strategies = {
 
 random_state = 0
 rng = check_random_state(random_state)
-round_to = 3
-cov_pct = 90  # the "coverage level"
+
+cov_pct = 95  # the "coverage level"
 alpha = (100 - cov_pct) / 100
 
 # Load the California Housing Prices dataset.
@@ -42,17 +42,13 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
 
 def sort_y_values(y_test, y_pred, y_pis):
-    """Sort the target values and predictions"""
+    """Sort the target values and predictions."""
     indices = np.argsort(y_test)
-    y_test_sorted = np.array(y_test)[indices]
-    y_pred_sorted = y_pred[indices]
-    y_lower_bound = y_pis[:, 0][indices]
-    y_upper_bound = y_pis[:, 1][indices]
     return {
-        "y_test": y_test_sorted,
-        "y_pred": y_pred_sorted,
-        "y_pred_low": y_lower_bound,
-        "y_pred_upp": y_upper_bound,
+        "y_test": y_test[indices],
+        "y_pred": y_pred[indices],
+        "y_pred_low": y_pis[:, 0][indices],
+        "y_pred_upp": y_pis[:, 1][indices],
     }
 
 
@@ -150,54 +146,72 @@ df = df.merge(
 )
 
 
-def plot_prediction_intervals(df):
-    domain = [
-        int(np.min(np.minimum(df["y_test"], df["y_pred"]))),  # min of both axes
-        int(np.max(np.maximum(df["y_test"], df["y_pred"]))),  # max of both axes
-    ]
+def plot_prediction_intervals(df, domain):
+    click = alt.selection_point(fields=["y_label"], bind="legend")
+
+    color_circle = alt.Color(
+        "y_label:N",
+        scale=alt.Scale(domain=["Yes", "No"], range=["#f2a619", "red"]),
+        title="Within Interval",
+    )
+    color_bar = alt.value("#e0f2ff")
 
     tooltip = [
         alt.Tooltip("y_test:Q", format="$,d", title="True Price"),
         alt.Tooltip("y_pred:Q", format="$,d", title="Predicted Price"),
         alt.Tooltip("y_pred_low:Q", format="$,d", title="Predicted Lower Price"),
         alt.Tooltip("y_pred_upp:Q", format="$,d", title="Predicted Upper Price"),
+        alt.Tooltip("y_label:N", title="Within Interval"),
     ]
 
-    base = alt.Chart(df)
-
-    circle = base.mark_circle(size=30).encode(
-        x=alt.X(
-            "y_pred:Q",
-            axis=alt.Axis(format="$,d"),
-            scale=alt.Scale(domain=domain, nice=False),
-            title="True Prices",
-        ),
-        y=alt.Y(
-            "y_test:Q",
-            axis=alt.Axis(format="$,d"),
-            scale=alt.Scale(domain=domain, nice=False),
-            title="Predicted Prices",
-        ),
-        color=alt.value("#f2a619"),
-        tooltip=tooltip,
+    base = alt.Chart(df).transform_calculate(
+        y_label=(
+            "((datum.y_test >= datum.y_pred_low) & (datum.y_test <= datum.y_pred_upp))"
+            " ? 'Yes' : 'No'"
+        )
     )
 
-    bar = base.mark_bar(opacity=0.8, width=2).encode(
+    circle = (
+        base.mark_circle(size=30)
+        .encode(
+            x=alt.X(
+                "y_pred:Q",
+                axis=alt.Axis(format="$,d"),
+                scale=alt.Scale(domain=domain, nice=False),
+                title="True Prices",
+            ),
+            y=alt.Y(
+                "y_test:Q",
+                axis=alt.Axis(format="$,d"),
+                scale=alt.Scale(domain=domain, nice=False),
+                title="Predicted Prices",
+            ),
+            color=alt.condition(click, color_circle, alt.value("lightgray")),
+            opacity=alt.condition(click, alt.value(1), alt.value(0)),
+            tooltip=tooltip,
+        )
+        .add_params(click)
+    )
+
+    bar = base.mark_bar(width=2).encode(
         x=alt.X("y_pred:Q", scale=alt.Scale(domain=domain, padding=0), title=""),
-        y=alt.Y("y_pred_low:Q", scale=alt.Scale(domain=domain, padding=0), title=""),
+        y=alt.Y("y_pred_low:Q", scale=alt.Scale(clamp=True, domain=domain, padding=0), title=""),
         y2=alt.Y2("y_pred_upp:Q", title=None),
-        color=alt.value("#e0f2ff"),
+        color=alt.condition(click, color_bar, alt.value("lightgray")),
+        opacity=alt.condition(click, alt.value(0.8), alt.value(0)),
         tooltip=tooltip,
     )
 
-    tick = base.mark_tick(opacity=0.4, orient="horizontal", thickness=1, width=5).encode(
-        x=alt.X("y_pred:Q", title=""), color=alt.value("#006aff")
+    tick = base.mark_tick(orient="horizontal", thickness=1, width=5).encode(
+        x=alt.X("y_pred:Q", title=""),
+        color=alt.value("#006aff"),
+        opacity=alt.condition(click, alt.value(0.4), alt.value(0)),
     )
-    tick_low = tick.encode(y=alt.Y("y_pred_low:Q", title=""))
-    tick_upp = tick.encode(y=alt.Y("y_pred_upp:Q", title=""))
+    tick_low = tick.encode(y=alt.Y("y_pred_low:Q", scale=alt.Scale(clamp=True), title=""))
+    tick_upp = tick.encode(y=alt.Y("y_pred_upp:Q", scale=alt.Scale(clamp=True), title=""))
 
     diagonal = (
-        alt.Chart(pd.DataFrame({"var1": [domain[0], domain[1]], "var2": [domain[0], domain[1]]}))
+        alt.Chart(pd.DataFrame({"var1": domain, "var2": domain}))
         .mark_line(color="black", opacity=0.4, strokeDash=[2, 2])
         .encode(
             x=alt.X("var1:Q"),
@@ -210,13 +224,16 @@ def plot_prediction_intervals(df):
             coverage="mean(coverage)", width="mean(width)", groupby=["strategy"]
         )
         .transform_calculate(
-            cov_text=f"'PICP: ' + format(datum.coverage, '.3f') + ' (target = {cov_pct / 100})'"
+            coverage_text=(
+                "'PI Coverage: ' + format(datum.coverage, '.3f')"
+                f" + ' (target = {cov_pct / 100})'"
+            )
         )
         .mark_text(align="left", baseline="top")
         .encode(
             x=alt.value(5),
             y=alt.value(5),
-            text=alt.Text("cov_text:N"),
+            text=alt.Text("coverage_text:N"),
         )
     )
     text_with = (
@@ -239,7 +256,11 @@ def plot_prediction_intervals(df):
 
 chart = alt.hconcat()
 for strategy in strategies.keys():
+    domain = [
+        int(np.min((df[["y_test", "y_pred"]].min(axis=0)))),  # min of all axes
+        int(np.max((df[["y_test", "y_pred"]].max(axis=0)))),  # max of all axes
+    ]
     df_i = df.query(f"strategy == '{strategy}'").reset_index(drop=True)
-    base = plot_prediction_intervals(df_i)
-    chart |= base.properties(height=250, width=325, title=strategies[strategy])
+    base = plot_prediction_intervals(df_i, domain)
+    chart |= base.properties(height=225, width=300, title=strategies[strategy])
 chart

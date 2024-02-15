@@ -70,6 +70,14 @@ df = pd.DataFrame(data)
 
 
 def plot_interpolations(df, legend):
+    click = alt.selection_point(fields=["method"], bind="legend")
+
+    color = alt.condition(
+        click,
+        alt.Color("method:N", sort=list(legend.keys()), title=None),
+        alt.value("lightgray"),
+    )
+
     point = (
         alt.Chart(df, width=alt.Step(20))
         .mark_circle(opacity=1, size=75)
@@ -81,7 +89,7 @@ def plot_interpolations(df, legend):
                 title=None,
             ),
             y=alt.Y("y_med:Q", title="Actual and Predicted Values"),
-            color=alt.Color("method:N", sort=list(legend.keys()), title=None),
+            color=color,
             tooltip=[
                 alt.Tooltip("method:N", title="Method"),
                 alt.Tooltip("x:N", title="X Values"),
@@ -104,7 +112,7 @@ def plot_interpolations(df, legend):
             ),
             y=alt.Y("y_low:Q", title=""),
             y2=alt.Y2("y_upp:Q", title=None),
-            color=alt.Color("method:N", sort=list(legend.keys()), title=None),
+            color=color,
             tooltip=[
                 alt.Tooltip("method:N", title="Method"),
                 alt.Tooltip("x:N", title="X Values"),
@@ -117,6 +125,7 @@ def plot_interpolations(df, legend):
 
     chart = (
         (area + point)
+        .add_params(click)
         .properties(height=400)
         .facet(
             column=alt.Column(
@@ -134,4 +143,5 @@ def plot_interpolations(df, legend):
     return chart
 
 
-plot_interpolations(df, legend)
+chart = plot_interpolations(df, legend)
+chart

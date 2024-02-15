@@ -29,34 +29,36 @@ funcs = [
         "noise": lambda x: np.log1p(x / 2) * np.random.uniform(size=len(x)),
     },
 ]
+
 legend = {
     "0": "#f2a619",
     "1": "#006aff",
 }
 
 
-def make_Xy(funcs, bounds, n_samples):
+def make_func_Xy(funcs, bounds, n_samples):
     x = np.linspace(*bounds, n_samples)
     y = np.empty((len(x), len(funcs)))
     for i, func in enumerate(funcs):
         y[:, i] = func["truth"](x) + func["noise"](x)
-    return x, y
+    return np.atleast_2d(x).T, y
 
 
-X, y = make_Xy(funcs, bounds, n_samples)
+X, y = make_func_Xy(funcs, bounds, n_samples)
+
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.5, random_state=0)
 
 qrf = RandomForestQuantileRegressor(max_samples_leaf=None, max_depth=4, random_state=0)
-qrf.fit(X_train.reshape(-1, 1), y_train)
+qrf.fit(X_train, y_train)
 
-y_pred = qrf.predict(X.reshape(-1, 1), quantiles=[0.025, 0.5, 0.975], weighted_quantile=False)
+y_pred = qrf.predict(X, quantiles=[0.025, 0.5, 0.975], weighted_leaves=False)
 y_pred = y_pred.reshape(-1, 3, len(funcs))
 
 df = pd.DataFrame(
     {
-        "x": np.tile(X, len(funcs)),
+        "x": np.tile(X.squeeze(), len(funcs)),
         "y": y.reshape(-1, order="F"),
-        "y_true": np.concatenate([f["truth"](X) for f in funcs]),
+        "y_true": np.concatenate([f["truth"](X.squeeze()) for f in funcs]),
         "y_pred": np.concatenate([y_pred[:, 1, i] for i in range(len(funcs))]),
         "y_pred_low": np.concatenate([y_pred[:, 0, i] for i in range(len(funcs))]),
         "y_pred_upp": np.concatenate([y_pred[:, 2, i] for i in range(len(funcs))]),
@@ -66,6 +68,20 @@ df = pd.DataFrame(
 
 
 def plot_multioutputs(df, legend):
+    click = alt.selection_point(fields=["target"], bind="legend")
+
+    color = alt.condition(
+        click,
+        alt.Color(
+            "target:N",
+            legend=alt.Legend(symbolOpacity=1),
+            scale=alt.Scale(range=list(legend.values())),
+            sort=list(legend.keys()),
+            title="Target",
+        ),
+        alt.value("lightgray"),
+    )
+
     tooltip = [
         alt.Tooltip("target:N", title="Target"),
         alt.Tooltip("x:Q", format=",.3f", title="X"),
@@ -82,47 +98,37 @@ def plot_multioutputs(df, legend):
         .encode(
             x=alt.X("x:Q", scale=alt.Scale(nice=False)),
             y=alt.Y("y:Q"),
-            color=alt.Color("target:N"),
+            color=alt.condition(click, alt.Color("target:N"), alt.value("lightgray")),
             tooltip=tooltip,
         )
     )
 
-    line_pred = (
+    line = (
         alt.Chart(df)
         .mark_line(color="black", size=3)
         .encode(
             x=alt.X("x:Q", scale=alt.Scale(nice=False), title="x"),
             y=alt.Y("y_pred:Q", title="y"),
-            color=alt.Color(
-                "target:N",
-                legend=alt.Legend(symbolOpacity=1),
-                scale=alt.Scale(range=list(legend.values())),
-                sort=list(legend.keys()),
-                title="Target",
-            ),
+            color=color,
             tooltip=tooltip,
         )
     )
 
-    area_pred = (
+    area = (
         alt.Chart(df)
         .mark_area(opacity=0.25)
         .encode(
             x=alt.X("x:Q", scale=alt.Scale(nice=False), title="x"),
             y=alt.Y("y_pred_low:Q", title="y"),
             y2=alt.Y2("y_pred_upp:Q", title=None),
-            color=alt.Color(
-                "target:N",
-                legend=alt.Legend(symbolOpacity=1),
-                sort=list(legend.keys()),
-                title="Target",
-            ),
+            color=color,
             tooltip=tooltip,
         )
     )
 
     chart = (
-        (points + area_pred + line_pred)
+        (points + area + line)
+        .add_params(click)
         .configure_range(category=alt.RangeScheme(list(legend.values())))
         .properties(height=400, width=650, title="Multi-target Prediction Intervals")
     )

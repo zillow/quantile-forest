@@ -47,6 +47,14 @@ df = pd.DataFrame({"Actual": y_test, "RF (Mean)": y_pred_rf, "QRF (Median)": y_p
 
 
 def plot_prediction_histograms(df, legend):
+    click = alt.selection_point(fields=["estimator"], bind="legend")
+
+    color = alt.condition(
+        click,
+        alt.Color("estimator:N", sort=list(legend.keys()), title=None),
+        alt.value("lightgray"),
+    )
+
     chart = (
         alt.Chart(df, width=alt.Step(6))
         .transform_fold(list(legend.keys()), as_=["estimator", "y_pred"])
@@ -56,7 +64,7 @@ def plot_prediction_histograms(df, legend):
         .encode(
             x=alt.X("estimator:N", axis=alt.Axis(labels=False, title=None)),
             y=alt.Y("sum(pct):Q", axis=alt.Axis(title="Frequency")),
-            color=alt.Color("estimator:N", sort=list(legend.keys()), title=None),
+            color=color,
             column=alt.Column(
                 "y_pred:Q",
                 bin=alt.Bin(maxbins=80),
@@ -71,6 +79,7 @@ def plot_prediction_histograms(df, legend):
                 alt.Tooltip("estimator:N", title=" "),
             ],
         )
+        .add_params(click)
         .configure_facet(spacing=0)
         .configure_range(category=alt.RangeScheme(list(legend.values())))
         .configure_scale(bandPaddingInner=0.2)

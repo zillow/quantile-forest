@@ -14,11 +14,14 @@ from sklearn.model_selection import train_test_split
 
 from quantile_forest import RandomForestQuantileRegressor
 
+n_samples = 1000
+bounds = [0, 10]
 
-def make_toy_dataset(n_samples, seed=0):
-    rng = np.random.RandomState(seed)
 
-    x = rng.uniform(0, 10, size=n_samples)
+def make_toy_dataset(n_samples, bounds, random_seed=0):
+    rng = np.random.RandomState(random_seed)
+
+    x = rng.uniform(*bounds, size=n_samples)
     f = x * np.sin(x)
 
     sigma = 0.25 + x / 10
@@ -28,12 +31,11 @@ def make_toy_dataset(n_samples, seed=0):
     return np.atleast_2d(x).T, y
 
 
-n_samples = 1000
-X, y = make_toy_dataset(n_samples)
+X, y = make_toy_dataset(n_samples, bounds)
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
-X_sampled = np.atleast_2d(np.linspace(0, 10, n_samples)).T
+X_sampled = np.atleast_2d(np.linspace(*bounds, n_samples)).T
 y_sampled = (X_sampled * np.sin(X_sampled)).reshape(-1)
 
 qrf = RandomForestQuantileRegressor(max_depth=3, min_samples_leaf=5, random_state=0)
@@ -60,9 +62,16 @@ df_test = pd.DataFrame(
 
 
 def plot_fit_and_intervals(df_train, df_test):
-    df_train["y_true_label"] = "f(x) = x sin(x)"
-    df_train["y_pred_label"] = "Predicted Median"
-    df_train["y_area_label"] = "Predicted 95% Interval"
+    df_train = df_train.copy()
+    df_test = df_test.copy()
+
+    df_train = df_train.assign(
+        **{
+            "y_true_label": "f(x) = x sin(x)",
+            "y_pred_label": "Predicted Median",
+            "y_area_label": "Predicted 95% Interval",
+        }
+    )
 
     df_test["point_label"] = "Test Observations"
 
@@ -82,11 +91,11 @@ def plot_fit_and_intervals(df_train, df_test):
 
     line_true = (
         alt.Chart(df_train)
-        .mark_line(color="#000000", size=3)
+        .mark_line(color="black", size=3)
         .encode(
             x=alt.X("X_sampled:Q", scale=alt.Scale(nice=False)),
             y=alt.Y("y_sampled:Q", title="f(x)"),
-            color=alt.Color("y_true_label:N", scale=alt.Scale(range=["#000000"]), title=None),
+            color=alt.Color("y_true_label:N", scale=alt.Scale(range=["black"]), title=None),
             tooltip=[
                 alt.Tooltip("X_sampled:Q", format=",.3f", title="X"),
                 alt.Tooltip("y_sampled:Q", format=",.3f", title="Y"),

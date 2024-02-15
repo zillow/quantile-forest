@@ -67,7 +67,7 @@ for i, n_estimators in enumerate(est_sizes):
             _ = qrf.predict(X_test, quantiles=0.5, weighted_quantile=False)
 
         timings[i, j, :] = [rf_time(), qrf_weighted_time(), qrf_unweighted_time()]
-        timings[i, j, :] *= 1000
+        timings[i, j, :] *= 1000  # convert from milliseconds to seconds
 
 timings = np.transpose(timings, axes=[2, 0, 1])  # put the estimator name first
 
@@ -97,13 +97,26 @@ df = (
 
 
 def plot_timings_by_size(df, legend):
+    click = alt.selection_point(fields=["name"], bind="legend")
+
+    color = alt.condition(
+        click,
+        alt.Color(
+            "name:N",
+            legend=alt.Legend(symbolOpacity=1),
+            sort=list(legend.keys()),
+            title=None,
+        ),
+        alt.value("lightgray"),
+    )
+
     line = (
         alt.Chart(df)
         .mark_line()
         .encode(
             x=alt.X("n_estimators:Q", title="Number of Estimators"),
             y=alt.Y("mean:Q", title="Prediction Runtime (seconds)"),
-            color=alt.Color("name:N", sort=list(legend.keys()), title=None),
+            color=color,
         )
     )
 
@@ -114,12 +127,7 @@ def plot_timings_by_size(df, legend):
             x=alt.X("n_estimators:Q"),
             y=alt.Y("ymin:Q"),
             y2=alt.Y2("ymax:Q"),
-            color=alt.Color(
-                "name:N",
-                legend=alt.Legend(symbolOpacity=1),
-                sort=list(legend.keys()),
-                title=None,
-            ),
+            color=color,
             tooltip=[
                 alt.Tooltip("name:N", title="Estimator Name"),
                 alt.Tooltip("n_estimators:Q", format=",d", title="Number of Estimators"),
@@ -132,9 +140,11 @@ def plot_timings_by_size(df, legend):
 
     chart = (
         (line + area)
+        .add_params(click)
         .configure_range(category=alt.RangeScheme(list(legend.values())))
         .properties(height=400, width=650)
     )
+
     return chart
 
 

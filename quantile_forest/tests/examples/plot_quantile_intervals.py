@@ -48,25 +48,25 @@ for train_index, test_index in kf.split(X):
     # Get predictions at 95% prediction intervals and median.
     y_pred_i = qrf.predict(X_test, quantiles=[0.025, 0.5, 0.975])
 
-    y_true = np.concatenate((y_true, y_test))
-    y_pred = np.concatenate((y_pred, y_pred_i[:, 1]))
-    y_pred_low = np.concatenate((y_pred_low, y_pred_i[:, 0]))
-    y_pred_upp = np.concatenate((y_pred_upp, y_pred_i[:, 2]))
+    y_true.append(y_test)
+    y_pred.append(y_pred_i[:, 1])
+    y_pred_low.append(y_pred_i[:, 0])
+    y_pred_upp.append(y_pred_i[:, 2])
 
 df = pd.DataFrame(
     {
-        "y_true": y_true,
-        "y_pred": y_pred,
-        "y_pred_low": y_pred_low,
-        "y_pred_upp": y_pred_upp,
+        "y_true": np.concatenate(y_true),
+        "y_pred": np.concatenate(y_pred),
+        "y_pred_low": np.concatenate(y_pred_low),
+        "y_pred_upp": np.concatenate(y_pred_upp),
     }
-).map(lambda x: x * 100_000)
+).map(
+    lambda x: x * 100_000
+)  # convert to dollars
 
 
 def plot_calibration_and_intervals(df):
     def plot_calibration(df):
-        df = df.copy()
-
         domain = [
             int(np.min(np.minimum(df["y_true"], df["y_pred"]))),  # min of both axes
             int(np.max(np.maximum(df["y_true"], df["y_pred"]))),  # max of both axes
@@ -142,7 +142,7 @@ def plot_calibration_and_intervals(df):
         df["y_pred_low"] -= mean
         df["y_pred_upp"] -= mean
 
-        x_domain = [1, df["idx"].max() - 1]
+        x_domain = [0, len(df)]
         y_domain = [
             int(np.min(np.minimum(df["y_true"], df["y_pred"]))),  # min of both axes
             int(np.max(np.maximum(df["y_true"], df["y_pred"]))),  # max of both axes
@@ -154,9 +154,12 @@ def plot_calibration_and_intervals(df):
             alt.Tooltip("y_pred:Q", format="$,d", title="Predicted Price (Centered)"),
             alt.Tooltip("y_pred_low:Q", format="$,d", title="Predicted Lower Price"),
             alt.Tooltip("y_pred_upp:Q", format="$,d", title="Predicted Upper Price"),
+            alt.Tooltip("y_pred_width:Q", format="$,d", title="Prediction Interval Width"),
         ]
 
-        base = alt.Chart(df)
+        base = alt.Chart(df).transform_calculate(
+            y_pred_width=alt.datum["y_pred_upp"] - alt.datum["y_pred_low"]
+        )
 
         circle = base.mark_circle(size=30).encode(
             x=alt.X("idx:Q", axis=alt.Axis(format=",d"), title="Ordered Samples"),
@@ -189,8 +192,10 @@ def plot_calibration_and_intervals(df):
 
     chart1 = plot_calibration(df).properties(height=250, width=325)
     chart2 = plot_intervals(df).properties(height=250, width=325)
-    return chart1 | chart2
+    chart = chart1 | chart2
+
+    return chart
 
 
 chart = plot_calibration_and_intervals(df)
-chart  # .configure_view(stroke=None)
+chart

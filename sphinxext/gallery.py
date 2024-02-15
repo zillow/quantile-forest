@@ -24,7 +24,8 @@ from .utils import (
     create_generic_image,
 )
 from altair.utils.execeval import eval_block
-from examples import iter_examples
+
+from quantile_forest.tests.examples import iter_examples
 
 EXAMPLE_MODULE = "examples"
 
@@ -38,7 +39,7 @@ GALLERY_TEMPLATE = jinja2.Template(
 {{ title }}
 {% for char in title %}-{% endfor %}
 
-General-purpose and introductory examples.
+General-purpose, introductory and illustrative examples.
 
 .. raw:: html
 
