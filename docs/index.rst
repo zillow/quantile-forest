@@ -44,7 +44,7 @@ The main documentation. This provides information and background on the key conc
 
 The API of all functions and classes, as given in the doctring.
 
-`Examples <auto_examples/index.html>`_
+`Examples <gallery/index.html>`_
 --------------------------------------
 
 General-purpose and introductory examples.
