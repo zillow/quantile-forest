@@ -126,8 +126,8 @@ def cqr_strategy(alpha, X_train, X_test, y_train, y_test):
 args = (alpha, X_train, X_test, y_train, y_test)
 df = pd.concat(
     [
-        pd.DataFrame(qrf_strategy(*args)).map(lambda x: x * 100_000).assign(strategy="qrf"),
-        pd.DataFrame(cqr_strategy(*args)).map(lambda x: x * 100_000).assign(strategy="cqr"),
+        pd.DataFrame(qrf_strategy(*args)).pipe(lambda x: x * 100_000).assign(strategy="qrf"),
+        pd.DataFrame(cqr_strategy(*args)).pipe(lambda x: x * 100_000).assign(strategy="cqr"),
     ]
 )
 

@@ -60,7 +60,7 @@ df = pd.DataFrame(
         "y_pred_low": np.concatenate(y_pred_low),
         "y_pred_upp": np.concatenate(y_pred_upp),
     }
-).map(
+).pipe(
     lambda x: x * 100_000
 )  # convert to dollars
 
