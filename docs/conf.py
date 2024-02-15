@@ -131,10 +131,12 @@ html_short_title = "quantile-forest"
 
 htmlhelp_basename = "quantile-forestdoc"
 
+
 # Adapted from: http://rackerlabs.github.io/docs-rackspace/tools/rtd-tables.html
 # and https://github.com/rtfd/sphinx_rtd_theme/issues/117
 def setup(app):
     app.add_css_file("theme_overrides.css")
+
 
 html_css_files = [
     "css/gallery.css",
