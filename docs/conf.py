@@ -33,8 +33,10 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
     "sphinx.ext.doctest",
+    "sphinx.ext.githubpages",
     "sphinx.ext.intersphinx",
     "numpydoc",
+    "sphinx_design",
     "sphinxcontrib.bibtex",
     "sphinxext_altair.altairplot",
     "sphinxext.gallery",
@@ -99,17 +101,25 @@ bibtex_bibfiles = ["refs.bib"]
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 html_theme = "pydata_sphinx_theme"
-html_title = f"Version {version}"
-html_style = "css/quantile-forest.css"
-html_css_files = [
-    "css/quantile-forest.css",
-    "css/gallery.css",
-]
-html_sidebars = {
-    "changelog": [],
+
+html_theme_options = {
+    # "navbar_start": ["navbar-logo", "navbar-project"],
+    "navbar_start": ["navbar-project"],
+    "navbar_center": ["navbar-nav"],
+    "navbar_end": ["theme-switcher", "navbar-icon-links"],
+    "primary_sidebar_end": [],
+    "footer_items": [],
+    "icon_links": [
+        {
+            "name": "GitHub",
+            "url": "https://github.com/zillow/quantile-forest",
+            "icon": "fab fa-github fa-lg",
+            "type": "fontawesome",
+        },
+    ],
 }
 
-html_theme_options = {}
+html_context = {"default_mode": "light"}
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -117,43 +127,43 @@ html_theme_options = {}
 html_static_path = ["_static"]
 
 # Output file base name for HTML help builder.
+html_short_title = "quantile-forest"
+
 htmlhelp_basename = "quantile-forestdoc"
+
+# Adapted from: http://rackerlabs.github.io/docs-rackspace/tools/rtd-tables.html
+# and https://github.com/rtfd/sphinx_rtd_theme/issues/117
+def setup(app):
+    app.add_css_file("theme_overrides.css")
+
+html_css_files = [
+    "css/gallery.css",
+]
+
+# Custom sidebar templates, maps document names to template names.
+html_sidebars = {
+    "index": [],
+    "**": ["sidebar-nav-bs"],
+}
 
 # -- Options for autodoc ------------------------------------------------------
 
-autodoc_default_options = {
-    "members": True,
-    "inherited-members": True,
-}
+autodoc_default_flags = ["members", "inherited-members"]
 
-# generate autosummary even if no references
+# Generate autosummary even if no references.
 autosummary_generate = True
 
 # -- Options for numpydoc -----------------------------------------------------
 
-# this is needed for some reason...
-# see https://github.com/numpy/numpydoc/issues/69
+# Hide extra class members.
 numpydoc_show_class_members = False
 
 # -- Options for intersphinx --------------------------------------------------
 
-# intersphinx configuration
+# intersphinx configuration.
 intersphinx_mapping = {
     "python": ("https://docs.python.org/{.major}".format(sys.version_info), None),
     "sklearn": ("https://scikit-learn.org/stable", None),
-}
-
-# -- Options for sphinx-gallery -----------------------------------------------
-
-# Generate the plot for the gallery
-plot_gallery = "True"
-
-# sphinx-gallery configuration
-sphinx_gallery_conf = {
-    "doc_module": "quantile-forest",
-    "backreferences_dir": os.path.join("references/generated"),
-    "show_memory": True,
-    "reference_url": {"quantile-forest": None},
 }
 
 # -- Options for LaTeX output ---------------------------------------------
@@ -185,7 +195,6 @@ latex_documents = [
 # If false, no module index is generated.
 # latex_domain_indices = True
 
-
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
@@ -200,34 +209,3 @@ man_pages = [
 
 # If true, show URL addresses after external links.
 # man_show_urls = False
-
-# -- Options for Texinfo output -------------------------------------------
-
-# Grouping the document tree into Texinfo files. List of tuples
-# (source start file, target name, title, author,
-#  dir menu entry, description, category)
-texinfo_documents = [
-    (
-        "index",
-        "quantile-forest",
-        "quantile-forest Documentation",
-        "Zillow Group",
-        "quantile-forest",
-        "scikit-learn compatible quantile forests.",
-        "Miscellaneous",
-    ),
-]
-
-# -- Additional temporary hacks -----------------------------------------------
-
-# Temporary work-around for spacing problem between parameter and parameter
-# type in the doc, see https://github.com/numpy/numpydoc/issues/215. The bug
-# has been fixed in sphinx (https://github.com/sphinx-doc/sphinx/pull/5976) but
-# through a change in sphinx basic.css except rtd_theme does not use basic.css.
-# In an ideal world, this would get fixed in this PR:
-# https://github.com/readthedocs/sphinx_rtd_theme/pull/747/files
-
-
-def setup(app):
-    app.add_js_file("js/copybutton.js")
-    app.add_css_file("basic.css")

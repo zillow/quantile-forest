@@ -19,8 +19,6 @@
    {% endif %}
    {% endblock %}
 
-.. include:: {{module}}.{{objname}}.examples
-
 .. raw:: html
 
-    <div style='clear:both'></div>
+    <div class="clearer"></div>

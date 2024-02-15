@@ -1,9 +1,10 @@
-###############
+.. _install:
+
 Getting Started
-###############
+===============
 
 Prerequisites
-=============
+-------------
 
 The quantile-forest package requires the following dependencies:
 
@@ -13,14 +14,14 @@ The quantile-forest package requires the following dependencies:
 * scipy (>=1.4)
 
 Install
-=======
+-------
 
 quantile-forest can be installed using `pip`::
 
   pip install quantile-forest
 
 Developer Install
-=================
+-----------------
 
 Building the package from source additionally requires the following dependencies:
 
@@ -31,7 +32,7 @@ To manually build and install the package, run::
   pip install --verbose --editable .
 
 Troubleshooting
-===============
+---------------
 
 If the build fails because SciPy is not installed, ensure OpenBLAS and LAPACK are available and accessible.
 
@@ -42,7 +43,7 @@ On macOS, run::
   export SYSTEM_VERSION_COMPAT=1
 
 Test and Coverage
-=================
+-----------------
 
 To test the code::
 
@@ -53,9 +54,16 @@ To test the documentation::
   $ python -m pytest docs/*rst
 
 Documentation
-=============
+-------------
 
 To build the documentation, run::
 
   $ pip install -r ./docs/sphinx_requirements.txt
   $ sphinx-build -b html ./docs ./docs/_build
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Install
+   :hidden:
+
+   Getting Started <self>
