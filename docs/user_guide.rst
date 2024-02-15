@@ -89,9 +89,10 @@ The output of the `predict` method is an array with one column for each specifie
 Multi-target quantile regression is also supported. If the target values are multi-dimensional, then the final output column will correspond to the number of targets::
 
     >>> from sklearn import datasets
-    >>> from sklearn.model_selection import train_test_split
     >>> from quantile_forest import RandomForestQuantileRegressor
-    >>> X, y = datasets.make_regression(n_targets=2, random_state=0)  # 2 targets
+    >>> X, y = datasets.make_regression(n_samples=100, n_targets=2, random_state=0)
+    >>> y.shape
+    (100, 2)
     >>> reg_multi = RandomForestQuantileRegressor()
     >>> reg_multi.fit(X, y)
     RandomForestQuantileRegressor()

@@ -1,7 +1,8 @@
 sphinx
-sphinx_gallery
-sphinx_rtd_theme
-sphinxcontrib.bibtex
-pydata_sphinx_theme
+altair
 numpydoc
-matplotlib
+pillow
+pydata_sphinx_theme
+sphinxcontrib.bibtex
+sphinxext-altair
+vl-convert-python

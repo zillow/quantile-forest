@@ -107,6 +107,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
         max_samples=None,
         max_samples_leaf=1,
     ):
+        """Initialize base quantile forest regressor."""
         init_dict = {
             (
                 "base_estimator" if sklearn_version < parse_version("1.2.0") else "estimator"
@@ -208,6 +209,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
 
     def _get_y_train_leaves(self, X, y_dim, sorter=None, sample_weight=None):
         """Return a mapping of each leaf node to its list of training indices.
+
         The ``apply`` function is used on the ``X`` values to obtain the leaf
         indices for the appropriate training indices, as sorted by ``sorter``.
 
@@ -323,7 +325,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
                     y_indices = random.sample(y_indices, max_samples_leaf)
 
                 if sorter is not None:
-                    y_indices = np.asarray(y_indices).reshape(y_dim, -1)
+                    y_indices = np.asarray(y_indices).reshape(-1, y_dim).swapaxes(0, 1)
 
                     for j in range(y_dim):
                         y_train_leaves[i, leaf_idx, j, : len(y_indices[j])] = y_indices[j]
@@ -612,7 +614,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
         indices=None,
         duplicates=None,
     ):
-        """Returns quantile ranks for X with scores y.
+        """Return quantile ranks for X with scores y.
 
         A quantile rank of, for example, 0.8 means that 80% of the scores in
         `inputs` are below the given score.
@@ -716,7 +718,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
         indices=None,
         duplicates=None,
     ):
-        """Returns training proximity counts for input samples.
+        """Return training proximity counts for input samples.
 
         Parameters
         ----------
@@ -811,7 +813,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
         return proximities
 
     def score(self, X, y, quantiles=0.5, sample_weight=None):
-        """Returns the coefficient of determination R^2 of the prediction.
+        """Return the coefficient of determination R^2 of the prediction.
 
         The coefficient R^2 is defined as (1 - u/v), where u is the residual
         sum of squares ((y_true - y_pred) ** 2).sum() and v is the total
@@ -1093,6 +1095,7 @@ class RandomForestQuantileRegressor(BaseForestQuantileRegressor):
         ccp_alpha=0.0,
         max_samples=None,
     ):
+        """Initialize random forest quantile regressor."""
         init_dict = {
             "estimator": DecisionTreeRegressor(),
             "n_estimators": n_estimators,
@@ -1381,6 +1384,7 @@ class ExtraTreesQuantileRegressor(BaseForestQuantileRegressor):
         ccp_alpha=0.0,
         max_samples=None,
     ):
+        """Initialize extra trees quantile regressor."""
         init_dict = {
             "estimator": ExtraTreeRegressor(),
             "n_estimators": n_estimators,
