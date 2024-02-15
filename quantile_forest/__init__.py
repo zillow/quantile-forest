@@ -1,3 +1,5 @@
+"""`quantile_forest` module that implements quantile regression forests."""
+
 import os
 import sys
 
