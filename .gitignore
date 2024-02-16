@@ -63,22 +63,20 @@ coverage.xml
 
 # Sphinx documentation
 docs/_build/
-docs/auto_examples/
 docs/generated/
 docs/references/
 
 # PyBuilder
 target/
 
-# OS generated files #
-######################
+# OS generated files
 .DS_Store
 
+# Paper
 paper/paper.pdf
 paper/paper.jats
-docs/sg_execution_times.rst
-docs/_images/*.png
-docs/_static/*.png
-docs/_images/_image_hashes.json
-docs/_static/_image_hashes.json
+
+# Sphinx documentation
+docs/_build/
+docs/_images/
 docs/gallery/*.rst

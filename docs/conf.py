@@ -104,7 +104,7 @@ html_theme = "pydata_sphinx_theme"
 
 html_theme_options = {
     # "navbar_start": ["navbar-logo", "navbar-project"],
-    "navbar_start": ["navbar-project"],
+    "navbar_start": ["navbar-logo", "navbar-project"],
     "navbar_center": ["navbar-nav"],
     "navbar_end": ["theme-switcher", "navbar-icon-links"],
     "primary_sidebar_end": [],
@@ -124,10 +124,19 @@ html_context = {"default_mode": "light"}
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ["_static"]
+html_static_path = ["_static", "_images"]
 
 # Output file base name for HTML help builder.
 html_short_title = "quantile-forest"
+
+# The name of an image file (relative to this directory) to place at the top
+# of the sidebar.
+html_logo = "_static/quantile-forest-logo.png"
+
+# The name of an image file (relative to this directory) to use as a favicon of
+# the docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
+# pixels large.
+html_favicon = "_static/favicon.ico"
 
 htmlhelp_basename = "quantile-forestdoc"
 
@@ -150,7 +159,10 @@ html_sidebars = {
 
 # -- Options for autodoc ------------------------------------------------------
 
-autodoc_default_flags = ["members", "inherited-members"]
+autodoc_default_options = {
+    "members": True,
+    "inherited-members": True,
+}
 
 # Generate autosummary even if no references.
 autosummary_generate = True
