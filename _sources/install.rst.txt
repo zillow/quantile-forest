@@ -59,6 +59,7 @@ Documentation
 To build the documentation, run::
 
   $ pip install -r ./docs/sphinx_requirements.txt
+  $ mkdir -p ./docs/_images
   $ sphinx-build -b html ./docs ./docs/_build
 
 .. toctree::
