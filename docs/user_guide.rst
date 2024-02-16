@@ -75,6 +75,10 @@ Default quantiles can be specified at model initialization using the `default_qu
     >>> reg.fit(X_train, y_train)
     RandomForestQuantileRegressor(default_quantiles=[0.25, 0.5, 0.75])
     >>> y_pred = reg.predict(X_test)  # predicts using the default quantiles
+    >>> y_pred.ndim == 2
+    True
+    >>> y_pred.shape[1] == 3
+    True
 
 The default quantiles can be overwritten at prediction time by specifying a value for `quantiles`:
 
@@ -82,6 +86,8 @@ The default quantiles can be overwritten at prediction time by specifying a valu
     >>> reg.fit(X_train, y_train)
     RandomForestQuantileRegressor(default_quantiles=[0.25, 0.5, 0.75])
     >>> y_pred = reg.predict(X_test, quantiles=0.5)  # uses override quantiles
+    >>> y_pred.ndim == 1
+    True
 
 The output of the `predict` method is an array with one column for each specified quantile or a single column if no quantiles are specified. The order of the output columns corresponds to the order of the quantiles, which can be specified in any order (i.e., they do not need to be monotonically ordered)::
 
@@ -195,13 +201,15 @@ Proximity counts are counts of the number of times that two samples share a leaf
     >>> X, y = datasets.load_diabetes(return_X_y=True)
     >>> X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25)
     >>> reg = RandomForestQuantileRegressor().fit(X_train, y_train)
-    >>> proximities = reg.proximity_counts(X_test)
+    >>> proximities = reg.proximity_counts(X_test)  # proximity counts for X_test
 
 For each test sample, the method outputs a list of tuples of the training index and proximity count, listed in descending order by proximity count. For example, a test sample with an output of [(1, 5), (0, 3), (3, 1)], means that the test sample shared 5, 3, and 1 leaf nodes with the training samples that were (zero-)indexed as 1, 0, and 3 during model fitting, respectively.
 
 The maximum number of proximity counts output per test sample can be limited by specifying `max_proximities`::
 
     >>> proximities = reg.proximity_counts(X_test, max_proximities=10)
+    >>> np.all([len(prox) <= 10 for prox in proximities])
+    True
 
 Out-of-bag (OOB) proximity counts can be returned by specifying `oob_score = True`::
 

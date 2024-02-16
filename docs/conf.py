@@ -150,7 +150,10 @@ html_sidebars = {
 
 # -- Options for autodoc ------------------------------------------------------
 
-autodoc_default_flags = ["members", "inherited-members"]
+autodoc_default_options = {
+    "members": True,
+    "inherited-members": True,
+}
 
 # Generate autosummary even if no references.
 autosummary_generate = True

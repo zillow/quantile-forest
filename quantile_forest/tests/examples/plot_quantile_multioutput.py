@@ -46,7 +46,7 @@ def make_func_Xy(funcs, bounds, n_samples):
 
 X, y = make_func_Xy(funcs, bounds, n_samples)
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.5, random_state=0)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
 
 qrf = RandomForestQuantileRegressor(max_samples_leaf=None, max_depth=4, random_state=0)
 qrf.fit(X_train, y_train)
