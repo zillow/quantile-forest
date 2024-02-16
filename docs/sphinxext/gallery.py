@@ -257,8 +257,7 @@ class MiniGalleryDirective(Directive):
 def main(app):
     gallery_dir = app.builder.config.gallery_dir
     target_dir = os.path.join(app.builder.srcdir, gallery_dir)
-    # image_dir = os.path.join(app.builder.srcdir, "_images")
-    image_dir = os.path.join(app.builder.srcdir, "_static")
+    image_dir = os.path.join(app.builder.srcdir, "_images")
 
     gallery_ref = app.builder.config.gallery_ref
     gallery_title = app.builder.config.gallery_title
