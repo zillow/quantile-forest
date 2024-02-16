@@ -1,4 +1,4 @@
-# quantile-forest <a href="zillow.github.io/quantile-forest/"><img align="right" src="zillow.github.io/quantile-forest/_static/quantile-forest-logo.png" height="50"></img></a>
+# quantile-forest <a href="https://zillow.github.io/quantile-forest/"><img align="right" src="https://zillow.github.io/quantile-forest/_static/quantile-forest-logo.png" height="50"></img></a>
 
 [![PyPI - Version](https://img.shields.io/pypi/v/quantile-forest)](https://pypi.org/project/quantile-forest)
 [![License](https://img.shields.io/github/license/zillow/quantile-forest)](https://github.com/zillow/quantile-forest/blob/main/LICENSE)
