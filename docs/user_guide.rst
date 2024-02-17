@@ -122,9 +122,8 @@ Quantile Weighting
 By default, the predict method calculates quantiles using a weighted quantile method (`weighted_quantile = True`), which assigns a weight to each sample in the training set based on the number of times that it co-occurs in the same leaves as the test sample. When the number of samples in the training set is larger than the expected size of this list (i.e., :math:`n_{train} \gg n_{trees} \cdot n_{leaves} \cdot n_{leafsamples}`), it can be more efficient to calculate an unweighted quantile (`weighted_quantile = False`), which aggregates the list of training `y` values for each leaf node to which the test sample belongs across all trees. For a given input, both methods can return the same output values::
 
     >>> import numpy as np
-    >>> kwargs = {"weighted_leaves": False}
-    >>> y_pred_weighted = reg.predict(X_test, weighted_quantile=True, **kwargs)
-    >>> y_pred_unweighted = reg.predict(X_test, weighted_quantile=False, **kwargs)
+    >>> y_pred_weighted = reg.predict(X_test, weighted_quantile=True)
+    >>> y_pred_unweighted = reg.predict(X_test, weighted_quantile=False)
     >>> np.allclose(y_pred_weighted, y_pred_unweighted)
     True
 
