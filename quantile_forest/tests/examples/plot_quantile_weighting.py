@@ -28,7 +28,7 @@ def timing():
     t1 = time.time()
 
 
-X, y = datasets.make_regression(n_samples=500, n_features=4, random_state=0)
+X, y = datasets.make_regression(n_samples=250, n_features=4, n_targets=5, random_state=0)
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.5, random_state=0)
 
@@ -69,6 +69,7 @@ for i, n_estimators in enumerate(est_sizes):
         timings[i, j, :] = [rf_time(), qrf_weighted_time(), qrf_unweighted_time()]
         timings[i, j, :] *= 1000  # convert from milliseconds to seconds
 
+timings /= timings.min()  # normalize by minimum runtime
 timings = np.transpose(timings, axes=[2, 0, 1])  # put the estimator name first
 
 data = {"name": [], "n_estimators": [], "iteration": [], "runtime": []}
@@ -115,7 +116,7 @@ def plot_timings_by_size(df, legend):
         .mark_line()
         .encode(
             x=alt.X("n_estimators:Q", title="Number of Estimators"),
-            y=alt.Y("mean:Q", title="Prediction Runtime (seconds)"),
+            y=alt.Y("mean:Q", title="Prediction Runtime (normalized)"),
             color=color,
         )
     )

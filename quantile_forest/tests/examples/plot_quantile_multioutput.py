@@ -21,11 +21,11 @@ bounds = [0, 100]
 
 funcs = [
     {
-        "truth": lambda x: np.log1p(x + 1),
-        "noise": lambda x: np.log1p(x + 1) * np.random.uniform(size=len(x)),
+        "signal": lambda x: np.log1p(x + 1),
+        "noise": lambda x: np.log1p(x) * np.random.uniform(size=len(x)),
     },
     {
-        "truth": lambda x: np.log1p(np.sqrt(x)),
+        "signal": lambda x: np.log1p(np.sqrt(x)),
         "noise": lambda x: np.log1p(x / 2) * np.random.uniform(size=len(x)),
     },
 ]
@@ -40,7 +40,7 @@ def make_func_Xy(funcs, bounds, n_samples):
     x = np.linspace(*bounds, n_samples)
     y = np.empty((len(x), len(funcs)))
     for i, func in enumerate(funcs):
-        y[:, i] = func["truth"](x) + func["noise"](x)
+        y[:, i] = func["signal"](x) + func["noise"](x)
     return np.atleast_2d(x).T, y
 
 
@@ -51,14 +51,14 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_
 qrf = RandomForestQuantileRegressor(max_samples_leaf=None, max_depth=4, random_state=0)
 qrf.fit(X_train, y_train)
 
-y_pred = qrf.predict(X, quantiles=[0.025, 0.5, 0.975], weighted_leaves=False)
+y_pred = qrf.predict(X, quantiles=[0.025, 0.5, 0.975], weighted_quantile=False)
 y_pred = y_pred.reshape(-1, 3, len(funcs))
 
 df = pd.DataFrame(
     {
         "x": np.tile(X.squeeze(), len(funcs)),
         "y": y.reshape(-1, order="F"),
-        "y_true": np.concatenate([f["truth"](X.squeeze()) for f in funcs]),
+        "y_true": np.concatenate([f["signal"](X.squeeze()) for f in funcs]),
         "y_pred": np.concatenate([y_pred[:, 1, i] for i in range(len(funcs))]),
         "y_pred_low": np.concatenate([y_pred[:, 0, i] for i in range(len(funcs))]),
         "y_pred_upp": np.concatenate([y_pred[:, 2, i] for i in range(len(funcs))]),

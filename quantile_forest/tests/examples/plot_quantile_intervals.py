@@ -2,8 +2,10 @@
 Quantile Regression Forests Prediction Intervals
 ================================================
 
-An example of how to use a quantile regression forest to plot prediction
-intervals on the California Housing dataset.
+An example of how to use quantile regression forests to generate prediction
+intervals on the California Housing dataset. Inspired by Figure 3 of
+"Quantile Regression Forests" by Meinshausen:
+https://jmlr.org/papers/v7/meinshausen06a.html.
 """
 
 import altair as alt
@@ -61,8 +63,8 @@ df = pd.DataFrame(
         "y_pred_upp": np.concatenate(y_pred_upp),
     }
 ).pipe(
-    lambda x: x * 100_000
-)  # convert to dollars
+    lambda x: x * 100_000  # convert to dollars
+)
 
 
 def plot_calibration_and_intervals(df):
