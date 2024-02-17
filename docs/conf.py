@@ -109,6 +109,7 @@ html_theme_options = {
     "navbar_end": ["theme-switcher", "navbar-icon-links"],
     "primary_sidebar_end": [],
     "footer_items": [],
+    "logo": {"image_dark": "_static/quantile-forest-logo-white.png"},
     "icon_links": [
         {
             "name": "GitHub",
