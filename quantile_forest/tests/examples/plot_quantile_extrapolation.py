@@ -60,7 +60,7 @@ qrf = RandomForestQuantileRegressor(
 )
 qrf.fit(np.expand_dims(X_train, axis=-1), y_train)
 
-y_pred = qrf.predict(X_test, quantiles=[0.025, 0.5, 0.975])  # extrapolate
+y_pred = qrf.predict(X_test, quantiles=[0.025, 0.5, 0.975])
 
 
 df = pd.DataFrame(
@@ -156,7 +156,7 @@ def plot_extrapolations(df, title="", legend=False, x_domain=None, y_domain=None
         tooltip=tooltip_pred,
     )
 
-    base1 = bar_pred + points_true + line_true + line_pred
+    chart = bar_pred + points_true + line_true + line_pred
 
     if legend:
         # For desired legend ordering.
@@ -175,10 +175,10 @@ def plot_extrapolations(df, title="", legend=False, x_domain=None, y_domain=None
             blank = blank.encode(
                 color=alt.Color(f"{k}:N", scale=alt.Scale(range=[v["color"]]), title=None)
             )
-            base1 += blank
-        base1 = base1.resolve_scale(color="independent")
+            chart += blank
+        chart = chart.resolve_scale(color="independent")
 
-    chart = base1.properties(height=200, width=300, title=title)
+    chart = chart.properties(height=200, width=300, title=title)
 
     return chart
 

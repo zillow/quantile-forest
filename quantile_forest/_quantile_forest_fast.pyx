@@ -617,7 +617,7 @@ cdef class QuantileForest:
         UINT8_t[:, :] X_indices=None,
         char* interpolation=b"linear",
         bint weighted_quantile=<bint>True,
-        bint weighted_leaves=<bint>True,
+        bint weighted_leaves=<bint>False,
         bint aggregate_leaves_first=<bint>True,
     ):
         """Return predictions for ``est.apply`` outputs.
@@ -644,7 +644,7 @@ cdef class QuantileForest:
         weighted_quantile : bool, default=True
             Calculate weighted quantiles.
 
-        weighted_leaves : bool, default=True
+        weighted_leaves : bool, default=False
             Weight samples inversely to the size of their leaf node.
 
         aggregate_leaves_first : bool, default=True

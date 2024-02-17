@@ -68,6 +68,7 @@ for idx, interpolation in enumerate(interpolations):
     data["y_med"].extend(y_medians[idx])
     data["y_low"].extend(y_medians[idx] - y_errs[idx][0])
     data["y_upp"].extend(y_medians[idx] + y_errs[idx][1])
+
 df = pd.DataFrame(data)
 
 
@@ -79,6 +80,14 @@ def plot_interpolations(df, legend):
         alt.Color("method:N", sort=list(legend.keys()), title=None),
         alt.value("lightgray"),
     )
+
+    tooltip = [
+        alt.Tooltip("method:N", title="Method"),
+        alt.Tooltip("x:N", title="X Values"),
+        alt.Tooltip("y_med:N", format=".3f", title="Median Y Value"),
+        alt.Tooltip("y_low:N", format=".3f", title="Lower Y Value"),
+        alt.Tooltip("y_upp:N", format=".3f", title="Upper Y Value"),
+    ]
 
     point = (
         alt.Chart(df, width=alt.Step(20))
@@ -92,13 +101,7 @@ def plot_interpolations(df, legend):
             ),
             y=alt.Y("y_med:Q", title="Actual and Predicted Values"),
             color=color,
-            tooltip=[
-                alt.Tooltip("method:N", title="Method"),
-                alt.Tooltip("x:N", title="X Values"),
-                alt.Tooltip("y_med:N", format=".3f", title="Median Y Value"),
-                alt.Tooltip("y_low:N", format=".3f", title="Lower Y Value"),
-                alt.Tooltip("y_upp:N", format=".3f", title="Upper Y Value"),
-            ],
+            tooltip=tooltip,
         )
     )
 
@@ -115,13 +118,7 @@ def plot_interpolations(df, legend):
             y=alt.Y("y_low:Q", title=""),
             y2=alt.Y2("y_upp:Q", title=None),
             color=color,
-            tooltip=[
-                alt.Tooltip("method:N", title="Method"),
-                alt.Tooltip("x:N", title="X Values"),
-                alt.Tooltip("y_med:N", format=".3f", title="Median Y Value"),
-                alt.Tooltip("y_low:N", format=".3f", title="Lower Y Value"),
-                alt.Tooltip("y_upp:N", format=".3f", title="Upper Y Value"),
-            ],
+            tooltip=tooltip,
         )
     )
 

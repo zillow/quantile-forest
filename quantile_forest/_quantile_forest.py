@@ -449,7 +449,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
         quantiles=None,
         interpolation="linear",
         weighted_quantile=True,
-        weighted_leaves=True,
+        weighted_leaves=False,
         aggregate_leaves_first=True,
         oob_score=False,
         indices=None,
@@ -490,7 +490,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
             number of training samples relative to siblings is small, weighted
             quantiles can be more efficient to compute than unweighted ones.
 
-        weighted_leaves : bool, default=True
+        weighted_leaves : bool, default=False
             Weight samples inversely to the size of their leaf node.
             Only used if `weighted_quantile=True` and `max_samples_leaf!=1`.
 
