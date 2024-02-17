@@ -119,16 +119,15 @@ Multi-target quantile regression is also supported. If the target values are mul
 Quantile Weighting
 ~~~~~~~~~~~~~~~~~~
 
-By default, the predict method calculates quantiles by weighting each sample inversely according to the size of its leaf node (`weighted_leaves = True`). If `weighted_leaves = False`, each sample in a leaf (including repeated bootstrap samples) will be given equal weight. Note that this leaf-based weighting can only be used with weighted quantiles.
-
 By default, the predict method calculates quantiles using a weighted quantile method (`weighted_quantile = True`), which assigns a weight to each sample in the training set based on the number of times that it co-occurs in the same leaves as the test sample. When the number of samples in the training set is larger than the expected size of this list (i.e., :math:`n_{train} \gg n_{trees} \cdot n_{leaves} \cdot n_{leafsamples}`), it can be more efficient to calculate an unweighted quantile (`weighted_quantile = False`), which aggregates the list of training `y` values for each leaf node to which the test sample belongs across all trees. For a given input, both methods can return the same output values::
 
     >>> import numpy as np
-    >>> kwargs = {"weighted_leaves": False}
-    >>> y_pred_weighted = reg.predict(X_test, weighted_quantile=True, **kwargs)
-    >>> y_pred_unweighted = reg.predict(X_test, weighted_quantile=False, **kwargs)
+    >>> y_pred_weighted = reg.predict(X_test, weighted_quantile=True)
+    >>> y_pred_unweighted = reg.predict(X_test, weighted_quantile=False)
     >>> np.allclose(y_pred_weighted, y_pred_unweighted)
     True
+
+By default, the predict method calculates quantiles by giving each sample in a leaf (including repeated bootstrap samples) equal weight (`weighted_leaves = False`). If `weighted_leaves = True`, each sample will be weighted inversely according to the size of its leaf node. Note that this leaf-based weighting can only be used with weighted quantiles.
 
 Out-of-Bag Estimation
 ~~~~~~~~~~~~~~~~~~~~~
