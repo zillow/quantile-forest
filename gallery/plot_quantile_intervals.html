@@ -388,8 +388,10 @@ document.write(`
                   
   <section id="quantile-regression-forests-prediction-intervals">
 <span id="gallery-plot-quantile-intervals"></span><h1>Quantile Regression Forests Prediction Intervals<a class="headerlink" href="#quantile-regression-forests-prediction-intervals" title="Link to this heading">#</a></h1>
-<p>An example of how to use a quantile regression forest to plot prediction
-intervals on the California Housing dataset.</p>
+<p>An example of how to use quantile regression forests to generate prediction
+intervals on the California Housing dataset. Inspired by Figure 3 of
+“Quantile Regression Forests” by Meinshausen:
+<a class="reference external" href="https://jmlr.org/papers/v7/meinshausen06a.html">https://jmlr.org/papers/v7/meinshausen06a.html</a>.</p>
 
 <div id="plot_quantile_intervals-rst-altair-plot-0">
 <script>
@@ -460,8 +462,8 @@ intervals on the California Housing dataset.</p>
         <span class="s2">&quot;y_pred_upp&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">y_pred_upp</span><span class="p">),</span>
     <span class="p">}</span>
 <span class="p">)</span><span class="o">.</span><span class="n">pipe</span><span class="p">(</span>
-    <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="o">*</span> <span class="mi">100_000</span>
-<span class="p">)</span>  <span class="c1"># convert to dollars</span>
+    <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="o">*</span> <span class="mi">100_000</span>  <span class="c1"># convert to dollars</span>
+<span class="p">)</span>
 
 
 <span class="k">def</span> <span class="nf">plot_calibration_and_intervals</span><span class="p">(</span><span class="n">df</span><span class="p">):</span>
