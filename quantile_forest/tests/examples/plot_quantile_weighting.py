@@ -4,8 +4,10 @@ Weighted vs. Unweighted Quantile Estimates
 
 An example comparison of the prediction runtime when using a quantile
 regression forest with weighted and unweighted quantiles to compute the
-predicted output values. A standard random forest regressor is included for
-comparison.
+predicted output values. While weighted and unweighted quantiles produce
+identical outputs, the relative runtime of the methods depends on the number
+of training samples and the total number of leaf samples used to calculate the
+quantiles. A standard random forest regressor is included for comparison.
 """
 
 import time
