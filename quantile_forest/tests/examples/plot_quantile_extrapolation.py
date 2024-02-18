@@ -5,7 +5,8 @@ Extrapolation with Quantile Regression Forests
 An example on a toy dataset that demonstrates that the prediction intervals
 produced by a quantile regression forest do not extrapolate outside of the
 bounds of the data in the training set, an important limitation of the
-approach.
+approach. Notice that the extrapolated median and interval values fail to
+accurately predict values outside of those observed in the training set.
 """
 
 import altair as alt
@@ -164,7 +165,7 @@ def plot_extrapolations(df, title="", legend=False, x_domain=None, y_domain=None
             "y_pred_line": {"type": "line", "color": "#006aff", "name": "Predicted Median"},
             "y_pred_area": {"type": "area", "color": "#e0f2ff", "name": "Predicted 95% Interval"},
             "y_extrp_line": {"type": "line", "color": "red", "name": "Extrapolated Median"},
-            "y_extrp_area": {"type": "area", "color": "red", "name": "Extrapolated Interval"},
+            "y_extrp_area": {"type": "area", "color": "red", "name": "Extrapolated 95% Interval"},
         }
         for k, v in data.items():
             blank = alt.Chart(pd.DataFrame({k: [v["name"]]}))
