@@ -6,8 +6,10 @@ An example that demonstrates the use of a quantile regression forest (QRF) to
 construct reliable prediction intervals using conformalized quantile
 regression (CQR). CQR offers prediction intervals that attain valid coverage,
 while QRF may require additional calibration for reliable interval estimates.
-Adapted from "Prediction intervals: Quantile Regression Forests" by Carl McBride
-Ellis:
+Notice that in this example, by using CQR we obtain a level of coverage (i.e.,
+percentage of samples that actaully fall within their prediction interval)
+that is closer to the target level. Adapted from "Prediction intervals:
+Quantile Regression Forests" by Carl McBride Ellis:
 https://www.kaggle.com/code/carlmcbrideellis/prediction-intervals-quantile-regression-forests.
 """
 
@@ -225,7 +227,7 @@ def plot_prediction_intervals(df, domain):
         )
         .transform_calculate(
             coverage_text=(
-                "'Coverage: ' + format(datum.coverage * 100, '.1f') + '%'"
+                f"'Coverage: ' + format({alt.datum['coverage'] * 100}, '.1f') + '%'"
                 f" + ' (target = {cov_pct}%)'"
             )
         )
@@ -240,7 +242,9 @@ def plot_prediction_intervals(df, domain):
         base.transform_aggregate(
             coverage="mean(coverage)", width="mean(width)", groupby=["strategy"]
         )
-        .transform_calculate(width_text="'Interval Width: ' + format(datum.width, '$,d')")
+        .transform_calculate(
+            width_text=f"'Interval Width: ' + format({alt.datum['width']}, '$,d')"
+        )
         .mark_text(align="left", baseline="top")
         .encode(
             x=alt.value(5),
