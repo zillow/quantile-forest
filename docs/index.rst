@@ -1,7 +1,7 @@
 :html_theme.sidebar_secondary.remove:
 
-quantile-forest Documentation
-=============================
+quantile-forest
+===============
 .. role:: raw-html(raw)
    :format: html
 
