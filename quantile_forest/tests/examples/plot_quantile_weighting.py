@@ -30,7 +30,7 @@ def timing():
     t1 = time.time()
 
 
-X, y = datasets.make_regression(n_samples=250, n_features=4, n_targets=5, random_state=0)
+X, y = datasets.make_regression(n_samples=500, n_features=4, n_targets=5, random_state=0)
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.5, random_state=0)
 
@@ -40,8 +40,8 @@ legend = {
     "QRF Unweighted Quantile": "#001751",
 }
 
-est_sizes = [1, 5, 10, 25, 50, 100]
-n_repeats = 10
+est_sizes = [1, 5, 10, 25, 50, 75, 100]
+n_repeats = 5
 
 timings = np.empty((len(est_sizes), n_repeats, 3))
 for i, n_estimators in enumerate(est_sizes):
