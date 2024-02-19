@@ -41,25 +41,7 @@ est = RandomForestQuantileRegressor(
 )
 est.fit(X, y)
 
-y_medians = []
-y_errs = []
-for interpolation in interpolations:
-    y_pred = est.predict(
-        X,
-        quantiles=[0.025, 0.5, 0.975],
-        interpolation=interpolation.lower(),
-    )
-    y_medians.append(y_pred[:, 1])
-    y_errs.append(
-        np.concatenate(
-            (
-                [y_pred[:, 1] - y_pred[:, 0]],
-                [y_pred[:, 2] - y_pred[:, 1]],
-            ),
-            axis=0,
-        )
-    )
-
+# Initialize data with actual values.
 data = {
     "method": ["Actual"] * len(y),
     "x": [f"Sample {idx + 1} ({x})" for idx, x in enumerate(X.tolist())],
@@ -67,12 +49,16 @@ data = {
     "y_low": y.tolist(),
     "y_upp": y.tolist(),
 }
-for idx, interpolation in enumerate(interpolations):
+
+# Populate data based on prediction results with different interpolations.
+for interpolation in interpolations:
+    y_pred = est.predict(X, quantiles=[0.025, 0.5, 0.975], interpolation=interpolation.lower())
+
     data["method"].extend([interpolation] * len(y))
     data["x"].extend([f"Sample {idx + 1} ({x})" for idx, x in enumerate(X.tolist())])
-    data["y_med"].extend(y_medians[idx])
-    data["y_low"].extend(y_medians[idx] - y_errs[idx][0])
-    data["y_upp"].extend(y_medians[idx] + y_errs[idx][1])
+    data["y_low"].extend(y_pred[:, 0])
+    data["y_med"].extend(y_pred[:, 1])
+    data["y_upp"].extend(y_pred[:, 2])
 
 df = pd.DataFrame(data)
 

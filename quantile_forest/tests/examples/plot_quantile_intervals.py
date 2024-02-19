@@ -36,6 +36,7 @@ y_pred = []
 y_pred_low = []
 y_pred_upp = []
 
+# Using k-fold cross-validation, get predictions for all samples.
 for train_index, test_index in kf.split(X):
     X_train, X_test, y_train, y_test = (
         X[train_index],

@@ -43,11 +43,10 @@ legend = {
 est_sizes = [1, 5, 10, 25, 50, 75, 100]
 n_repeats = 5
 
-timings = np.empty((len(est_sizes), n_repeats, 3))
+# Populate data with timing results over estimators.
+data = {"name": [], "n_estimators": [], "iteration": [], "runtime": []}
 for i, n_estimators in enumerate(est_sizes):
     for j in range(n_repeats):
-        result = {}
-
         rf = RandomForestRegressor(
             n_estimators=n_estimators,
             random_state=0,
@@ -68,19 +67,15 @@ for i, n_estimators in enumerate(est_sizes):
         with timing() as qrf_unweighted_time:
             _ = qrf.predict(X_test, quantiles=0.5, weighted_quantile=False)
 
-        timings[i, j, :] = [rf_time(), qrf_weighted_time(), qrf_unweighted_time()]
-        timings[i, j, :] *= 1000  # convert from milliseconds to seconds
+        timings = [rf_time(), qrf_weighted_time(), qrf_unweighted_time()]
 
-timings /= timings.min()  # normalize by minimum runtime
-timings = np.transpose(timings, axes=[2, 0, 1])  # put the estimator name first
+        for name, runtime in zip(legend.keys(), timings):
+            runtime *= 1000  # convert from milliseconds to seconds
 
-data = {"name": [], "n_estimators": [], "iteration": [], "runtime": []}
-for i, name in enumerate(legend):
-    for j in range(timings.shape[1]):
-        data["name"].extend([name] * n_repeats)
-        data["n_estimators"].extend([est_sizes[j]] * n_repeats)
-        data["iteration"].extend(list(range(n_repeats)))
-        data["runtime"].extend(timings[i, j])
+            data["name"].extend([name])
+            data["n_estimators"].extend([est_sizes[i]])
+            data["iteration"].extend([j])
+            data["runtime"].extend([runtime])
 
 df = (
     pd.DataFrame(data)

@@ -46,11 +46,15 @@ def get_test_X(X):
     return X_test
 
 
+# Create the full dataset.
 X, y = make_func_Xy(func, bounds, n_samples)
 
+# Calculate the extrapolation bounds.
 extrap_min_idx = int(n_samples * (extrap_frac / 2))
 extrap_max_idx = int(n_samples - (n_samples * (extrap_frac / 2)))
 
+# Based on the extrapolation bounds, get the training and test data.
+# Training data excludes extrapolated regions; test data includes them.
 X_train, y_train = get_train_Xy(X, y, extrap_min_idx, extrap_max_idx)
 X_test = get_test_X(X)
 
@@ -61,6 +65,7 @@ qrf = RandomForestQuantileRegressor(
 )
 qrf.fit(np.expand_dims(X_train, axis=-1), y_train)
 
+# Get predictions at 95% prediction intervals and median.
 y_pred = qrf.predict(X_test, quantiles=[0.025, 0.5, 0.975])
 
 
