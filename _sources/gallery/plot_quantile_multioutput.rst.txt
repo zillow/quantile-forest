@@ -14,7 +14,7 @@ An example on a toy dataset that demonstrates fitting a single quantile
 regressor for multiple target variables. For each target, multiple quantiles
 can be estimated simultaneously. In this example, the target variable has
 two output values for each sample, with a single regressor used to estimate
-three quantiles (the median and interval) for each target output.
+three quantiles (the median and 95% interval) for each target output.
 
 
 .. altair-plot::

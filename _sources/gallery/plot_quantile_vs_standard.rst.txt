@@ -59,49 +59,49 @@ more reliable estimator of a skewed distribution than the mean.
         "QRF (Median)": "#006aff",
     }
 
-    df = pd.DataFrame({"Actual": y_test, "RF (Mean)": y_pred_rf, "QRF (Median)": y_pred_qrf})
+    df = pd.DataFrame({"actual": y_test, "rf": y_pred_rf, "qrf": y_pred_qrf})
 
 
     def plot_prediction_histograms(df, legend):
-        click = alt.selection_point(fields=["estimator"], bind="legend")
+        click = alt.selection_point(fields=["label"], bind="legend")
 
         color = alt.condition(
             click,
-            alt.Color("estimator:N", sort=list(legend.keys()), title=None),
+            alt.Color("label:N", sort=list(legend.keys()), title=None),
             alt.value("lightgray"),
         )
 
         chart = (
-            alt.Chart(df, width=alt.Step(6))
-            .transform_fold(list(legend.keys()), as_=["estimator", "y_pred"])
-            .transform_joinaggregate(total="count(*)", groupby=["estimator"])
+            alt.Chart(df)
+            .transform_calculate(calculate=f"round({alt.datum['actual']} * 10) / 10", as_="Actual")
+            .transform_calculate(calculate=f"round({alt.datum['rf']} * 10) / 10", as_="RF (Mean)")
+            .transform_calculate(calculate=f"round({alt.datum['qrf']} * 10) / 10", as_="QRF (Median)")
+            .transform_fold(["Actual", "RF (Mean)", "QRF (Median)"], as_=["label", "value"])
+            .transform_joinaggregate(total="count(*)", groupby=["label"])
             .transform_calculate(pct="1 / datum.total")
             .mark_bar()
             .encode(
-                x=alt.X("estimator:N", axis=alt.Axis(labels=False, title=None)),
-                y=alt.Y("sum(pct):Q", axis=alt.Axis(title="Frequency")),
-                color=color,
-                column=alt.Column(
-                    "y_pred:Q",
-                    bin=alt.Bin(maxbins=80),
-                    header=alt.Header(
-                        labelExpr="datum.value % 1 == 0 ? floor(datum.value) : null",
-                        labelOrient="bottom",
-                        titleOrient="bottom",
+                x=alt.X(
+                    "value:O",
+                    axis=alt.Axis(
+                        labelAngle=0,
+                        labelExpr="datum.value % 0.5 == 0 ? datum.value : null",
                     ),
-                    title="Actual and Predicted Target Values",
+                    title="Value",
                 ),
+                y=alt.Y("sum(pct):Q", axis=alt.Axis(format=".0%", title="Percentage")),
+                color=color,
+                xOffset=alt.XOffset("label:N"),
                 tooltip=[
-                    alt.Tooltip("estimator:N", title=" "),
+                    alt.Tooltip("label:N", title="Label"),
+                    alt.Tooltip("value:O", title="Value (binned)"),
+                    alt.Tooltip("sum(pct):Q", format=".0%", title="Percentage"),
                 ],
             )
             .add_params(click)
-            .configure_facet(spacing=0)
             .configure_range(category=alt.RangeScheme(list(legend.values())))
-            .configure_scale(bandPaddingInner=0.2)
-            .configure_view(stroke=None)
+            .properties(height=400, width=650)
         )
-
         return chart
 
 
@@ -148,49 +148,49 @@ more reliable estimator of a skewed distribution than the mean.
                 "QRF (Median)": "#006aff",
             }
 
-            df = pd.DataFrame({"Actual": y_test, "RF (Mean)": y_pred_rf, "QRF (Median)": y_pred_qrf})
+            df = pd.DataFrame({"actual": y_test, "rf": y_pred_rf, "qrf": y_pred_qrf})
 
 
             def plot_prediction_histograms(df, legend):
-                click = alt.selection_point(fields=["estimator"], bind="legend")
+                click = alt.selection_point(fields=["label"], bind="legend")
 
                 color = alt.condition(
                     click,
-                    alt.Color("estimator:N", sort=list(legend.keys()), title=None),
+                    alt.Color("label:N", sort=list(legend.keys()), title=None),
                     alt.value("lightgray"),
                 )
 
                 chart = (
-                    alt.Chart(df, width=alt.Step(6))
-                    .transform_fold(list(legend.keys()), as_=["estimator", "y_pred"])
-                    .transform_joinaggregate(total="count(*)", groupby=["estimator"])
+                    alt.Chart(df)
+                    .transform_calculate(calculate=f"round({alt.datum['actual']} * 10) / 10", as_="Actual")
+                    .transform_calculate(calculate=f"round({alt.datum['rf']} * 10) / 10", as_="RF (Mean)")
+                    .transform_calculate(calculate=f"round({alt.datum['qrf']} * 10) / 10", as_="QRF (Median)")
+                    .transform_fold(["Actual", "RF (Mean)", "QRF (Median)"], as_=["label", "value"])
+                    .transform_joinaggregate(total="count(*)", groupby=["label"])
                     .transform_calculate(pct="1 / datum.total")
                     .mark_bar()
                     .encode(
-                        x=alt.X("estimator:N", axis=alt.Axis(labels=False, title=None)),
-                        y=alt.Y("sum(pct):Q", axis=alt.Axis(title="Frequency")),
-                        color=color,
-                        column=alt.Column(
-                            "y_pred:Q",
-                            bin=alt.Bin(maxbins=80),
-                            header=alt.Header(
-                                labelExpr="datum.value % 1 == 0 ? floor(datum.value) : null",
-                                labelOrient="bottom",
-                                titleOrient="bottom",
+                        x=alt.X(
+                            "value:O",
+                            axis=alt.Axis(
+                                labelAngle=0,
+                                labelExpr="datum.value % 0.5 == 0 ? datum.value : null",
                             ),
-                            title="Actual and Predicted Target Values",
+                            title="Value",
                         ),
+                        y=alt.Y("sum(pct):Q", axis=alt.Axis(format=".0%", title="Percentage")),
+                        color=color,
+                        xOffset=alt.XOffset("label:N"),
                         tooltip=[
-                            alt.Tooltip("estimator:N", title=" "),
+                            alt.Tooltip("label:N", title="Label"),
+                            alt.Tooltip("value:O", title="Value (binned)"),
+                            alt.Tooltip("sum(pct):Q", format=".0%", title="Percentage"),
                         ],
                     )
                     .add_params(click)
-                    .configure_facet(spacing=0)
                     .configure_range(category=alt.RangeScheme(list(legend.values())))
-                    .configure_scale(bandPaddingInner=0.2)
-                    .configure_view(stroke=None)
+                    .properties(height=400, width=650)
                 )
-
                 return chart
 
 
