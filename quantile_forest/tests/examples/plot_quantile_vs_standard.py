@@ -37,8 +37,8 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 regr_rf.fit(X_train, y_train)
 regr_qrf.fit(X_train, y_train)
 
-y_pred_rf = regr_rf.predict(X_test)
-y_pred_qrf = regr_qrf.predict(X_test, quantiles=0.5)
+y_pred_rf = regr_rf.predict(X_test)  # standard RF predictions (mean)
+y_pred_qrf = regr_qrf.predict(X_test, quantiles=0.5)  # QRF predictions (median)
 
 legend = {
     "Actual": "#c0c0c0",
