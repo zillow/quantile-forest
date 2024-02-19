@@ -34,6 +34,7 @@ three quantiles (the median and 95% interval) for each target output.
     n_samples = 2500
     bounds = [0, 100]
 
+    # Define functions that generate targets; each function maps to one target.
     funcs = [
         {
             "signal": lambda x: np.log1p(x + 1),
@@ -59,15 +60,16 @@ three quantiles (the median and 95% interval) for each target output.
         return np.atleast_2d(x).T, y
 
 
+    # Create the dataset with multiple target variables.
     X, y = make_func_Xy(funcs, bounds, n_samples)
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
 
     qrf = RandomForestQuantileRegressor(max_samples_leaf=None, max_depth=4, random_state=0)
-    qrf.fit(X_train, y_train)
+    qrf.fit(X_train, y_train)  # fit on all of the targets simultaneously
 
-    y_pred = qrf.predict(X, quantiles=[0.025, 0.5, 0.975], weighted_quantile=False)
-    y_pred = y_pred.reshape(-1, 3, len(funcs))
+    # Get multiple-output predictions at 95% prediction intervals and median.
+    y_pred = qrf.predict(X, quantiles=[0.025, 0.5, 0.975])
 
     df = pd.DataFrame(
         {
@@ -170,6 +172,7 @@ three quantiles (the median and 95% interval) for each target output.
             n_samples = 2500
             bounds = [0, 100]
 
+            # Define functions that generate targets; each function maps to one target.
             funcs = [
                 {
                     "signal": lambda x: np.log1p(x + 1),
@@ -195,15 +198,16 @@ three quantiles (the median and 95% interval) for each target output.
                 return np.atleast_2d(x).T, y
 
 
+            # Create the dataset with multiple target variables.
             X, y = make_func_Xy(funcs, bounds, n_samples)
 
             X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
 
             qrf = RandomForestQuantileRegressor(max_samples_leaf=None, max_depth=4, random_state=0)
-            qrf.fit(X_train, y_train)
+            qrf.fit(X_train, y_train)  # fit on all of the targets simultaneously
 
-            y_pred = qrf.predict(X, quantiles=[0.025, 0.5, 0.975], weighted_quantile=False)
-            y_pred = y_pred.reshape(-1, 3, len(funcs))
+            # Get multiple-output predictions at 95% prediction intervals and median.
+            y_pred = qrf.predict(X, quantiles=[0.025, 0.5, 0.975])
 
             df = pd.DataFrame(
                 {

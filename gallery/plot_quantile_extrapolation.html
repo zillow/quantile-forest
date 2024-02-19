@@ -445,11 +445,15 @@ accurately predict values outside of those observed in the training set.</p>
     <span class="k">return</span> <span class="n">X_test</span>
 
 
+<span class="c1"># Create the full dataset.</span>
 <span class="n">X</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">make_func_Xy</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">n_samples</span><span class="p">)</span>
 
+<span class="c1"># Calculate the extrapolation bounds.</span>
 <span class="n">extrap_min_idx</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">n_samples</span> <span class="o">*</span> <span class="p">(</span><span class="n">extrap_frac</span> <span class="o">/</span> <span class="mi">2</span><span class="p">))</span>
 <span class="n">extrap_max_idx</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">n_samples</span> <span class="o">-</span> <span class="p">(</span><span class="n">n_samples</span> <span class="o">*</span> <span class="p">(</span><span class="n">extrap_frac</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)))</span>
 
+<span class="c1"># Based on the extrapolation bounds, get the training and test data.</span>
+<span class="c1"># Training data excludes extrapolated regions; test data includes them.</span>
 <span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span> <span class="o">=</span> <span class="n">get_train_Xy</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">extrap_min_idx</span><span class="p">,</span> <span class="n">extrap_max_idx</span><span class="p">)</span>
 <span class="n">X_test</span> <span class="o">=</span> <span class="n">get_test_X</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
 
@@ -460,6 +464,7 @@ accurately predict values outside of those observed in the training set.</p>
 <span class="p">)</span>
 <span class="n">qrf</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">expand_dims</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">),</span> <span class="n">y_train</span><span class="p">)</span>
 
+<span class="c1"># Get predictions at 95% prediction intervals and median.</span>
 <span class="n">y_pred</span> <span class="o">=</span> <span class="n">qrf</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">,</span> <span class="n">quantiles</span><span class="o">=</span><span class="p">[</span><span class="mf">0.025</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.975</span><span class="p">])</span>
 
 

@@ -435,6 +435,7 @@ intervals on the California Housing dataset. Inspired by Figure 3 of
 <span class="n">y_pred_low</span> <span class="o">=</span> <span class="p">[]</span>
 <span class="n">y_pred_upp</span> <span class="o">=</span> <span class="p">[]</span>
 
+<span class="c1"># Using k-fold cross-validation, get predictions for all samples.</span>
 <span class="k">for</span> <span class="n">train_index</span><span class="p">,</span> <span class="n">test_index</span> <span class="ow">in</span> <span class="n">kf</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">X</span><span class="p">):</span>
     <span class="n">X_train</span><span class="p">,</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">y_test</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">X</span><span class="p">[</span><span class="n">train_index</span><span class="p">],</span>

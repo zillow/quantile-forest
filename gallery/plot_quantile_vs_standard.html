@@ -436,8 +436,8 @@ more reliable estimator of a skewed distribution than the mean.</p>
 <span class="n">regr_rf</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">)</span>
 <span class="n">regr_qrf</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">)</span>
 
-<span class="n">y_pred_rf</span> <span class="o">=</span> <span class="n">regr_rf</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">)</span>
-<span class="n">y_pred_qrf</span> <span class="o">=</span> <span class="n">regr_qrf</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">,</span> <span class="n">quantiles</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+<span class="n">y_pred_rf</span> <span class="o">=</span> <span class="n">regr_rf</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">)</span>  <span class="c1"># standard RF predictions (mean)</span>
+<span class="n">y_pred_qrf</span> <span class="o">=</span> <span class="n">regr_qrf</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">,</span> <span class="n">quantiles</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>  <span class="c1"># QRF predictions (median)</span>
 
 <span class="n">legend</span> <span class="o">=</span> <span class="p">{</span>
     <span class="s2">&quot;Actual&quot;</span><span class="p">:</span> <span class="s2">&quot;#c0c0c0&quot;</span><span class="p">,</span>
