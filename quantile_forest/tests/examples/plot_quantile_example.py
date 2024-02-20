@@ -8,17 +8,18 @@ the predictions to a ground truth function used to generate noisy samples.
 """
 
 import altair as alt
-import pandas as pd
 import numpy as np
+import pandas as pd
 from sklearn.model_selection import train_test_split
 
 from quantile_forest import RandomForestQuantileRegressor
 
 n_samples = 1000
 bounds = [0, 10]
+quantiles = [0.025, 0.5, 0.975]
 
 
-def make_toy_dataset(n_samples, bounds, random_seed=0):
+def make_toy_dataset(n_samples, bounds, add_noise=True, random_seed=0):
     rng = np.random.RandomState(random_seed)
 
     x = rng.uniform(*bounds, size=n_samples)
@@ -26,109 +27,94 @@ def make_toy_dataset(n_samples, bounds, random_seed=0):
 
     sigma = 0.25 + x / 10
     noise = rng.lognormal(sigma=sigma) - np.exp(sigma**2 / 2)
-    y = f + noise
+    y = f + (noise if add_noise else 0)
 
     return np.atleast_2d(x).T, y
 
 
-X, y = make_toy_dataset(n_samples, bounds)
+# Create noisy data for modeling and non-noisy function data for illustration.
+X, y = make_toy_dataset(n_samples, bounds, add_noise=True, random_seed=0)
+X_func, y_func = make_toy_dataset(n_samples, bounds, add_noise=False, random_seed=0)
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
-
-X_sampled = np.atleast_2d(np.linspace(*bounds, n_samples)).T
-y_sampled = (X_sampled * np.sin(X_sampled)).reshape(-1)
 
 qrf = RandomForestQuantileRegressor(max_depth=3, min_samples_leaf=5, random_state=0)
 qrf.fit(X_train, y_train)
 
-y_pred = qrf.predict(X_sampled, quantiles=[0.025, 0.5, 0.975])
+y_pred_func = qrf.predict(X_func, quantiles=quantiles)
+y_pred_test = qrf.predict(X_test, quantiles=quantiles)
 
-df_train = pd.DataFrame(
+df = pd.DataFrame(
     {
-        "X_sampled": X_sampled.reshape(-1),
-        "y_sampled": y_sampled,
-        "y_pred_low": y_pred[:, 0],
-        "y_pred_med": y_pred[:, 1],
-        "y_pred_upp": y_pred[:, 2],
-    }
-)
-
-df_test = pd.DataFrame(
-    {
-        "X_test": X_test.reshape(-1),
-        "y_test": y_test,
+        "X": np.concatenate([X_func.reshape(-1), X_test.reshape(-1)]),
+        "y": np.concatenate([y_func, y_test]),
+        "y_pred": np.concatenate([y_pred_func[:, 1], y_pred_test[:, 1]]),
+        "y_pred_low": np.concatenate([y_pred_func[:, 0], y_pred_test[:, 0]]),
+        "y_pred_upp": np.concatenate([y_pred_func[:, 2], y_pred_test[:, 2]]),
+        "test": [False] * len(y_func) + [True] * len(y_test),
     }
 )
 
 
-def plot_fit_and_intervals(df_train, df_test):
-    df_train = df_train.copy()
-    df_test = df_test.copy()
-
-    df_train = df_train.assign(
-        **{
-            "y_true_label": "f(x) = x sin(x)",
-            "y_pred_label": "Predicted Median",
-            "y_area_label": "Predicted 95% Interval",
-        }
-    )
-
-    df_test["point_label"] = "Test Observations"
-
+def plot_fit_and_intervals(df):
     points = (
-        alt.Chart(df_test)
+        alt.Chart(df.assign(**{"point_label": "Test Observations"}))
+        .transform_filter(alt.datum["test"])  # filter to test data
         .mark_circle(color="#f2a619")
         .encode(
-            x=alt.X("X_test:Q", scale=alt.Scale(nice=False)),
-            y=alt.Y("y_test:Q", title=""),
+            x=alt.X("X:Q", scale=alt.Scale(nice=False)),
+            y=alt.Y("y:Q", title=""),
             color=alt.Color("point_label:N", scale=alt.Scale(range=["#f2a619"]), title=None),
             tooltip=[
-                alt.Tooltip("X_test:Q", format=",.3f", title="X"),
-                alt.Tooltip("y_test:Q", format=",.3f", title="Y"),
+                alt.Tooltip("X:Q", format=",.3f", title="X"),
+                alt.Tooltip("y:Q", format=",.3f", title="Y"),
             ],
         )
     )
 
     line_true = (
-        alt.Chart(df_train)
+        alt.Chart(df.assign(**{"y_true_label": "f(x) = x sin(x)"}))
+        .transform_filter(~alt.datum["test"])  # filter to training data
         .mark_line(color="black", size=3)
         .encode(
-            x=alt.X("X_sampled:Q", scale=alt.Scale(nice=False)),
-            y=alt.Y("y_sampled:Q", title="f(x)"),
+            x=alt.X("X:Q", scale=alt.Scale(nice=False)),
+            y=alt.Y("y:Q", title="f(x)"),
             color=alt.Color("y_true_label:N", scale=alt.Scale(range=["black"]), title=None),
             tooltip=[
-                alt.Tooltip("X_sampled:Q", format=",.3f", title="X"),
-                alt.Tooltip("y_sampled:Q", format=",.3f", title="Y"),
+                alt.Tooltip("X:Q", format=",.3f", title="X"),
+                alt.Tooltip("y:Q", format=",.3f", title="Y"),
             ],
         )
     )
 
     line_pred = (
-        alt.Chart(df_train)
+        alt.Chart(df.assign(**{"y_pred_label": "Predicted Median"}))
+        .transform_filter(~alt.datum["test"])  # filter to training data
         .mark_line(color="#006aff", size=5)
         .encode(
-            x=alt.X("X_sampled:Q", scale=alt.Scale(nice=False)),
-            y=alt.Y("y_pred_med:Q", title=""),
+            x=alt.X("X:Q", scale=alt.Scale(nice=False)),
+            y=alt.Y("y_pred:Q", title=""),
             color=alt.Color("y_pred_label:N", scale=alt.Scale(range=["#006aff"]), title=None),
             tooltip=[
-                alt.Tooltip("X_sampled:Q", format=",.3f", title="X"),
-                alt.Tooltip("y_sampled:Q", format=",.3f", title="Y"),
-                alt.Tooltip("y_pred_med:Q", format=",.3f", title="Predicted Y"),
+                alt.Tooltip("X:Q", format=",.3f", title="X"),
+                alt.Tooltip("y:Q", format=",.3f", title="Y"),
+                alt.Tooltip("y_pred:Q", format=",.3f", title="Predicted Y"),
             ],
         )
     )
 
     area_pred = (
-        alt.Chart(df_train)
+        alt.Chart(df)
+        .transform_filter(~alt.datum["test"])  # filter to training data
         .mark_area(color="#e0f2ff", opacity=0.8)
         .encode(
-            x=alt.X("X_sampled:Q", scale=alt.Scale(nice=False), title="x"),
+            x=alt.X("X:Q", scale=alt.Scale(nice=False), title="x"),
             y=alt.Y("y_pred_low:Q", title=""),
             y2=alt.Y2("y_pred_upp:Q", title=None),
             tooltip=[
-                alt.Tooltip("X_sampled:Q", format=",.3f", title="X"),
-                alt.Tooltip("y_sampled:Q", format=",.3f", title="Y"),
-                alt.Tooltip("y_pred_med:Q", format=",.3f", title="Predicted Y"),
+                alt.Tooltip("X:Q", format=",.3f", title="X"),
+                alt.Tooltip("y:Q", format=",.3f", title="Y"),
+                alt.Tooltip("y_pred:Q", format=",.3f", title="Predicted Y"),
                 alt.Tooltip("y_pred_low:Q", format=",.3f", title="Predicted Lower Y"),
                 alt.Tooltip("y_pred_upp:Q", format=",.3f", title="Predicted Upper Y"),
             ],
@@ -153,5 +139,5 @@ def plot_fit_and_intervals(df_train, df_test):
     return chart
 
 
-chart = plot_fit_and_intervals(df_train, df_test)
+chart = plot_fit_and_intervals(df)
 chart

@@ -81,7 +81,9 @@ def qrf_strategy(alpha, X_train, X_test, y_train, y_test):
     # Calculate the point predictions on the test data.
     y_pred = qrf.predict(X_test, quantiles="mean", aggregate_leaves_first=False)
 
-    return sort_y_values(y_test, y_pred, y_pis)
+    y_values = sort_y_values(y_test, y_pred, y_pis)
+
+    return pd.DataFrame(y_values).pipe(lambda x: x * 100_000).assign(strategy="qrf")
 
 
 def cqr_strategy(alpha, X_train, X_test, y_train, y_test):
@@ -121,31 +123,31 @@ def cqr_strategy(alpha, X_train, X_test, y_train, y_test):
     # Calculate the point predictions on the test data.
     y_pred = qrf.predict(X_test, quantiles="mean", aggregate_leaves_first=False)
 
-    return sort_y_values(y_test, y_pred, y_pis)
+    y_values = sort_y_values(y_test, y_pred, y_pis)
+
+    return pd.DataFrame(y_values).pipe(lambda x: x * 100_000).assign(strategy="cqr")
 
 
 # Get strategy outputs as a data frame.
 args = (alpha, X_train, X_test, y_train, y_test)
-df = pd.concat(
-    [
-        pd.DataFrame(qrf_strategy(*args)).pipe(lambda x: x * 100_000).assign(strategy="qrf"),
-        pd.DataFrame(cqr_strategy(*args)).pipe(lambda x: x * 100_000).assign(strategy="cqr"),
-    ]
-)
+df = pd.concat([qrf_strategy(*args), cqr_strategy(*args)])
 
-# Add coverage and mean width metrics to the data frame.
-df = df.merge(
+# Calculate coverage and width metrics.
+metrics = (
     df.groupby("strategy")
     .apply(
-        lambda x: pd.Series(
+        lambda grp: pd.Series(
             {
-                "coverage": coverage_score(x["y_test"], x["y_pred_low"], x["y_pred_upp"]),
-                "width": mean_width_score(x["y_pred_low"], x["y_pred_upp"]),
+                "coverage": coverage_score(grp["y_test"], grp["y_pred_low"], grp["y_pred_upp"]),
+                "width": mean_width_score(grp["y_pred_low"], grp["y_pred_upp"]),
             }
         )
     )
     .reset_index()
 )
+
+# Merge the metrics into the data frame.
+df = df.merge(metrics, on="strategy", how="left")
 
 
 def plot_prediction_intervals(df, domain):
@@ -222,9 +224,7 @@ def plot_prediction_intervals(df, domain):
     )
 
     text_coverage = (
-        base.transform_aggregate(
-            coverage="mean(coverage)", width="mean(width)", groupby=["strategy"]
-        )
+        base.transform_aggregate(coverage="mean(coverage)", groupby=["strategy"])
         .transform_calculate(
             coverage_text=(
                 f"'Coverage: ' + format({alt.datum['coverage'] * 100}, '.1f') + '%'"
@@ -239,9 +239,7 @@ def plot_prediction_intervals(df, domain):
         )
     )
     text_with = (
-        base.transform_aggregate(
-            coverage="mean(coverage)", width="mean(width)", groupby=["strategy"]
-        )
+        base.transform_aggregate(width="mean(width)", groupby=["strategy"])
         .transform_calculate(
             width_text=f"'Interval Width: ' + format({alt.datum['width']}, '$,d')"
         )

@@ -23,21 +23,21 @@ quantile-forest
       :link-type: ref
       :link-alt: Getting started
 
-      A guide that provides installation instructions and information on testing the package.
+      A guide that provides installation requirements and instructions, as well as procedures for developers.
 
    .. grid-item-card:: User Guide
       :link: user_guide
       :link-type: ref
       :link-alt: User guide
 
-      Check out the User Guide for information on the key concepts behind quantile forests.
+      Information on the key concepts behind quantile forests and how they apply to this package.
 
    .. grid-item-card:: Examples
       :link: example-gallery
       :link-type: ref
       :link-alt: Examples
 
-      General-purpose, introductory and illustrative examples of using quantile forests.
+      Examples that demonstrate the broad applications and introductory concepts of quantile forests.
 
    .. grid-item-card:: API
       :link: api

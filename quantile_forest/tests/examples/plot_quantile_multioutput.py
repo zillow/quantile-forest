@@ -1,6 +1,6 @@
 """
-Multiple-Output Quantile Regression
-===================================
+Multiple-Output Quantile Regression with QRFs
+=============================================
 
 An example on a toy dataset that demonstrates fitting a single quantile
 regressor for multiple target variables. For each target, multiple quantiles
@@ -10,8 +10,8 @@ three quantiles (the median and 95% interval) for each target output.
 """
 
 import altair as alt
-import pandas as pd
 import numpy as np
+import pandas as pd
 from sklearn.model_selection import train_test_split
 
 from quantile_forest import RandomForestQuantileRegressor
