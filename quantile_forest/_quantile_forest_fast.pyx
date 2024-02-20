@@ -13,7 +13,9 @@ from libcpp.string cimport string
 from libcpp.vector cimport vector
 
 import numpy as np
+
 cimport numpy as np
+
 np.import_array()
 
 from scipy import sparse

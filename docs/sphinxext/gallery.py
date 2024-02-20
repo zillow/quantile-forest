@@ -1,31 +1,24 @@
 """Adapted from Vega-Altair. BSD-3-Clause License. https://github.com/altair-viz/altair"""
 
 import hashlib
-import os
 import json
+import os
 import random
-from operator import itemgetter
-import warnings
 import shutil
+import warnings
+from operator import itemgetter
 
 import jinja2
-
+from altair.utils.execeval import eval_block
 from docutils import nodes
-from docutils.statemachine import ViewList
 from docutils.parsers.rst import Directive
 from docutils.parsers.rst.directives import flag
-
+from docutils.statemachine import ViewList
 from sphinx.util.nodes import nested_parse_with_titles
 
-from .utils import (
-    get_docstring_and_rest,
-    prev_this_next,
-    create_thumbnail,
-    create_generic_image,
-)
-from altair.utils.execeval import eval_block
-
 from quantile_forest.tests.examples import iter_examples
+
+from .utils import create_generic_image, create_thumbnail, get_docstring_and_rest, prev_this_next
 
 EXAMPLE_MODULE = "examples"
 

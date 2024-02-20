@@ -30,8 +30,8 @@ def create_thumbnail(image_filename, thumb_filename, window_size=(280, 160)):
 
 def create_generic_image(filename, shape=(200, 300), gradient=True):
     """Create a generic image."""
-    from PIL import Image
     import numpy as np
+    from PIL import Image
 
     assert len(shape) == 2
 
