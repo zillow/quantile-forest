@@ -31,19 +31,11 @@ qrf = RandomForestQuantileRegressor(n_estimators=100, random_state=0)
 kf = KFold(n_splits=5)
 kf.get_n_splits(X)
 
-y_true = []
-y_pred = []
-y_pred_low = []
-y_pred_upp = []
-
 # Using k-fold cross-validation, get predictions for all samples.
+data = {"y_true": [], "y_pred": [], "y_pred_low": [], "y_pred_upp": []}
 for train_index, test_index in kf.split(X):
-    X_train, X_test, y_train, y_test = (
-        X[train_index],
-        X[test_index],
-        y[train_index],
-        y[test_index],
-    )
+    X_train, y_train = X[train_index], y[train_index]
+    X_test, y_test = X[test_index], y[test_index]
 
     qrf.set_params(max_features=X_train.shape[1] // 3)
     qrf.fit(X_train, y_train)
@@ -51,21 +43,12 @@ for train_index, test_index in kf.split(X):
     # Get predictions at 95% prediction intervals and median.
     y_pred_i = qrf.predict(X_test, quantiles=[0.025, 0.5, 0.975])
 
-    y_true.append(y_test)
-    y_pred.append(y_pred_i[:, 1])
-    y_pred_low.append(y_pred_i[:, 0])
-    y_pred_upp.append(y_pred_i[:, 2])
+    data["y_true"].extend(y_test)
+    data["y_pred"].extend(y_pred_i[:, 1])
+    data["y_pred_low"].extend(y_pred_i[:, 0])
+    data["y_pred_upp"].extend(y_pred_i[:, 2])
 
-df = pd.DataFrame(
-    {
-        "y_true": np.concatenate(y_true),
-        "y_pred": np.concatenate(y_pred),
-        "y_pred_low": np.concatenate(y_pred_low),
-        "y_pred_upp": np.concatenate(y_pred_upp),
-    }
-).pipe(
-    lambda x: x * 100_000  # convert to dollars
-)
+df = pd.DataFrame(data).pipe(lambda x: x * 100_000)  # convert to dollars
 
 
 def plot_calibration_and_intervals(df):

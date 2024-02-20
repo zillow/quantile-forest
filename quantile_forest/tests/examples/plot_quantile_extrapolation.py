@@ -58,16 +58,11 @@ extrap_max_idx = int(n_samples - (n_samples * (extrap_frac / 2)))
 X_train, y_train = get_train_Xy(X, y, extrap_min_idx, extrap_max_idx)
 X_test = get_test_X(X)
 
-qrf = RandomForestQuantileRegressor(
-    max_samples_leaf=None,
-    min_samples_leaf=10,
-    random_state=0,
-)
+qrf = RandomForestQuantileRegressor(max_samples_leaf=None, min_samples_leaf=10, random_state=0)
 qrf.fit(np.expand_dims(X_train, axis=-1), y_train)
 
 # Get predictions at 95% prediction intervals and median.
 y_pred = qrf.predict(X_test, quantiles=[0.025, 0.5, 0.975])
-
 
 df = pd.DataFrame(
     {
@@ -77,35 +72,13 @@ df = pd.DataFrame(
         "y_pred": y_pred[:, 1],
         "y_pred_low": y_pred[:, 0],
         "y_pred_upp": y_pred[:, 2],
-        "train": np.concatenate(
-            [
-                np.zeros(extrap_min_idx),
-                np.ones(extrap_max_idx - extrap_min_idx),
-                np.zeros(len(y) - extrap_max_idx),
-            ]
-        ),
-        "test_left": np.concatenate(
-            [
-                np.ones(extrap_min_idx),
-                np.zeros(len(y) - extrap_min_idx),
-            ]
-        ),
-        "test_right": np.concatenate(
-            [
-                np.zeros(extrap_max_idx),
-                np.ones(len(y) - extrap_max_idx),
-            ]
-        ),
+        "test_left": [True] * extrap_min_idx + [False] * (len(y) - extrap_min_idx),
+        "test_right": [False] * extrap_max_idx + [True] * (len(y) - extrap_max_idx),
     }
 )
 
 
 def plot_extrapolations(df, title="", legend=False, x_domain=None, y_domain=None):
-    df = df.copy()
-
-    df["point_label"] = "Observations"
-    df["line_label"] = func_str
-
     x_scale = None
     if x_domain is not None:
         x_scale = alt.Scale(domain=x_domain, nice=False, padding=0)
@@ -130,7 +103,7 @@ def plot_extrapolations(df, title="", legend=False, x_domain=None, y_domain=None
         alt.Tooltip("y_pred_upp:Q", format=",.3f", title="Predicted Upper Y"),
     ]
 
-    base = alt.Chart(df)
+    base = alt.Chart(df.assign(**{"point_label": "Observations", "line_label": func_str}))
 
     points_true = base.mark_circle(size=20).encode(
         x=alt.X("X_true:Q", scale=x_scale, title="x"),
@@ -195,17 +168,17 @@ kwargs = {
 }
 
 chart1 = plot_extrapolations(
-    df.query(f"train == 1"), title="Prediction Intervals on Training Data", **kwargs
+    df.query("~(test_left | test_right)"), title="Prediction Intervals on Training Data", **kwargs
 )
 chart2 = alt.layer(
     plot_extrapolations(
-        df.query(f"(train == 1)"),
+        df.query("~(test_left | test_right)"),
         title="Prediction Intervals with Extrapolated Values",
         legend=True,
         **kwargs,
     ).resolve_scale(color="independent"),
-    plot_extrapolations(df.query(f"(test_left == 1)").assign(extrapolate=True), **kwargs),
-    plot_extrapolations(df.query(f"(test_right == 1)").assign(extrapolate=True), **kwargs),
+    plot_extrapolations(df.query("test_left").assign(extrapolate=True), **kwargs),
+    plot_extrapolations(df.query("test_right").assign(extrapolate=True), **kwargs),
 )
 chart = chart1 | chart2
 chart
