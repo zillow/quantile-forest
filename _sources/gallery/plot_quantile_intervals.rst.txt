@@ -85,7 +85,7 @@ https://jmlr.org/papers/v7/meinshausen06a.html.
                     "y_pred:Q",
                     axis=alt.Axis(format="$,d"),
                     scale=alt.Scale(domain=domain, nice=False),
-                    title="Fitted Values (Conditional Mean)",
+                    title="Fitted Values (conditional median)",
                 ),
                 y=alt.Y(
                     "y_true:Q",
@@ -165,7 +165,7 @@ https://jmlr.org/papers/v7/meinshausen06a.html.
                 y=alt.Y(
                     "y_true:Q",
                     axis=alt.Axis(format="$,d"),
-                    title="Observed Values and Prediction Intervals",
+                    title="Observed Values and Prediction Intervals (centered)",
                 ),
                 color=alt.value("#f2a619"),
                 tooltip=tooltip,
@@ -267,7 +267,7 @@ https://jmlr.org/papers/v7/meinshausen06a.html.
                             "y_pred:Q",
                             axis=alt.Axis(format="$,d"),
                             scale=alt.Scale(domain=domain, nice=False),
-                            title="Fitted Values (Conditional Mean)",
+                            title="Fitted Values (conditional median)",
                         ),
                         y=alt.Y(
                             "y_true:Q",
@@ -347,7 +347,7 @@ https://jmlr.org/papers/v7/meinshausen06a.html.
                         y=alt.Y(
                             "y_true:Q",
                             axis=alt.Axis(format="$,d"),
-                            title="Observed Values and Prediction Intervals",
+                            title="Observed Values and Prediction Intervals (centered)",
                         ),
                         color=alt.value("#f2a619"),
                         tooltip=tooltip,

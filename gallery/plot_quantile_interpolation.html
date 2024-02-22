@@ -416,18 +416,6 @@ actual values.</p>
 
 <span class="kn">from</span> <span class="nn">quantile_forest</span> <span class="kn">import</span> <span class="n">RandomForestQuantileRegressor</span>
 
-<span class="n">interpolations</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">&quot;Linear&quot;</span><span class="p">:</span> <span class="s2">&quot;#006aff&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;Lower&quot;</span><span class="p">:</span> <span class="s2">&quot;#ffd237&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;Higher&quot;</span><span class="p">:</span> <span class="s2">&quot;#0d4599&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;Midpoint&quot;</span><span class="p">:</span> <span class="s2">&quot;#f2a619&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;Nearest&quot;</span><span class="p">:</span> <span class="s2">&quot;#a6e5ff&quot;</span><span class="p">,</span>
-<span class="p">}</span>
-
-<span class="c1"># legend = {&quot;Actual&quot;: &quot;#000000&quot;} | interpolations</span>
-<span class="n">legend</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;Actual&quot;</span><span class="p">:</span> <span class="s2">&quot;#000000&quot;</span><span class="p">}</span>
-<span class="n">legend</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">interpolations</span><span class="p">)</span>
-
 <span class="c1"># Create toy dataset.</span>
 <span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]])</span>
 <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span>
@@ -439,6 +427,18 @@ actual values.</p>
     <span class="n">random_state</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="n">est</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+
+<span class="n">interpolations</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;Linear&quot;</span><span class="p">:</span> <span class="s2">&quot;#006aff&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Lower&quot;</span><span class="p">:</span> <span class="s2">&quot;#ffd237&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Higher&quot;</span><span class="p">:</span> <span class="s2">&quot;#0d4599&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Midpoint&quot;</span><span class="p">:</span> <span class="s2">&quot;#f2a619&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Nearest&quot;</span><span class="p">:</span> <span class="s2">&quot;#a6e5ff&quot;</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="c1"># legend = {&quot;Actual&quot;: &quot;#000000&quot;} | interpolations</span>
+<span class="n">legend</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;Actual&quot;</span><span class="p">:</span> <span class="s2">&quot;#000000&quot;</span><span class="p">}</span>
+<span class="n">legend</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">interpolations</span><span class="p">)</span>
 
 <span class="c1"># Initialize data with actual values.</span>
 <span class="n">data</span> <span class="o">=</span> <span class="p">{</span>

@@ -77,8 +77,6 @@ more reliable estimator of a skewed distribution than the mean.
             .transform_calculate(calculate=f"round({alt.datum['rf']} * 10) / 10", as_="RF (Mean)")
             .transform_calculate(calculate=f"round({alt.datum['qrf']} * 10) / 10", as_="QRF (Median)")
             .transform_fold(["Actual", "RF (Mean)", "QRF (Median)"], as_=["label", "value"])
-            .transform_joinaggregate(total="count(*)", groupby=["label"])
-            .transform_calculate(pct="1 / datum.total")
             .mark_bar()
             .encode(
                 x=alt.X(
@@ -87,15 +85,15 @@ more reliable estimator of a skewed distribution than the mean.
                         labelAngle=0,
                         labelExpr="datum.value % 0.5 == 0 ? datum.value : null",
                     ),
-                    title="Value",
+                    title="Actual and Predicted Target Values",
                 ),
-                y=alt.Y("sum(pct):Q", axis=alt.Axis(format=".0%", title="Percentage")),
+                y=alt.Y("count():Q", axis=alt.Axis(format=",d", title="Counts")),
                 color=color,
                 xOffset=alt.XOffset("label:N"),
                 tooltip=[
                     alt.Tooltip("label:N", title="Label"),
                     alt.Tooltip("value:O", title="Value (binned)"),
-                    alt.Tooltip("sum(pct):Q", format=".0%", title="Percentage"),
+                    alt.Tooltip("count():Q", format=",d", title="Counts"),
                 ],
             )
             .add_params(click)
@@ -166,8 +164,6 @@ more reliable estimator of a skewed distribution than the mean.
                     .transform_calculate(calculate=f"round({alt.datum['rf']} * 10) / 10", as_="RF (Mean)")
                     .transform_calculate(calculate=f"round({alt.datum['qrf']} * 10) / 10", as_="QRF (Median)")
                     .transform_fold(["Actual", "RF (Mean)", "QRF (Median)"], as_=["label", "value"])
-                    .transform_joinaggregate(total="count(*)", groupby=["label"])
-                    .transform_calculate(pct="1 / datum.total")
                     .mark_bar()
                     .encode(
                         x=alt.X(
@@ -176,15 +172,15 @@ more reliable estimator of a skewed distribution than the mean.
                                 labelAngle=0,
                                 labelExpr="datum.value % 0.5 == 0 ? datum.value : null",
                             ),
-                            title="Value",
+                            title="Actual and Predicted Target Values",
                         ),
-                        y=alt.Y("sum(pct):Q", axis=alt.Axis(format=".0%", title="Percentage")),
+                        y=alt.Y("count():Q", axis=alt.Axis(format=",d", title="Counts")),
                         color=color,
                         xOffset=alt.XOffset("label:N"),
                         tooltip=[
                             alt.Tooltip("label:N", title="Label"),
                             alt.Tooltip("value:O", title="Value (binned)"),
-                            alt.Tooltip("sum(pct):Q", format=".0%", title="Percentage"),
+                            alt.Tooltip("count():Q", format=",d", title="Counts"),
                         ],
                     )
                     .add_params(click)

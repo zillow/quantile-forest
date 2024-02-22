@@ -439,7 +439,7 @@ accurately predict values outside of those observed in the training set.</p>
     <span class="k">return</span> <span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span>
 
 
-<span class="k">def</span> <span class="nf">get_test_X</span><span class="p">(</span><span class="n">X</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">get_test_X</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">bounds</span><span class="p">):</span>
     <span class="n">n_samples</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
     <span class="n">X_test</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">*</span><span class="n">bounds</span><span class="p">,</span> <span class="n">n_samples</span><span class="p">))</span><span class="o">.</span><span class="n">T</span>
     <span class="k">return</span> <span class="n">X_test</span>
@@ -455,7 +455,7 @@ accurately predict values outside of those observed in the training set.</p>
 <span class="c1"># Based on the extrapolation bounds, get the training and test data.</span>
 <span class="c1"># Training data excludes extrapolated regions; test data includes them.</span>
 <span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span> <span class="o">=</span> <span class="n">get_train_Xy</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">extrap_min_idx</span><span class="p">,</span> <span class="n">extrap_max_idx</span><span class="p">)</span>
-<span class="n">X_test</span> <span class="o">=</span> <span class="n">get_test_X</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+<span class="n">X_test</span> <span class="o">=</span> <span class="n">get_test_X</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">bounds</span><span class="p">)</span>
 
 <span class="n">qrf</span> <span class="o">=</span> <span class="n">RandomForestQuantileRegressor</span><span class="p">(</span><span class="n">max_samples_leaf</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">min_samples_leaf</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 <span class="n">qrf</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">expand_dims</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">),</span> <span class="n">y_train</span><span class="p">)</span>
