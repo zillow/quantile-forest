@@ -1,6 +1,4 @@
-"""
-Testing for the quantile forest module (quantile_forest._quantile_forest).
-"""
+"""Testing for the quantile forest module (quantile_forest._quantile_forest)."""
 
 import math
 import pickle
