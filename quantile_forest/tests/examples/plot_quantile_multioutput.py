@@ -63,9 +63,9 @@ df = pd.DataFrame(
         "x": np.tile(X.squeeze(), len(funcs)),
         "y": y.reshape(-1, order="F"),
         "y_true": np.concatenate([f["signal"](X.squeeze()) for f in funcs]),
-        "y_pred": np.concatenate([y_pred[:, 1, i] for i in range(len(funcs))]),
-        "y_pred_low": np.concatenate([y_pred[:, 0, i] for i in range(len(funcs))]),
-        "y_pred_upp": np.concatenate([y_pred[:, 2, i] for i in range(len(funcs))]),
+        "y_pred": np.concatenate([y_pred[:, i, 1] for i in range(len(funcs))]),
+        "y_pred_low": np.concatenate([y_pred[:, i, 0] for i in range(len(funcs))]),
+        "y_pred_upp": np.concatenate([y_pred[:, i, 2] for i in range(len(funcs))]),
         "target": np.concatenate([[f"{i}"] * len(X) for i in range(len(funcs))]),
     }
 )
