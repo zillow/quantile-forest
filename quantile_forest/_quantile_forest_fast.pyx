@@ -705,7 +705,7 @@ cdef class QuantileForest:
             raise ValueError(f"Invalid interpolation method {interpolation}.")
 
         # Initialize NumPy array with NaN values and get view for nogil.
-        preds = np.full((n_samples, n_quantiles, n_outputs), np.nan, dtype=np.float64)
+        preds = np.full((n_samples, n_outputs, n_quantiles), np.nan, dtype=np.float64)
         preds_view = preds  # memoryview
 
         with nogil:
@@ -832,7 +832,7 @@ cdef class QuantileForest:
                     if not use_mean:
                         for k in range(<SIZE_t>(leaf_preds.size())):
                             if leaf_preds[k].size() == 1:
-                                preds_view[i, k, j] = leaf_preds[k][0]
+                                preds_view[i, j, k] = leaf_preds[k][0]
                             elif leaf_preds[k].size() > 1:
                                 pred = calc_quantile(
                                     leaf_preds[k],
@@ -840,12 +840,12 @@ cdef class QuantileForest:
                                     interpolation,
                                     issorted=False,
                                 )
-                                preds_view[i, k, j] = pred[0]
+                                preds_view[i, j, k] = pred[0]
                     else:
                         if leaf_preds[0].size() == 1:
-                            preds_view[i, 0, j] = leaf_preds[0][0]
+                            preds_view[i, j, 0] = leaf_preds[0][0]
                         elif leaf_preds[0].size() > 1:
-                            preds_view[i, 0, j] = calc_mean(leaf_preds[0])
+                            preds_view[i, j, 0] = calc_mean(leaf_preds[0])
 
         return np.asarray(preds_view)
 

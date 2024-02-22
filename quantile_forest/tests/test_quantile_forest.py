@@ -470,8 +470,8 @@ def check_predict_quantiles(
             )
         score = est.score(X.reshape(-1, 1), y, quantiles=0.5)
         assert y_pred.ndim == (3 if isinstance(quantiles, list) else 2)
-        assert y_pred.shape[-1] == y.shape[1]
-        assert np.any(y_pred[..., 0] != y_pred[..., 1])
+        assert y_pred.shape[1] == y.shape[1]
+        assert np.any(y_pred[:, 0, ...] != y_pred[:, 1, ...])
         assert score > 0.97
 
     # Check that specifying `quantiles` overwrites `default_quantiles`.
