@@ -72,7 +72,7 @@ def plot_calibration_and_intervals(df):
                 "y_pred:Q",
                 axis=alt.Axis(format="$,d"),
                 scale=alt.Scale(domain=domain, nice=False),
-                title="Fitted Values (Conditional Mean)",
+                title="Fitted Values (conditional median)",
             ),
             y=alt.Y(
                 "y_true:Q",
@@ -152,7 +152,7 @@ def plot_calibration_and_intervals(df):
             y=alt.Y(
                 "y_true:Q",
                 axis=alt.Axis(format="$,d"),
-                title="Observed Values and Prediction Intervals",
+                title="Observed Values and Prediction Intervals (centered)",
             ),
             color=alt.value("#f2a619"),
             tooltip=tooltip,

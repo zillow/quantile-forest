@@ -17,18 +17,6 @@ import pandas as pd
 
 from quantile_forest import RandomForestQuantileRegressor
 
-interpolations = {
-    "Linear": "#006aff",
-    "Lower": "#ffd237",
-    "Higher": "#0d4599",
-    "Midpoint": "#f2a619",
-    "Nearest": "#a6e5ff",
-}
-
-# legend = {"Actual": "#000000"} | interpolations
-legend = {"Actual": "#000000"}
-legend.update(interpolations)
-
 # Create toy dataset.
 X = np.array([[-1, -1], [-1, -1], [-1, -1], [1, 1], [1, 1]])
 y = np.array([-2, -1, 0, 1, 2])
@@ -40,6 +28,18 @@ est = RandomForestQuantileRegressor(
     random_state=0,
 )
 est.fit(X, y)
+
+interpolations = {
+    "Linear": "#006aff",
+    "Lower": "#ffd237",
+    "Higher": "#0d4599",
+    "Midpoint": "#f2a619",
+    "Nearest": "#a6e5ff",
+}
+
+# legend = {"Actual": "#000000"} | interpolations
+legend = {"Actual": "#000000"}
+legend.update(interpolations)
 
 # Initialize data with actual values.
 data = {

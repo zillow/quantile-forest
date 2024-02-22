@@ -16,7 +16,7 @@ from docutils.parsers.rst.directives import flag
 from docutils.statemachine import ViewList
 from sphinx.util.nodes import nested_parse_with_titles
 
-from quantile_forest.tests.examples import iter_examples
+from examples import iter_examples
 
 from .utils import create_generic_image, create_thumbnail, get_docstring_and_rest, prev_this_next
 
