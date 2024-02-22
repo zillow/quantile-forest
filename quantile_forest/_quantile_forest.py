@@ -1,5 +1,4 @@
-"""
-Quantile regression forest of trees-based ensemble methods.
+"""Quantile regression forest of trees-based ensemble methods.
 
 The module structure is the following:
 
@@ -859,11 +858,12 @@ class RandomForestQuantileRegressor(BaseForestQuantileRegressor):
     """A random forest regressor that provides quantile estimates.
 
     A quantile random forest is a meta estimator that fits a number of
-    decision trees on various sub-samples of the dataset and uses averaging
-    to improve the predictive accuracy and control over-fitting. The
-    sub-sample size is controlled with the `max_samples` parameter if
-    `bootstrap=True` (default), otherwise the whole dataset is used to build
-    each tree.
+    decision trees on various sub-samples of the dataset, keeps the values of
+    samples that reach each node, and assesses the conditional distribution
+    based on this information. The sub-sample size is controlled with the
+    `max_samples` parameter if `bootstrap=True` (default), otherwise the whole
+    dataset is used to build each tree. The leaf-sample size is controlled
+    with the `max_samples_leaf` parameter.
 
     Parameters
     ----------
@@ -1146,10 +1146,11 @@ class RandomForestQuantileRegressor(BaseForestQuantileRegressor):
 class ExtraTreesQuantileRegressor(BaseForestQuantileRegressor):
     """An extra-trees regressor that provides quantile estimates.
 
-    This class implements a meta estimator that fits a number of randomized
-    decision trees (a.k.a. extra-trees) on various sub-samples of the dataset
-    and use averaging to improve the predictive accuracy and control
-    over-fitting.
+    A quantile extra trees regressor is a meta estimator that fits a number of
+    randomized decision trees (a.k.a. extra-trees) on various sub-samples of
+    the dataset, keeps the values of samples that reach each node, and
+    assesses the conditional distribution based on this information. The
+    leaf-sample size is controlled with the `max_samples_leaf` parameter.
 
     Parameters
     ----------

@@ -12,12 +12,12 @@ ctypedef double float64_t
 cdef class QuantileForest:
     # The QuantileForest object.
 
-    # Input/Output layout
+    # Input/Output layout.
     cdef public vector[vector[float64_t]] y_train
     cdef public intp_t[:, :, :, :] y_train_leaves
     cdef public bint sparse_pickle
 
-    # Methods
+    # Methods.
     cpdef cnp.ndarray predict(
         self,
         vector[double] quantiles,
