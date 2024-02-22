@@ -516,8 +516,8 @@ class BaseForestQuantileRegressor(ForestRegressor):
 
         Returns
         -------
-        y_pred : array of shape (n_samples, n_quantiles, n_outputs)
-            If quantiles is set to None, then return ``E(Y | X)``. Else, for
+        y_pred : array of shape (n_samples, n_outputs, n_quantiles)
+            If quantiles is set to 'mean', then return ``E(Y | X)``. Else, for
             all quantiles, return ``y`` at ``q`` for which ``F(Y=y|x) = q``,
             where ``q`` is the quantile.
         """
@@ -565,27 +565,27 @@ class BaseForestQuantileRegressor(ForestRegressor):
         if self.max_samples_leaf == 1:  # optimize for single-sample-per-leaf performance
             y_train_leaves = np.asarray(self.forest_.y_train_leaves)
             y_train = np.asarray(self.forest_.y_train).T
-            y_pred = np.empty((len(X), len(quantiles), y_train.shape[1]))
-            for i in range(y_train.shape[1]):
+            y_pred = np.empty((len(X), y_train.shape[1], len(quantiles)))
+            for output in range(y_train.shape[1]):
                 leaf_values = np.empty((len(X), self.n_estimators))
                 for tree in range(self.n_estimators):
-                    if X_indices is None:
-                        train_indices = y_train_leaves[tree, X_leaves[:, tree], i, 0]
+                    if X_indices is None:  # IB scoring
+                        train_indices = y_train_leaves[tree, X_leaves[:, tree], output, 0]
                     else:  # OOB scoring
                         indices = X_indices[:, tree] == 1
                         leaves = X_leaves[indices, tree]
                         train_indices = np.zeros(len(X), dtype=int)
-                        train_indices[indices] = y_train_leaves[tree, leaves, i, 0]
-                    leaf_values[:, tree] = y_train[train_indices - 1, i]
+                        train_indices[indices] = y_train_leaves[tree, leaves, output, 0]
+                    leaf_values[:, tree] = y_train[train_indices - 1, output]
                     leaf_values[train_indices == 0, tree] = np.nan
                 if len(quantiles) == 1 and quantiles[0] == -1:  # calculate mean
                     func = np.mean if X_indices is None else np.nanmean
-                    y_pred[..., i] = np.expand_dims(func(leaf_values, axis=1), axis=1)
+                    y_pred[:, output, :] = np.expand_dims(func(leaf_values, axis=1), axis=1)
                 else:  # calculate quantiles
                     func = np.quantile if X_indices is None else np.nanquantile
                     method = interpolation.decode()
-                    y_pred[..., i] = func(leaf_values, quantiles, method=method, axis=1).T
-        else:
+                    y_pred[:, output, :] = func(leaf_values, quantiles, method=method, axis=1).T
+        else:  # get predictions for arbitrary leaf sizes
             y_pred = self.forest_.predict(
                 quantiles,
                 X_leaves,

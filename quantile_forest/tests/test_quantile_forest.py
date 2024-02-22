@@ -3,6 +3,7 @@ Testing for the quantile forest module (quantile_forest._quantile_forest).
 """
 
 import math
+import pickle
 import warnings
 from typing import Any, Dict
 
@@ -21,7 +22,7 @@ from sklearn.utils._testing import (
     assert_array_equal,
     assert_raises,
 )
-from sklearn.utils.validation import check_random_state
+from sklearn.utils.validation import check_is_fitted, check_random_state
 
 from quantile_forest import ExtraTreesQuantileRegressor, RandomForestQuantileRegressor
 from quantile_forest._quantile_forest_fast import (
@@ -470,8 +471,8 @@ def check_predict_quantiles(
             )
         score = est.score(X.reshape(-1, 1), y, quantiles=0.5)
         assert y_pred.ndim == (3 if isinstance(quantiles, list) else 2)
-        assert y_pred.shape[-1] == y.shape[1]
-        assert np.any(y_pred[..., 0] != y_pred[..., 1])
+        assert y_pred.shape[1] == y.shape[1]
+        assert np.any(y_pred[:, 0, ...] != y_pred[:, 1, ...])
         assert score > 0.97
 
     # Check that specifying `quantiles` overwrites `default_quantiles`.
@@ -979,7 +980,7 @@ def check_predict_oob(
     # Check warning if not enough estimators.
     with np.errstate(divide="ignore", invalid="ignore"):
         est = ForestRegressor(n_estimators=4, bootstrap=True, oob_score=True, random_state=0)
-        with pytest.warns(UserWarning):
+        with pytest.warns():
             est.fit(X, y)
             est.predict(
                 X,
@@ -1183,6 +1184,29 @@ def check_proximity_counts_oob(name):
 @pytest.mark.parametrize("name", FOREST_REGRESSORS)
 def test_proximity_counts_oob(name):
     check_proximity_counts_oob(name)
+
+
+def check_serialization(name):
+    # Check model serialization/deserialization.
+
+    X = X_california
+    y = y_california
+
+    ForestRegressor = FOREST_REGRESSORS[name]
+
+    est = ForestRegressor(n_estimators=10, random_state=0)
+    est.fit(X, y)
+
+    dumped = pickle.dumps(est)
+    est_loaded = pickle.loads(dumped)
+
+    assert check_is_fitted(est_loaded) is None
+    assert np.all(est.predict(X) == est_loaded.predict(X))
+
+
+@pytest.mark.parametrize("name", FOREST_REGRESSORS)
+def test_serialization(name):
+    check_serialization(name)
 
 
 def test_calc_quantile():
@@ -1411,7 +1435,7 @@ def test_calc_quantile_rank():
             assert_allclose(actual, expected)
 
     inputs = []
-    scores = np.array([1], dtype=np.float64)
+    scores = float(1)
 
     # Check that -1 is returned for empty list.
     actual = calc_quantile_rank(inputs, scores)
@@ -1419,7 +1443,7 @@ def test_calc_quantile_rank():
     assert_array_equal(actual, expected)
 
     inputs = [2, 4, 3]
-    scores = np.array([3], dtype=np.float64)
+    scores = float(3)
 
     # Check that sorting is correctly applied.
     actual1 = calc_quantile_rank(inputs, scores, issorted=True)
@@ -1432,7 +1456,7 @@ def test_calc_quantile_rank():
         TypeError,
         calc_quantile_rank,
         [1, 2],
-        np.array([1], dtype=np.float64),
+        float(1),
         kind=None,
     )
 

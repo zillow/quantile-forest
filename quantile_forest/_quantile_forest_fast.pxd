@@ -2,47 +2,46 @@ from libcpp.map cimport map
 from libcpp.vector cimport vector
 
 import numpy as np
-cimport numpy as np
+cimport numpy as cnp
 
-ctypedef np.npy_float32 DTYPE_t          # Type of X
-ctypedef np.npy_float64 DOUBLE_t         # Type of y
-ctypedef np.npy_intp SIZE_t              # Type for indices and counters
-ctypedef np.npy_uint8 UINT8_t            # Unsigned 8 bit integer
-ctypedef np.npy_uint32 UINT32_t          # Unsigned 32 bit integer
+ctypedef unsigned char uint8_t
+ctypedef unsigned int uint32_t
+ctypedef Py_ssize_t intp_t
+ctypedef double float64_t
 
 cdef class QuantileForest:
     # The QuantileForest object.
 
     # Input/Output layout
-    cdef public vector[vector[DOUBLE_t]] y_train
-    cdef public SIZE_t[:, :, :, :] y_train_leaves
+    cdef public vector[vector[float64_t]] y_train
+    cdef public intp_t[:, :, :, :] y_train_leaves
     cdef public bint sparse_pickle
 
     # Methods
-    cpdef np.ndarray predict(
+    cpdef cnp.ndarray predict(
         self,
         vector[double] quantiles,
-        SIZE_t[:, :] X_leaves,
-        UINT8_t[:, :] X_indices=*,
+        intp_t[:, :] X_leaves,
+        uint8_t[:, :] X_indices=*,
         char* interpolation=*,
         bint weighted_quantile=*,
         bint weighted_leaves=*,
         bint aggregate_leaves_first=*,
     )
 
-    cpdef np.ndarray quantile_ranks(
+    cpdef cnp.ndarray quantile_ranks(
         self,
         double[:, :] y_scores,
-        SIZE_t[:, :] X_leaves,
-        UINT8_t[:, :] X_indices=*,
+        intp_t[:, :] X_leaves,
+        uint8_t[:, :] X_indices=*,
         char* kind=*,
         bint aggregate_leaves_first=*,
     )
 
-    cpdef vector[map[SIZE_t, SIZE_t]] proximity_counts(
+    cpdef vector[map[intp_t, intp_t]] proximity_counts(
         self,
-        SIZE_t[:, :] X_leaves,
-        UINT8_t[:, :] X_indices=*,
-        UINT32_t max_proximities=*,
-        SIZE_t[:, :] sorter=*,
+        intp_t[:, :] X_leaves,
+        uint8_t[:, :] X_indices=*,
+        uint32_t max_proximities=*,
+        intp_t[:, :] sorter=*,
     )

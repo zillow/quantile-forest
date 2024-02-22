@@ -95,7 +95,7 @@ The output of the `predict` method is an array with one column for each specifie
     >>> (y_pred[:, 0] >= y_pred[:, 1]).all()
     True
 
-Multi-target quantile regression is also supported. If the target values are multi-dimensional, then the final output column will correspond to the number of targets::
+Multi-target quantile regression is also supported. If the target values are multi-dimensional, then the second output column will correspond to the number of targets::
 
     >>> from sklearn import datasets
     >>> from quantile_forest import RandomForestQuantileRegressor
@@ -111,9 +111,9 @@ Multi-target quantile regression is also supported. If the target values are mul
     True
     >>> y_pred.shape[0] == len(X)
     True
-    >>> y_pred.shape[1] == len(quantiles)
+    >>> y_pred.shape[-1] == len(quantiles)
     True
-    >>> y_pred.shape[-1] == y.shape[1]
+    >>> y_pred.shape[1] == y.shape[1]
     True
 
 Quantile Weighting

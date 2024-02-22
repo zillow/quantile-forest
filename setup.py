@@ -77,12 +77,23 @@ def configure_extension_modules():
         Extension(
             "quantile_forest._quantile_forest_fast",
             sources=["quantile_forest/_quantile_forest_fast.pyx"],
+            define_macros=[("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION")],
             include_dirs=[numpy.get_include()],
             language="c++",
         ),
     ]
 
-    return cythonize(EXTENSIONS, compiler_directives={"language_level": "3"})
+    return cythonize(
+        EXTENSIONS,
+        compiler_directives={
+            "language_level": "3",
+            "boundscheck": False,
+            "cdivision": True,
+            "initializedcheck": False,
+            "nonecheck": False,
+            "wraparound": False,
+        },
+    )
 
 
 def setup_package():

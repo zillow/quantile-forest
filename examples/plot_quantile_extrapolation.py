@@ -40,7 +40,7 @@ def get_train_Xy(X, y, min_idx, max_idx):
     return X_train, y_train
 
 
-def get_test_X(X):
+def get_test_X(X, bounds):
     n_samples = len(X)
     X_test = np.atleast_2d(np.linspace(*bounds, n_samples)).T
     return X_test
@@ -56,7 +56,7 @@ extrap_max_idx = int(n_samples - (n_samples * (extrap_frac / 2)))
 # Based on the extrapolation bounds, get the training and test data.
 # Training data excludes extrapolated regions; test data includes them.
 X_train, y_train = get_train_Xy(X, y, extrap_min_idx, extrap_max_idx)
-X_test = get_test_X(X)
+X_test = get_test_X(X, bounds)
 
 qrf = RandomForestQuantileRegressor(max_samples_leaf=None, min_samples_leaf=10, random_state=0)
 qrf.fit(np.expand_dims(X_train, axis=-1), y_train)
