@@ -18,7 +18,7 @@ The module structure is the following:
   that extends the extremely randomized trees ``ExtraTreesRegressor`` as the
   estimator implementation.
 
-Only single output problems are handled.
+Single and multi-output problems are both handled.
 """
 
 import random
