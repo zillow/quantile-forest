@@ -3,6 +3,7 @@ Testing for the quantile forest module (quantile_forest._quantile_forest).
 """
 
 import math
+import pickle
 import warnings
 from typing import Any, Dict
 
@@ -21,7 +22,7 @@ from sklearn.utils._testing import (
     assert_array_equal,
     assert_raises,
 )
-from sklearn.utils.validation import check_random_state
+from sklearn.utils.validation import check_is_fitted, check_random_state
 
 from quantile_forest import ExtraTreesQuantileRegressor, RandomForestQuantileRegressor
 from quantile_forest._quantile_forest_fast import (
@@ -1183,6 +1184,29 @@ def check_proximity_counts_oob(name):
 @pytest.mark.parametrize("name", FOREST_REGRESSORS)
 def test_proximity_counts_oob(name):
     check_proximity_counts_oob(name)
+
+
+def check_serialization(name):
+    # Check model serialization/deserialization.
+
+    X = X_california
+    y = y_california
+
+    ForestRegressor = FOREST_REGRESSORS[name]
+
+    est = ForestRegressor(n_estimators=10, random_state=0)
+    est.fit(X, y)
+
+    dumped = pickle.dumps(est)
+    est_loaded = pickle.loads(dumped)
+
+    assert check_is_fitted(est_loaded) is None
+    assert np.all(est.predict(X) == est_loaded.predict(X))
+
+
+@pytest.mark.parametrize("name", FOREST_REGRESSORS)
+def test_serialization(name):
+    check_serialization(name)
 
 
 def test_calc_quantile():
