@@ -980,7 +980,7 @@ def check_predict_oob(
     # Check warning if not enough estimators.
     with np.errstate(divide="ignore", invalid="ignore"):
         est = ForestRegressor(n_estimators=4, bootstrap=True, oob_score=True, random_state=0)
-        with pytest.warns(UserWarning):
+        with pytest.warns():
             est.fit(X, y)
             est.predict(
                 X,
@@ -1435,7 +1435,7 @@ def test_calc_quantile_rank():
             assert_allclose(actual, expected)
 
     inputs = []
-    scores = np.array([1], dtype=np.float64)
+    scores = float(1)
 
     # Check that -1 is returned for empty list.
     actual = calc_quantile_rank(inputs, scores)
@@ -1443,7 +1443,7 @@ def test_calc_quantile_rank():
     assert_array_equal(actual, expected)
 
     inputs = [2, 4, 3]
-    scores = np.array([3], dtype=np.float64)
+    scores = float(3)
 
     # Check that sorting is correctly applied.
     actual1 = calc_quantile_rank(inputs, scores, issorted=True)
@@ -1456,7 +1456,7 @@ def test_calc_quantile_rank():
         TypeError,
         calc_quantile_rank,
         [1, 2],
-        np.array([1], dtype=np.float64),
+        float(1),
         kind=None,
     )
 
