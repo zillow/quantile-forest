@@ -26,7 +26,7 @@ quantile-forest
       A guide that provides installation requirements and instructions, as well as procedures for developers.
 
    .. grid-item-card:: User Guide
-      :link: user_guide
+      :link: user-guide-intro
       :link-type: ref
       :link-alt: User guide
 
@@ -50,9 +50,10 @@ quantile-forest
    :maxdepth: 1
    :hidden:
 
-   Getting Started <install>
-   User Guide <user_guide>
+   Getting Started <getting_started/installation>
+   User Guide <user_guide/introduction>
    Examples <gallery/index>
    API <api>
+   Release Notes <releases/changes>
 
 .. _GitHub: http://github.com/zillow/quantile-forest
