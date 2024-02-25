@@ -11,7 +11,7 @@ in the training set. To overcome this limitation, we can use a procedure known
 as Xtrapolation that can estimate the extrapolation bounds for samples that
 fall outside the range of the training data. Adapted from "Extrapolation-Aware
 Nonparametric Statistical Inference" by Niklas Pfister and Peter Bühlmann:
-https://github.com/NiklasPfister/ExtrapolationAware-Inference.
+https://arxiv.org/abs/2402.09758.
 """
 
 import math
