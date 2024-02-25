@@ -23,14 +23,18 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install black flake8 isort pytest pytest-cov
+          pip install black cython-lint flake8 isort pytest pytest-cov
           pip install -r ./docs/sphinx_requirements.txt
           pip install --verbose --editable .
 
-      - name: Check formatting with black
+      - name: Check Python formatting with black
         run: |
           black --line-length 99 --diff --color .
           black --line-length=99 --check .
+
+      - name: Check Cython formatting with cython-lint
+        run: |
+          cython-lint --max-line-length=99 --ignore=E741 .
 
       - name: Check import order with isort
         run: |
@@ -43,7 +47,7 @@ jobs:
 
       - name: Test with pytest
         run: |
-          python -m pytest docs/*rst
+          python -m pytest docs/user_guide/*rst
           python -m pytest --pyargs quantile_forest --cov=quantile_forest
 
       - name: Upload coverage reports to Codecov
