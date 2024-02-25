@@ -18,7 +18,7 @@ For each test sample, the method outputs a list of tuples of the training index 
 The maximum number of proximity counts output per test sample can be limited by specifying `max_proximities`::
 
     >>> proximities = reg.proximity_counts(X_test, max_proximities=10)
-    >>> np.all([len(prox) <= 10 for prox in proximities])
+    >>> all([len(prox) <= 10 for prox in proximities])
     True
 
 Out-of-bag (OOB) proximity counts can be returned by specifying `oob_score = True`::

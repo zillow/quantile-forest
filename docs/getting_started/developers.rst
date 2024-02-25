@@ -34,7 +34,7 @@ To test the code::
 
 To test the documentation::
 
-  $ python -m pytest docs/*rst
+  $ python -m pytest docs/user_guide/*rst
 
 Documentation
 ~~~~~~~~~~~~~
