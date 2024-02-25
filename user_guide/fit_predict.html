@@ -2,13 +2,13 @@
 <!DOCTYPE html>
 
 
-<html lang="en" data-content_root="./" data-theme="light">
+<html lang="en" data-content_root="../" data-theme="light">
 
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>User Guide &#8212; quantile-forest 1.3.4 documentation</title>
+    <title>Fitting and Predicting &#8212; quantile-forest 1.3.4 documentation</title>
   
   
   
@@ -18,42 +18,42 @@
   </script>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="_static/styles/theme.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
-<link href="_static/styles/bootstrap.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
-<link href="_static/styles/pydata-sphinx-theme.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
+  <link href="../_static/styles/theme.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
+<link href="../_static/styles/bootstrap.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
 
   
-  <link href="_static/vendor/fontawesome/6.5.1/css/all.min.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
-  <link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.5.1/webfonts/fa-solid-900.woff2" />
-<link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.5.1/webfonts/fa-brands-400.woff2" />
-<link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.5.1/webfonts/fa-regular-400.woff2" />
+  <link href="../_static/vendor/fontawesome/6.5.1/css/all.min.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.1/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.1/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.1/webfonts/fa-regular-400.woff2" />
 
-    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
-    <link rel="stylesheet" type="text/css" href="_static/altair-plot.css" />
-    <link rel="stylesheet" type="text/css" href="_static/gallery.css" />
-    <link rel="stylesheet" type="text/css" href="_static/theme_overrides.css" />
-    <link rel="stylesheet" type="text/css" href="_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css?v=0a3b3ea7" />
-    <link rel="stylesheet" type="text/css" href="_static/css/gallery.css?v=c8ff873b" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/altair-plot.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/gallery.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/theme_overrides.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css?v=0a3b3ea7" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/gallery.css?v=c8ff873b" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=8d27b9dea8ad943066ae" />
-<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=8d27b9dea8ad943066ae" />
-  <script src="_static/vendor/fontawesome/6.5.1/js/all.min.js?digest=8d27b9dea8ad943066ae"></script>
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8d27b9dea8ad943066ae" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8d27b9dea8ad943066ae" />
+  <script src="../_static/vendor/fontawesome/6.5.1/js/all.min.js?digest=8d27b9dea8ad943066ae"></script>
 
-    <script src="_static/documentation_options.js?v=e358f374"></script>
-    <script src="_static/doctools.js?v=888ff710"></script>
-    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
-    <script src="_static/design-tabs.js?v=36754332"></script>
+    <script src="../_static/documentation_options.js?v=e358f374"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/design-tabs.js?v=36754332"></script>
     <script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
     <script src="https://cdn.jsdelivr.net/npm/vega-lite@5.16.3"></script>
     <script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
     <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'user_guide';</script>
-    <link rel="icon" href="_static/favicon.ico"/>
-    <link rel="index" title="Index" href="genindex.html" />
-    <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="General Examples" href="gallery/index.html" />
-    <link rel="prev" title="Getting Started" href="install.html" />
+    <script>DOCUMENTATION_OPTIONS.pagename = 'user_guide/fit_predict';</script>
+    <link rel="icon" href="../_static/favicon.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Quantile Ranks" href="quantile_ranks.html" />
+    <link rel="prev" title="Introduction" href="introduction.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -89,7 +89,7 @@
     <div class="search-button__overlay"></div>
     <div class="search-button__search-container">
 <form class="bd-search d-flex align-items-center"
-      action="search.html"
+      action="../search.html"
       method="get">
   <i class="fa-solid fa-magnifying-glass"></i>
   <input type="search"
@@ -119,7 +119,7 @@
 
   
 
-<a class="navbar-brand logo" href="index.html">
+<a class="navbar-brand logo" href="../index.html">
   
   
   
@@ -128,13 +128,13 @@
     
     
     
-    <img src="_static/quantile-forest-logo.png" class="logo__image only-light" alt="quantile-forest 1.3.4 documentation - Home"/>
-    <script>document.write(`<img src="_static/quantile-forest-logo-white.png" class="logo__image only-dark" alt="quantile-forest 1.3.4 documentation - Home"/>`);</script>
+    <img src="../_static/quantile-forest-logo.png" class="logo__image only-light" alt="quantile-forest 1.3.4 documentation - Home"/>
+    <script>document.write(`<img src="../_static/quantile-forest-logo-white.png" class="logo__image only-dark" alt="quantile-forest 1.3.4 documentation - Home"/>`);</script>
   
   
 </a></div>
     
-      <div class="navbar-item"><a class="navbar-brand" href="index.html">
+      <div class="navbar-item"><a class="navbar-brand" href="../index.html">
 <p class="title">quantile-forest</p>
 </a>
 </div>
@@ -150,29 +150,36 @@
   <ul class="bd-navbar-elements navbar-nav">
     
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="install.html">
+                      <a class="nav-link nav-internal" href="../getting_started/installation.html">
                         Getting Started
                       </a>
                     </li>
                 
 
                     <li class="nav-item current active">
-                      <a class="nav-link nav-internal" href="#">
+                      <a class="nav-link nav-internal" href="introduction.html">
                         User Guide
                       </a>
                     </li>
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="gallery/index.html">
+                      <a class="nav-link nav-internal" href="../gallery/index.html">
                         Examples
                       </a>
                     </li>
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="api.html">
+                      <a class="nav-link nav-internal" href="../api.html">
                         API
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../releases/changes.html">
+                        Release Notes
                       </a>
                     </li>
                 
@@ -275,29 +282,36 @@ document.write(`
   <ul class="bd-navbar-elements navbar-nav">
     
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="install.html">
+                      <a class="nav-link nav-internal" href="../getting_started/installation.html">
                         Getting Started
                       </a>
                     </li>
                 
 
                     <li class="nav-item current active">
-                      <a class="nav-link nav-internal" href="#">
+                      <a class="nav-link nav-internal" href="introduction.html">
                         User Guide
                       </a>
                     </li>
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="gallery/index.html">
+                      <a class="nav-link nav-internal" href="../gallery/index.html">
                         Examples
                       </a>
                     </li>
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="api.html">
+                      <a class="nav-link nav-internal" href="../api.html">
                         API
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../releases/changes.html">
+                        Release Notes
                       </a>
                     </li>
                 
@@ -349,7 +363,10 @@ document.write(`
   <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
   <div class="bd-toc-item navbar-nav"><p aria-level="2" class="caption" role="heading"><span class="caption-text">User Guide</span></p>
 <ul class="current nav bd-sidenav">
-<li class="toctree-l1 current active"><a class="current reference internal" href="#">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Fitting and Predicting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quantile_ranks.html">Quantile Ranks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proximities.html">Proximity Counts</a></li>
 </ul>
 </div>
 </nav></div>
@@ -383,11 +400,14 @@ document.write(`
   <ul class="bd-breadcrumbs">
     
     <li class="breadcrumb-item breadcrumb-home">
-      <a href="index.html" class="nav-link" aria-label="Home">
+      <a href="../index.html" class="nav-link" aria-label="Home">
         <i class="fa-solid fa-home"></i>
       </a>
     </li>
-    <li class="breadcrumb-item active" aria-current="page">User Guide</li>
+    
+    <li class="breadcrumb-item"><a href="introduction.html" class="nav-link">Introduction</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page">Fitting and...</li>
   </ul>
 </nav>
 </div>
@@ -404,30 +424,11 @@ document.write(`
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="user-guide">
-<span id="id1"></span><h1>User Guide<a class="headerlink" href="#user-guide" title="Link to this heading">#</a></h1>
-<section id="introduction">
-<h2>Introduction<a class="headerlink" href="#introduction" title="Link to this heading">#</a></h2>
-<p>Random forests have proven to be very popular and powerful for regression and classification. For regression, random forests give an accurate approximation of the conditional mean of a response variable. That is, if we let <span class="math notranslate nohighlight">\(Y\)</span> be a real-valued response variable and <span class="math notranslate nohighlight">\(X\)</span> a covariate or predictor variable, they estimate <span class="math notranslate nohighlight">\(E(Y | X)\)</span>, which can be interpreted as the expected value of the output <span class="math notranslate nohighlight">\(Y\)</span> given the input <span class="math notranslate nohighlight">\(X\)</span>.</p>
-<p>However random forests provide information about the full conditional distribution of the response variable, not only about the conditional mean. Quantile regression forests, a generalization of random forests, can be used to infer conditional quantiles. That is, they return <span class="math notranslate nohighlight">\(y\)</span> at <span class="math notranslate nohighlight">\(q\)</span> for which <span class="math notranslate nohighlight">\(F(Y=y|X) = q\)</span>, where <span class="math notranslate nohighlight">\(q\)</span> is the quantile.</p>
-<p>The quantiles give more complete information about the distribution of <span class="math notranslate nohighlight">\(Y\)</span> as a function of the predictor variable <span class="math notranslate nohighlight">\(X\)</span> than the conditional mean alone. They can be useful, for example, to build prediction intervals or to perform outlier detection in a high-dimensional dataset.</p>
-<p>In practice, the empirical estimation of quantiles can be calculated in several ways. In this package, a desired quantile is calculated from the input rank <span class="math notranslate nohighlight">\(x\)</span> such that <span class="math notranslate nohighlight">\(x = (N + 1 - 2C)q + C\)</span>, where <span class="math notranslate nohighlight">\(q\)</span> is the quantile, <span class="math notranslate nohighlight">\(N\)</span> is the number of samples, and <span class="math notranslate nohighlight">\(C\)</span> is a constant (degree of freedom). In this package, <span class="math notranslate nohighlight">\(C = 1\)</span>. This package provides methods that calculate quantiles using samples that are weighted and unweighted. In a weighted quantile, <span class="math notranslate nohighlight">\(N\)</span> is calculated from the fraction of the total weight instead of the total number of samples.</p>
-</section>
-<section id="quantile-regression-forests">
-<h2>Quantile Regression Forests<a class="headerlink" href="#quantile-regression-forests" title="Link to this heading">#</a></h2>
-<p>A standard decision tree can be extended in a straightforward way to estimate conditional quantiles. When a decision tree is fit, rather than storing only the sufficient statistics of the response variable at the leaf node, such as the mean and variance, all of the response values can be stored with the leaf node. At prediction time, these values can then be used to calculate empirical quantile estimates.</p>
-<p>The quantile-based approach can be extended to random forests. To estimate <span class="math notranslate nohighlight">\(F(Y=y|x) = q\)</span>, each response value in the training set is given a weight or frequency. Formally, the weight or frequency given to the <span class="math notranslate nohighlight">\(j\)</span>th training sample, <span class="math notranslate nohighlight">\(y_j\)</span>, while estimating the quantile is</p>
-<div class="math notranslate nohighlight">
-\[\frac{1}{T} \sum_{t=1}^{T} \frac{\mathbb{1}(y_j \in L(x))}{\sum_{i=1}^N \mathbb{1}(y_i \in L(x))},\]</div>
-<p>where <span class="math notranslate nohighlight">\(L(x)\)</span> denotes the leaf that <span class="math notranslate nohighlight">\(x\)</span> falls into.</p>
-<p>Informally, this means that given a new unknown sample, we first find the leaf that it falls into for each tree in the ensemble. Each training sample <span class="math notranslate nohighlight">\(y_j\)</span> that falls into the same leaf as the new sample is given a weight that equals the fraction of samples in the leaf. Each <span class="math notranslate nohighlight">\(y_j\)</span> that does not fall into the same leaf as the new sample is given a weight or frequency of zero. The weights or frequencies for each <span class="math notranslate nohighlight">\(y_j\)</span> are then summed or aggregated across all of the trees in the ensemble. This information can then be used to calculate the empirical quantile estimates.</p>
-<p>This approach was first proposed by <span id="id2">Meinshausen [<a class="reference internal" href="references.html#id3" title="Nicolai Meinshausen. Quantile Regression Forests. Journal of Machine Learning Research, 7(6), 983-999, 2006. URL: https://www.jmlr.org/papers/volume7/meinshausen06a/meinshausen06a.pdf.">Mei06</a>]</span>.</p>
-</section>
-<section id="fitting-and-predicting">
-<h2>Fitting and Predicting<a class="headerlink" href="#fitting-and-predicting" title="Link to this heading">#</a></h2>
+  <section id="fitting-and-predicting">
+<span id="user-guide-fit-predict"></span><h1>Fitting and Predicting<a class="headerlink" href="#fitting-and-predicting" title="Link to this heading">#</a></h1>
 <p>Quantile forests can be fit and used to predict like standard scikit-learn estimators. In this package, the quantile forests extend standard scikit-learn forest regressors and inherent their model parameters, in addition to offering additional parameters related to quantile regression. We’ll discuss many of the important model parameters below.</p>
 <section id="fitting-a-model">
-<h3>Fitting a Model<a class="headerlink" href="#fitting-a-model" title="Link to this heading">#</a></h3>
+<h2>Fitting a Model<a class="headerlink" href="#fitting-a-model" title="Link to this heading">#</a></h2>
 <p>Let’s fit a quantile forest on a simple regression dataset:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">sklearn</span> <span class="kn">import</span> <span class="n">datasets</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">sklearn.model_selection</span> <span class="kn">import</span> <span class="n">train_test_split</span>
@@ -442,7 +443,7 @@ document.write(`
 <p>During model initialization, the parameter <code class="docutils literal notranslate"><span class="pre">max_samples_leaf</span></code> can be specified, which determines the maximum number of samples per leaf node to retain. If <code class="docutils literal notranslate"><span class="pre">max_samples_leaf</span></code> is smaller than the number of samples in a given leaf node, then a subset of values are randomly selected. By default, the model retains one randomly selected sample per leaf node (<code class="docutils literal notranslate"><span class="pre">max_samples_leaf</span> <span class="pre">=</span> <span class="pre">1</span></code>), which enables the use of optimizations at prediction time that are not available when a variable number of samples may be retained per leaf. All samples can be retained by specifying <code class="docutils literal notranslate"><span class="pre">max_samples_leaf</span> <span class="pre">=</span> <span class="pre">None</span></code>. Note that the number of retained samples can materially impact the size of the model object.</p>
 </section>
 <section id="making-predictions">
-<h3>Making Predictions<a class="headerlink" href="#making-predictions" title="Link to this heading">#</a></h3>
+<h2>Making Predictions<a class="headerlink" href="#making-predictions" title="Link to this heading">#</a></h2>
 <p>A notable advantage of quantile forests is that they can be fit once, while arbitrary quantiles can be estimated at prediction time. Accordingly, since the quantiles can be specified at prediction time, the model accepts an optional parameter during the call to the <code class="docutils literal notranslate"><span class="pre">predict</span></code> method, which can be a float or list of floats that specify the empirical quantiles to return:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">y_pred</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">,</span> <span class="n">quantiles</span><span class="o">=</span><span class="p">[</span><span class="mf">0.25</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.75</span><span class="p">])</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">y_pred</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
@@ -506,7 +507,7 @@ document.write(`
 </div>
 </section>
 <section id="quantile-weighting">
-<h3>Quantile Weighting<a class="headerlink" href="#quantile-weighting" title="Link to this heading">#</a></h3>
+<h2>Quantile Weighting<a class="headerlink" href="#quantile-weighting" title="Link to this heading">#</a></h2>
 <p>By default, the predict method calculates quantiles using a weighted quantile method (<code class="docutils literal notranslate"><span class="pre">weighted_quantile</span> <span class="pre">=</span> <span class="pre">True</span></code>), which assigns a weight to each sample in the training set based on the number of times that it co-occurs in the same leaves as the test sample. When the number of samples in the training set is larger than the expected size of this list (i.e., <span class="math notranslate nohighlight">\(n_{train} \gg n_{trees} \cdot n_{leaves} \cdot n_{leafsamples}\)</span>), it can be more efficient to calculate an unweighted quantile (<code class="docutils literal notranslate"><span class="pre">weighted_quantile</span> <span class="pre">=</span> <span class="pre">False</span></code>), which aggregates the list of training <code class="docutils literal notranslate"><span class="pre">y</span></code> values for each leaf node to which the test sample belongs across all trees. For a given input, both methods can return the same output values:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">y_pred_weighted</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">,</span> <span class="n">weighted_quantile</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -518,7 +519,7 @@ document.write(`
 <p>By default, the predict method calculates quantiles by giving each sample in a leaf (including repeated bootstrap samples) equal weight (<code class="docutils literal notranslate"><span class="pre">weighted_leaves</span> <span class="pre">=</span> <span class="pre">False</span></code>). If <code class="docutils literal notranslate"><span class="pre">weighted_leaves</span> <span class="pre">=</span> <span class="pre">True</span></code>, each sample will be weighted inversely according to the size of its leaf node. Note that this leaf-based weighting can only be used with weighted quantiles.</p>
 </section>
 <section id="out-of-bag-estimation">
-<h3>Out-of-Bag Estimation<a class="headerlink" href="#out-of-bag-estimation" title="Link to this heading">#</a></h3>
+<h2>Out-of-Bag Estimation<a class="headerlink" href="#out-of-bag-estimation" title="Link to this heading">#</a></h2>
 <p>Out-of-bag (OOB) predictions can be returned by specifying <code class="docutils literal notranslate"><span class="pre">oob_score</span> <span class="pre">=</span> <span class="pre">True</span></code>:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">y_pred_oob</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">quantiles</span><span class="o">=</span><span class="p">[</span><span class="mf">0.5</span><span class="p">],</span> <span class="n">oob_score</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
@@ -536,7 +537,7 @@ document.write(`
 <p>This allows all samples, both from the training and test sets, to be scored with a single call to <code class="docutils literal notranslate"><span class="pre">predict</span></code>, whereby OOB predictions are returned for the training samples and IB (i.e., non-OOB) predictions are returned for the test samples.</p>
 </section>
 <section id="random-forest-predictions">
-<h3>Random Forest Predictions<a class="headerlink" href="#random-forest-predictions" title="Link to this heading">#</a></h3>
+<h2>Random Forest Predictions<a class="headerlink" href="#random-forest-predictions" title="Link to this heading">#</a></h2>
 <p>The predictions of a standard random forest can also be recovered from a quantile forest without retraining by passing <code class="docutils literal notranslate"><span class="pre">quantiles</span> <span class="pre">=</span> <span class="pre">&quot;mean&quot;</span></code> and <code class="docutils literal notranslate"><span class="pre">aggregate_leaves_first</span> <span class="pre">=</span> <span class="pre">False</span></code>, the latter which specifies a Boolean flag to average the leaf values before aggregating the leaves across trees. This configuration essentially replicates the prediction process used by a standard random forest regressor, which is an averaging of mean leaf values across trees:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">sklearn</span> <span class="kn">import</span> <span class="n">datasets</span>
@@ -560,50 +561,6 @@ document.write(`
 </div>
 </section>
 </section>
-<section id="quantile-ranks">
-<h2>Quantile Ranks<a class="headerlink" href="#quantile-ranks" title="Link to this heading">#</a></h2>
-<p>The quantile rank is the fraction of scores in a frequency distribution that are less than (or equal to) that score. For a quantile forest, the frequency distribution is the set of training sample response values that are used to construct the empirical quantile estimates. The quantile rank of each sample is calculated by aggregating the response values from all of the training samples that share the same leaf node across all of the trees. The output quantile rank will be a value in the range [0, 1] for each test sample:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">sklearn</span> <span class="kn">import</span> <span class="n">datasets</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">sklearn.model_selection</span> <span class="kn">import</span> <span class="n">train_test_split</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">quantile_forest</span> <span class="kn">import</span> <span class="n">RandomForestQuantileRegressor</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">X</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">datasets</span><span class="o">.</span><span class="n">load_diabetes</span><span class="p">(</span><span class="n">return_X_y</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">X_train</span><span class="p">,</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">y_test</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="mf">0.25</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">reg</span> <span class="o">=</span> <span class="n">RandomForestQuantileRegressor</span><span class="p">()</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">y_ranks</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">quantile_ranks</span><span class="p">(</span><span class="n">X_test</span><span class="p">,</span> <span class="n">y_test</span><span class="p">)</span>  <span class="c1"># quantile ranks of y_test</span>
-</pre></div>
-</div>
-<p>Out-of-bag (OOB) quantile ranks can be returned by specifying <code class="docutils literal notranslate"><span class="pre">oob_score</span> <span class="pre">=</span> <span class="pre">True</span></code>:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">y_ranks_oob</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">quantile_ranks</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">oob_score</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-</pre></div>
-</div>
-</section>
-<section id="proximity-counts">
-<h2>Proximity Counts<a class="headerlink" href="#proximity-counts" title="Link to this heading">#</a></h2>
-<p>Proximity counts are counts of the number of times that two samples share a leaf node. When a test set is present, the proximity counts of each sample in the test set with each sample in the training set can be computed:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">sklearn</span> <span class="kn">import</span> <span class="n">datasets</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">sklearn.model_selection</span> <span class="kn">import</span> <span class="n">train_test_split</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">quantile_forest</span> <span class="kn">import</span> <span class="n">RandomForestQuantileRegressor</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">X</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">datasets</span><span class="o">.</span><span class="n">load_diabetes</span><span class="p">(</span><span class="n">return_X_y</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">X_train</span><span class="p">,</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">y_test</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="mf">0.25</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">reg</span> <span class="o">=</span> <span class="n">RandomForestQuantileRegressor</span><span class="p">()</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">proximities</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">proximity_counts</span><span class="p">(</span><span class="n">X_test</span><span class="p">)</span>  <span class="c1"># proximity counts for X_test</span>
-</pre></div>
-</div>
-<p>For each test sample, the method outputs a list of tuples of the training index and proximity count, listed in descending order by proximity count. For example, a test sample with an output of [(1, 5), (0, 3), (3, 1)], means that the test sample shared 5, 3, and 1 leaf nodes with the training samples that were (zero-)indexed as 1, 0, and 3 during model fitting, respectively.</p>
-<p>The maximum number of proximity counts output per test sample can be limited by specifying <code class="docutils literal notranslate"><span class="pre">max_proximities</span></code>:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">proximities</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">proximity_counts</span><span class="p">(</span><span class="n">X_test</span><span class="p">,</span> <span class="n">max_proximities</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">([</span><span class="nb">len</span><span class="p">(</span><span class="n">prox</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">10</span> <span class="k">for</span> <span class="n">prox</span> <span class="ow">in</span> <span class="n">proximities</span><span class="p">])</span>
-<span class="go">True</span>
-</pre></div>
-</div>
-<p>Out-of-bag (OOB) proximity counts can be returned by specifying <code class="docutils literal notranslate"><span class="pre">oob_score</span> <span class="pre">=</span> <span class="pre">True</span></code>:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">proximities</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">proximity_counts</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">oob_score</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-</pre></div>
-</div>
-<div class="toctree-wrapper compound">
-</div>
-</section>
-</section>
 
 
                 </article>
@@ -616,20 +573,20 @@ document.write(`
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="install.html"
+       href="introduction.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">Getting Started</p>
+        <p class="prev-next-title">Introduction</p>
       </div>
     </a>
     <a class="right-next"
-       href="gallery/index.html"
+       href="quantile_ranks.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">General Examples</p>
+        <p class="prev-next-title">Quantile Ranks</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -651,25 +608,18 @@ document.write(`
   </div>
   <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#introduction">Introduction</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#quantile-regression-forests">Quantile Regression Forests</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#fitting-and-predicting">Fitting and Predicting</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#fitting-a-model">Fitting a Model</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#making-predictions">Making Predictions</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#quantile-weighting">Quantile Weighting</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#out-of-bag-estimation">Out-of-Bag Estimation</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#random-forest-predictions">Random Forest Predictions</a></li>
-</ul>
-</li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#quantile-ranks">Quantile Ranks</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#proximity-counts">Proximity Counts</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#fitting-a-model">Fitting a Model</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#making-predictions">Making Predictions</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#quantile-weighting">Quantile Weighting</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#out-of-bag-estimation">Out-of-Bag Estimation</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#random-forest-predictions">Random Forest Predictions</a></li>
 </ul>
   </nav></div>
 
   <div class="sidebar-secondary-item">
 
   <div class="tocsection sourcelink">
-    <a href="_sources/user_guide.rst.txt">
+    <a href="../_sources/user_guide/fit_predict.rst.txt">
       <i class="fa-solid fa-file-lines"></i> Show Source
     </a>
   </div>
@@ -688,8 +638,8 @@ document.write(`
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script src="_static/scripts/bootstrap.js?digest=8d27b9dea8ad943066ae"></script>
-<script src="_static/scripts/pydata-sphinx-theme.js?digest=8d27b9dea8ad943066ae"></script>
+  <script src="../_static/scripts/bootstrap.js?digest=8d27b9dea8ad943066ae"></script>
+<script src="../_static/scripts/pydata-sphinx-theme.js?digest=8d27b9dea8ad943066ae"></script>
 
   <footer class="bd-footer">
 <div class="bd-footer__inner bd-page-width">

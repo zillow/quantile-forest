@@ -2,13 +2,13 @@
 <!DOCTYPE html>
 
 
-<html lang="en" data-content_root="./" data-theme="light">
+<html lang="en" data-content_root="../" data-theme="light">
 
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>API Reference &#8212; quantile-forest 1.3.4 documentation</title>
+    <title>Proximity Counts &#8212; quantile-forest 1.3.4 documentation</title>
   
   
   
@@ -18,41 +18,41 @@
   </script>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="_static/styles/theme.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
-<link href="_static/styles/bootstrap.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
-<link href="_static/styles/pydata-sphinx-theme.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
+  <link href="../_static/styles/theme.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
+<link href="../_static/styles/bootstrap.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
 
   
-  <link href="_static/vendor/fontawesome/6.5.1/css/all.min.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
-  <link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.5.1/webfonts/fa-solid-900.woff2" />
-<link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.5.1/webfonts/fa-brands-400.woff2" />
-<link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.5.1/webfonts/fa-regular-400.woff2" />
+  <link href="../_static/vendor/fontawesome/6.5.1/css/all.min.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.1/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.1/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.1/webfonts/fa-regular-400.woff2" />
 
-    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
-    <link rel="stylesheet" type="text/css" href="_static/altair-plot.css" />
-    <link rel="stylesheet" type="text/css" href="_static/gallery.css" />
-    <link rel="stylesheet" type="text/css" href="_static/theme_overrides.css" />
-    <link rel="stylesheet" type="text/css" href="_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css?v=0a3b3ea7" />
-    <link rel="stylesheet" type="text/css" href="_static/css/gallery.css?v=c8ff873b" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/altair-plot.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/gallery.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/theme_overrides.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css?v=0a3b3ea7" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/gallery.css?v=c8ff873b" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=8d27b9dea8ad943066ae" />
-<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=8d27b9dea8ad943066ae" />
-  <script src="_static/vendor/fontawesome/6.5.1/js/all.min.js?digest=8d27b9dea8ad943066ae"></script>
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8d27b9dea8ad943066ae" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8d27b9dea8ad943066ae" />
+  <script src="../_static/vendor/fontawesome/6.5.1/js/all.min.js?digest=8d27b9dea8ad943066ae"></script>
 
-    <script src="_static/documentation_options.js?v=e358f374"></script>
-    <script src="_static/doctools.js?v=888ff710"></script>
-    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
-    <script src="_static/design-tabs.js?v=36754332"></script>
+    <script src="../_static/documentation_options.js?v=e358f374"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/design-tabs.js?v=36754332"></script>
     <script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
     <script src="https://cdn.jsdelivr.net/npm/vega-lite@5.16.3"></script>
     <script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'api';</script>
-    <link rel="icon" href="_static/favicon.ico"/>
-    <link rel="index" title="Index" href="genindex.html" />
-    <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="ExtraTreesQuantileRegressor" href="generated/quantile_forest.ExtraTreesQuantileRegressor.html" />
-    <link rel="prev" title="General Examples" href="gallery/index.html" />
+    <script>DOCUMENTATION_OPTIONS.pagename = 'user_guide/proximities';</script>
+    <link rel="icon" href="../_static/favicon.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="General Examples" href="../gallery/index.html" />
+    <link rel="prev" title="Quantile Ranks" href="quantile_ranks.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -88,7 +88,7 @@
     <div class="search-button__overlay"></div>
     <div class="search-button__search-container">
 <form class="bd-search d-flex align-items-center"
-      action="search.html"
+      action="../search.html"
       method="get">
   <i class="fa-solid fa-magnifying-glass"></i>
   <input type="search"
@@ -118,7 +118,7 @@
 
   
 
-<a class="navbar-brand logo" href="index.html">
+<a class="navbar-brand logo" href="../index.html">
   
   
   
@@ -127,13 +127,13 @@
     
     
     
-    <img src="_static/quantile-forest-logo.png" class="logo__image only-light" alt="quantile-forest 1.3.4 documentation - Home"/>
-    <script>document.write(`<img src="_static/quantile-forest-logo-white.png" class="logo__image only-dark" alt="quantile-forest 1.3.4 documentation - Home"/>`);</script>
+    <img src="../_static/quantile-forest-logo.png" class="logo__image only-light" alt="quantile-forest 1.3.4 documentation - Home"/>
+    <script>document.write(`<img src="../_static/quantile-forest-logo-white.png" class="logo__image only-dark" alt="quantile-forest 1.3.4 documentation - Home"/>`);</script>
   
   
 </a></div>
     
-      <div class="navbar-item"><a class="navbar-brand" href="index.html">
+      <div class="navbar-item"><a class="navbar-brand" href="../index.html">
 <p class="title">quantile-forest</p>
 </a>
 </div>
@@ -149,35 +149,35 @@
   <ul class="bd-navbar-elements navbar-nav">
     
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="getting_started/installation.html">
+                      <a class="nav-link nav-internal" href="../getting_started/installation.html">
                         Getting Started
                       </a>
                     </li>
                 
 
-                    <li class="nav-item">
-                      <a class="nav-link nav-internal" href="user_guide/introduction.html">
+                    <li class="nav-item current active">
+                      <a class="nav-link nav-internal" href="introduction.html">
                         User Guide
                       </a>
                     </li>
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="gallery/index.html">
+                      <a class="nav-link nav-internal" href="../gallery/index.html">
                         Examples
                       </a>
                     </li>
                 
 
-                    <li class="nav-item current active">
-                      <a class="nav-link nav-internal" href="#">
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../api.html">
                         API
                       </a>
                     </li>
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="releases/changes.html">
+                      <a class="nav-link nav-internal" href="../releases/changes.html">
                         Release Notes
                       </a>
                     </li>
@@ -281,35 +281,35 @@ document.write(`
   <ul class="bd-navbar-elements navbar-nav">
     
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="getting_started/installation.html">
+                      <a class="nav-link nav-internal" href="../getting_started/installation.html">
                         Getting Started
                       </a>
                     </li>
                 
 
-                    <li class="nav-item">
-                      <a class="nav-link nav-internal" href="user_guide/introduction.html">
+                    <li class="nav-item current active">
+                      <a class="nav-link nav-internal" href="introduction.html">
                         User Guide
                       </a>
                     </li>
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="gallery/index.html">
+                      <a class="nav-link nav-internal" href="../gallery/index.html">
                         Examples
                       </a>
                     </li>
                 
 
-                    <li class="nav-item current active">
-                      <a class="nav-link nav-internal" href="#">
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../api.html">
                         API
                       </a>
                     </li>
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="releases/changes.html">
+                      <a class="nav-link nav-internal" href="../releases/changes.html">
                         Release Notes
                       </a>
                     </li>
@@ -360,9 +360,12 @@ document.write(`
 <nav class="bd-docs-nav bd-links"
      aria-label="Section Navigation">
   <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
-  <div class="bd-toc-item navbar-nav"><ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="generated/quantile_forest.ExtraTreesQuantileRegressor.html">ExtraTreesQuantileRegressor</a></li>
-<li class="toctree-l1"><a class="reference internal" href="generated/quantile_forest.RandomForestQuantileRegressor.html">RandomForestQuantileRegressor</a></li>
+  <div class="bd-toc-item navbar-nav"><p aria-level="2" class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fit_predict.html">Fitting and Predicting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quantile_ranks.html">Quantile Ranks</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Proximity Counts</a></li>
 </ul>
 </div>
 </nav></div>
@@ -396,11 +399,14 @@ document.write(`
   <ul class="bd-breadcrumbs">
     
     <li class="breadcrumb-item breadcrumb-home">
-      <a href="index.html" class="nav-link" aria-label="Home">
+      <a href="../index.html" class="nav-link" aria-label="Home">
         <i class="fa-solid fa-home"></i>
       </a>
     </li>
-    <li class="breadcrumb-item active" aria-current="page">API Reference</li>
+    
+    <li class="breadcrumb-item"><a href="introduction.html" class="nav-link">Introduction</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page">Proximity Counts</li>
   </ul>
 </nav>
 </div>
@@ -417,22 +423,29 @@ document.write(`
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="api-reference">
-<span id="api"></span><h1>API Reference<a class="headerlink" href="#api-reference" title="Link to this heading">#</a></h1>
-<p>This is the full API documentation of the <code class="docutils literal notranslate"><span class="pre">quantile-forest</span></code> package.</p>
-<section id="quantile-forests">
-<h2>Quantile Forests<a class="headerlink" href="#quantile-forests" title="Link to this heading">#</a></h2>
-<table class="autosummary longtable table autosummary">
-<tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/quantile_forest.ExtraTreesQuantileRegressor.html#quantile_forest.ExtraTreesQuantileRegressor" title="quantile_forest.ExtraTreesQuantileRegressor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ExtraTreesQuantileRegressor</span></code></a></p></td>
-<td><p>An extra-trees regressor that provides quantile estimates.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="generated/quantile_forest.RandomForestQuantileRegressor.html#quantile_forest.RandomForestQuantileRegressor" title="quantile_forest.RandomForestQuantileRegressor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">RandomForestQuantileRegressor</span></code></a></p></td>
-<td><p>A random forest regressor that provides quantile estimates.</p></td>
-</tr>
-</tbody>
-</table>
-</section>
+  <section id="proximity-counts">
+<span id="user-guide-proximities"></span><h1>Proximity Counts<a class="headerlink" href="#proximity-counts" title="Link to this heading">#</a></h1>
+<p>Proximity counts are counts of the number of times that two samples share a leaf node. When a test set is present, the proximity counts of each sample in the test set with each sample in the training set can be computed:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">sklearn</span> <span class="kn">import</span> <span class="n">datasets</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">sklearn.model_selection</span> <span class="kn">import</span> <span class="n">train_test_split</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">quantile_forest</span> <span class="kn">import</span> <span class="n">RandomForestQuantileRegressor</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">X</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">datasets</span><span class="o">.</span><span class="n">load_diabetes</span><span class="p">(</span><span class="n">return_X_y</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">X_train</span><span class="p">,</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">y_test</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="mf">0.25</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">reg</span> <span class="o">=</span> <span class="n">RandomForestQuantileRegressor</span><span class="p">()</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">proximities</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">proximity_counts</span><span class="p">(</span><span class="n">X_test</span><span class="p">)</span>  <span class="c1"># proximity counts for X_test</span>
+</pre></div>
+</div>
+<p>For each test sample, the method outputs a list of tuples of the training index and proximity count, listed in descending order by proximity count. For example, a test sample with an output of [(1, 5), (0, 3), (3, 1)], means that the test sample shared 5, 3, and 1 leaf nodes with the training samples that were (zero-)indexed as 1, 0, and 3 during model fitting, respectively.</p>
+<p>The maximum number of proximity counts output per test sample can be limited by specifying <code class="docutils literal notranslate"><span class="pre">max_proximities</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">proximities</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">proximity_counts</span><span class="p">(</span><span class="n">X_test</span><span class="p">,</span> <span class="n">max_proximities</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">all</span><span class="p">([</span><span class="nb">len</span><span class="p">(</span><span class="n">prox</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">10</span> <span class="k">for</span> <span class="n">prox</span> <span class="ow">in</span> <span class="n">proximities</span><span class="p">])</span>
+<span class="go">True</span>
+</pre></div>
+</div>
+<p>Out-of-bag (OOB) proximity counts can be returned by specifying <code class="docutils literal notranslate"><span class="pre">oob_score</span> <span class="pre">=</span> <span class="pre">True</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">proximities</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">proximity_counts</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">oob_score</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
 </section>
 
 
@@ -446,20 +459,20 @@ document.write(`
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="gallery/index.html"
+       href="quantile_ranks.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">General Examples</p>
+        <p class="prev-next-title">Quantile Ranks</p>
       </div>
     </a>
     <a class="right-next"
-       href="generated/quantile_forest.ExtraTreesQuantileRegressor.html"
+       href="../gallery/index.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">ExtraTreesQuantileRegressor</p>
+        <p class="prev-next-title">General Examples</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -474,21 +487,9 @@ document.write(`
 
 
   <div class="sidebar-secondary-item">
-<div
-    id="pst-page-navigation-heading-2"
-    class="page-toc tocsection onthispage">
-    <i class="fa-solid fa-list"></i> On this page
-  </div>
-  <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
-    <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#quantile-forests">Quantile Forests</a></li>
-</ul>
-  </nav></div>
-
-  <div class="sidebar-secondary-item">
 
   <div class="tocsection sourcelink">
-    <a href="_sources/api.rst.txt">
+    <a href="../_sources/user_guide/proximities.rst.txt">
       <i class="fa-solid fa-file-lines"></i> Show Source
     </a>
   </div>
@@ -507,8 +508,8 @@ document.write(`
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script src="_static/scripts/bootstrap.js?digest=8d27b9dea8ad943066ae"></script>
-<script src="_static/scripts/pydata-sphinx-theme.js?digest=8d27b9dea8ad943066ae"></script>
+  <script src="../_static/scripts/bootstrap.js?digest=8d27b9dea8ad943066ae"></script>
+<script src="../_static/scripts/pydata-sphinx-theme.js?digest=8d27b9dea8ad943066ae"></script>
 
   <footer class="bd-footer">
 <div class="bd-footer__inner bd-page-width">
