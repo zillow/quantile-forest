@@ -156,6 +156,7 @@ html_css_files = [
 # Custom sidebar templates, maps document names to template names.
 html_sidebars = {
     "index": [],
+    "releases/changes": [],
     "**": ["sidebar-nav-bs"],
 }
 
