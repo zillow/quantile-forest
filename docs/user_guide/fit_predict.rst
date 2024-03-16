@@ -85,10 +85,6 @@ Multi-target quantile regression is also supported. If the target values are mul
     >>> y_pred.shape[1] == y.shape[1]
     True
 
-Predicting with User-Specified Functions
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-While a QRF is designed to estimate quantiles from the empirical distribution calculated for each sample, in many cases it may be useful to use the empirical distribution to calculate other quantities of interest. For more details, see :ref:`gallery_plot_predict_custom`.
-
 Quantile Weighting
 ~~~~~~~~~~~~~~~~~~
 
@@ -144,3 +140,8 @@ The predictions of a standard random forest can also be recovered from a quantil
     >>> y_pred_qrf = qrf.predict(X_test, **kwargs)
     >>> np.allclose(y_pred_rf, y_pred_qrf)
     True
+
+Predicting with User-Specified Functions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+While a QRF is designed to estimate quantiles from the empirical distribution calculated for each sample, in many cases it may be useful to use the empirical distribution to calculate other quantities of interest. For more details, see :ref:`gallery_plot_predict_custom`.
