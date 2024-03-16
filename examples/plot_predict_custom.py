@@ -16,9 +16,10 @@ import altair as alt
 import numpy as np
 import pandas as pd
 import scipy as sp
-from quantile_forest import RandomForestQuantileRegressor
 from sklearn import datasets
 from sklearn.model_selection import train_test_split
+
+from quantile_forest import RandomForestQuantileRegressor
 
 np.random.seed(0)
 
