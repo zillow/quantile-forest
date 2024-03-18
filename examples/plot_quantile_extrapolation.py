@@ -48,7 +48,11 @@ class Xtrapolation:
 
     Performs extrapolation-aware nonparametric statistical inference based on
     an existing nonparametric estimate. Adapted from the Python code [1] for
-    the Xtrapolation procedure introduced in [2]. Specifically assumes a QRF.
+    the Xtrapolation procedure introduced in [2].
+
+    The procedure specifically applies a QRF for generating local polynomials
+    to estimate derivatives in a single dimension. For multi-dimensional
+    problems, using the original implementation is strongly encouraged.
 
     References
     ----------
