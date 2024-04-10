@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Calculating User-Specified Functions with QRFs &#8212; quantile-forest 1.3.4 documentation</title>
+    <title>Computing User-Specified Functions with QRFs &#8212; quantile-forest 1.3.4 documentation</title>
   
   
   
@@ -45,7 +45,7 @@
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/design-tabs.js?v=36754332"></script>
     <script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
-    <script src="https://cdn.jsdelivr.net/npm/vega-lite@5.16.3"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vega-lite@5.17.0"></script>
     <script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'gallery/plot_predict_custom';</script>
     <link rel="icon" href="../_static/favicon.ico"/>
@@ -383,7 +383,7 @@ document.write(`
         <i class="fa-solid fa-home"></i>
       </a>
     </li>
-    <li class="breadcrumb-item active" aria-current="page">Calculating...</li>
+    <li class="breadcrumb-item active" aria-current="page">Computing...</li>
   </ul>
 </nav>
 </div>
@@ -400,8 +400,8 @@ document.write(`
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="calculating-user-specified-functions-with-qrfs">
-<span id="gallery-plot-predict-custom"></span><h1>Calculating User-Specified Functions with QRFs<a class="headerlink" href="#calculating-user-specified-functions-with-qrfs" title="Link to this heading">#</a></h1>
+  <section id="computing-user-specified-functions-with-qrfs">
+<span id="gallery-plot-predict-custom"></span><h1>Computing User-Specified Functions with QRFs<a class="headerlink" href="#computing-user-specified-functions-with-qrfs" title="Link to this heading">#</a></h1>
 <p>An example that demonstrates a way of extracting the empirical distribution
 from a quantile regression forest (QRF) for one or more samples in order to
 calculate a user-specified function of interest. While a QRF is designed to
@@ -414,7 +414,7 @@ other quantities of interest. Here, we calculate the ECDF for a test sample.</p>
   // embed when document is loaded, to ensure vega library is available
   // this works on all modern browsers, except IE8 and older
   document.addEventListener("DOMContentLoaded", function(event) {
-      var spec = {"config": {"view": {"continuousWidth": 300, "continuousHeight": 300}}, "layer": [{"mark": {"type": "circle", "color": "#006aff"}, "encoding": {"tooltip": [{"field": "y_value", "title": "Response Value", "type": "quantitative"}, {"field": "probability", "title": "Probability", "type": "quantitative"}], "x": {"field": "y_value", "title": "Response Value", "type": "quantitative"}, "y": {"field": "probability", "title": "Probability", "type": "quantitative"}}}, {"mark": {"type": "line", "color": "#006aff"}, "encoding": {"tooltip": [{"field": "y_value", "title": "Response Value", "type": "quantitative"}, {"field": "probability", "title": "Probability", "type": "quantitative"}], "x": {"field": "y_value", "title": "Response Value", "type": "quantitative"}, "x2": {"field": "y_value2"}, "y": {"field": "probability", "title": "Probability", "type": "quantitative"}}}], "data": {"name": "data-3e35776789539da6f6bcdedf120df619"}, "height": 400, "width": 650, "$schema": "https://vega.github.io/schema/vega-lite/v5.16.3.json", "datasets": {"data-3e35776789539da6f6bcdedf120df619": [{"y_value": 52.0, "y_value2": 121.0, "probability": 0.013}, {"y_value": 121.0, "y_value2": 129.0, "probability": 0.021}, {"y_value": 129.0, "y_value2": 131.0, "probability": 0.038}, {"y_value": 131.0, "y_value2": 151.0, "probability": 0.056}, {"y_value": 151.0, "y_value2": 155.0, "probability": 0.071}, {"y_value": 155.0, "y_value2": 178.0, "probability": 0.085}, {"y_value": 178.0, "y_value2": 200.0, "probability": 0.107}, {"y_value": 200.0, "y_value2": 202.0, "probability": 0.125}, {"y_value": 202.0, "y_value2": 232.0, "probability": 0.149}, {"y_value": 232.0, "y_value2": 237.0, "probability": 0.16}, {"y_value": 237.0, "y_value2": 252.0, "probability": 0.174}, {"y_value": 252.0, "y_value2": 257.0, "probability": 0.182}, {"y_value": 257.0, "y_value2": 258.0, "probability": 0.224}, {"y_value": 258.0, "y_value2": 259.0, "probability": 0.25}, {"y_value": 259.0, "y_value2": 261.0, "probability": 0.366}, {"y_value": 261.0, "y_value2": 263.0, "probability": 0.403}, {"y_value": 263.0, "y_value2": 264.0, "probability": 0.488}, {"y_value": 264.0, "y_value2": 270.0, "probability": 0.502}, {"y_value": 270.0, "y_value2": 272.0, "probability": 0.553}, {"y_value": 272.0, "y_value2": 274.0, "probability": 0.561}, {"y_value": 274.0, "y_value2": 275.0, "probability": 0.575}, {"y_value": 275.0, "y_value2": 277.0, "probability": 0.64}, {"y_value": 277.0, "y_value2": 279.0, "probability": 0.65}, {"y_value": 279.0, "y_value2": 280.0, "probability": 0.698}, {"y_value": 280.0, "y_value2": 281.0, "probability": 0.712}, {"y_value": 281.0, "y_value2": 288.0, "probability": 0.773}, {"y_value": 288.0, "y_value2": 293.0, "probability": 0.812}, {"y_value": 293.0, "y_value2": 303.0, "probability": 0.824}, {"y_value": 303.0, "y_value2": 310.0, "probability": 0.837}, {"y_value": 310.0, "y_value2": 311.0, "probability": 0.845}, {"y_value": 311.0, "y_value2": 332.0, "probability": 0.86}, {"y_value": 332.0, "y_value2": 336.0, "probability": 0.871}, {"y_value": 336.0, "y_value2": 341.0, "probability": 0.947}, {"y_value": 341.0, "y_value2": null, "probability": 1.0}]}};
+      var spec = {"config": {"view": {"continuousWidth": 300, "continuousHeight": 300}}, "layer": [{"mark": {"type": "circle", "color": "#006aff", "opacity": 1, "size": 50}, "encoding": {"tooltip": [{"field": "y_value", "title": "Response Value", "type": "quantitative"}, {"field": "probability", "title": "Probability", "type": "quantitative"}], "x": {"field": "y_value", "title": "Response Value", "type": "quantitative"}, "y": {"field": "probability", "title": "Probability", "type": "quantitative"}}}, {"mark": {"type": "line", "color": "#006aff", "size": 2}, "encoding": {"tooltip": [{"field": "y_value", "title": "Response Value", "type": "quantitative"}, {"field": "probability", "title": "Probability", "type": "quantitative"}], "x": {"field": "y_value", "title": "Response Value", "type": "quantitative"}, "x2": {"field": "y_value2"}, "y": {"field": "probability", "title": "Probability", "type": "quantitative"}}}], "data": {"name": "data-f09d2f002e1cf92cac9927dae2114340"}, "height": 400, "title": "Empirical Cumulative Distribution Function (ECDF) Plot", "width": 650, "$schema": "https://vega.github.io/schema/vega-lite/v5.17.0.json", "datasets": {"data-f09d2f002e1cf92cac9927dae2114340": [{"y_value": 52.0, "y_value2": 121.0, "probability": 0.013}, {"y_value": 121.0, "y_value2": 129.0, "probability": 0.021}, {"y_value": 129.0, "y_value2": 131.0, "probability": 0.038}, {"y_value": 131.0, "y_value2": 151.0, "probability": 0.056}, {"y_value": 151.0, "y_value2": 155.0, "probability": 0.071}, {"y_value": 155.0, "y_value2": 178.0, "probability": 0.085}, {"y_value": 178.0, "y_value2": 200.0, "probability": 0.107}, {"y_value": 200.0, "y_value2": 202.0, "probability": 0.125}, {"y_value": 202.0, "y_value2": 232.0, "probability": 0.149}, {"y_value": 232.0, "y_value2": 237.0, "probability": 0.16}, {"y_value": 237.0, "y_value2": 252.0, "probability": 0.174}, {"y_value": 252.0, "y_value2": 257.0, "probability": 0.182}, {"y_value": 257.0, "y_value2": 258.0, "probability": 0.224}, {"y_value": 258.0, "y_value2": 259.0, "probability": 0.25}, {"y_value": 259.0, "y_value2": 261.0, "probability": 0.366}, {"y_value": 261.0, "y_value2": 263.0, "probability": 0.403}, {"y_value": 263.0, "y_value2": 264.0, "probability": 0.488}, {"y_value": 264.0, "y_value2": 270.0, "probability": 0.502}, {"y_value": 270.0, "y_value2": 272.0, "probability": 0.553}, {"y_value": 272.0, "y_value2": 274.0, "probability": 0.561}, {"y_value": 274.0, "y_value2": 275.0, "probability": 0.575}, {"y_value": 275.0, "y_value2": 277.0, "probability": 0.64}, {"y_value": 277.0, "y_value2": 279.0, "probability": 0.65}, {"y_value": 279.0, "y_value2": 280.0, "probability": 0.698}, {"y_value": 280.0, "y_value2": 281.0, "probability": 0.712}, {"y_value": 281.0, "y_value2": 288.0, "probability": 0.773}, {"y_value": 288.0, "y_value2": 293.0, "probability": 0.812}, {"y_value": 293.0, "y_value2": 303.0, "probability": 0.824}, {"y_value": 303.0, "y_value2": 310.0, "probability": 0.837}, {"y_value": 310.0, "y_value2": 311.0, "probability": 0.845}, {"y_value": 311.0, "y_value2": 332.0, "probability": 0.86}, {"y_value": 332.0, "y_value2": 336.0, "probability": 0.871}, {"y_value": 336.0, "y_value2": 341.0, "probability": 0.947}, {"y_value": 341.0, "y_value2": null, "probability": 1.0}]}};
       var opt = {
         "mode": "vega-lite",
         "renderer": "canvas",
@@ -459,7 +459,7 @@ other quantities of interest. Here, we calculate the ECDF for a test sample.</p>
     <span class="k">if</span> <span class="n">what</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">reg</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">quantiles</span><span class="o">=</span><span class="n">quantiles</span><span class="p">)</span>
 
-    <span class="c1"># Get the complete set of proximities for each sample.</span>
+    <span class="c1"># Get the complete set of proximities (training indices) for each sample.</span>
     <span class="n">proximities</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">proximity_counts</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
 
     <span class="c1"># Retrieve the unsorted training responses from the model (stored in sorted order).</span>
@@ -508,7 +508,7 @@ other quantities of interest. Here, we calculate the ECDF for a test sample.</p>
 
     <span class="n">circles</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">alt</span><span class="o">.</span><span class="n">Chart</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
-        <span class="o">.</span><span class="n">mark_circle</span><span class="p">(</span><span class="n">color</span><span class="o">=</span><span class="s2">&quot;#006aff&quot;</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">mark_circle</span><span class="p">(</span><span class="n">color</span><span class="o">=</span><span class="s2">&quot;#006aff&quot;</span><span class="p">,</span> <span class="n">opacity</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
         <span class="o">.</span><span class="n">encode</span><span class="p">(</span>
             <span class="n">x</span><span class="o">=</span><span class="n">alt</span><span class="o">.</span><span class="n">X</span><span class="p">(</span><span class="s2">&quot;y_value&quot;</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Response Value&quot;</span><span class="p">),</span>
             <span class="n">y</span><span class="o">=</span><span class="n">alt</span><span class="o">.</span><span class="n">Y</span><span class="p">(</span><span class="s2">&quot;probability&quot;</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Probability&quot;</span><span class="p">),</span>
@@ -518,7 +518,7 @@ other quantities of interest. Here, we calculate the ECDF for a test sample.</p>
 
     <span class="n">lines</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">alt</span><span class="o">.</span><span class="n">Chart</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
-        <span class="o">.</span><span class="n">mark_line</span><span class="p">(</span><span class="n">color</span><span class="o">=</span><span class="s2">&quot;#006aff&quot;</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">mark_line</span><span class="p">(</span><span class="n">color</span><span class="o">=</span><span class="s2">&quot;#006aff&quot;</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
         <span class="o">.</span><span class="n">encode</span><span class="p">(</span>
             <span class="n">x</span><span class="o">=</span><span class="n">alt</span><span class="o">.</span><span class="n">X</span><span class="p">(</span><span class="s2">&quot;y_value&quot;</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Response Value&quot;</span><span class="p">),</span>
             <span class="n">x2</span><span class="o">=</span><span class="n">alt</span><span class="o">.</span><span class="n">X2</span><span class="p">(</span><span class="s2">&quot;y_value2&quot;</span><span class="p">),</span>
@@ -527,7 +527,11 @@ other quantities of interest. Here, we calculate the ECDF for a test sample.</p>
         <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">chart</span> <span class="o">=</span> <span class="p">(</span><span class="n">circles</span> <span class="o">+</span> <span class="n">lines</span><span class="p">)</span><span class="o">.</span><span class="n">properties</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="mi">400</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">650</span><span class="p">)</span>
+    <span class="n">chart</span> <span class="o">=</span> <span class="p">(</span><span class="n">circles</span> <span class="o">+</span> <span class="n">lines</span><span class="p">)</span><span class="o">.</span><span class="n">properties</span><span class="p">(</span>
+        <span class="n">height</span><span class="o">=</span><span class="mi">400</span><span class="p">,</span>
+        <span class="n">width</span><span class="o">=</span><span class="mi">650</span><span class="p">,</span>
+        <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Empirical Cumulative Distribution Function (ECDF) Plot&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
     <span class="k">return</span> <span class="n">chart</span>
 
 
