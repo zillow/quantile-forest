@@ -1,6 +1,6 @@
 """
-Calculating User-Specified Functions with QRFs
-==============================================
+Computing User-Specified Functions with QRFs
+============================================
 
 An example that demonstrates a way of extracting the empirical distribution
 from a quantile regression forest (QRF) for one or more samples in order to
@@ -46,7 +46,7 @@ def predict(reg, X, quantiles=0.5, what=None):
     if what is None:
         return reg.predict(X, quantiles=quantiles)
 
-    # Get the complete set of proximities for each sample.
+    # Get the complete set of proximities (training indices) for each sample.
     proximities = reg.proximity_counts(X)
 
     # Retrieve the unsorted training responses from the model (stored in sorted order).
@@ -95,7 +95,7 @@ def plot_ecdf(df):
 
     circles = (
         alt.Chart(df)
-        .mark_circle(color="#006aff")
+        .mark_circle(color="#006aff", opacity=1, size=50)
         .encode(
             x=alt.X("y_value", title="Response Value"),
             y=alt.Y("probability", title="Probability"),
@@ -105,7 +105,7 @@ def plot_ecdf(df):
 
     lines = (
         alt.Chart(df)
-        .mark_line(color="#006aff")
+        .mark_line(color="#006aff", size=2)
         .encode(
             x=alt.X("y_value", title="Response Value"),
             x2=alt.X2("y_value2"),
@@ -114,7 +114,11 @@ def plot_ecdf(df):
         )
     )
 
-    chart = (circles + lines).properties(height=400, width=650)
+    chart = (circles + lines).properties(
+        height=400,
+        width=650,
+        title="Empirical Cumulative Distribution Function (ECDF) Plot",
+    )
     return chart
 
 

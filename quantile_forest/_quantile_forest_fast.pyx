@@ -507,6 +507,7 @@ cpdef double calc_quantile_rank(
 
 cpdef vector[intp_t] generate_unsampled_indices(
     vector[intp_t] sample_indices,
+    intp_t n_total_samples,
     vector[set[intp_t]] duplicates,
 ) noexcept nogil:
     """Return a list of every unsampled index, accounting for duplicates.
@@ -514,7 +515,10 @@ cpdef vector[intp_t] generate_unsampled_indices(
     Parameters
     ----------
     sample_indices : array-like of shape (n_samples)
-        Sample indices for which to get duplicates.
+        Sampled indices.
+
+    n_total_samples : int
+        Number of total samples, sampled and unsampled.
 
     duplicates : list of sets
         List of sets of functionally identical indices.
@@ -543,7 +547,7 @@ cpdef vector[intp_t] generate_unsampled_indices(
                 sampled_set.insert(duplicates[i].begin(), duplicates[i].end())
 
     # If the index is not in `sampled_set`, it is unsampled.
-    for i in range(n_samples):
+    for i in range(n_total_samples):
         if not sampled_set.count(i):
             unsampled_indices.push_back(i)
 
