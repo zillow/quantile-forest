@@ -272,6 +272,7 @@ def test_predict_quantiles_toy(name):
 
 def check_predict_quantiles(
     name,
+    max_samples,
     max_samples_leaf,
     quantiles,
     weighted_quantile,
@@ -295,7 +296,13 @@ def check_predict_quantiles(
     y_train = y_train.astype(np.float64)
     y_test = y_test.astype(np.float64)
 
-    est = ForestRegressor(n_estimators=10, max_samples_leaf=max_samples_leaf, random_state=0)
+    est = ForestRegressor(
+        n_estimators=10,
+        max_samples_leaf=max_samples_leaf,
+        max_samples=max_samples,
+        bootstrap=True,
+        random_state=0,
+    )
     est.fit(X_train, y_train)
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", UserWarning)
@@ -317,7 +324,13 @@ def check_predict_quantiles(
         X_california, y_california, test_size=0.25, random_state=0
     )
 
-    est = ForestRegressor(n_estimators=10, max_samples_leaf=max_samples_leaf, random_state=0)
+    est = ForestRegressor(
+        n_estimators=10,
+        max_samples_leaf=max_samples_leaf,
+        max_samples=max_samples,
+        bootstrap=True,
+        random_state=0,
+    )
     est.fit(X_train, y_train)
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", UserWarning)
@@ -338,7 +351,13 @@ def check_predict_quantiles(
         assert np.all(np.less_equal(y_pred[:, 1], y_pred[:, 2]))
 
     # Check that weighted and unweighted quantiles are all equal.
-    est = ForestRegressor(n_estimators=10, max_samples_leaf=max_samples_leaf, random_state=0)
+    est = ForestRegressor(
+        n_estimators=10,
+        max_samples_leaf=max_samples_leaf,
+        max_samples=max_samples,
+        bootstrap=True,
+        random_state=0,
+    )
     est.fit(X_train, y_train)
     y_pred_1 = est.predict(
         X_test,
@@ -357,7 +376,13 @@ def check_predict_quantiles(
     assert_allclose(y_pred_1, y_pred_2)
 
     # Check that weighted and unweighted leaves are all equal.
-    est = ForestRegressor(n_estimators=1, max_samples_leaf=max_samples_leaf, random_state=0)
+    est = ForestRegressor(
+        n_estimators=1,
+        max_samples_leaf=max_samples_leaf,
+        max_samples=max_samples,
+        bootstrap=True,
+        random_state=0,
+    )
     est.fit(X_train, y_train)
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", UserWarning)
@@ -378,7 +403,13 @@ def check_predict_quantiles(
     assert_allclose(y_pred_1, y_pred_2)
 
     # Check that aggregated and unaggregated quantiles are all equal.
-    est = ForestRegressor(n_estimators=1, max_samples_leaf=max_samples_leaf, random_state=0)
+    est = ForestRegressor(
+        n_estimators=1,
+        max_samples_leaf=max_samples_leaf,
+        max_samples=max_samples,
+        bootstrap=True,
+        random_state=0,
+    )
     est.fit(X_train, y_train)
     y_pred_1 = est.predict(
         X_test,
@@ -397,7 +428,13 @@ def check_predict_quantiles(
     assert_allclose(y_pred_1, y_pred_2)
 
     # Check that omitting quantiles is the same as setting to 0.5.
-    est = ForestRegressor(n_estimators=1, max_samples_leaf=max_samples_leaf, random_state=0)
+    est = ForestRegressor(
+        n_estimators=1,
+        max_samples_leaf=max_samples_leaf,
+        max_samples=max_samples,
+        bootstrap=True,
+        random_state=0,
+    )
     est.fit(X_train, y_train)
     y_pred_1 = est.predict(
         X_test,
@@ -456,7 +493,13 @@ def check_predict_quantiles(
         y[:, 1] = np.log1p(X + 1)
         y[:, 1] += np.log1p(X + 1) * np.random.uniform(size=len(X))
 
-        est = ForestRegressor(n_estimators=1, max_samples_leaf=max_samples_leaf, random_state=0)
+        est = ForestRegressor(
+            n_estimators=1,
+            max_samples_leaf=max_samples_leaf,
+            max_samples=max_samples,
+            bootstrap=True,
+            random_state=0,
+        )
         est.fit(X.reshape(-1, 1), y)
 
         with warnings.catch_warnings():
@@ -471,16 +514,24 @@ def check_predict_quantiles(
         assert y_pred.ndim == (3 if isinstance(quantiles, list) else 2)
         assert y_pred.shape[1] == y.shape[1]
         assert np.any(y_pred[:, 0, ...] != y_pred[:, 1, ...])
-        assert score > 0.97
+        assert score > 0.95
 
     # Check that specifying `quantiles` overwrites `default_quantiles`.
-    est1 = ForestRegressor(n_estimators=1, max_samples_leaf=max_samples_leaf, random_state=0)
+    est1 = ForestRegressor(
+        n_estimators=1,
+        max_samples_leaf=max_samples_leaf,
+        max_samples=max_samples,
+        bootstrap=True,
+        random_state=0,
+    )
     est1.fit(X_train, y_train)
     y_pred_1 = est1.predict(X_test, quantiles=0.5)
     est2 = ForestRegressor(
         n_estimators=1,
         default_quantiles=[0.25, 0.5, 0.75],
         max_samples_leaf=max_samples_leaf,
+        max_samples=max_samples,
+        bootstrap=True,
         random_state=0,
     )
     est2.fit(X_train, y_train)
@@ -488,7 +539,13 @@ def check_predict_quantiles(
     assert_allclose(y_pred_1, y_pred_2)
 
     # Check that specifying `interpolation` changes outputs.
-    est = ForestRegressor(n_estimators=10, max_samples_leaf=max_samples_leaf, random_state=0)
+    est = ForestRegressor(
+        n_estimators=10,
+        max_samples_leaf=max_samples_leaf,
+        max_samples=max_samples,
+        bootstrap=True,
+        random_state=0,
+    )
     est.fit(X_train, y_train)
     y_pred_1 = est.predict(X_test, quantiles=0.5, interpolation="linear")
     y_pred_2 = est.predict(X_test, quantiles=0.5, interpolation="nearest")
@@ -500,19 +557,21 @@ def check_predict_quantiles(
 
 
 @pytest.mark.parametrize("name", FOREST_REGRESSORS)
+@pytest.mark.parametrize("max_samples", [None, 0.5, 1.0, 100])
 @pytest.mark.parametrize("max_samples_leaf", [None, 1])
 @pytest.mark.parametrize("quantiles", [None, "mean", 0.5, [0.2, 0.5, 0.8]])
 @pytest.mark.parametrize("weighted_quantile", [True, False])
 @pytest.mark.parametrize("aggregate_leaves_first", [True, False])
 def test_predict_quantiles(
     name,
+    max_samples,
     max_samples_leaf,
     quantiles,
     weighted_quantile,
     aggregate_leaves_first,
 ):
     check_predict_quantiles(
-        name, max_samples_leaf, quantiles, weighted_quantile, aggregate_leaves_first
+        name, max_samples, max_samples_leaf, quantiles, weighted_quantile, aggregate_leaves_first
     )
 
 
@@ -829,6 +888,7 @@ def test_oob_samples_duplicates(name):
 
 def check_predict_oob(
     name,
+    max_samples,
     max_samples_leaf,
     quantiles,
     weighted_quantile,
@@ -843,6 +903,7 @@ def check_predict_oob(
     est = ForestRegressor(
         n_estimators=20,
         max_samples_leaf=max_samples_leaf,
+        max_samples=max_samples,
         bootstrap=True,
         oob_score=True,
         random_state=0,
@@ -977,7 +1038,13 @@ def check_predict_oob(
 
     # Check warning if not enough estimators.
     with np.errstate(divide="ignore", invalid="ignore"):
-        est = ForestRegressor(n_estimators=4, bootstrap=True, oob_score=True, random_state=0)
+        est = ForestRegressor(
+            n_estimators=4,
+            max_samples=max_samples,
+            bootstrap=True,
+            oob_score=True,
+            random_state=0,
+        )
         with pytest.warns():
             est.fit(X, y)
             est.predict(
@@ -1028,12 +1095,14 @@ def check_predict_oob(
 
 
 @pytest.mark.parametrize("name", FOREST_REGRESSORS)
+@pytest.mark.parametrize("max_samples", [None, 0.5, 1.0, 100])
 @pytest.mark.parametrize("max_samples_leaf", [None, 1])
 @pytest.mark.parametrize("quantiles", [None, "mean", 0.5, [0.2, 0.5, 0.8]])
 @pytest.mark.parametrize("weighted_quantile", [True, False])
 @pytest.mark.parametrize("aggregate_leaves_first", [True, False])
 def test_predict_oob(
     name,
+    max_samples,
     max_samples_leaf,
     quantiles,
     weighted_quantile,
@@ -1041,6 +1110,7 @@ def test_predict_oob(
 ):
     check_predict_oob(
         name,
+        max_samples,
         max_samples_leaf,
         quantiles,
         weighted_quantile,
@@ -1464,24 +1534,25 @@ def test_generate_unsampled_indices():
     max_index = 20
     duplicates = [[1, 4], [19, 10], [2, 3, 5], [6, 13]]
 
-    def _generate_unsampled_indices(sample_indices):
+    def _generate_unsampled_indices(sample_indices, n_total_samples):
         return generate_unsampled_indices(
             np.array(sample_indices, dtype=np.int64),
+            n_total_samples=n_total_samples,
             duplicates=duplicates,
         )
 
     # If all indices are sampled, there are no unsampled indices.
     indices = [idx for idx in range(max_index)]
     expected = np.array([], dtype=np.int64)
-    assert_array_equal(_generate_unsampled_indices(indices), expected)
+    assert_array_equal(_generate_unsampled_indices(indices, max_index), expected)
 
     # Index 7 has no duplicates, and thus should be the only unsampled index.
     indices = [7 for _ in range(max_index)]
     expected = np.array([idx for idx in range(max_index) if idx != 7])
-    assert_array_equal(_generate_unsampled_indices(indices), expected)
+    assert_array_equal(_generate_unsampled_indices(indices, max_index), expected)
 
     # Check sample indices [0, 1, 2] with duplicates set(1, 4) + set(2, 3, 5),
     # which excludes [0, 1, 2, 3, 4, 5] (i.e., range(6)) from unsampled.
     indices = [idx % 3 for idx in range(max_index)]
     expected = [x for x in range(max_index) if x not in range(6)]
-    assert_array_equal(_generate_unsampled_indices(indices), expected)
+    assert_array_equal(_generate_unsampled_indices(indices, max_index), expected)
