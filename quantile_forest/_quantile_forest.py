@@ -621,7 +621,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
         """Return quantile ranks for X with scores y.
 
         A quantile rank of, for example, 0.8 means that 80% of the scores in
-        `inputs` are below the given score.
+        the frequency distribution of the inputs are below the given score.
 
         In the case of gaps or ties, the exact definition depends on the
         optional keyword `kind`.
@@ -865,7 +865,7 @@ class RandomForestQuantileRegressor(BaseForestQuantileRegressor):
     A quantile random forest is a meta estimator that fits a number of
     decision trees on various sub-samples of the dataset, keeps the values of
     samples that reach each node, and assesses the conditional distribution
-    based on this information. The sub-sample size is controlled with the
+    based on this information [1]. The sub-sample size is controlled with the
     `max_samples` parameter if `bootstrap=True` (default), otherwise the whole
     dataset is used to build each tree. The leaf-sample size is controlled
     with the `max_samples_leaf` parameter.
@@ -937,9 +937,8 @@ class RandomForestQuantileRegressor(BaseForestQuantileRegressor):
 
         - If int, then consider `max_features` features at each split.
         - If float, then `max_features` is a fraction and
-          `round(max_features * n_features)` features are considered at each
-          split.
-        - If "auto", then `max_features=n_features`.
+          `max(1, int(max_features * n_features_in_))` features are considered
+          at each split.
         - If "sqrt", then `max_features=sqrt(n_features)`.
         - If "log2", then `max_features=log2(n_features)`.
         - If None or 1.0, then `max_features=n_features`.
@@ -1017,9 +1016,21 @@ class RandomForestQuantileRegressor(BaseForestQuantileRegressor):
         - If float, then draw `max(round(n_samples * max_samples), 1)` samples.
           Thus, `max_samples` should be in the interval `(0.0, 1.0]`.
 
+    monotonic_cst : array-like of int of shape (n_features), default=None
+        Indicates the monotonicity constraint to enforce on each feature.
+          - 1: monotonically increasing
+          - 0: no constraint
+          - -1: monotonically decreasing
+
+        If monotonic_cst is None, no constraints are applied.
+
+        Monotonicity constraints are not supported for:
+          - multioutput regressions (i.e. when `n_outputs_ > 1`),
+          - regressions trained on data with missing values.
+
     Attributes
     ----------
-    estimator_ : DecisionTreeRegressor
+    estimator_ : :class:`~sklearn.tree.DecisionTreeRegressor`
         The child estimator template used to create the collection of fitted
         sub-estimators.
 
@@ -1054,16 +1065,44 @@ class RandomForestQuantileRegressor(BaseForestQuantileRegressor):
         Prediction computed with out-of-bag estimate on the training set.
         This attribute exists only when ``oob_score`` is True.
 
+    estimators_samples_ : list of arrays
+        The subset of drawn samples (i.e., the in-bag samples) for each base
+        estimator. Each subset is defined by an array of the indices selected.
+
     See Also
     --------
     ExtraTreesQuantileRegressor : Quantile ensemble of extremely randomized
         tree regressors.
+
+    Notes
+    -----
+    The default values for the parameters controlling the size of the trees
+    (e.g. ``max_depth``, ``min_samples_leaf``, etc.) lead to fully grown and
+    unpruned trees which can potentially be very large on some data sets. To
+    reduce memory consumption, the complexity and size of the trees should be
+    controlled by setting those parameter values.
+
+    The features are always randomly permuted at each split. Therefore,
+    the best found split may vary, even with the same training data,
+    ``max_features=n_features`` and ``bootstrap=False``, if the improvement
+    of the criterion is identical for several splits enumerated during the
+    search of the best split. To obtain a deterministic behaviour during
+    fitting, ``random_state`` has to be fixed.
+
+    The default value ``max_features=1.0`` uses ``n_features``
+    rather than ``n_features / 3``. The latter was originally suggested in
+    [2], whereas the former was more recently justified empirically in [3].
 
     References
     ----------
     .. [1] N. Meinshausen, "Quantile Regression Forests", Journal of Machine
            Learning Research, 7(Jun), 983-999, 2006.
            http://www.jmlr.org/papers/volume7/meinshausen06a/meinshausen06a.pdf
+
+    .. [2] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32, 2001.
+
+    .. [3] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized
+           trees", Machine Learning, 63(1), 3-42, 2006.
 
     Examples
     --------
@@ -1154,7 +1193,7 @@ class ExtraTreesQuantileRegressor(BaseForestQuantileRegressor):
     A quantile extra trees regressor is a meta estimator that fits a number of
     randomized decision trees (a.k.a. extra-trees) on various sub-samples of
     the dataset, keeps the values of samples that reach each node, and
-    assesses the conditional distribution based on this information. The
+    assesses the conditional distribution based on this information [1]. The
     leaf-sample size is controlled with the `max_samples_leaf` parameter.
 
     Parameters
@@ -1224,9 +1263,8 @@ class ExtraTreesQuantileRegressor(BaseForestQuantileRegressor):
 
         - If int, then consider `max_features` features at each split.
         - If float, then `max_features` is a fraction and
-          `round(max_features * n_features)` features are considered at each
-          split.
-        - If "auto", then `max_features=n_features`.
+          `max(1, int(max_features * n_features_in_))` features are considered
+          at each split.
         - If "sqrt", then `max_features=sqrt(n_features)`.
         - If "log2", then `max_features=log2(n_features)`.
         - If None or 1.0, then `max_features=n_features`.
@@ -1266,7 +1304,7 @@ class ExtraTreesQuantileRegressor(BaseForestQuantileRegressor):
 
     oob_score : bool or callable, default=False
         Whether to use out-of-bag samples to estimate the generalization score.
-        By default, :func:`~sklearn.metrics.accuracy_score` is used.
+        By default, :func:`~sklearn.metrics.r2_score` is used.
         Provide a callable with signature `metric(y_true, y_pred)` to use a
         custom metric. Only available if `bootstrap=True`.
 
@@ -1307,9 +1345,21 @@ class ExtraTreesQuantileRegressor(BaseForestQuantileRegressor):
         - If float, then draw `max_samples * X.shape[0]` samples. Thus,
           `max_samples` should be in the interval `(0.0, 1.0]`.
 
+    monotonic_cst : array-like of int of shape (n_features), default=None
+        Indicates the monotonicity constraint to enforce on each feature.
+          - 1: monotonically increasing
+          - 0: no constraint
+          - -1: monotonically decreasing
+
+        If monotonic_cst is None, no constraints are applied.
+
+        Monotonicity constraints are not supported for:
+          - multioutput regressions (i.e. when `n_outputs_ > 1`),
+          - regressions trained on data with missing values.
+
     Attributes
     ----------
-    estimator_ : ExtraTreeRegressor
+    estimator_ : :class:`~sklearn.tree.ExtraTreeRegressor`
         The child estimator template used to create the collection of fitted
         sub-estimators.
 
@@ -1344,16 +1394,30 @@ class ExtraTreesQuantileRegressor(BaseForestQuantileRegressor):
         Prediction computed with out-of-bag estimate on the training set.
         This attribute exists only when ``oob_score`` is True.
 
+    estimators_samples_ : list of arrays
+        The subset of drawn samples (i.e., the in-bag samples) for each base
+        estimator. Each subset is defined by an array of the indices selected.
+
     See Also
     --------
-    RandomForestQuantileRegressor : Quantile ensemble regressor using trees
-        with optimal splits.
+    RandomForestQuantileRegressor : Quantile ensemble regressor using trees.
+
+    Notes
+    -----
+    The default values for the parameters controlling the size of the trees
+    (e.g. ``max_depth``, ``min_samples_leaf``, etc.) lead to fully grown and
+    unpruned trees which can potentially be very large on some data sets. To
+    reduce memory consumption, the complexity and size of the trees should be
+    controlled by setting those parameter values.
 
     References
     ----------
     .. [1] N. Meinshausen, "Quantile Regression Forests", Journal of Machine
            Learning Research, 7(Jun), 983-999, 2006.
            http://www.jmlr.org/papers/volume7/meinshausen06a/meinshausen06a.pdf
+
+    .. [2] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized trees",
+           Machine Learning, 63(1), 3-42, 2006.
 
     Examples
     --------
