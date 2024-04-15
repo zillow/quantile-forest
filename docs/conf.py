@@ -40,6 +40,7 @@ extensions = [
     "sphinx_design",
     "sphinxcontrib.bibtex",
     "sphinxext_altair.altairplot",
+    "sphinxext.directives",
     "sphinxext.gallery",
 ]
 
