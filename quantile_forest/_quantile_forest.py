@@ -875,10 +875,6 @@ class RandomForestQuantileRegressor(BaseForestQuantileRegressor):
     n_estimators : int, default=100
         The number of trees in the forest.
 
-        .. sklearn-versionchanged:: 0.22
-           The default value of `n_estimators` changed from 10 to 100
-           in 0.22.
-
     default_quantiles : float, list, or "mean", default=0.5
         The default quantile or list of quantiles that the model tries to
         predict. Each quantile must be strictly between 0 and 1. If "mean",
@@ -899,12 +895,6 @@ class RandomForestQuantileRegressor(BaseForestQuantileRegressor):
         Training using "absolute_error" is significantly slower
         than when using "squared_error".
 
-        .. sklearn-versionadded:: 0.18
-           Mean Absolute Error (MAE) criterion.
-
-        .. sklearn-versionadded:: 1.0
-           Poisson criterion.
-
     max_depth : int, default=None
         The maximum depth of the tree. If None, then nodes are expanded until
         all leaves are pure or until all leaves contain less than
@@ -918,9 +908,6 @@ class RandomForestQuantileRegressor(BaseForestQuantileRegressor):
           `ceil(min_samples_split * n_samples)` are the minimum
           number of samples for each split.
 
-        .. sklearn-versionchanged:: 0.18
-           Added float values for fractions.
-
     min_samples_leaf : int or float, default=1
         The minimum number of samples required to be at a leaf node.
         A split point at any depth will only be considered if it leaves at
@@ -932,9 +919,6 @@ class RandomForestQuantileRegressor(BaseForestQuantileRegressor):
         - If float, then `min_samples_leaf` is a fraction and
           `ceil(min_samples_leaf * n_samples)` are the minimum
           number of samples for each node.
-
-        .. sklearn-versionchanged:: 0.18
-           Added float values for fractions.
 
     max_samples_leaf : int, float or None, default=1
         The maximum number of samples permitted to be at a leaf node.
@@ -994,8 +978,6 @@ class RandomForestQuantileRegressor(BaseForestQuantileRegressor):
         ``N``, ``N_t``, ``N_t_R`` and ``N_t_L`` all refer to the weighted sum,
         if ``sample_weight`` is passed.
 
-        .. sklearn-versionadded:: 0.19
-
     bootstrap : bool, default=True
         Whether bootstrap samples are used when building trees. If False, the
         whole dataset is used to build each tree.
@@ -1031,8 +1013,6 @@ class RandomForestQuantileRegressor(BaseForestQuantileRegressor):
         subtree with the largest cost complexity that is smaller than
         ``ccp_alpha`` will be chosen. By default, no pruning is performed.
 
-        .. sklearn-versionadded:: 0.22
-
     max_samples : int or float, default=None
         If bootstrap is True, the number of samples to draw from X
         to train each base estimator.
@@ -1041,8 +1021,6 @@ class RandomForestQuantileRegressor(BaseForestQuantileRegressor):
         - If int, then draw `max_samples` samples.
         - If float, then draw `max(round(n_samples * max_samples), 1)` samples.
           Thus, `max_samples` should be in the interval `(0.0, 1.0]`.
-
-        .. sklearn-versionadded:: 0.22
 
     monotonic_cst : array-like of int of shape (n_features), default=None
         Indicates the monotonicity constraint to enforce on each feature.
@@ -1083,13 +1061,9 @@ class RandomForestQuantileRegressor(BaseForestQuantileRegressor):
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
-        .. sklearn-versionadded:: 0.24
-
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
         has feature names that are all strings.
-
-        .. sklearn-versionadded:: 1.0
 
     n_outputs_ : int
         The number of outputs when ``fit`` is performed.
@@ -1244,10 +1218,6 @@ class ExtraTreesQuantileRegressor(BaseForestQuantileRegressor):
     n_estimators : int, default=100
         The number of trees in the forest.
 
-        .. sklearn-versionchanged:: 0.22
-           The default value of `n_estimators` changed from 10 to 100
-           in 0.22.
-
     default_quantiles : float, list, or "mean", default=0.5
         The default quantile or list of quantiles that the model tries to
         predict. Each quantile must be strictly between 0 and 1. If "mean",
@@ -1281,9 +1251,6 @@ class ExtraTreesQuantileRegressor(BaseForestQuantileRegressor):
           `ceil(min_samples_split * n_samples)` are the minimum
           number of samples for each split.
 
-        .. sklearn-versionchanged:: 0.18
-           Added float values for fractions.
-
     min_samples_leaf : int or float, default=1
         The minimum number of samples required to be at a leaf node.
         A split point at any depth will only be considered if it leaves at
@@ -1295,9 +1262,6 @@ class ExtraTreesQuantileRegressor(BaseForestQuantileRegressor):
         - If float, then `min_samples_leaf` is a fraction and
           `ceil(min_samples_leaf * n_samples)` are the minimum
           number of samples for each node.
-
-        .. sklearn-versionchanged:: 0.18
-           Added float values for fractions.
 
     max_samples_leaf : int, float or None, default=1
         The maximum number of samples permitted to be at a leaf node.
@@ -1356,8 +1320,6 @@ class ExtraTreesQuantileRegressor(BaseForestQuantileRegressor):
         ``N``, ``N_t``, ``N_t_R`` and ``N_t_L`` all refer to the weighted sum,
         if ``sample_weight`` is passed.
 
-        .. sklearn-versionadded:: 0.19
-
     bootstrap : bool, default=False
         Whether bootstrap samples are used when building trees. If False, the
         whole dataset is used to build each tree.
@@ -1395,8 +1357,6 @@ class ExtraTreesQuantileRegressor(BaseForestQuantileRegressor):
         Complexity parameter used for Minimal Cost-Complexity Pruning. The
         subtree with the largest cost complexity that is smaller than
         ``ccp_alpha`` will be chosen. By default, no pruning is performed.
-
-        .. sklearn-versionadded:: 0.22
 
     max_samples : int or float, default=None
         If bootstrap is True, the number of samples to draw from X
@@ -1446,13 +1406,9 @@ class ExtraTreesQuantileRegressor(BaseForestQuantileRegressor):
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
-        .. sklearn-versionadded:: 0.24
-
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
         has feature names that are all strings.
-
-        .. sklearn-versionadded:: 1.0
 
     n_outputs_ : int
         The number of outputs.
