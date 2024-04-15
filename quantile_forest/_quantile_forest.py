@@ -952,7 +952,6 @@ class RandomForestQuantileRegressor(BaseForestQuantileRegressor):
         .. sklearn-versionchanged:: 1.1
             The default of `max_features` changed from `"auto"` to 1.0.
 
-
         Note: the search for a split does not stop until at least one
         valid partition of the node samples is found, even if it requires to
         effectively inspect more than ``max_features`` features.
