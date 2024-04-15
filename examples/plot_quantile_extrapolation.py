@@ -319,7 +319,7 @@ def train_test_split(train_indices, **kwargs):
 
 
 def prob_randomized_pi(qmat, y, coverage):
-    """Calculate calibration probability"""
+    """Calculate calibration probability."""
     alpha_included = np.mean((qmat[:, 0] <= y) & (y <= qmat[:, 1]))
     alpha_excluded = np.mean((qmat[:, 0] < y) & (y < qmat[:, 1]))
     if coverage <= alpha_excluded:
