@@ -1138,6 +1138,7 @@ class RandomForestQuantileRegressor(BaseForestQuantileRegressor):
         warm_start=False,
         ccp_alpha=0.0,
         max_samples=None,
+        monotonic_cst=None,
     ):
         """Initialize random forest quantile regressor."""
         init_dict = {
@@ -1164,6 +1165,8 @@ class RandomForestQuantileRegressor(BaseForestQuantileRegressor):
             "max_samples": max_samples,
             "max_samples_leaf": max_samples_leaf,
         }
+        if sklearn_version >= parse_version("1.4.0"):
+            init_dict["estimator_params"] += ("monotonic_cst",)
         super(RandomForestQuantileRegressor, self).__init__(**init_dict)
 
         self.default_quantiles = default_quantiles
@@ -1177,6 +1180,7 @@ class RandomForestQuantileRegressor(BaseForestQuantileRegressor):
         self.max_leaf_nodes = max_leaf_nodes
         self.min_impurity_decrease = min_impurity_decrease
         self.ccp_alpha = ccp_alpha
+        self.monotonic_cst = monotonic_cst
 
     def _more_tags(self):
         return {
@@ -1453,6 +1457,7 @@ class ExtraTreesQuantileRegressor(BaseForestQuantileRegressor):
         warm_start=False,
         ccp_alpha=0.0,
         max_samples=None,
+        monotonic_cst=None,
     ):
         """Initialize extra trees quantile regressor."""
         init_dict = {
@@ -1479,6 +1484,8 @@ class ExtraTreesQuantileRegressor(BaseForestQuantileRegressor):
             "max_samples": max_samples,
             "max_samples_leaf": max_samples_leaf,
         }
+        if sklearn_version >= parse_version("1.4.0"):
+            init_dict["estimator_params"] += ("monotonic_cst",)
         super(ExtraTreesQuantileRegressor, self).__init__(**init_dict)
 
         self.default_quantiles = default_quantiles
@@ -1492,6 +1499,7 @@ class ExtraTreesQuantileRegressor(BaseForestQuantileRegressor):
         self.max_leaf_nodes = max_leaf_nodes
         self.min_impurity_decrease = min_impurity_decrease
         self.ccp_alpha = ccp_alpha
+        self.monotonic_cst = monotonic_cst
 
     def _more_tags(self):
         return {
