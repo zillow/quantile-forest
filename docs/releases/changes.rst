@@ -8,8 +8,8 @@ Release Notes
 Version 1.3.5 (released Apr 15, 2024)
 -------------------------------------
 
-- Fixes fractional `max_samples` (#47)
-- Adds support for `monotonic_cst` (#49)
+- Fix fractional `max_samples` (#47)
+- Add support for `monotonic_cst` (#49)
 
 Version 1.3.4 (released Feb 21, 2024)
 -------------------------------------
