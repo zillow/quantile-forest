@@ -1113,8 +1113,8 @@ class RandomForestQuantileRegressor(BaseForestQuantileRegressor):
 
     .. [2] \L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32, 2001.
 
-    .. [3] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized
-           trees", Machine Learning, 63(1), 3-42, 2006.
+    .. [3] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely Randomized
+           Trees", Machine Learning, 63(1), 3-42, 2006.
 
     Examples
     --------
@@ -1444,7 +1444,7 @@ class ExtraTreesQuantileRegressor(BaseForestQuantileRegressor):
            Learning Research, 7(Jun), 983-999, 2006.
            http://www.jmlr.org/papers/volume7/meinshausen06a/meinshausen06a.pdf
 
-    .. [2] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized trees",
+    .. [2] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely Randomized Trees",
            Machine Learning, 63(1), 3-42, 2006.
 
     Examples
