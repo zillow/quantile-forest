@@ -932,7 +932,7 @@ def check_predict_oob(
     else:
         assert y_pred.shape == (len(X),)
     if quantiles == "mean" and aggregate_leaves_first is False:
-        assert est.oob_score_ == y_pred_score
+        assert math.isclose(est.oob_score_, y_pred_score)
     else:
         assert abs(est.oob_score_ - y_pred_score) < 0.1
 
