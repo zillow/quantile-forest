@@ -5,6 +5,12 @@
 Release Notes
 =============
 
+Version 1.3.6 (released May 22, 2024)
+-------------------------------------
+
+- Fix import of scikit-learn 1.5 `parse_version` (#52)
+- Update pre-commit hooks (#53)
+
 Version 1.3.5 (released Apr 15, 2024)
 -------------------------------------
 
