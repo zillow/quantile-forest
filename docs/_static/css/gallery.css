@@ -84,7 +84,7 @@ div.bottomnav {
   padding-right: 1rem;
 }
 #showcase .preview {
-  /* Value is chosen through trial and error so that the examples fill out the 
+  /* Value is chosen through trial and error so that the examples fill out the
   whole width which is defined in #showcase .examples */
   width: 172px;
   height: 100px;

@@ -3,12 +3,20 @@
 Developer's Guide
 -----------------
 
-Development Installation
+Development Dependencies
 ~~~~~~~~~~~~~~~~~~~~~~~~
-
 Building the package from source additionally requires the following dependencies:
 
 * cython (>=3.0a4)
+
+We also use pre-commit hooks to identify simple issues before submission.
+
+To install these dependencies, run::
+
+  pip install cython pre-commit
+
+Development Installation
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 To manually build and install the package, run::
 
