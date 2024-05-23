@@ -38,6 +38,7 @@ from sklearn.ensemble._forest import (
 )
 from sklearn.tree import DecisionTreeRegressor, ExtraTreeRegressor
 from sklearn.tree._tree import DTYPE
+
 try:
     from sklearn.utils.fixes import parse_version
 except ImportError:
