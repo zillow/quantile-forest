@@ -8,11 +8,11 @@ All contributions, suggestions, and feedback you submitted are accepted under th
 
 ## Submitting an Issue
 
-[Issues](https://github.com/zillow/quantile-forest/issues) should be used to report problems with the package or any of its dependencies, request a new feature, or to discuss potential changes before a PR is created. 
+[Issues](https://github.com/zillow/quantile-forest/issues) should be used to report problems with the package or any of its dependencies, request a new feature, or to discuss potential changes before a PR is created.
 
 When reporting bugs, please provide a [minimal reproducible example](https://stackoverflow.com/help/minimal-reproducible-example), the version of the package, and the environment (e.g., Python version).
 
-If you find an existing Issue that addresses the problem you're having, please add your own reproducible example to the existing issue rather than creating a new one. 
+If you find an existing Issue that addresses the problem you're having, please add your own reproducible example to the existing issue rather than creating a new one.
 
 ## Submitting a Pull Request
 
