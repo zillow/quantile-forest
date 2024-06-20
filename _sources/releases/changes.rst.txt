@@ -5,6 +5,13 @@
 Release Notes
 =============
 
+Version 1.3.7 (released Jun 19, 2024)
+-------------------------------------
+
+- Compatibility for NumPy 2.0 (#59)
+- Bump pypa/gh-action-pypi-publish from 1.8.14 to 1.9.0 (#56)
+- Bump pypa/cibuildwheel from 2.18.1 to 2.19.1 (#57)
+
 Version 1.3.6 (released May 22, 2024)
 -------------------------------------
 

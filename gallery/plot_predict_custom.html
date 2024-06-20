@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Computing User-Specified Functions with QRFs &#8212; quantile-forest 1.3.6 documentation</title>
+    <title>Computing User-Specified Functions with QRFs &#8212; quantile-forest 1.3.7 documentation</title>
   
   
   
@@ -18,15 +18,15 @@
   </script>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../_static/styles/theme.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
-<link href="../_static/styles/bootstrap.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
-<link href="../_static/styles/pydata-sphinx-theme.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
+  <link href="../_static/styles/theme.css?digest=3ee479438cf8b5e0d341" rel="stylesheet" />
+<link href="../_static/styles/bootstrap.css?digest=3ee479438cf8b5e0d341" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=3ee479438cf8b5e0d341" rel="stylesheet" />
 
   
-  <link href="../_static/vendor/fontawesome/6.5.1/css/all.min.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
-  <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.1/webfonts/fa-solid-900.woff2" />
-<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.1/webfonts/fa-brands-400.woff2" />
-<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.1/webfonts/fa-regular-400.woff2" />
+  <link href="../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=3ee479438cf8b5e0d341" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
 
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
     <link rel="stylesheet" type="text/css" href="../_static/altair-plot.css" />
@@ -36,11 +36,11 @@
     <link rel="stylesheet" type="text/css" href="../_static/css/gallery.css?v=8f271e45" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8d27b9dea8ad943066ae" />
-<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8d27b9dea8ad943066ae" />
-  <script src="../_static/vendor/fontawesome/6.5.1/js/all.min.js?digest=8d27b9dea8ad943066ae"></script>
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=3ee479438cf8b5e0d341" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=3ee479438cf8b5e0d341" />
+  <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=3ee479438cf8b5e0d341"></script>
 
-    <script src="../_static/documentation_options.js?v=70d8fd07"></script>
+    <script src="../_static/documentation_options.js?v=d4a0791e"></script>
     <script src="../_static/doctools.js?v=9a2dae69"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/design-tabs.js?v=f930bc37"></script>
@@ -60,27 +60,23 @@
 
   
   
-  <a id="pst-skip-link" class="skip-link" href="#main-content">Skip to main content</a>
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
   
   <div id="pst-scroll-pixel-helper"></div>
   
   <button type="button" class="btn rounded-pill" id="pst-back-to-top">
-    <i class="fa-solid fa-arrow-up"></i>
-    Back to top
-  </button>
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
 
   
   <input type="checkbox"
           class="sidebar-toggle"
-          name="__primary"
-          id="__primary"/>
-  <label class="overlay overlay-primary" for="__primary"></label>
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
   
   <input type="checkbox"
           class="sidebar-toggle"
-          name="__secondary"
-          id="__secondary"/>
-  <label class="overlay overlay-secondary" for="__secondary"></label>
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
   
   <div class="search-button__wrapper">
     <div class="search-button__overlay"></div>
@@ -102,12 +98,17 @@
   <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
 </form></div>
   </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
   
-    <header class="bd-header navbar navbar-expand-lg bd-navbar">
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
 <div class="bd-header__inner bd-page-width">
-  <label class="sidebar-toggle primary-toggle" for="__primary">
+  <button class="sidebar-toggle primary-toggle" aria-label="Site navigation">
     <span class="fa-solid fa-bars"></span>
-  </label>
+  </button>
   
   
   <div class="col-lg-3 navbar-header-items__start">
@@ -125,8 +126,8 @@
     
     
     
-    <img src="../_static/quantile-forest-logo.png" class="logo__image only-light" alt="quantile-forest 1.3.6 documentation - Home"/>
-    <script>document.write(`<img src="../_static/quantile-forest-logo-white.png" class="logo__image only-dark" alt="quantile-forest 1.3.6 documentation - Home"/>`);</script>
+    <img src="../_static/quantile-forest-logo.png" class="logo__image only-light" alt="quantile-forest 1.3.7 documentation - Home"/>
+    <script>document.write(`<img src="../_static/quantile-forest-logo-white.png" class="logo__image only-dark" alt="quantile-forest 1.3.7 documentation - Home"/>`);</script>
   
   
 </a></div>
@@ -145,40 +146,40 @@
 <nav class="navbar-nav">
   <ul class="bd-navbar-elements navbar-nav">
     
-                    <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../getting_started/installation.html">
-                        Getting Started
-                      </a>
-                    </li>
-                
+<li class="nav-item pst-header-nav-item">
+  <a class="nav-link nav-internal" href="../getting_started/installation.html">
+    Getting Started
+  </a>
+</li>
 
-                    <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../user_guide/introduction.html">
-                        User Guide
-                      </a>
-                    </li>
-                
 
-                    <li class="nav-item">
-                      <a class="nav-link nav-internal" href="index.html">
-                        Examples
-                      </a>
-                    </li>
-                
+<li class="nav-item pst-header-nav-item">
+  <a class="nav-link nav-internal" href="../user_guide/introduction.html">
+    User Guide
+  </a>
+</li>
 
-                    <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../api.html">
-                        API
-                      </a>
-                    </li>
-                
 
-                    <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../releases/changes.html">
-                        Release Notes
-                      </a>
-                    </li>
-                
+<li class="nav-item pst-header-nav-item">
+  <a class="nav-link nav-internal" href="index.html">
+    Examples
+  </a>
+</li>
+
+
+<li class="nav-item pst-header-nav-item">
+  <a class="nav-link nav-internal" href="../api.html">
+    API
+  </a>
+</li>
+
+
+<li class="nav-item pst-header-nav-item">
+  <a class="nav-link nav-internal" href="../releases/changes.html">
+    Release Notes
+  </a>
+</li>
+
   </ul>
 </nav></div>
       
@@ -271,46 +272,49 @@ document.write(`
     
       <div class="sidebar-header-items__center">
         
-          <div class="navbar-item">
+          
+          
+            <div class="navbar-item">
 <nav class="navbar-nav">
   <ul class="bd-navbar-elements navbar-nav">
     
-                    <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../getting_started/installation.html">
-                        Getting Started
-                      </a>
-                    </li>
-                
+<li class="nav-item pst-header-nav-item">
+  <a class="nav-link nav-internal" href="../getting_started/installation.html">
+    Getting Started
+  </a>
+</li>
 
-                    <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../user_guide/introduction.html">
-                        User Guide
-                      </a>
-                    </li>
-                
 
-                    <li class="nav-item">
-                      <a class="nav-link nav-internal" href="index.html">
-                        Examples
-                      </a>
-                    </li>
-                
+<li class="nav-item pst-header-nav-item">
+  <a class="nav-link nav-internal" href="../user_guide/introduction.html">
+    User Guide
+  </a>
+</li>
 
-                    <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../api.html">
-                        API
-                      </a>
-                    </li>
-                
 
-                    <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../releases/changes.html">
-                        Release Notes
-                      </a>
-                    </li>
-                
+<li class="nav-item pst-header-nav-item">
+  <a class="nav-link nav-internal" href="index.html">
+    Examples
+  </a>
+</li>
+
+
+<li class="nav-item pst-header-nav-item">
+  <a class="nav-link nav-internal" href="../api.html">
+    API
+  </a>
+</li>
+
+
+<li class="nav-item pst-header-nav-item">
+  <a class="nav-link nav-internal" href="../releases/changes.html">
+    Release Notes
+  </a>
+</li>
+
   </ul>
 </nav></div>
+          
         
       </div>
     
@@ -359,13 +363,13 @@ document.write(`
 
       </div>
       
-      <main id="main-content" class="bd-main">
+      <main id="main-content" class="bd-main" role="main">
         
         
           <div class="bd-content">
             <div class="bd-article-container">
               
-              <div class="bd-header-article">
+              <div class="bd-header-article d-print-none">
 <div class="header-article-items header-article__inner">
   
     <div class="header-article-items__start">
@@ -374,7 +378,7 @@ document.write(`
 
 
 
-<nav aria-label="Breadcrumb">
+<nav aria-label="Breadcrumb" class="d-print-none">
   <ul class="bd-breadcrumbs">
     
     <li class="breadcrumb-item breadcrumb-home">
@@ -413,7 +417,7 @@ other quantities of interest. Here, we calculate the ECDF for a test sample.</p>
   // embed when document is loaded, to ensure vega library is available
   // this works on all modern browsers, except IE8 and older
   document.addEventListener("DOMContentLoaded", function(event) {
-      var spec = {"config": {"view": {"continuousWidth": 300, "continuousHeight": 300}}, "layer": [{"mark": {"type": "circle", "color": "#006aff", "opacity": 1, "size": 50}, "encoding": {"tooltip": [{"field": "y_value", "title": "Response Value", "type": "quantitative"}, {"field": "probability", "title": "Probability", "type": "quantitative"}], "x": {"field": "y_value", "title": "Response Value", "type": "quantitative"}, "y": {"field": "probability", "title": "Probability", "type": "quantitative"}}}, {"mark": {"type": "line", "color": "#006aff", "size": 2}, "encoding": {"tooltip": [{"field": "y_value", "title": "Response Value", "type": "quantitative"}, {"field": "probability", "title": "Probability", "type": "quantitative"}], "x": {"field": "y_value", "title": "Response Value", "type": "quantitative"}, "x2": {"field": "y_value2"}, "y": {"field": "probability", "title": "Probability", "type": "quantitative"}}}], "data": {"name": "data-f09d2f002e1cf92cac9927dae2114340"}, "height": 400, "title": "Empirical Cumulative Distribution Function (ECDF) Plot", "width": 650, "$schema": "https://vega.github.io/schema/vega-lite/v5.17.0.json", "datasets": {"data-f09d2f002e1cf92cac9927dae2114340": [{"y_value": 52.0, "y_value2": 121.0, "probability": 0.013}, {"y_value": 121.0, "y_value2": 129.0, "probability": 0.021}, {"y_value": 129.0, "y_value2": 131.0, "probability": 0.038}, {"y_value": 131.0, "y_value2": 151.0, "probability": 0.056}, {"y_value": 151.0, "y_value2": 155.0, "probability": 0.071}, {"y_value": 155.0, "y_value2": 178.0, "probability": 0.085}, {"y_value": 178.0, "y_value2": 200.0, "probability": 0.107}, {"y_value": 200.0, "y_value2": 202.0, "probability": 0.125}, {"y_value": 202.0, "y_value2": 232.0, "probability": 0.149}, {"y_value": 232.0, "y_value2": 237.0, "probability": 0.16}, {"y_value": 237.0, "y_value2": 252.0, "probability": 0.174}, {"y_value": 252.0, "y_value2": 257.0, "probability": 0.182}, {"y_value": 257.0, "y_value2": 258.0, "probability": 0.224}, {"y_value": 258.0, "y_value2": 259.0, "probability": 0.25}, {"y_value": 259.0, "y_value2": 261.0, "probability": 0.366}, {"y_value": 261.0, "y_value2": 263.0, "probability": 0.403}, {"y_value": 263.0, "y_value2": 264.0, "probability": 0.488}, {"y_value": 264.0, "y_value2": 270.0, "probability": 0.502}, {"y_value": 270.0, "y_value2": 272.0, "probability": 0.553}, {"y_value": 272.0, "y_value2": 274.0, "probability": 0.561}, {"y_value": 274.0, "y_value2": 275.0, "probability": 0.575}, {"y_value": 275.0, "y_value2": 277.0, "probability": 0.64}, {"y_value": 277.0, "y_value2": 279.0, "probability": 0.65}, {"y_value": 279.0, "y_value2": 280.0, "probability": 0.698}, {"y_value": 280.0, "y_value2": 281.0, "probability": 0.712}, {"y_value": 281.0, "y_value2": 288.0, "probability": 0.773}, {"y_value": 288.0, "y_value2": 293.0, "probability": 0.812}, {"y_value": 293.0, "y_value2": 303.0, "probability": 0.824}, {"y_value": 303.0, "y_value2": 310.0, "probability": 0.837}, {"y_value": 310.0, "y_value2": 311.0, "probability": 0.845}, {"y_value": 311.0, "y_value2": 332.0, "probability": 0.86}, {"y_value": 332.0, "y_value2": 336.0, "probability": 0.871}, {"y_value": 336.0, "y_value2": 341.0, "probability": 0.947}, {"y_value": 341.0, "y_value2": null, "probability": 1.0}]}};
+      var spec = {"config": {"view": {"continuousWidth": 300, "continuousHeight": 300}}, "layer": [{"mark": {"type": "circle", "color": "#006aff", "opacity": 1, "size": 50}, "encoding": {"tooltip": [{"field": "y_value", "title": "Response Value", "type": "quantitative"}, {"field": "probability", "title": "Probability", "type": "quantitative"}], "x": {"field": "y_value", "title": "Response Value", "type": "quantitative"}, "y": {"field": "probability", "title": "Probability", "type": "quantitative"}}}, {"mark": {"type": "line", "color": "#006aff", "size": 2}, "encoding": {"tooltip": [{"field": "y_value", "title": "Response Value", "type": "quantitative"}, {"field": "probability", "title": "Probability", "type": "quantitative"}], "x": {"field": "y_value", "title": "Response Value", "type": "quantitative"}, "x2": {"field": "y_value2"}, "y": {"field": "probability", "title": "Probability", "type": "quantitative"}}}], "data": {"name": "data-b8db4abe5bc88dc6074d9dbdfe387a0a"}, "height": 400, "title": "Empirical Cumulative Distribution Function (ECDF) Plot", "width": 650, "$schema": "https://vega.github.io/schema/vega-lite/v5.17.0.json", "datasets": {"data-b8db4abe5bc88dc6074d9dbdfe387a0a": [{"y_value": 52.0, "y_value2": 121.0, "probability": 0.011}, {"y_value": 121.0, "y_value2": 129.0, "probability": 0.019}, {"y_value": 129.0, "y_value2": 131.0, "probability": 0.047}, {"y_value": 131.0, "y_value2": 151.0, "probability": 0.062}, {"y_value": 151.0, "y_value2": 155.0, "probability": 0.08}, {"y_value": 155.0, "y_value2": 178.0, "probability": 0.089}, {"y_value": 178.0, "y_value2": 200.0, "probability": 0.113}, {"y_value": 200.0, "y_value2": 202.0, "probability": 0.131}, {"y_value": 202.0, "y_value2": 232.0, "probability": 0.154}, {"y_value": 232.0, "y_value2": 237.0, "probability": 0.164}, {"y_value": 237.0, "y_value2": 252.0, "probability": 0.177}, {"y_value": 252.0, "y_value2": 257.0, "probability": 0.188}, {"y_value": 257.0, "y_value2": 258.0, "probability": 0.227}, {"y_value": 258.0, "y_value2": 259.0, "probability": 0.254}, {"y_value": 259.0, "y_value2": 261.0, "probability": 0.375}, {"y_value": 261.0, "y_value2": 263.0, "probability": 0.414}, {"y_value": 263.0, "y_value2": 264.0, "probability": 0.493}, {"y_value": 264.0, "y_value2": 270.0, "probability": 0.507}, {"y_value": 270.0, "y_value2": 272.0, "probability": 0.552}, {"y_value": 272.0, "y_value2": 274.0, "probability": 0.561}, {"y_value": 274.0, "y_value2": 275.0, "probability": 0.569}, {"y_value": 275.0, "y_value2": 277.0, "probability": 0.627}, {"y_value": 277.0, "y_value2": 279.0, "probability": 0.633}, {"y_value": 279.0, "y_value2": 280.0, "probability": 0.681}, {"y_value": 280.0, "y_value2": 281.0, "probability": 0.695}, {"y_value": 281.0, "y_value2": 288.0, "probability": 0.762}, {"y_value": 288.0, "y_value2": 293.0, "probability": 0.807}, {"y_value": 293.0, "y_value2": 303.0, "probability": 0.816}, {"y_value": 303.0, "y_value2": 310.0, "probability": 0.826}, {"y_value": 310.0, "y_value2": 311.0, "probability": 0.839}, {"y_value": 311.0, "y_value2": 332.0, "probability": 0.859}, {"y_value": 332.0, "y_value2": 336.0, "probability": 0.871}, {"y_value": 336.0, "y_value2": 341.0, "probability": 0.947}, {"y_value": 341.0, "y_value2": null, "probability": 1.0}]}};
       var opt = {
         "mode": "vega-lite",
         "renderer": "canvas",
@@ -547,7 +551,7 @@ other quantities of interest. Here, we calculate the ECDF for a test sample.</p>
               
               
               
-                <footer class="prev-next-footer">
+                <footer class="prev-next-footer d-print-none">
                   
 <div class="prev-next-area">
 </div>
@@ -568,8 +572,8 @@ other quantities of interest. Here, we calculate the ECDF for a test sample.</p>
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script src="../_static/scripts/bootstrap.js?digest=8d27b9dea8ad943066ae"></script>
-<script src="../_static/scripts/pydata-sphinx-theme.js?digest=8d27b9dea8ad943066ae"></script>
+  <script src="../_static/scripts/bootstrap.js?digest=3ee479438cf8b5e0d341"></script>
+<script src="../_static/scripts/pydata-sphinx-theme.js?digest=3ee479438cf8b5e0d341"></script>
 
   <footer class="bd-footer">
 <div class="bd-footer__inner bd-page-width">
@@ -602,7 +606,7 @@ other quantities of interest. Here, we calculate the ECDF for a test sample.</p>
       
         <div class="footer-item">
 <p class="theme-version">
-  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.15.2.
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.15.3.
 </p></div>
       
     </div>
