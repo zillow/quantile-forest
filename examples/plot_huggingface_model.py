@@ -144,7 +144,7 @@ def plot_quantiles_by_latlon(df, quantiles):
     slider = alt.binding_range(
         min=0,
         max=1,
-        step=1 / (len(quantiles) - 1),
+        step=0.5 if len(quantiles) == 1 else 1 / (len(quantiles) - 1),
         name="Quantile:",
     )
 
@@ -178,7 +178,7 @@ def plot_quantiles_by_latlon(df, quantiles):
                 alt.Tooltip("index:N", title="Row ID"),
                 alt.Tooltip("Latitude:Q", format=".2f", title="Latitude"),
                 alt.Tooltip("Longitude:Q", format=".2f", title="Longitude"),
-                alt.Tooltip("value:Q", format=",.0f", title="Predicted Value"),
+                alt.Tooltip("value:Q", format="$,.0f", title="Predicted Value"),
             ],
         )
         .properties(
@@ -206,8 +206,7 @@ with open(f"{local_dir}/{model_filename}", "rb") as file:
 shutil.rmtree(local_dir)
 
 # Estimate quantiles.
-n_quantiles = 11
-quantiles = list((np.arange(n_quantiles) * 10) / 100)
+quantiles = list((np.arange(11) * 10) / 100)
 X, y = datasets.fetch_california_housing(as_frame=True, return_X_y=True)
 y_pred = qrf.predict(X, quantiles=quantiles) * 100_000  # predict in dollars
 
