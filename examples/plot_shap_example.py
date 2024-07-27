@@ -64,7 +64,8 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=100, random_
 qrf = RandomForestQuantileRegressor(random_state=0)
 qrf.fit(X_train, y_train)
 
-quantiles = list((np.arange(5) * 25) / 100)
+test_idx = 0
+quantiles = list((np.arange(11) * 10) / 100)
 
 dfs = []
 for quantile in quantiles:
@@ -72,12 +73,12 @@ for quantile in quantiles:
     shap_values = get_shap_values(qrf, X_test, quantile=quantile)
 
     # Get the SHAP values for a particular test instance (by index).
-    shap_values_by_index = get_shap_value_by_index(shap_values, 0)
+    shap_values_by_index = get_shap_value_by_index(shap_values, test_idx)
 
     dfs.append(
         pd.DataFrame(
             {
-                "feature": X.columns,
+                "feature": [f"{X.iloc[test_idx, i]} = {X.columns[i]}" for i in range(X.shape[1])],
                 "shap_value": shap_values_by_index.values,
                 "abs_shap_value": abs(shap_values_by_index.values),
                 "base_value": shap_values_by_index.base_values,
@@ -163,6 +164,12 @@ def plot_shap_waterfall_with_quantiles(df):
         color=alt.condition(
             alt.datum["shap_value"] > 0, alt.value("#ff0251"), alt.value("#006aff")
         ),
+        tooltip=[
+            alt.Tooltip("feature:N", title="Feature"),
+            alt.Tooltip("shap_value:Q", format=".3f", title="SHAP Value"),
+            alt.Tooltip("start:Q", format=".3f", title="SHAP Start"),
+            alt.Tooltip("end:Q", format=".3f", title="SHAP End"),
+        ],
     )
 
     text_left = bars.mark_text(
