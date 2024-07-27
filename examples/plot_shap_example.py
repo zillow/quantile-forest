@@ -73,17 +73,17 @@ for quantile in quantiles:
     shap_values = get_shap_values(qrf, X_test, quantile=quantile)
 
     # Get the SHAP values for a particular test instance (by index).
-    shap_values_by_index = get_shap_value_by_index(shap_values, test_idx)
+    shap_values_by_idx = get_shap_value_by_index(shap_values, test_idx)
 
     dfs.append(
         pd.DataFrame(
             {
                 "feature": [f"{X.iloc[test_idx, i]} = {X.columns[i]}" for i in range(X.shape[1])],
-                "shap_value": shap_values_by_index.values,
-                "abs_shap_value": abs(shap_values_by_index.values),
-                "base_value": shap_values_by_index.base_values,
-                "model_output": shap_values_by_index.base_values
-                + sum(shap_values_by_index.values),
+                "feature_name": X.columns,
+                "shap_value": shap_values_by_idx.values,
+                "abs_shap_value": abs(shap_values_by_idx.values),
+                "base_value": shap_values_by_idx.base_values,
+                "model_output": shap_values_by_idx.base_values + sum(shap_values_by_idx.values),
                 "quantile": quantile,
             }
         )
@@ -165,7 +165,7 @@ def plot_shap_waterfall_with_quantiles(df):
             alt.datum["shap_value"] > 0, alt.value("#ff0251"), alt.value("#006aff")
         ),
         tooltip=[
-            alt.Tooltip("feature:N", title="Feature"),
+            alt.Tooltip("feature_name:N", title="Feature"),
             alt.Tooltip("shap_value:Q", format=".3f", title="SHAP Value"),
             alt.Tooltip("start:Q", format=".3f", title="SHAP Start"),
             alt.Tooltip("end:Q", format=".3f", title="SHAP End"),
