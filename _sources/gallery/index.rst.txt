@@ -100,11 +100,11 @@ General-purpose, introductory and illustrative examples.
     <span class="image-title">Quantile Regression Forests vs. Random Forests</span>
     </a>
     
-    <a class="imagegroup" href="plot_shap_example.html">
+    <a class="imagegroup" href="plot_treeshap_example.html">
     <span
         class="image" alt="Tree SHAP with Quantile Regression Forests"
     
-        style="background-image: url(../_static/plot_shap_example-thumb.png);"
+        style="background-image: url(../_static/plot_treeshap_example-thumb.png);"
     
     ></span>
 
