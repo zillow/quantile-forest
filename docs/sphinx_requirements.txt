@@ -3,6 +3,7 @@ altair
 numpydoc
 pillow
 pydata_sphinx_theme
+skops
 sphinxcontrib.bibtex
 sphinx-design
 sphinxext-altair
