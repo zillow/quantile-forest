@@ -100,6 +100,28 @@ General-purpose, introductory and illustrative examples.
     <span class="image-title">Quantile Regression Forests vs. Random Forests</span>
     </a>
     
+    <a class="imagegroup" href="plot_shap_example.html">
+    <span
+        class="image" alt="Tree SHAP with Quantile Regression Forests"
+    
+        style="background-image: url(../_static/plot_shap_example-thumb.png);"
+    
+    ></span>
+
+    <span class="image-title">Tree SHAP with Quantile Regression Forests</span>
+    </a>
+    
+    <a class="imagegroup" href="plot_huggingface_model.html">
+    <span
+        class="image" alt="Using a Trained QRF Model via Hugging Face Hub"
+    
+        style="background-image: url(../_static/plot_huggingface_model-thumb.png);"
+    
+    ></span>
+
+    <span class="image-title">Using a Trained QRF Model via Hugging Face Hub</span>
+    </a>
+    
     </span>
 
    <div style='clear:both;'></div>
