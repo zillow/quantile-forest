@@ -491,6 +491,11 @@ class BaseForestQuantileRegressor(ForestRegressor):
             - If "nearest", then ``i`` or ``j``, whichever is nearest.
             - If "midpoint", then ``(i + j) / 2``.
 
+            .. note::
+                When `max_samples_leaf=1`, the specific interpolation
+                options will depend on those available in the NumPy
+                `percentile` and `nanpercentile` methods.
+
         weighted_quantile : bool, default=True
             Calculate a weighted quantile. Weighted quantiles are computed by
             assigning weights to each training sample, while unweighted
