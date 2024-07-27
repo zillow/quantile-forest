@@ -175,6 +175,7 @@ def plot_quantiles_by_latlon(df, quantiles):
             color=alt.Color("value:Q", scale=alt.Scale(scheme="viridis"), title="Prediction"),
             size=alt.Size("Population:Q"),
             tooltip=[
+                alt.Tooltip("index:N", title="Row ID"),
                 alt.Tooltip("Latitude:Q", format=".2f", title="Latitude"),
                 alt.Tooltip("Longitude:Q", format=".2f", title="Longitude"),
                 alt.Tooltip("value:Q", format=",.0f", title="Predicted Value"),
