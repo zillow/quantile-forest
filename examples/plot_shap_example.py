@@ -59,6 +59,7 @@ def get_shap_value_by_index(shap_values, index):
 X, y = datasets.fetch_california_housing(as_frame=True, return_X_y=True)
 X = X.iloc[:500]
 y = y[:500]
+y *= 100_000  # convert to dollars
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=100, random_state=0)
 
 qrf = RandomForestQuantileRegressor(random_state=0)
@@ -115,15 +116,15 @@ def plot_shap_waterfall_with_quantiles(df):
     )
     df_grouped["start"] = (
         df_grouped.groupby("quantile")
-        .apply(lambda g: g["shap_value"].cumsum() + g["base_value"])
+        .apply(lambda g: g["shap_value"].shift(1, fill_value=0).cumsum() + g["base_value"])
         .reset_index(drop=True)
     )
     df_grouped["end"] = (
         df_grouped.groupby("quantile")
-        .apply(lambda g: g["shap_value"].shift(1, fill_value=0).cumsum() + g["base_value"])
+        .apply(lambda g: g["shap_value"].cumsum() + g["base_value"])
         .reset_index(drop=True)
     )
-    df_grouped["value_label"] = df_grouped["shap_value"].round(2).astype(str)
+    df_grouped["value_label"] = df_grouped["shap_value"].apply(lambda x: "${0:,.2f}".format(x))
     df_grouped = (
         df_grouped.groupby("quantile")
         .apply(lambda x: x.sort_values("abs_shap_value", ascending=False))
@@ -139,8 +140,8 @@ def plot_shap_waterfall_with_quantiles(df):
             lambda g: pd.DataFrame(
                 {
                     "label": [
-                        f"f(X) = {round(g['model_output'].iloc[0], 3)}",
-                        f"E[f(X)] = {round(g['base_value'].iloc[0], 3)}",
+                        f"f(X) = ${g['model_output'].iloc[0]:,.2f}",
+                        f"E[f(X)] = ${g['base_value'].iloc[0]:,.2f}",
                     ],
                     "x": [g["model_output"].iloc[0], g["base_value"].iloc[0]],
                     "quantile": [g["quantile"].iloc[0], g["quantile"].iloc[0]],
@@ -155,20 +156,20 @@ def plot_shap_waterfall_with_quantiles(df):
     bars = base.mark_bar().encode(
         y=alt.Y("feature:N", sort=None, title="Feature"),
         x=alt.X(
-            "end:Q",
-            axis=alt.Axis(grid=False),
+            "start:Q",
+            axis=alt.Axis(format="$,.2f", grid=False),
             scale=alt.Scale(domain=[x_min, x_max], zero=False),
             title="Value",
         ),
-        x2=alt.X2("start:Q"),
+        x2=alt.X2("end:Q"),
         color=alt.condition(
             alt.datum["shap_value"] > 0, alt.value("#ff0251"), alt.value("#006aff")
         ),
         tooltip=[
             alt.Tooltip("feature_name:N", title="Feature"),
-            alt.Tooltip("shap_value:Q", format=".3f", title="SHAP Value"),
-            alt.Tooltip("start:Q", format=".3f", title="SHAP Start"),
-            alt.Tooltip("end:Q", format=".3f", title="SHAP End"),
+            alt.Tooltip("shap_value:Q", format="$,.2f", title="SHAP Value"),
+            alt.Tooltip("start:Q", format="$,.2f", title="SHAP Start"),
+            alt.Tooltip("end:Q", format="$,.2f", title="SHAP End"),
         ],
     )
 
