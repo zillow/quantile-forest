@@ -435,6 +435,10 @@ us understand how the explanations change with different quantile selections.</p
 
 <span class="kn">from</span> <span class="nn">quantile_forest</span> <span class="kn">import</span> <span class="n">RandomForestQuantileRegressor</span>
 
+<span class="n">n_samples</span> <span class="o">=</span> <span class="mi">500</span>
+<span class="n">test_idx</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="n">quantiles</span> <span class="o">=</span> <span class="nb">list</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">11</span><span class="p">)</span> <span class="o">*</span> <span class="mi">10</span><span class="p">)</span> <span class="o">/</span> <span class="mi">100</span><span class="p">)</span>
+
 
 <span class="k">def</span> <span class="nf">get_shap_values</span><span class="p">(</span><span class="n">qrf</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">quantile</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="c1"># Define a custom tree model.</span>
@@ -475,39 +479,31 @@ us understand how the explanations change with different quantile selections.</p
 
 <span class="c1"># Load the California Housing Prices dataset.</span>
 <span class="n">X</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">datasets</span><span class="o">.</span><span class="n">fetch_california_housing</span><span class="p">(</span><span class="n">as_frame</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">return_X_y</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="n">X</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:</span><span class="mi">500</span><span class="p">]</span>
-<span class="n">y</span> <span class="o">=</span> <span class="n">y</span><span class="p">[:</span><span class="mi">500</span><span class="p">]</span>
+<span class="n">X</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:</span><span class="n">n_samples</span><span class="p">]</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">y</span><span class="p">[:</span><span class="n">n_samples</span><span class="p">]</span>
 <span class="n">y</span> <span class="o">*=</span> <span class="mi">100_000</span>  <span class="c1"># convert to dollars</span>
 <span class="n">X_train</span><span class="p">,</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">y_test</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 
 <span class="n">qrf</span> <span class="o">=</span> <span class="n">RandomForestQuantileRegressor</span><span class="p">(</span><span class="n">random_state</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 <span class="n">qrf</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">)</span>
 
-<span class="n">test_idx</span> <span class="o">=</span> <span class="mi">0</span>
-<span class="n">quantiles</span> <span class="o">=</span> <span class="nb">list</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">11</span><span class="p">)</span> <span class="o">*</span> <span class="mi">10</span><span class="p">)</span> <span class="o">/</span> <span class="mi">100</span><span class="p">)</span>
-
-<span class="n">dfs</span> <span class="o">=</span> <span class="p">[]</span>
-<span class="k">for</span> <span class="n">quantile</span> <span class="ow">in</span> <span class="n">quantiles</span><span class="p">:</span>
-    <span class="c1"># Get the SHAP values for the test data.</span>
-    <span class="n">shap_values</span> <span class="o">=</span> <span class="n">get_shap_values</span><span class="p">(</span><span class="n">qrf</span><span class="p">,</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">quantile</span><span class="o">=</span><span class="n">quantile</span><span class="p">)</span>
-
-    <span class="c1"># Get the SHAP values for a particular test instance (by index).</span>
-    <span class="n">shap_values_by_idx</span> <span class="o">=</span> <span class="n">get_shap_value_by_index</span><span class="p">(</span><span class="n">shap_values</span><span class="p">,</span> <span class="n">test_idx</span><span class="p">)</span>
-
-    <span class="n">dfs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span>
+    <span class="p">[</span>
         <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
             <span class="p">{</span>
                 <span class="s2">&quot;feature&quot;</span><span class="p">:</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">X</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">test_idx</span><span class="p">,</span><span class="w"> </span><span class="n">i</span><span class="p">]</span><span class="si">}</span><span class="s2"> = </span><span class="si">{</span><span class="n">X</span><span class="o">.</span><span class="n">columns</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])],</span>
                 <span class="s2">&quot;feature_name&quot;</span><span class="p">:</span> <span class="n">X</span><span class="o">.</span><span class="n">columns</span><span class="p">,</span>
-                <span class="s2">&quot;shap_value&quot;</span><span class="p">:</span> <span class="n">shap_values_by_idx</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
-                <span class="s2">&quot;abs_shap_value&quot;</span><span class="p">:</span> <span class="nb">abs</span><span class="p">(</span><span class="n">shap_values_by_idx</span><span class="o">.</span><span class="n">values</span><span class="p">),</span>
-                <span class="s2">&quot;base_value&quot;</span><span class="p">:</span> <span class="n">shap_values_by_idx</span><span class="o">.</span><span class="n">base_values</span><span class="p">,</span>
-                <span class="s2">&quot;model_output&quot;</span><span class="p">:</span> <span class="n">shap_values_by_idx</span><span class="o">.</span><span class="n">base_values</span> <span class="o">+</span> <span class="nb">sum</span><span class="p">(</span><span class="n">shap_values_by_idx</span><span class="o">.</span><span class="n">values</span><span class="p">),</span>
-                <span class="s2">&quot;quantile&quot;</span><span class="p">:</span> <span class="n">quantile</span><span class="p">,</span>
+                <span class="s2">&quot;shap_value&quot;</span><span class="p">:</span> <span class="n">shap_i</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+                <span class="s2">&quot;abs_shap_value&quot;</span><span class="p">:</span> <span class="nb">abs</span><span class="p">(</span><span class="n">shap_i</span><span class="o">.</span><span class="n">values</span><span class="p">),</span>
+                <span class="s2">&quot;base_value&quot;</span><span class="p">:</span> <span class="n">shap_i</span><span class="o">.</span><span class="n">base_values</span><span class="p">,</span>
+                <span class="s2">&quot;model_output&quot;</span><span class="p">:</span> <span class="n">shap_i</span><span class="o">.</span><span class="n">base_values</span> <span class="o">+</span> <span class="nb">sum</span><span class="p">(</span><span class="n">shap_i</span><span class="o">.</span><span class="n">values</span><span class="p">),</span>
+                <span class="s2">&quot;quantile&quot;</span><span class="p">:</span> <span class="n">q</span><span class="p">,</span>
             <span class="p">}</span>
         <span class="p">)</span>
-    <span class="p">)</span>
-<span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">dfs</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">q</span> <span class="ow">in</span> <span class="n">quantiles</span>
+        <span class="k">for</span> <span class="n">shap_i</span> <span class="ow">in</span> <span class="p">[</span><span class="n">get_shap_value_by_index</span><span class="p">(</span><span class="n">get_shap_values</span><span class="p">(</span><span class="n">qrf</span><span class="p">,</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">quantile</span><span class="o">=</span><span class="n">q</span><span class="p">),</span> <span class="n">test_idx</span><span class="p">)]</span>
+    <span class="p">]</span>
+<span class="p">)</span>
 
 
 <span class="k">def</span> <span class="nf">plot_shap_waterfall_with_quantiles</span><span class="p">(</span><span class="n">df</span><span class="p">):</span>

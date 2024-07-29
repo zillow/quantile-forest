@@ -14,7 +14,7 @@ An example on a toy dataset that demonstrates fitting a single quantile
 regressor for multiple target variables. For each target, multiple quantiles
 can be estimated simultaneously. In this example, the target variable has
 two output values for each sample, with a single regressor used to estimate
-three quantiles (the median and 95% interval) for each target output.
+three quantiles (the median and interval points) for each target.
 
 
 .. altair-plot::
@@ -33,6 +33,7 @@ three quantiles (the median and 95% interval) for each target output.
 
     n_samples = 2500
     bounds = [0, 100]
+    intervals = list(np.arange(21) / 20)
 
     # Define functions that generate targets; each function maps to one target.
     funcs = [
@@ -68,23 +69,34 @@ three quantiles (the median and 95% interval) for each target output.
     qrf = RandomForestQuantileRegressor(max_samples_leaf=None, max_depth=4, random_state=0)
     qrf.fit(X_train, y_train)  # fit on all of the targets simultaneously
 
-    # Get multiple-output predictions at 95% prediction intervals and median.
-    y_pred = qrf.predict(X, quantiles=[0.025, 0.5, 0.975])
+    dfs = []
+    for idx, interval in enumerate(intervals):
+        # Get multiple-output predictions at median and prediction intervals.
+        quantiles = [0.5, round(0.5 - interval / 2, 3), round(0.5 + interval / 2, 3)]
+        y_pred = qrf.predict(X, quantiles=quantiles)
 
-    df = pd.DataFrame(
-        {
-            "x": np.tile(X.squeeze(), len(funcs)),
-            "y": y.reshape(-1, order="F"),
-            "y_true": np.concatenate([f["signal"](X.squeeze()) for f in funcs]),
-            "y_pred": np.concatenate([y_pred[:, i, 1] for i in range(len(funcs))]),
-            "y_pred_low": np.concatenate([y_pred[:, i, 0] for i in range(len(funcs))]),
-            "y_pred_upp": np.concatenate([y_pred[:, i, 2] for i in range(len(funcs))]),
-            "target": np.concatenate([[f"{i}"] * len(X) for i in range(len(funcs))]),
-        }
-    )
+        df_i = pd.DataFrame(
+            {
+                "x": np.tile(X.squeeze(), len(funcs)),
+                "y": y.reshape(-1, order="F"),
+                "y_true": np.concatenate([f["signal"](X.squeeze()) for f in funcs]),
+                "y_pred": np.concatenate([y_pred[:, i, 0] for i in range(len(funcs))]),
+                "y_pred_low": np.concatenate([y_pred[:, i, 1] for i in range(len(funcs))]),
+                "y_pred_upp": np.concatenate([y_pred[:, i, 2] for i in range(len(funcs))]),
+                "quantile_low": np.concatenate([[quantiles[1]] * len(X) for i in range(len(funcs))]),
+                "quantile_upp": np.concatenate([[quantiles[2]] * len(X) for i in range(len(funcs))]),
+                "target": np.concatenate([[f"{i}"] * len(X) for i in range(len(funcs))]),
+            }
+        )
+        dfs.append(df_i)
+    df = pd.concat(dfs)
 
 
     def plot_multioutputs(df, legend):
+        slider = alt.binding_range(min=0, max=1, step=0.05, name="Prediction Interval:")
+        interval_selection = alt.param(value=0.95, bind=slider, name="interval")
+        interval_tol = 0.001
+
         click = alt.selection_point(fields=["target"], bind="legend")
 
         color = alt.condition(
@@ -107,6 +119,8 @@ three quantiles (the median and 95% interval) for each target output.
             alt.Tooltip("y_pred:Q", format=",.3f", title="Predicted Y"),
             alt.Tooltip("y_pred_low:Q", format=",.3f", title="Predicted Lower Y"),
             alt.Tooltip("y_pred_upp:Q", format=",.3f", title="Predicted Upper Y"),
+            alt.Tooltip("quantile_low:Q", format=".3f", title="Lower Quantile"),
+            alt.Tooltip("quantile_upp:Q", format=".3f", title="Upper Quantile"),
         ]
 
         points = (
@@ -145,7 +159,17 @@ three quantiles (the median and 95% interval) for each target output.
 
         chart = (
             (points + area + line)
-            .add_params(click)
+            .transform_filter(
+                (
+                    (alt.datum.quantile_low >= (0.5 - interval_selection / 2 - interval_tol))
+                    & (alt.datum.quantile_low <= (0.5 - interval_selection / 2 + interval_tol))
+                )
+                | (
+                    (alt.datum.quantile_upp >= (0.5 + interval_selection / 2 - interval_tol))
+                    & (alt.datum.quantile_upp <= (0.5 + interval_selection / 2 + interval_tol))
+                )
+            )
+            .add_params(interval_selection, click)
             .configure_range(category=alt.RangeScheme(list(legend.values())))
             .properties(height=400, width=650, title="Multi-target Prediction Intervals")
         )
@@ -171,6 +195,7 @@ three quantiles (the median and 95% interval) for each target output.
 
             n_samples = 2500
             bounds = [0, 100]
+            intervals = list(np.arange(21) / 20)
 
             # Define functions that generate targets; each function maps to one target.
             funcs = [
@@ -206,23 +231,34 @@ three quantiles (the median and 95% interval) for each target output.
             qrf = RandomForestQuantileRegressor(max_samples_leaf=None, max_depth=4, random_state=0)
             qrf.fit(X_train, y_train)  # fit on all of the targets simultaneously
 
-            # Get multiple-output predictions at 95% prediction intervals and median.
-            y_pred = qrf.predict(X, quantiles=[0.025, 0.5, 0.975])
+            dfs = []
+            for idx, interval in enumerate(intervals):
+                # Get multiple-output predictions at median and prediction intervals.
+                quantiles = [0.5, round(0.5 - interval / 2, 3), round(0.5 + interval / 2, 3)]
+                y_pred = qrf.predict(X, quantiles=quantiles)
 
-            df = pd.DataFrame(
-                {
-                    "x": np.tile(X.squeeze(), len(funcs)),
-                    "y": y.reshape(-1, order="F"),
-                    "y_true": np.concatenate([f["signal"](X.squeeze()) for f in funcs]),
-                    "y_pred": np.concatenate([y_pred[:, i, 1] for i in range(len(funcs))]),
-                    "y_pred_low": np.concatenate([y_pred[:, i, 0] for i in range(len(funcs))]),
-                    "y_pred_upp": np.concatenate([y_pred[:, i, 2] for i in range(len(funcs))]),
-                    "target": np.concatenate([[f"{i}"] * len(X) for i in range(len(funcs))]),
-                }
-            )
+                df_i = pd.DataFrame(
+                    {
+                        "x": np.tile(X.squeeze(), len(funcs)),
+                        "y": y.reshape(-1, order="F"),
+                        "y_true": np.concatenate([f["signal"](X.squeeze()) for f in funcs]),
+                        "y_pred": np.concatenate([y_pred[:, i, 0] for i in range(len(funcs))]),
+                        "y_pred_low": np.concatenate([y_pred[:, i, 1] for i in range(len(funcs))]),
+                        "y_pred_upp": np.concatenate([y_pred[:, i, 2] for i in range(len(funcs))]),
+                        "quantile_low": np.concatenate([[quantiles[1]] * len(X) for i in range(len(funcs))]),
+                        "quantile_upp": np.concatenate([[quantiles[2]] * len(X) for i in range(len(funcs))]),
+                        "target": np.concatenate([[f"{i}"] * len(X) for i in range(len(funcs))]),
+                    }
+                )
+                dfs.append(df_i)
+            df = pd.concat(dfs)
 
 
             def plot_multioutputs(df, legend):
+                slider = alt.binding_range(min=0, max=1, step=0.05, name="Prediction Interval:")
+                interval_selection = alt.param(value=0.95, bind=slider, name="interval")
+                interval_tol = 0.001
+
                 click = alt.selection_point(fields=["target"], bind="legend")
 
                 color = alt.condition(
@@ -245,6 +281,8 @@ three quantiles (the median and 95% interval) for each target output.
                     alt.Tooltip("y_pred:Q", format=",.3f", title="Predicted Y"),
                     alt.Tooltip("y_pred_low:Q", format=",.3f", title="Predicted Lower Y"),
                     alt.Tooltip("y_pred_upp:Q", format=",.3f", title="Predicted Upper Y"),
+                    alt.Tooltip("quantile_low:Q", format=".3f", title="Lower Quantile"),
+                    alt.Tooltip("quantile_upp:Q", format=".3f", title="Upper Quantile"),
                 ]
 
                 points = (
@@ -283,7 +321,17 @@ three quantiles (the median and 95% interval) for each target output.
 
                 chart = (
                     (points + area + line)
-                    .add_params(click)
+                    .transform_filter(
+                        (
+                            (alt.datum.quantile_low >= (0.5 - interval_selection / 2 - interval_tol))
+                            & (alt.datum.quantile_low <= (0.5 - interval_selection / 2 + interval_tol))
+                        )
+                        | (
+                            (alt.datum.quantile_upp >= (0.5 + interval_selection / 2 - interval_tol))
+                            & (alt.datum.quantile_upp <= (0.5 + interval_selection / 2 + interval_tol))
+                        )
+                    )
+                    .add_params(interval_selection, click)
                     .configure_range(category=alt.RangeScheme(list(legend.values())))
                     .properties(height=400, width=650, title="Multi-target Prediction Intervals")
                 )

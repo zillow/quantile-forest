@@ -30,17 +30,19 @@ actual values.
 
     from quantile_forest import RandomForestQuantileRegressor
 
+    intervals = list(np.arange(101) / 100)
+
     # Create toy dataset.
     X = np.array([[-1, -1], [-1, -1], [-1, -1], [1, 1], [1, 1]])
     y = np.array([-2, -1, 0, 1, 2])
 
-    est = RandomForestQuantileRegressor(
+    qrf = RandomForestQuantileRegressor(
         n_estimators=1,
         max_samples_leaf=None,
         bootstrap=False,
         random_state=0,
     )
-    est.fit(X, y)
+    qrf.fit(X, y)
 
     interpolations = {
         "Linear": "#006aff",
@@ -54,30 +56,43 @@ actual values.
     legend = {"Actual": "#000000"}
     legend.update(interpolations)
 
-    # Initialize data with actual values.
-    data = {
-        "method": ["Actual"] * len(y),
-        "X": [f"Sample {idx + 1} ({x})" for idx, x in enumerate(X.tolist())],
-        "y_pred": y.tolist(),
-        "y_pred_low": y.tolist(),
-        "y_pred_upp": y.tolist(),
-    }
+    dfs = []
+    for idx, interval in enumerate(intervals):
+        # Initialize data with actual values.
+        data = {
+            "method": ["Actual"] * len(y),
+            "X": [f"Sample {idx + 1} ({x})" for idx, x in enumerate(X.tolist())],
+            "y_pred": y.tolist(),
+            "y_pred_low": y.tolist(),
+            "y_pred_upp": y.tolist(),
+            "quantile_low": [None] * len(y),
+            "quantile_upp": [None] * len(y),
+        }
 
-    # Populate data based on prediction results with different interpolations.
-    for interpolation in interpolations:
-        # Get predictions at 95% prediction intervals and median.
-        y_pred = est.predict(X, quantiles=[0.025, 0.5, 0.975], interpolation=interpolation.lower())
+        # Populate data based on prediction results with different interpolations.
+        for interpolation in interpolations:
+            # Get predictions at median and prediction intervals.
+            quantiles = [0.5, round(0.5 - interval / 2, 3), round(0.5 + interval / 2, 3)]
+            y_pred = qrf.predict(X, quantiles=quantiles, interpolation=interpolation.lower())
 
-        data["method"].extend([interpolation] * len(y))
-        data["X"].extend([f"Sample {idx + 1} ({x})" for idx, x in enumerate(X.tolist())])
-        data["y_pred"].extend(y_pred[:, 1])
-        data["y_pred_low"].extend(y_pred[:, 0])
-        data["y_pred_upp"].extend(y_pred[:, 2])
+            data["method"].extend([interpolation] * len(y))
+            data["X"].extend([f"Sample {idx + 1} ({x})" for idx, x in enumerate(X.tolist())])
+            data["y_pred"].extend(y_pred[:, 0])
+            data["y_pred_low"].extend(y_pred[:, 1])
+            data["y_pred_upp"].extend(y_pred[:, 2])
+            data["quantile_low"].extend([quantiles[1]] * len(y))
+            data["quantile_upp"].extend([quantiles[2]] * len(y))
 
-    df = pd.DataFrame(data)
+        df_i = pd.DataFrame(data)
+        dfs.append(df_i)
+    df = pd.concat(dfs)
 
 
     def plot_interpolations(df, legend):
+        slider = alt.binding_range(min=0, max=1, step=0.01, name="Prediction Interval:")
+        interval_selection = alt.param(value=0.95, bind=slider, name="interval")
+        interval_tol = 0.001
+
         click = alt.selection_point(fields=["method"], bind="legend")
 
         color = alt.condition(
@@ -89,9 +104,11 @@ actual values.
         tooltip = [
             alt.Tooltip("method:N", title="Method"),
             alt.Tooltip("X:N", title="X Values"),
-            alt.Tooltip("y_pred:N", format=".3f", title="Median Y Value"),
-            alt.Tooltip("y_pred_low:N", format=".3f", title="Lower Y Value"),
-            alt.Tooltip("y_pred_upp:N", format=".3f", title="Upper Y Value"),
+            alt.Tooltip("y_pred:Q", format=".3f", title="Predicted Y"),
+            alt.Tooltip("y_pred_low:Q", format=".3f", title="Predicted Lower Y"),
+            alt.Tooltip("y_pred_upp:Q", format=".3f", title="Predicted Upper Y"),
+            alt.Tooltip("quantile_low:Q", format=".3f", title="Lower Quantile"),
+            alt.Tooltip("quantile_upp:Q", format=".3f", title="Upper Quantile"),
         ]
 
         point = (
@@ -129,7 +146,18 @@ actual values.
 
         chart = (
             (area + point)
-            .add_params(click)
+            .transform_filter(
+                (
+                    (alt.datum.quantile_low >= (0.5 - interval_selection / 2 - interval_tol))
+                    & (alt.datum.quantile_low <= (0.5 - interval_selection / 2 + interval_tol))
+                )
+                | (
+                    (alt.datum.quantile_upp >= (0.5 + interval_selection / 2 - interval_tol))
+                    & (alt.datum.quantile_upp <= (0.5 + interval_selection / 2 + interval_tol))
+                )
+                | (alt.datum.method == "Actual")
+            )
+            .add_params(interval_selection, click)
             .properties(height=400)
             .facet(
                 column=alt.Column(
@@ -160,17 +188,19 @@ actual values.
 
             from quantile_forest import RandomForestQuantileRegressor
 
+            intervals = list(np.arange(101) / 100)
+
             # Create toy dataset.
             X = np.array([[-1, -1], [-1, -1], [-1, -1], [1, 1], [1, 1]])
             y = np.array([-2, -1, 0, 1, 2])
 
-            est = RandomForestQuantileRegressor(
+            qrf = RandomForestQuantileRegressor(
                 n_estimators=1,
                 max_samples_leaf=None,
                 bootstrap=False,
                 random_state=0,
             )
-            est.fit(X, y)
+            qrf.fit(X, y)
 
             interpolations = {
                 "Linear": "#006aff",
@@ -184,30 +214,43 @@ actual values.
             legend = {"Actual": "#000000"}
             legend.update(interpolations)
 
-            # Initialize data with actual values.
-            data = {
-                "method": ["Actual"] * len(y),
-                "X": [f"Sample {idx + 1} ({x})" for idx, x in enumerate(X.tolist())],
-                "y_pred": y.tolist(),
-                "y_pred_low": y.tolist(),
-                "y_pred_upp": y.tolist(),
-            }
+            dfs = []
+            for idx, interval in enumerate(intervals):
+                # Initialize data with actual values.
+                data = {
+                    "method": ["Actual"] * len(y),
+                    "X": [f"Sample {idx + 1} ({x})" for idx, x in enumerate(X.tolist())],
+                    "y_pred": y.tolist(),
+                    "y_pred_low": y.tolist(),
+                    "y_pred_upp": y.tolist(),
+                    "quantile_low": [None] * len(y),
+                    "quantile_upp": [None] * len(y),
+                }
 
-            # Populate data based on prediction results with different interpolations.
-            for interpolation in interpolations:
-                # Get predictions at 95% prediction intervals and median.
-                y_pred = est.predict(X, quantiles=[0.025, 0.5, 0.975], interpolation=interpolation.lower())
+                # Populate data based on prediction results with different interpolations.
+                for interpolation in interpolations:
+                    # Get predictions at median and prediction intervals.
+                    quantiles = [0.5, round(0.5 - interval / 2, 3), round(0.5 + interval / 2, 3)]
+                    y_pred = qrf.predict(X, quantiles=quantiles, interpolation=interpolation.lower())
 
-                data["method"].extend([interpolation] * len(y))
-                data["X"].extend([f"Sample {idx + 1} ({x})" for idx, x in enumerate(X.tolist())])
-                data["y_pred"].extend(y_pred[:, 1])
-                data["y_pred_low"].extend(y_pred[:, 0])
-                data["y_pred_upp"].extend(y_pred[:, 2])
+                    data["method"].extend([interpolation] * len(y))
+                    data["X"].extend([f"Sample {idx + 1} ({x})" for idx, x in enumerate(X.tolist())])
+                    data["y_pred"].extend(y_pred[:, 0])
+                    data["y_pred_low"].extend(y_pred[:, 1])
+                    data["y_pred_upp"].extend(y_pred[:, 2])
+                    data["quantile_low"].extend([quantiles[1]] * len(y))
+                    data["quantile_upp"].extend([quantiles[2]] * len(y))
 
-            df = pd.DataFrame(data)
+                df_i = pd.DataFrame(data)
+                dfs.append(df_i)
+            df = pd.concat(dfs)
 
 
             def plot_interpolations(df, legend):
+                slider = alt.binding_range(min=0, max=1, step=0.01, name="Prediction Interval:")
+                interval_selection = alt.param(value=0.95, bind=slider, name="interval")
+                interval_tol = 0.001
+
                 click = alt.selection_point(fields=["method"], bind="legend")
 
                 color = alt.condition(
@@ -219,9 +262,11 @@ actual values.
                 tooltip = [
                     alt.Tooltip("method:N", title="Method"),
                     alt.Tooltip("X:N", title="X Values"),
-                    alt.Tooltip("y_pred:N", format=".3f", title="Median Y Value"),
-                    alt.Tooltip("y_pred_low:N", format=".3f", title="Lower Y Value"),
-                    alt.Tooltip("y_pred_upp:N", format=".3f", title="Upper Y Value"),
+                    alt.Tooltip("y_pred:Q", format=".3f", title="Predicted Y"),
+                    alt.Tooltip("y_pred_low:Q", format=".3f", title="Predicted Lower Y"),
+                    alt.Tooltip("y_pred_upp:Q", format=".3f", title="Predicted Upper Y"),
+                    alt.Tooltip("quantile_low:Q", format=".3f", title="Lower Quantile"),
+                    alt.Tooltip("quantile_upp:Q", format=".3f", title="Upper Quantile"),
                 ]
 
                 point = (
@@ -259,7 +304,18 @@ actual values.
 
                 chart = (
                     (area + point)
-                    .add_params(click)
+                    .transform_filter(
+                        (
+                            (alt.datum.quantile_low >= (0.5 - interval_selection / 2 - interval_tol))
+                            & (alt.datum.quantile_low <= (0.5 - interval_selection / 2 + interval_tol))
+                        )
+                        | (
+                            (alt.datum.quantile_upp >= (0.5 + interval_selection / 2 - interval_tol))
+                            & (alt.datum.quantile_upp <= (0.5 + interval_selection / 2 + interval_tol))
+                        )
+                        | (alt.datum.method == "Actual")
+                    )
+                    .add_params(interval_selection, click)
                     .properties(height=400)
                     .facet(
                         column=alt.Column(
