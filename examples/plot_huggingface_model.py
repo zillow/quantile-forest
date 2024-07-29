@@ -8,7 +8,7 @@ been trained with default parameters on a train-test split of the California
 housing dataset and uploaded to Hugging Face Hub. The model is downloaded and
 inference is performed over several quantiles for each instance in the dataset.
 The estimates are visualized by the latitude and longitude of each instance.
-The model used is availabe on Hugging Face Hub:
+The model used is available on Hugging Face Hub:
 https://huggingface.co/quantile-forest/california-housing-example
 """
 
