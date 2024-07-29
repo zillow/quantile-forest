@@ -8,6 +8,8 @@ been trained with default parameters on a train-test split of the California
 housing dataset and uploaded to Hugging Face Hub. The model is downloaded and
 inference is performed over several quantiles for each instance in the dataset.
 The estimates are visualized by the latitude and longitude of each instance.
+The model used is availabe on Hugging Face Hub:
+https://huggingface.co/quantile-forest/california-housing-example
 """
 
 import os
@@ -28,6 +30,9 @@ alt.data_transformers.disable_max_rows()
 token = "<Hugging Face Access Token>"
 repo_id = "quantile-forest/california-housing-example"
 load_existing = True
+
+quantiles = list((np.arange(5) * 25) / 100)
+sample_frac = 1
 
 
 def fit_and_upload_model(token, repo_id, local_dir="./local_repo"):
@@ -139,6 +144,35 @@ with open(qrf_pkl_filename, 'rb') as file:
     shutil.rmtree(local_dir)
 
 
+if not load_existing:
+    fit_and_upload_model(token, repo_id)
+
+# Download the repository locally.
+local_dir = "./local_repo"
+if os.path.exists(local_dir):
+    shutil.rmtree(local_dir)
+hub_utils.download(repo_id=repo_id, dst=local_dir)
+
+# Load the fitted model.
+model_filename = "model.pkl"
+with open(f"{local_dir}/{model_filename}", "rb") as file:
+    qrf = pickle.load(file)
+shutil.rmtree(local_dir)
+
+# Estimate quantiles.
+X, y = datasets.fetch_california_housing(as_frame=True, return_X_y=True)
+y_pred = qrf.predict(X, quantiles=quantiles) * 100_000  # predict in dollars
+
+df = (
+    pd.DataFrame(y_pred, columns=quantiles)
+    .reset_index()
+    .sample(frac=sample_frac, random_state=0)
+    .melt(id_vars=["index"], var_name="quantile", value_name="value")
+    .merge(X[["Latitude", "Longitude", "Population"]].reset_index(), on="index", how="right")
+)
+print(df)
+
+
 def plot_quantiles_by_latlon(df, quantiles):
     # Slider for varying the displayed quantile estimates.
     slider = alt.binding_range(
@@ -172,7 +206,7 @@ def plot_quantiles_by_latlon(df, quantiles):
                 scale=alt.Scale(zero=False),
                 title="Latitude",
             ),
-            color=alt.Color("value:Q", scale=alt.Scale(scheme="viridis"), title="Prediction"),
+            color=alt.Color("value:Q", scale=alt.Scale(scheme="cividis"), title="Prediction"),
             size=alt.Size("Population:Q"),
             tooltip=[
                 alt.Tooltip("index:N", title="Row ID"),
@@ -189,33 +223,6 @@ def plot_quantiles_by_latlon(df, quantiles):
     )
     return chart
 
-
-if not load_existing:
-    fit_and_upload_model(token, repo_id)
-
-# Download the repository locally.
-local_dir = "./local_repo"
-if os.path.exists(local_dir):
-    shutil.rmtree(local_dir)
-hub_utils.download(repo_id=repo_id, dst=local_dir)
-
-# Load the fitted model.
-model_filename = "model.pkl"
-with open(f"{local_dir}/{model_filename}", "rb") as file:
-    qrf = pickle.load(file)
-shutil.rmtree(local_dir)
-
-# Estimate quantiles.
-quantiles = list((np.arange(11) * 10) / 100)
-X, y = datasets.fetch_california_housing(as_frame=True, return_X_y=True)
-y_pred = qrf.predict(X, quantiles=quantiles) * 100_000  # predict in dollars
-
-df = (
-    pd.DataFrame(y_pred, columns=quantiles)
-    .reset_index()
-    .melt(id_vars=["index"], var_name="quantile", value_name="value")
-    .merge(X[["Latitude", "Longitude", "Population"]].reset_index(), on="index", how="right")
-)
 
 chart = plot_quantiles_by_latlon(df, quantiles)
 chart

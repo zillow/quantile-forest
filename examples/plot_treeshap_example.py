@@ -17,6 +17,10 @@ from sklearn.model_selection import train_test_split
 
 from quantile_forest import RandomForestQuantileRegressor
 
+n_samples = 500
+test_idx = 0
+quantiles = list((np.arange(11) * 10) / 100)
+
 
 def get_shap_values(qrf, X, quantile=0.5, **kwargs):
     # Define a custom tree model.
@@ -57,39 +61,31 @@ def get_shap_value_by_index(shap_values, index):
 
 # Load the California Housing Prices dataset.
 X, y = datasets.fetch_california_housing(as_frame=True, return_X_y=True)
-X = X.iloc[:500]
-y = y[:500]
+X = X.iloc[:n_samples]
+y = y[:n_samples]
 y *= 100_000  # convert to dollars
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=100, random_state=0)
 
 qrf = RandomForestQuantileRegressor(random_state=0)
 qrf.fit(X_train, y_train)
 
-test_idx = 0
-quantiles = list((np.arange(11) * 10) / 100)
-
-dfs = []
-for quantile in quantiles:
-    # Get the SHAP values for the test data.
-    shap_values = get_shap_values(qrf, X_test, quantile=quantile)
-
-    # Get the SHAP values for a particular test instance (by index).
-    shap_values_by_idx = get_shap_value_by_index(shap_values, test_idx)
-
-    dfs.append(
+df = pd.concat(
+    [
         pd.DataFrame(
             {
                 "feature": [f"{X.iloc[test_idx, i]} = {X.columns[i]}" for i in range(X.shape[1])],
                 "feature_name": X.columns,
-                "shap_value": shap_values_by_idx.values,
-                "abs_shap_value": abs(shap_values_by_idx.values),
-                "base_value": shap_values_by_idx.base_values,
-                "model_output": shap_values_by_idx.base_values + sum(shap_values_by_idx.values),
-                "quantile": quantile,
+                "shap_value": shap_i.values,
+                "abs_shap_value": abs(shap_i.values),
+                "base_value": shap_i.base_values,
+                "model_output": shap_i.base_values + sum(shap_i.values),
+                "quantile": q,
             }
         )
-    )
-df = pd.concat(dfs)
+        for q in quantiles
+        for shap_i in [get_shap_value_by_index(get_shap_values(qrf, X_test, quantile=q), test_idx)]
+    ]
+)
 
 
 def plot_shap_waterfall_with_quantiles(df):
