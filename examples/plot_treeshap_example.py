@@ -197,7 +197,7 @@ def plot_shap_waterfall_with_quantiles(df, height=300):
     )
 
     points = (
-        bars.transform_filter(abs(alt.datum["shap_value"]) > x_shift)
+        bars.transform_filter(f"abs(datum.shap_value) > {x_shift}")
         .mark_point(filled=True, opacity=1, size=125)
         .encode(
             x=alt.X("end_shifted:Q", title=None),
