@@ -94,7 +94,7 @@ df = pd.concat(
 )
 
 
-def plot_shap_waterfall_with_quantiles(df):
+def plot_shap_waterfall_with_quantiles(df, height=300):
     df = df.copy()
 
     # Slider for varying the applied quantile estimates.
@@ -115,28 +115,24 @@ def plot_shap_waterfall_with_quantiles(df):
         df.groupby("quantile")
         .apply(lambda g: g.sort_values("abs_shap_value", ascending=True))
         .reset_index(drop=True)
-    )
-    df_grouped["start"] = (
-        df_grouped.groupby("quantile")
-        .apply(lambda g: g["shap_value"].shift(1, fill_value=0).cumsum() + g["base_value"])
-        .reset_index(drop=True)
-    )
-    df_grouped["end"] = (
-        df_grouped.groupby("quantile")
-        .apply(lambda g: g["shap_value"].cumsum() + g["base_value"])
-        .reset_index(drop=True)
-    )
-    df_grouped["value_label"] = df_grouped["shap_value"].apply(
-        lambda x: ("+" if x >= 0 else "-") + "{0:,.2f}".format(abs(x))
-    )
-    df_grouped = (
-        df_grouped.groupby("quantile")
+        .assign(
+            **{
+                "start": lambda df: df.groupby("quantile", group_keys=False).apply(
+                    lambda g: g["shap_value"].shift(1, fill_value=0).cumsum() + g["base_value"]
+                ),
+                "end": lambda df: df.groupby("quantile", group_keys=False).apply(
+                    lambda g: g["shap_value"].cumsum() + g["base_value"]
+                ),
+                "value_label": lambda df: df["shap_value"].apply(
+                    lambda x: ("+" if x >= 0 else "-") + "{0:,.2f}".format(abs(x))
+                ),
+                "feature2": lambda df: df.groupby("quantile", group_keys=False).apply(
+                    lambda g: g["feature"].shift(-1)
+                ),
+            }
+        )
+        .groupby("quantile")
         .apply(lambda g: g.sort_values("abs_shap_value", ascending=False))
-        .reset_index(drop=True)
-    )
-    df_grouped["feature2"] = (
-        df_grouped.groupby("quantile")
-        .apply(lambda g: g["feature"].shift(1))
         .reset_index(drop=True)
     )
 
@@ -144,12 +140,12 @@ def plot_shap_waterfall_with_quantiles(df):
     x_max = max(df["base_value"].max(), df["model_output"].max())
     x_shift = (x_max - x_min) / 100
 
-    y_rule_offset = round(300 / df_grouped["feature"].nunique() / 2) - 2
-    y_text_offset = round(300 / 2)
+    y_rule_offset = round(height / df_grouped["feature"].nunique() / 2) - 2
+    y_text_offset = round(height / 2)
 
-    triangle_left = "M 0,3 L -1,0 L 0,-3 Z"
-    triangle_right = "M 0,-3 L 1,0 L 0,3 Z"
-    triangle_size = 125
+    triangle_size = round(height / 100)
+    triangle_left = f"M 0,{triangle_size} L -1,0 L 0,-{triangle_size} Z"
+    triangle_right = f"M 0,-{triangle_size} L 1,0 L 0,{triangle_size} Z"
 
     df_text_labels = (
         df_grouped.groupby("quantile")
@@ -175,6 +171,9 @@ def plot_shap_waterfall_with_quantiles(df):
         .transform_calculate(
             end_shifted=f"datum.shap_value > 0 ? datum.end - {x_shift} : datum.end + {x_shift}"
         )
+        .transform_calculate(
+            end_shifted=f"abs(datum.shap_value) < {x_shift} ? datum.end : datum.end_shifted"
+        )
     )
 
     bars = base.mark_bar().encode(
@@ -197,11 +196,15 @@ def plot_shap_waterfall_with_quantiles(df):
         ],
     )
 
-    points = bars.mark_point(filled=True, opacity=1, size=triangle_size).encode(
-        x=alt.X("end_shifted:Q", title=None),
-        shape=alt.condition(
-            alt.datum["shap_value"] > 0, alt.value(triangle_right), alt.value(triangle_left)
-        ),
+    points = (
+        bars.transform_filter(abs(alt.datum["shap_value"]) > x_shift)
+        .mark_point(filled=True, opacity=1, size=125)
+        .encode(
+            x=alt.X("end_shifted:Q", title=None),
+            shape=alt.condition(
+                alt.datum["shap_value"] > 0, alt.value(triangle_right), alt.value(triangle_left)
+            ),
+        )
     )
 
     text_bar_left = bars.mark_text(
@@ -233,7 +236,7 @@ def plot_shap_waterfall_with_quantiles(df):
     )
     text = text_bar_left + text_bar_right + text_label_start + text_label_end
 
-    feature_rule = (
+    feature_bar_rule = (
         base.transform_filter("isValid(datum.feature2)")
         .mark_rule(
             color="black",
@@ -248,16 +251,31 @@ def plot_shap_waterfall_with_quantiles(df):
             y2=alt.Y2("feature2"),
         )
     )
-    end_rule = base.mark_rule(color="gray", opacity=0.8, strokeDash=[1, 1]).encode(
+    end_bar_rule = base.mark_rule(color="gray", opacity=0.8, strokeDash=[1, 1]).encode(
         x=alt.X("model_output:Q")
     )
-    rules = feature_rule + end_rule
+    tick_start_rule = (
+        alt.Chart(df_text_labels)
+        .mark_rule(color="black", opacity=1, y=height, y2=height + 5)
+        .transform_filter(q_val)
+        .transform_filter(alt.datum["type"] == "start")
+        .encode(x=alt.X("x:Q"))
+    )
+    tick_end_rule = (
+        alt.Chart(df_text_labels)
+        .mark_rule(color="black", opacity=1, y=0, y2=5)
+        .transform_filter(q_val)
+        .transform_filter(alt.datum["type"] == "end")
+        .encode(x=alt.X("x:Q"))
+    )
+    rules = feature_bar_rule + end_bar_rule + tick_start_rule + tick_end_rule
 
     chart = (
         (bars + points + text + rules)
         .add_params(q_val)
+        .configure_view(strokeOpacity=0)
         .properties(
-            width=600, height=300, title="Waterfall Plot of SHAP Values for QRF Predictions"
+            width=600, height=height, title="Waterfall Plot of SHAP Values for QRF Predictions"
         )
     )
 
