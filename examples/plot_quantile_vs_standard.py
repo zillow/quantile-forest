@@ -31,7 +31,7 @@ skewnorm_rv.random_state = rng
 y = skewnorm_rv.rvs(n_samples)
 X = rng.randn(n_samples, 2) * y.reshape(-1, 1)
 
-quantiles = list(np.arange(101) / 100)
+quantiles = list(np.arange(21) * 5 / 100)
 
 regr_rf = RandomForestRegressor(n_estimators=10, random_state=0)
 regr_qrf = RandomForestQuantileRegressor(n_estimators=10, random_state=0)
