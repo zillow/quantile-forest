@@ -23,7 +23,7 @@ from quantile_forest import RandomForestQuantileRegressor
 
 np.random.seed(0)
 
-n_test_samples = 10
+n_test_samples = 100
 
 
 def predict(reg, X, quantiles=0.5, what=None):
@@ -98,7 +98,7 @@ df = pd.concat(dfs)
 def plot_ecdf(df):
     min_idx = df["sample_idx"].min()
     max_idx = df["sample_idx"].max()
-    slider = alt.binding_range(min=min_idx, max=max_idx, step=1, name="Sample Index:")
+    slider = alt.binding_range(min=min_idx, max=max_idx, step=1, name="Sample Index: ")
     sample_selection = alt.param(value=0, bind=slider, name="sample_idx")
 
     tooltip = [

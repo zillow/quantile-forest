@@ -102,7 +102,7 @@ def plot_shap_waterfall_with_quantiles(df, height=300):
         min=0,
         max=1,
         step=0.5 if len(quantiles) == 1 else 1 / (len(quantiles) - 1),
-        name="Quantile:",
+        name="Quantile: ",
     )
 
     q_val = alt.selection_point(

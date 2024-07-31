@@ -80,7 +80,7 @@ df = pd.concat(dfs)
 
 
 def plot_multioutputs(df, legend):
-    slider = alt.binding_range(min=0, max=1, step=0.05, name="Prediction Interval:")
+    slider = alt.binding_range(min=0, max=1, step=0.05, name="Prediction Interval: ")
     interval_selection = alt.param(value=0.95, bind=slider, name="interval")
     interval_tol = 0.001
 

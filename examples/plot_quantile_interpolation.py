@@ -76,8 +76,8 @@ df = pd.concat(dfs)
 
 
 def plot_interpolations(df, legend):
-    slider = alt.binding_range(min=0, max=1, step=0.01, name="Prediction Interval:")
-    interval_selection = alt.param(value=0.95, bind=slider, name="interval")
+    slider = alt.binding_range(min=0, max=1, step=0.01, name="Prediction Interval: ")
+    interval_selection = alt.param(value=0.9, bind=slider, name="interval")
     interval_tol = 0.001
 
     click = alt.selection_point(fields=["method"], bind="legend")

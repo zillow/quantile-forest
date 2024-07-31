@@ -8,9 +8,9 @@ regression (CQR). CQR offers prediction intervals that attain valid coverage,
 while QRF may require additional calibration for reliable interval estimates.
 Notice that in this example, by using CQR we obtain a level of coverage (i.e.,
 percentage of samples that actaully fall within their prediction interval)
-that is closer to the target level. Adapted from "Prediction intervals:
-Quantile Regression Forests" by Carl McBride Ellis:
-https://www.kaggle.com/code/carlmcbrideellis/prediction-intervals-quantile-regression-forests.
+that is generally closer to the target level. Adapted from `"Prediction
+intervals: Quantile Regression Forests" by Carl McBride Ellis
+<https://www.kaggle.com/code/carlmcbrideellis/prediction-intervals-quantile-regression-forests>`_.
 """
 
 import altair as alt
@@ -30,8 +30,7 @@ strategies = {
 random_state = 0
 rng = check_random_state(random_state)
 
-cov_pct = 95  # the "coverage level"
-alpha = (100 - cov_pct) / 100
+coverages = list(np.arange(11) / 10)  # the "coverage level"
 
 # Load the California Housing Prices dataset.
 california = datasets.fetch_california_housing()
@@ -113,7 +112,7 @@ def cqr_strategy(alpha, X_train, X_test, y_train, y_test):
     conf_scores = (np.vstack((a, b)).T).max(axis=1)
 
     # Get the 1-alpha quantile `s` from the distribution of conformity scores.
-    s = np.quantile(conf_scores, (1 - alpha) * (1 + (1 / (len(y_calib)))))
+    s = np.quantile(conf_scores, np.clip((1 - alpha) * (1 + (1 / (len(y_calib)))), 0, 1))
 
     # Subtract `s` from the lower quantile and add it to the upper quantile.
     y_conf_low = y_pred_low - s
@@ -129,12 +128,15 @@ def cqr_strategy(alpha, X_train, X_test, y_train, y_test):
 
 
 # Get strategy outputs as a data frame.
-args = (alpha, X_train, X_test, y_train, y_test)
-df = pd.concat([qrf_strategy(*args), cqr_strategy(*args)])
+dfs = []
+for cov_frac in coverages:
+    alpha = float(round(1 - cov_frac, 2))
+    args = (alpha, X_train, X_test, y_train, y_test)
+    dfs.append(pd.concat([qrf_strategy(*args), cqr_strategy(*args)]).assign(alpha=alpha))
+df = pd.concat(dfs)
 
-# Calculate coverage and width metrics.
 metrics = (
-    df.groupby("strategy")
+    df.groupby(["alpha", "strategy"])
     .apply(
         lambda grp: pd.Series(
             {
@@ -147,10 +149,14 @@ metrics = (
 )
 
 # Merge the metrics into the data frame.
-df = df.merge(metrics, on="strategy", how="left")
+df = df.merge(metrics, on=["alpha", "strategy"], how="left")
 
 
 def plot_prediction_intervals(df, domain):
+    slider = alt.binding_range(min=0, max=1, step=0.1, name="Coverage: ")
+    cov_selection = alt.param(value=0.9, bind=slider, name="coverage")
+    cov_tol = 0.01
+
     click = alt.selection_point(fields=["y_label"], bind="legend")
 
     color_circle = alt.Color(
@@ -168,10 +174,17 @@ def plot_prediction_intervals(df, domain):
         alt.Tooltip("y_label:N", title="Within Interval"),
     ]
 
-    base = alt.Chart(df).transform_calculate(
-        y_label=(
-            "((datum.y_test >= datum.y_pred_low) & (datum.y_test <= datum.y_pred_upp))"
-            " ? 'Yes' : 'No'"
+    base = (
+        alt.Chart(df)
+        .transform_filter(
+            (1 - alt.datum["alpha"] - cov_tol <= cov_selection)
+            & (1 - alt.datum["alpha"] + cov_tol >= cov_selection)
+        )
+        .transform_calculate(
+            y_label=(
+                "((datum.y_test >= datum.y_pred_low) & (datum.y_test <= datum.y_pred_upp))"
+                " ? 'Yes' : 'No'"
+            )
         )
     )
 
@@ -224,11 +237,13 @@ def plot_prediction_intervals(df, domain):
     )
 
     text_coverage = (
-        base.transform_aggregate(coverage="mean(coverage)", groupby=["strategy"])
+        base.transform_aggregate(
+            alpha="mean(alpha)", coverage="mean(coverage)", groupby=["strategy"]
+        )
         .transform_calculate(
             coverage_text=(
-                f"'Coverage: ' + format({alt.datum['coverage'] * 100}, '.1f') + '%'"
-                f" + ' (target = {cov_pct}%)'"
+                f"'Coverage: ' + format(datum.coverage * 100, '.1f') + '%'"
+                f" + ' (target = ' + format((1 - datum.alpha) * 100, '.1f') + '%)'"
             )
         )
         .mark_text(align="left", baseline="top")
@@ -251,7 +266,9 @@ def plot_prediction_intervals(df, domain):
         )
     )
 
-    chart = bar + tick_low + tick_upp + circle + diagonal + text_coverage + text_with
+    chart = (bar + tick_low + tick_upp + circle + diagonal + text_coverage + text_with).add_params(
+        cov_selection
+    )
 
     return chart
 
