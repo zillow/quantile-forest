@@ -29,6 +29,8 @@ quantiles (the median and interval points) for each target.
 
     from quantile_forest import RandomForestQuantileRegressor
 
+    alt.data_transformers.disable_max_rows()
+
     np.random.seed(0)
 
     n_samples = 2500
@@ -190,6 +192,8 @@ quantiles (the median and interval points) for each target.
             from sklearn.model_selection import train_test_split
 
             from quantile_forest import RandomForestQuantileRegressor
+
+            alt.data_transformers.disable_max_rows()
 
             np.random.seed(0)
 

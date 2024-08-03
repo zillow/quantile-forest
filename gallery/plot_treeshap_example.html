@@ -439,6 +439,8 @@ SHAP explanations vary with different quantile choices.</p>
 
 <span class="kn">from</span> <span class="nn">quantile_forest</span> <span class="kn">import</span> <span class="n">RandomForestQuantileRegressor</span>
 
+<span class="n">alt</span><span class="o">.</span><span class="n">data_transformers</span><span class="o">.</span><span class="n">disable_max_rows</span><span class="p">()</span>
+
 <span class="n">n_samples</span> <span class="o">=</span> <span class="mi">500</span>
 <span class="n">test_idx</span> <span class="o">=</span> <span class="mi">0</span>
 <span class="n">quantiles</span> <span class="o">=</span> <span class="nb">list</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">11</span><span class="p">)</span> <span class="o">*</span> <span class="mi">10</span><span class="p">)</span> <span class="o">/</span> <span class="mi">100</span><span class="p">)</span>
@@ -455,8 +457,8 @@ SHAP explanations vary with different quantile choices.</p>
     <span class="c1"># Use Tree SHAP to generate explanations.</span>
     <span class="n">explainer</span> <span class="o">=</span> <span class="n">shap</span><span class="o">.</span><span class="n">TreeExplainer</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">X</span><span class="p">)</span>
 
-    <span class="n">qrf_pred</span> <span class="o">=</span> <span class="n">qrf</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">(),</span> <span class="n">quantiles</span><span class="o">=</span><span class="n">quantile</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-    <span class="n">rf_pred</span> <span class="o">=</span> <span class="n">qrf</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">(),</span> <span class="n">quantiles</span><span class="o">=</span><span class="s2">&quot;mean&quot;</span><span class="p">,</span> <span class="n">aggregate_leaves_first</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">qrf_pred</span> <span class="o">=</span> <span class="n">qrf</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">quantiles</span><span class="o">=</span><span class="n">quantile</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="n">rf_pred</span> <span class="o">=</span> <span class="n">qrf</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">quantiles</span><span class="o">=</span><span class="s2">&quot;mean&quot;</span><span class="p">,</span> <span class="n">aggregate_leaves_first</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
     <span class="n">scaling</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">qrf</span><span class="o">.</span><span class="n">estimators_</span><span class="p">)</span>  <span class="c1"># scale factor based on the number of estimators</span>
     <span class="n">base_offset</span> <span class="o">=</span> <span class="n">qrf_pred</span> <span class="o">-</span> <span class="n">rf_pred</span>  <span class="c1"># difference between the QRF and RF (baseline) predictions</span>
