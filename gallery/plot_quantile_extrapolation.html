@@ -32,7 +32,7 @@
     <link rel="stylesheet" type="text/css" href="../_static/altair-plot.css" />
     <link rel="stylesheet" type="text/css" href="../_static/gallery.css" />
     <link rel="stylesheet" type="text/css" href="../_static/theme_overrides.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=87e54e7c" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
     <link rel="stylesheet" type="text/css" href="../_static/css/gallery.css?v=8f271e45" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
@@ -407,16 +407,15 @@ document.write(`
                   
   <section id="extrapolation-with-quantile-regression-forests">
 <span id="gallery-plot-quantile-extrapolation"></span><h1>Extrapolation with Quantile Regression Forests<a class="headerlink" href="#extrapolation-with-quantile-regression-forests" title="Link to this heading">#</a></h1>
-<p>An example on a toy dataset that illustrates the prediction intervals produced
-by a quantile regression forest (QRF) on extrapolated data. QRFs do not
-intrinsically extrapolate outside of the bounds of the training data, an
-important limitation of the approach; notice that the extrapolated interval
-with a standard QRF fails to reliably cover values outside of those observed
-in the training set. To overcome this limitation, we can use a procedure known
-as Xtrapolation that can estimate the extrapolation bounds for samples that
-fall outside the range of the training data. Adapted from “Extrapolation-Aware
-Nonparametric Statistical Inference” by Niklas Pfister and Peter Bühlmann:
-<a class="reference external" href="https://arxiv.org/abs/2402.09758">https://arxiv.org/abs/2402.09758</a>.</p>
+<p>This example uses a toy dataset to illustrate the prediction intervals
+produced by a quantile regression forest (QRF) on extrapolated data. QRFs do
+not intrinsically extrapolate outside the bounds of the training data, which
+is an important limitation of the approach. Notice that the extrapolated
+interval with a standard QRF fails to reliably cover values outside those
+observed in the training set. To overcome this limitation, we can use a
+procedure known as Xtrapolation, which can estimate the extrapolation bounds
+for samples that fall outside the range of the training data. This example is
+adapted from <a class="reference external" href="https://arxiv.org/abs/2402.09758">“Extrapolation-Aware Nonparametric Statistical Inference”</a> by Niklas Pfister and Peter Bühlmann.</p>
 
 <div id="plot_quantile_extrapolation-rst-altair-plot-0">
 <script>
@@ -1001,7 +1000,7 @@ Nonparametric Statistical Inference” by Niklas Pfister and Peter Bühlmann:
         <div class="footer-item">
 
   <p class="sphinx-version">
-    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.4.7.
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.0.2.
     <br/>
   </p>
 </div>

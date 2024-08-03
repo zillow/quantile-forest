@@ -10,16 +10,16 @@
 Extrapolation with Quantile Regression Forests
 ==============================================
 
-An example on a toy dataset that illustrates the prediction intervals produced
-by a quantile regression forest (QRF) on extrapolated data. QRFs do not
-intrinsically extrapolate outside of the bounds of the training data, an
-important limitation of the approach; notice that the extrapolated interval
-with a standard QRF fails to reliably cover values outside of those observed
-in the training set. To overcome this limitation, we can use a procedure known
-as Xtrapolation that can estimate the extrapolation bounds for samples that
-fall outside the range of the training data. Adapted from "Extrapolation-Aware
-Nonparametric Statistical Inference" by Niklas Pfister and Peter Bühlmann:
-https://arxiv.org/abs/2402.09758.
+This example uses a toy dataset to illustrate the prediction intervals
+produced by a quantile regression forest (QRF) on extrapolated data. QRFs do
+not intrinsically extrapolate outside the bounds of the training data, which
+is an important limitation of the approach. Notice that the extrapolated
+interval with a standard QRF fails to reliably cover values outside those
+observed in the training set. To overcome this limitation, we can use a
+procedure known as Xtrapolation, which can estimate the extrapolation bounds
+for samples that fall outside the range of the training data. This example is
+adapted from `"Extrapolation-Aware Nonparametric Statistical Inference"
+<https://arxiv.org/abs/2402.09758>`_ by Niklas Pfister and Peter Bühlmann.
 
 
 .. altair-plot::

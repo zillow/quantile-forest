@@ -10,10 +10,10 @@
 Quantile Regression Forests Prediction Intervals
 ================================================
 
-An example of how to use quantile regression forests to generate prediction
-intervals on the California Housing dataset. Inspired by Figure 3 of
-"Quantile Regression Forests" by Meinshausen:
-https://jmlr.org/papers/v7/meinshausen06a.html.
+This example demonstrates how to use quantile regression forests (QRF) to
+generate prediction intervals on the California Housing dataset. Inspired by
+Figure 3 of `"Quantile Regression Forests"
+<https://jmlr.org/papers/v7/meinshausen06a.html>`_ by Meinshausen.
 
 
 .. altair-plot::

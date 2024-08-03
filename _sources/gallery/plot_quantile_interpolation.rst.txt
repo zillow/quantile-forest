@@ -10,13 +10,12 @@
 Comparing Quantile Interpolation Methods
 ========================================
 
-An example illustration of the interpolation methods that can be applied
-during prediction when the desired quantile lies between two data points. In
-this toy example, the forest estimator creates a single split that separates
-samples 1–3 and samples 4–5, with quantiles calculated separately for these
-two groups based on the actual sample values. The interpolation methods are
-used when a calculated quantile does not precisely correspond to one of the
-actual values.
+This example illustrates the interpolation methods that can be applied during
+prediction when the desired quantile lies between two data points. In this toy
+example, the forest estimator creates a single split that separates samples
+1–3 and samples 4–5, with quantiles calculated separately for these two groups
+based on the actual sample values. The interpolation methods are used when a
+calculated quantile does not precisely correspond to one of the actual values.
 
 
 .. altair-plot::

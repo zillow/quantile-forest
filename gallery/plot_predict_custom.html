@@ -32,7 +32,7 @@
     <link rel="stylesheet" type="text/css" href="../_static/altair-plot.css" />
     <link rel="stylesheet" type="text/css" href="../_static/gallery.css" />
     <link rel="stylesheet" type="text/css" href="../_static/theme_overrides.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=87e54e7c" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
     <link rel="stylesheet" type="text/css" href="../_static/css/gallery.css?v=8f271e45" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
@@ -407,12 +407,13 @@ document.write(`
                   
   <section id="computing-user-specified-functions-with-qrfs">
 <span id="gallery-plot-predict-custom"></span><h1>Computing User-Specified Functions with QRFs<a class="headerlink" href="#computing-user-specified-functions-with-qrfs" title="Link to this heading">#</a></h1>
-<p>An example that demonstrates a way of extracting the empirical distribution
-from a quantile regression forest (QRF) for one or more samples in order to
-calculate a user-specified function of interest. While a QRF is designed to
-estimate quantiles from the empirical distribution calculated for each sample,
-in many cases it may be useful to use the empirical distribution to calculate
-other quantities of interest. Here, we calculate the ECDF for a test sample.</p>
+<p>This example demonstrates how to extract the empirical distribution from a
+quantile regression forest (QRF) for one or more samples to calculate a
+user-specified function of interest. While a QRF is designed to estimate
+quantiles from the empirical distribution calculated for each sample, it can
+also be useful to use this empirical distribution to calculate other
+quantities of interest. Here, we calculate the empirical cumulative
+distribution function (ECDF) for a test sample.</p>
 
 <div id="plot_predict_custom-rst-altair-plot-0">
 <script>
@@ -613,7 +614,7 @@ other quantities of interest. Here, we calculate the ECDF for a test sample.</p>
         <div class="footer-item">
 
   <p class="sphinx-version">
-    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.4.7.
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.0.2.
     <br/>
   </p>
 </div>
