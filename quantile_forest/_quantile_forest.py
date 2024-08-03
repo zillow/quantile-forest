@@ -177,8 +177,10 @@ class BaseForestQuantileRegressor(ForestRegressor):
                     "max_samples_leaf must be of integer, float, or None type, got "
                     f"{self.max_samples_leaf}."
                 )
-        X, y = self._validate_data(X, y, multi_output=True, accept_sparse="csc", dtype=DTYPE)
         super(BaseForestQuantileRegressor, self).fit(X, y, sample_weight=sample_weight)
+        X, y = self._validate_data(
+            X, y, multi_output=True, accept_sparse="csc", dtype=DTYPE, force_all_finite=False
+        )
 
         if y.ndim == 1:
             y = np.expand_dims(y, axis=1)
