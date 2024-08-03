@@ -2,15 +2,16 @@
 QRFs for Conformalized Quantile Regression
 ==========================================
 
-An example that demonstrates the use of a quantile regression forest (QRF) to
+This example demonstrates the use of a quantile regression forest (QRF) to
 construct reliable prediction intervals using conformalized quantile
-regression (CQR). CQR offers prediction intervals that attain valid coverage,
-while QRF may require additional calibration for reliable interval estimates.
-Notice that in this example, by using CQR we obtain a level of coverage (i.e.,
-percentage of samples that actaully fall within their prediction interval)
-that is generally closer to the target level. Adapted from `"Prediction
-intervals: Quantile Regression Forests" by Carl McBride Ellis
-<https://www.kaggle.com/code/carlmcbrideellis/prediction-intervals-quantile-regression-forests>`_.
+regression (CQR). CQR provides prediction intervals that attain valid
+coverage, whereas QRF may require additional calibration for reliable interval
+estimates. In this example, by using CQR, we achieve a level of coverage
+(i.e., the percentage of samples that actually fall within their prediction
+interval) that is generally closer to the target level. This example is
+adapted from `"Prediction intervals: Quantile Regression Forests"
+<https://www.kaggle.com/code/carlmcbrideellis/prediction-intervals-quantile-regression-forests>`_
+by Carl McBride Ellis.
 """
 
 import altair as alt

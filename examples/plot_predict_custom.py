@@ -2,12 +2,13 @@
 Computing User-Specified Functions with QRFs
 ============================================
 
-An example that demonstrates a way of extracting the empirical distribution
-from a quantile regression forest (QRF) for one or more samples in order to
-calculate a user-specified function of interest. While a QRF is designed to
-estimate quantiles from the empirical distribution calculated for each sample,
-in many cases it may be useful to use the empirical distribution to calculate
-other quantities of interest. Here, we calculate the ECDF for a test sample.
+This example demonstrates how to extract the empirical distribution from a
+quantile regression forest (QRF) for one or more samples to calculate a
+user-specified function of interest. While a QRF is designed to estimate
+quantiles from the empirical distribution calculated for each sample, it can
+also be useful to use this empirical distribution to calculate other
+quantities of interest. Here, we calculate the empirical cumulative
+distribution function (ECDF) for a test sample.
 """
 
 from itertools import chain

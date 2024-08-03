@@ -2,8 +2,8 @@
 Tree SHAP with Quantile Regression Forests
 ==========================================
 
-An example that demonstrates the use of SHAP (SHapley Additive exPlanations)
-to explain the predictions of a quantile regression forest (QRF) model. We
+This example demonstrates the use of SHAP (SHapley Additive exPlanations) to
+explain the predictions of a quantile regression forest (QRF) model. We
 generate a waterfall plot using the `Tree SHAP
 <https://shap.readthedocs.io/en/latest/generated/shap.TreeExplainer.html#shap.TreeExplainer>`_
 method to visualize the explanations for a single instance across multiple

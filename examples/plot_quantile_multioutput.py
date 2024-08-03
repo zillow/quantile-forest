@@ -2,11 +2,11 @@
 Multiple-Output Quantile Regression with QRFs
 =============================================
 
-An example on a toy dataset that demonstrates fitting a single quantile
-regressor for multiple target variables. For each target, multiple quantiles
-can be estimated simultaneously. In this example, the target variable has
-two output values for each sample, with a single regressor used to estimate
-three quantiles (the median and interval points) for each target.
+This example demonstrates fitting a single quantile regressor for multiple
+target variables on a toy dataset. For each target, multiple quantiles can be
+estimated simultaneously. In this example, the target variable has two output
+values for each sample, with a single regressor used to estimate three
+quantiles (the median and interval points) for each target.
 """
 
 import altair as alt

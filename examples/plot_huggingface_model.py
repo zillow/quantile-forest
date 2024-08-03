@@ -2,14 +2,14 @@
 Using a Trained QRF Model via Hugging Face Hub
 ==============================================
 
-An example of downloading a trained quantile regression forest (QRF) model
-from Hugging Face Hub and using it to estimate new quantiles. Here, a QRF has
-been trained with default parameters on a train-test split of the California
-housing dataset and uploaded to Hugging Face Hub. The model is downloaded and
-inference is performed over several quantiles for each instance in the dataset.
-The estimates are visualized by the latitude and longitude of each instance.
-The model used is available on Hugging Face Hub:
-https://huggingface.co/quantile-forest/california-housing-example
+This example demonstrates how to download a trained quantile regression forest
+(QRF) model from Hugging Face Hub and use it to estimate new quantiles. In
+this scenario, a QRF has been trained with default parameters on a train-test
+split of the California housing dataset and uploaded to Hugging Face Hub. The
+model is downloaded, and inference is performed over several quantiles for
+each instance in the dataset. The estimates are visualized by the latitude and
+longitude of each instance. The model used is available on Hugging Face Hub
+`here <https://huggingface.co/quantile-forest/california-housing-example>`_.
 """
 
 import os
@@ -170,7 +170,6 @@ df = (
     .melt(id_vars=["index"], var_name="quantile", value_name="value")
     .merge(X[["Latitude", "Longitude", "Population"]].reset_index(), on="index", how="right")
 )
-print(df)
 
 
 def plot_quantiles_by_latlon(df, quantiles):

@@ -2,9 +2,9 @@
 Predicting with Quantile Regression Forests
 ===========================================
 
-An example that demonstrates the use of a quantile regression forest to
+This example demonstrates the use of a quantile regression forest (QRF) to
 predict a conditional median and prediction intervals. The example compares
-the predictions to a ground truth function used to generate noisy samples.
+the QRF predictions to a ground truth function used to generate noisy samples.
 """
 
 import altair as alt
