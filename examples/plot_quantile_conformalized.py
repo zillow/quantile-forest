@@ -23,6 +23,8 @@ from sklearn.utils.validation import check_random_state
 
 from quantile_forest import RandomForestQuantileRegressor
 
+alt.data_transformers.disable_max_rows()
+
 strategies = {
     "qrf": "Quantile Regression Forest (QRF)",
     "cqr": "Conformalized Quantile Regression (CQR)",

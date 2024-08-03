@@ -16,6 +16,8 @@ from sklearn.model_selection import train_test_split
 
 from quantile_forest import RandomForestQuantileRegressor
 
+alt.data_transformers.disable_max_rows()
+
 np.random.seed(0)
 
 n_samples = 2500

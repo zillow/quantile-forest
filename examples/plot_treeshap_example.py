@@ -22,6 +22,8 @@ from sklearn.model_selection import train_test_split
 
 from quantile_forest import RandomForestQuantileRegressor
 
+alt.data_transformers.disable_max_rows()
+
 n_samples = 500
 test_idx = 0
 quantiles = list((np.arange(11) * 10) / 100)
@@ -38,8 +40,8 @@ def get_shap_values(qrf, X, quantile=0.5, **kwargs):
     # Use Tree SHAP to generate explanations.
     explainer = shap.TreeExplainer(model, X)
 
-    qrf_pred = qrf.predict(X.to_numpy(), quantiles=quantile, **kwargs)
-    rf_pred = qrf.predict(X.to_numpy(), quantiles="mean", aggregate_leaves_first=False)
+    qrf_pred = qrf.predict(X, quantiles=quantile, **kwargs)
+    rf_pred = qrf.predict(X, quantiles="mean", aggregate_leaves_first=False)
 
     scaling = 1.0 / len(qrf.estimators_)  # scale factor based on the number of estimators
     base_offset = qrf_pred - rf_pred  # difference between the QRF and RF (baseline) predictions
