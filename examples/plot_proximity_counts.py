@@ -19,22 +19,33 @@ import numpy as np
 import pandas as pd
 from sklearn import datasets
 from sklearn.model_selection import train_test_split
+from sklearn.utils.validation import check_random_state
 
 from quantile_forest import RandomForestQuantileRegressor
 
 alt.data_transformers.disable_max_rows()
 
-n_test_samples = 10
-corrupt_frac = 0.5
+rng = check_random_state(0)
+
+n_examples = 5
+corrupt_frac = 0.33
 
 # Load the Digits dataset.
 X, y = datasets.load_digits(return_X_y=True, as_frame=True)
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=n_test_samples, random_state=0)
+
+perm = rng.permutation(len(X))
+X = X.iloc[perm]
+y = y[perm]
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
 
-def randomly_mask_values(df, n=None, frac=None, seed=0):
+def randomly_mask_values(df, n=None, frac=None, random_state=None):
     """Randomly mask a fraction of the values in a data frame with NaN."""
-    np.random.seed(seed)
+    if random_state is None:
+        rng = check_random_state(0)
+    else:
+        rng = random_state
 
     df = df.copy()
 
@@ -43,8 +54,8 @@ def randomly_mask_values(df, n=None, frac=None, seed=0):
     elif frac is not None:
         num_nan = int(df.size * frac)
 
-    random_rows = np.random.randint(0, df.shape[0], num_nan)
-    random_cols = np.random.randint(0, df.shape[1], num_nan)
+    random_rows = rng.randint(0, df.shape[0], num_nan)
+    random_cols = rng.randint(0, df.shape[1], num_nan)
 
     df.values[random_rows, random_cols] = np.nan
 
@@ -84,8 +95,11 @@ def fillna(df):
 
 
 # Randomly corrupt a fraction of the training and test data.
-X_train_corrupt = randomly_mask_values(X_train, frac=corrupt_frac, seed=0).pipe(fillna)
-X_test_corrupt = randomly_mask_values(X_test, frac=corrupt_frac, seed=0).pipe(fillna)
+X_train_corrupt = randomly_mask_values(X_train, frac=corrupt_frac, random_state=rng).pipe(fillna)
+X_test_corrupt = randomly_mask_values(X_test, frac=corrupt_frac, random_state=rng).pipe(fillna)
+
+X_test = X_test[:n_examples]
+X_test_corrupt = X_test_corrupt[:n_examples]
 
 # We set `max_samples_leaf=None` so that all leaf node samples are stored.
 qrf = RandomForestQuantileRegressor(max_samples_leaf=None, random_state=0)
@@ -105,7 +119,7 @@ df_test_corrupt = digits_wide_to_long(X_test_corrupt).rename(columns={"value": "
 
 df_prox = pd.DataFrame(
     {
-        "prox": [[(j, *p) for j, p in enumerate(proximities[i])] for i in range(n_test_samples)],
+        "prox": [[(j, *p) for j, p in enumerate(proximities[i])] for i in range(n_examples)],
         "index": X_test.index,
     }
 )

@@ -20,7 +20,7 @@ n_samples = 5000
 bounds = [0, 10]
 
 
-def make_toy_dataset(n_samples, bounds, add_noise=True, random_seed=0):
+def make_toy_dataset(n_samples, bounds, random_seed=0):
     rng = np.random.RandomState(random_seed)
     X_1d = np.linspace(*bounds, num=n_samples)
     X = X_1d.reshape(-1, 1)
@@ -28,12 +28,12 @@ def make_toy_dataset(n_samples, bounds, add_noise=True, random_seed=0):
     return X, y
 
 
-X, y = make_toy_dataset(n_samples, bounds, add_noise=True, random_seed=0)
+X, y = make_toy_dataset(n_samples, bounds, random_seed=0)
 
 params = {"max_samples_leaf": None, "min_samples_leaf": 50, "random_state": 0}
 qrf = RandomForestQuantileRegressor(**params).fit(X, y)
 
-y_pred = qrf.predict(X)
+y_pred = qrf.predict(X, quantiles=0.5)
 y_ranks = qrf.quantile_ranks(X, y)
 
 df = pd.DataFrame(
@@ -51,6 +51,7 @@ def plot_fit_and_ranks(df):
     rank_val = alt.param("rank_val", bind=slider, value=0.05)
 
     base = alt.Chart(df)
+
     points = (
         base.transform_calculate(
             outlier="abs(datum.y_rank - 0.5) > (0.5 - rank_val / 2) ? 'Yes' : 'No'"
@@ -60,7 +61,11 @@ def plot_fit_and_ranks(df):
         .encode(
             x=alt.X("x:Q"),
             y=alt.Y("y:Q"),
-            color=alt.condition(f"datum.outlier == 'Yes'", alt.value("red"), alt.value("#f2a619")),
+            color=alt.Color(
+                "outlier:N",
+                scale=alt.Scale(domain=["Yes", "No"], range=["red", "#f2a619"]),
+                title="Outliers",
+            ),
             tooltip=[
                 alt.Tooltip("x:Q", format=".3f", title="x"),
                 alt.Tooltip("y:Q", format=".3f", title="f(x)"),
@@ -69,11 +74,19 @@ def plot_fit_and_ranks(df):
             ],
         )
     )
+
     line_pred = base.mark_line(color="#006aff", size=4).encode(
-        x=alt.X("x", axis=alt.Axis(title="x")), y=alt.Y("y_pred", axis=alt.Axis(title="f(x)"))
+        x=alt.X("x:Q", axis=alt.Axis(title="x")),
+        y=alt.Y("y_pred:Q", axis=alt.Axis(title="f(x)")),
     )
 
-    chart = (points + line_pred).properties(
+    dummy_legend = (
+        base.mark_line(opacity=1)
+        .encode(opacity=alt.Opacity("model:N", scale=alt.Scale(range=[1, 1]), title="Predictions"))
+        .transform_calculate(model="'Median'")
+    )
+
+    chart = (dummy_legend + points + line_pred).properties(
         height=400, width=650, title="QRF Predictions with Quantile Rank Thresholding"
     )
 
