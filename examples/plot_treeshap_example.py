@@ -22,8 +22,6 @@ from sklearn.model_selection import train_test_split
 
 from quantile_forest import RandomForestQuantileRegressor
 
-alt.data_transformers.disable_max_rows()
-
 n_samples = 500
 test_idx = 0
 quantiles = list((np.arange(11) * 10) / 100)
@@ -71,7 +69,7 @@ X, y = datasets.fetch_california_housing(as_frame=True, return_X_y=True)
 X = X.iloc[:n_samples]
 y = y[:n_samples]
 y *= 100_000  # convert to dollars
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=100, random_state=0)
+X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
 qrf = RandomForestQuantileRegressor(random_state=0)
 qrf.fit(X_train, y_train)

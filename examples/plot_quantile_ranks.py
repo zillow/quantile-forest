@@ -34,6 +34,8 @@ params = {"max_samples_leaf": None, "min_samples_leaf": 50, "random_state": 0}
 qrf = RandomForestQuantileRegressor(**params).fit(X, y)
 
 y_pred = qrf.predict(X, quantiles=0.5)
+
+# Get the quantile rank for all samples.
 y_ranks = qrf.quantile_ranks(X, y)
 
 df = pd.DataFrame(
@@ -64,7 +66,7 @@ def plot_fit_and_ranks(df):
             color=alt.Color(
                 "outlier:N",
                 scale=alt.Scale(domain=["Yes", "No"], range=["red", "#f2a619"]),
-                title="Outliers",
+                title="Outlier",
             ),
             tooltip=[
                 alt.Tooltip("x:Q", format=".3f", title="x"),
@@ -82,7 +84,7 @@ def plot_fit_and_ranks(df):
 
     dummy_legend = (
         base.mark_line(opacity=1)
-        .encode(opacity=alt.Opacity("model:N", scale=alt.Scale(range=[1, 1]), title="Predictions"))
+        .encode(opacity=alt.Opacity("model:N", scale=alt.Scale(range=[1, 1]), title="Prediction"))
         .transform_calculate(model="'Median'")
     )
 
