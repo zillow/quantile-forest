@@ -27,7 +27,7 @@ from quantile_forest import RandomForestQuantileRegressor
 
 rng = check_random_state(0)
 
-n_examples = 10
+n_examples = 25
 noise_std = 0.1
 
 # Load the Digits dataset.
@@ -77,7 +77,7 @@ X_train_corrupt = X_train.pipe(add_gaussian_noise, std=noise_std, random_state=r
 X_test_corrupt = X_test.pipe(add_gaussian_noise, std=noise_std, random_state=rng)
 
 # We set `max_samples_leaf=None` so that all leaf node samples are stored.
-qrf = RandomForestQuantileRegressor(n_estimators=100, max_samples_leaf=None, random_state=0)
+qrf = RandomForestQuantileRegressor(max_samples_leaf=None, random_state=0)
 qrf.fit(X_train_corrupt, X_train)
 
 # Get the proximity counts.
