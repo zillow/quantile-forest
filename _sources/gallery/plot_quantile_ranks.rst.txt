@@ -62,25 +62,30 @@ significantly from the expected range.
 
 
     def plot_fit_and_ranks(df):
+        # Slider for varying the interval that defines the upper and lower quantile rank thresholds.
         slider = alt.binding_range(min=0, max=1, step=0.01, name="Rank Interval Threshold: ")
         rank_val = alt.param("rank_val", bind=slider, value=0.05)
 
+        click = alt.selection_point(fields=["outlier"], bind="legend")
+
         base = alt.Chart(df)
 
+        color_points = alt.Color(
+            "outlier:N",
+            scale=alt.Scale(domain=["Yes", "No"], range=["red", "#f2a619"]),
+            title="Outlier",
+        )
+
         points = (
-            base.transform_calculate(
+            base.add_params(rank_val, click)
+            .transform_calculate(
                 outlier="abs(datum.y_rank - 0.5) > (0.5 - rank_val / 2) ? 'Yes' : 'No'"
             )
-            .add_params(rank_val)
             .mark_circle(opacity=0.5, size=25)
             .encode(
                 x=alt.X("x:Q"),
                 y=alt.Y("y:Q"),
-                color=alt.Color(
-                    "outlier:N",
-                    scale=alt.Scale(domain=["Yes", "No"], range=["red", "#f2a619"]),
-                    title="Outlier",
-                ),
+                color=alt.condition(click, color_points, alt.value("lightgray")),
                 tooltip=[
                     alt.Tooltip("x:Q", format=".3f", title="x"),
                     alt.Tooltip("y:Q", format=".3f", title="f(x)"),
@@ -156,25 +161,30 @@ significantly from the expected range.
 
 
             def plot_fit_and_ranks(df):
+                # Slider for varying the interval that defines the upper and lower quantile rank thresholds.
                 slider = alt.binding_range(min=0, max=1, step=0.01, name="Rank Interval Threshold: ")
                 rank_val = alt.param("rank_val", bind=slider, value=0.05)
 
+                click = alt.selection_point(fields=["outlier"], bind="legend")
+
                 base = alt.Chart(df)
 
+                color_points = alt.Color(
+                    "outlier:N",
+                    scale=alt.Scale(domain=["Yes", "No"], range=["red", "#f2a619"]),
+                    title="Outlier",
+                )
+
                 points = (
-                    base.transform_calculate(
+                    base.add_params(rank_val, click)
+                    .transform_calculate(
                         outlier="abs(datum.y_rank - 0.5) > (0.5 - rank_val / 2) ? 'Yes' : 'No'"
                     )
-                    .add_params(rank_val)
                     .mark_circle(opacity=0.5, size=25)
                     .encode(
                         x=alt.X("x:Q"),
                         y=alt.Y("y:Q"),
-                        color=alt.Color(
-                            "outlier:N",
-                            scale=alt.Scale(domain=["Yes", "No"], range=["red", "#f2a619"]),
-                            title="Outlier",
-                        ),
+                        color=alt.condition(click, color_points, alt.value("lightgray")),
                         tooltip=[
                             alt.Tooltip("x:Q", format=".3f", title="x"),
                             alt.Tooltip("y:Q", format=".3f", title="f(x)"),

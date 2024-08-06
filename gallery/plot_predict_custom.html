@@ -511,12 +511,14 @@ distribution function (ECDF) for a test sample.</p>
         <span class="p">}</span>
     <span class="p">)</span>
     <span class="n">dfs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">df_i</span><span class="p">)</span>
-<span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">dfs</span><span class="p">)</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">dfs</span><span class="p">,</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
 
 <span class="k">def</span> <span class="nf">plot_ecdf</span><span class="p">(</span><span class="n">df</span><span class="p">):</span>
     <span class="n">min_idx</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;sample_idx&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
     <span class="n">max_idx</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;sample_idx&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+
+    <span class="c1"># Slider for determining the sample index for which the custom function is being visualized.</span>
     <span class="n">slider</span> <span class="o">=</span> <span class="n">alt</span><span class="o">.</span><span class="n">binding_range</span><span class="p">(</span><span class="nb">min</span><span class="o">=</span><span class="n">min_idx</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="n">max_idx</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Sample Index: &quot;</span><span class="p">)</span>
     <span class="n">sample_selection</span> <span class="o">=</span> <span class="n">alt</span><span class="o">.</span><span class="n">param</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">bind</span><span class="o">=</span><span class="n">slider</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;sample_idx&quot;</span><span class="p">)</span>
 
@@ -548,8 +550,8 @@ distribution function (ECDF) for a test sample.</p>
 
     <span class="n">chart</span> <span class="o">=</span> <span class="p">(</span>
         <span class="p">(</span><span class="n">circles</span> <span class="o">+</span> <span class="n">lines</span><span class="p">)</span>
-        <span class="o">.</span><span class="n">transform_filter</span><span class="p">(</span><span class="n">alt</span><span class="o">.</span><span class="n">datum</span><span class="o">.</span><span class="n">sample_idx</span> <span class="o">==</span> <span class="n">sample_selection</span><span class="p">)</span>
         <span class="o">.</span><span class="n">add_params</span><span class="p">(</span><span class="n">sample_selection</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">transform_filter</span><span class="p">(</span><span class="n">alt</span><span class="o">.</span><span class="n">datum</span><span class="o">.</span><span class="n">sample_idx</span> <span class="o">==</span> <span class="n">sample_selection</span><span class="p">)</span>
         <span class="o">.</span><span class="n">properties</span><span class="p">(</span>
             <span class="n">height</span><span class="o">=</span><span class="mi">400</span><span class="p">,</span>
             <span class="n">width</span><span class="o">=</span><span class="mi">650</span><span class="p">,</span>
