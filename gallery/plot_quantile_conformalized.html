@@ -450,7 +450,7 @@ by Carl McBride Ellis.</p>
 <span class="n">random_state</span> <span class="o">=</span> <span class="mi">0</span>
 <span class="n">rng</span> <span class="o">=</span> <span class="n">check_random_state</span><span class="p">(</span><span class="n">random_state</span><span class="p">)</span>
 
-<span class="n">coverages</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">11</span><span class="p">)</span> <span class="o">/</span> <span class="mi">10</span><span class="p">)</span>  <span class="c1"># the &quot;coverage level&quot;</span>
+<span class="n">coverages</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">1.1</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">)</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>  <span class="c1"># the &quot;coverage level&quot;</span>
 
 <span class="c1"># Load the California Housing Prices dataset.</span>
 <span class="n">california</span> <span class="o">=</span> <span class="n">datasets</span><span class="o">.</span><span class="n">fetch_california_housing</span><span class="p">()</span>
@@ -563,7 +563,8 @@ by Carl McBride Ellis.</p>
                 <span class="s2">&quot;coverage&quot;</span><span class="p">:</span> <span class="n">coverage_score</span><span class="p">(</span><span class="n">grp</span><span class="p">[</span><span class="s2">&quot;y_test&quot;</span><span class="p">],</span> <span class="n">grp</span><span class="p">[</span><span class="s2">&quot;y_pred_low&quot;</span><span class="p">],</span> <span class="n">grp</span><span class="p">[</span><span class="s2">&quot;y_pred_upp&quot;</span><span class="p">]),</span>
                 <span class="s2">&quot;width&quot;</span><span class="p">:</span> <span class="n">mean_width_score</span><span class="p">(</span><span class="n">grp</span><span class="p">[</span><span class="s2">&quot;y_pred_low&quot;</span><span class="p">],</span> <span class="n">grp</span><span class="p">[</span><span class="s2">&quot;y_pred_upp&quot;</span><span class="p">]),</span>
             <span class="p">}</span>
-        <span class="p">)</span>
+        <span class="p">),</span>
+        <span class="n">include_groups</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>
 <span class="p">)</span>
