@@ -27,13 +27,13 @@ from quantile_forest import RandomForestQuantileRegressor
 
 rng = check_random_state(0)
 
-n_test = 25
+n_test_samples = 25
 noise_std = 0.1
 
 # Load the Digits dataset.
 X, y = datasets.load_digits(return_X_y=True, as_frame=True)
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=n_test, random_state=0)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=n_test_samples, random_state=0)
 
 
 def add_gaussian_noise(X, mean=0, std=0.1, random_state=None):
@@ -94,7 +94,7 @@ df = (
     .join(y_test)
     .reset_index()
     .join(df_prox)
-    .iloc[:n_test]
+    .iloc[:n_test_samples]
     .explode("prox")
     .assign(
         **{
@@ -127,6 +127,7 @@ def plot_digits_proximities(
     n_subplot_rows = n_prox // n_prox_per_row
     subplot_dim = (width - subplot_spacing * (n_subplot_rows - 1)) / n_subplot_rows
 
+    # Slider for determining the test index for which the data is being visualized.
     slider = alt.binding_range(
         min=0,
         max=n_samples - 1,

@@ -58,11 +58,13 @@ df = pd.concat(
             quantile=quantile
         )
         for q_idx, quantile in enumerate(quantiles)
-    ]
+    ],
+    ignore_index=True,
 )
 
 
 def plot_prediction_histograms(df, legend):
+    # Slider for varying the quantile value used for generating the QRF histogram.
     slider = alt.binding_range(
         min=0,
         max=1,
@@ -86,6 +88,7 @@ def plot_prediction_histograms(df, legend):
 
     chart = (
         alt.Chart(df)
+        .add_params(q_val, click)
         .transform_filter(q_val)
         .transform_calculate(calculate=f"round(datum.actual * 10) / 10", as_="Actual")
         .transform_calculate(calculate=f"round(datum.rf * 10) / 10", as_="RF (Mean)")
@@ -110,7 +113,6 @@ def plot_prediction_histograms(df, legend):
                 alt.Tooltip("count():Q", format=",d", title="Counts"),
             ],
         )
-        .add_params(q_val, click)
         .configure_range(category=alt.RangeScheme(list(legend.values())))
         .properties(height=400, width=650)
     )

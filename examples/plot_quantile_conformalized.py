@@ -157,6 +157,7 @@ df = df.merge(metrics, on=["alpha", "strategy"], how="left")
 
 
 def plot_prediction_intervals(df, domain):
+    # Slider for varying the target coverage level.
     slider = alt.binding_range(min=0, max=1, step=0.1, name="Coverage: ")
     cov_selection = alt.param(value=0.9, bind=slider, name="coverage")
     cov_tol = 0.01
@@ -193,7 +194,8 @@ def plot_prediction_intervals(df, domain):
     )
 
     circle = (
-        base.mark_circle(size=30)
+        base.add_params(click)
+        .mark_circle(size=30)
         .encode(
             x=alt.X(
                 "y_pred:Q",
@@ -211,7 +213,6 @@ def plot_prediction_intervals(df, domain):
             opacity=alt.condition(click, alt.value(1), alt.value(0)),
             tooltip=tooltip,
         )
-        .add_params(click)
     )
 
     bar = base.mark_bar(width=2).encode(

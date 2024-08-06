@@ -84,6 +84,7 @@ df = pd.DataFrame(
 
 
 def plot_multioutputs(df, legend):
+    # Slider for varying the displayed prediction intervals.
     slider = alt.binding_range(min=0, max=1, step=0.05, name="Prediction Interval: ")
     interval_selection = alt.param(value=0.95, bind=slider, name="interval")
 

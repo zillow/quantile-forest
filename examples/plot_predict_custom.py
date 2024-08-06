@@ -93,12 +93,14 @@ for idx in range(n_test_samples):
         }
     )
     dfs.append(df_i)
-df = pd.concat(dfs)
+df = pd.concat(dfs, ignore_index=True)
 
 
 def plot_ecdf(df):
     min_idx = df["sample_idx"].min()
     max_idx = df["sample_idx"].max()
+
+    # Slider for determining the sample index for which the custom function is being visualized.
     slider = alt.binding_range(min=min_idx, max=max_idx, step=1, name="Sample Index: ")
     sample_selection = alt.param(value=0, bind=slider, name="sample_idx")
 
@@ -130,8 +132,8 @@ def plot_ecdf(df):
 
     chart = (
         (circles + lines)
-        .transform_filter(alt.datum.sample_idx == sample_selection)
         .add_params(sample_selection)
+        .transform_filter(alt.datum.sample_idx == sample_selection)
         .properties(
             height=400,
             width=650,

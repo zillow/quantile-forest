@@ -90,7 +90,8 @@ df = pd.concat(
         )
         for q in quantiles
         for shap_i in [get_shap_value_by_index(get_shap_values(qrf, X_test, quantile=q), test_idx)]
-    ]
+    ],
+    ignore_index=True,
 )
 
 
@@ -112,26 +113,27 @@ def plot_shap_waterfall_with_quantiles(df, height=300):
     )
 
     df_grouped = (
-        df.groupby("quantile")
+        df.groupby("quantile")[df.columns.tolist()]
         .apply(lambda g: g.sort_values("abs_shap_value", ascending=True))
         .reset_index(drop=True)
         .assign(
             **{
                 "start": lambda df: df.groupby("quantile", group_keys=False).apply(
-                    lambda g: g["shap_value"].shift(1, fill_value=0).cumsum() + g["base_value"]
+                    lambda g: g["shap_value"].shift(1, fill_value=0).cumsum() + g["base_value"],
+                    include_groups=False,
                 ),
                 "end": lambda df: df.groupby("quantile", group_keys=False).apply(
-                    lambda g: g["shap_value"].cumsum() + g["base_value"]
+                    lambda g: g["shap_value"].cumsum() + g["base_value"], include_groups=False
                 ),
                 "value_label": lambda df: df["shap_value"].apply(
                     lambda x: ("+" if x >= 0 else "-") + "{0:,.2f}".format(abs(x))
                 ),
                 "feature2": lambda df: df.groupby("quantile", group_keys=False).apply(
-                    lambda g: g["feature"].shift(-1)
+                    lambda g: g["feature"].shift(-1), include_groups=False
                 ),
             }
         )
-        .groupby("quantile")
+        .groupby("quantile")[df.columns.tolist() + ["start", "end", "value_label", "feature2"]]
         .apply(lambda g: g.sort_values("abs_shap_value", ascending=False))
         .reset_index(drop=True)
     )
@@ -148,7 +150,7 @@ def plot_shap_waterfall_with_quantiles(df, height=300):
     triangle_right = f"M 0,-{triangle_size} L 1,0 L 0,{triangle_size} Z"
 
     df_text_labels = (
-        df_grouped.groupby("quantile")
+        df_grouped.groupby("quantile")[df.columns]
         .apply(
             lambda g: pd.DataFrame(
                 {
