@@ -25,6 +25,8 @@ alt.data_transformers.disable_max_rows()
 
 rng = check_random_state(0)
 
+quantiles = np.arange(0, 1.05, 0.05).round(2).tolist()
+
 # Create right-skewed dataset.
 n_samples = 5000
 a, loc, scale = 5, -1, 1
@@ -32,8 +34,6 @@ skewnorm_rv = sp.stats.skewnorm(a, loc, scale)
 skewnorm_rv.random_state = rng
 y = skewnorm_rv.rvs(n_samples)
 X = rng.randn(n_samples, 2) * y.reshape(-1, 1)
-
-quantiles = list(np.arange(21) * 5 / 100)
 
 regr_rf = RandomForestRegressor(n_estimators=10, random_state=0)
 regr_qrf = RandomForestQuantileRegressor(n_estimators=10, random_state=0)

@@ -24,7 +24,7 @@ from quantile_forest import RandomForestQuantileRegressor
 
 n_samples = 500
 test_idx = 0
-quantiles = list((np.arange(11) * 10) / 100)
+quantiles = np.arange(0, 1.1, 0.1).round(1).tolist()
 
 
 def get_shap_values(qrf, X, quantile=0.5, **kwargs):

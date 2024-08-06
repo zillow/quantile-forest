@@ -31,7 +31,7 @@ token = "<Hugging Face Access Token>"
 repo_id = "quantile-forest/california-housing-example"
 load_existing = True
 
-quantiles = list((np.arange(5) * 25) / 100)
+quantiles = np.arange(0, 1.25, 0.25).round(2).tolist()
 sample_frac = 1
 
 

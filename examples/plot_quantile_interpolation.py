@@ -16,7 +16,7 @@ import pandas as pd
 
 from quantile_forest import RandomForestQuantileRegressor
 
-intervals = list(np.arange(101) / 100)
+intervals = np.arange(0, 1.01, 0.01).round(2).tolist()
 
 # Create toy dataset.
 X = np.array([[-1, -1], [-1, -1], [-1, -1], [1, 1], [1, 1]])

@@ -33,7 +33,7 @@ strategies = {
 random_state = 0
 rng = check_random_state(random_state)
 
-coverages = list(np.arange(11) / 10)  # the "coverage level"
+coverages = np.arange(0, 1.1, 0.1).round(1).tolist()  # the "coverage level"
 
 # Load the California Housing Prices dataset.
 california = datasets.fetch_california_housing()
@@ -146,7 +146,8 @@ metrics = (
                 "coverage": coverage_score(grp["y_test"], grp["y_pred_low"], grp["y_pred_upp"]),
                 "width": mean_width_score(grp["y_pred_low"], grp["y_pred_upp"]),
             }
-        )
+        ),
+        include_groups=False,
     )
     .reset_index()
 )
