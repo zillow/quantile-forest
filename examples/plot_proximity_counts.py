@@ -52,9 +52,9 @@ def add_gaussian_noise(X, mean=0, std=0.1, random_state=None):
     X_scaled = scaler.fit_transform(X)
 
     noise = rng.normal(mean, std, X_scaled.shape)
-    X_noisy = X_scaled + noise
+    X_noisy = np.clip(X_scaled + noise, 0, 1)
 
-    X_noisy = scaler.inverse_transform(np.clip(X_noisy, 0, 1))
+    X_noisy = scaler.inverse_transform(X_noisy)
 
     if isinstance(X, pd.DataFrame):
         X_noisy = pd.DataFrame(X_noisy)
@@ -95,7 +95,7 @@ df_prox = pd.DataFrame(
 )
 
 df = (
-    combine_floats(X_test, X_test_noisy)
+    combine_floats(X_test, X_test_noisy)  # combine to reduce transmitted data
     .join(y_test)
     .reset_index()
     .join(df_prox)
@@ -112,8 +112,9 @@ df = (
     .drop(columns=["prox"])
 )
 
+# Create a data frame for looking up training proximities.
 df_lookup = (
-    combine_floats(X_train, X_train_noisy)
+    combine_floats(X_train, X_train_noisy)  # combine to reduce transmitted data
     .assign(**{"index": np.arange(len(X_train))})
     .join(y_train)
 )

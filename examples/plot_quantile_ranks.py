@@ -5,7 +5,9 @@ Using Quantile Ranks to Identify Potential Outliers
 This example demonstrates the use of quantile regression forest (QRF) quantile
 ranks to identify potential outlier samples. In this scenario, we train a QRF
 model on a toy dataset and use quantile ranks to highlight values that deviate
-significantly from the expected range.
+significantly from the expected range. Potential outliers are defined as
+points whose quantile rank falls outside the specified threshold interval
+around the median.
 """
 
 import math
@@ -88,6 +90,7 @@ def plot_fit_and_ranks(df):
         y=alt.Y("y_pred:Q", axis=alt.Axis(title="f(x)")),
     )
 
+    # For desired legend labels.
     dummy_legend = (
         base.mark_line(opacity=1)
         .encode(opacity=alt.Opacity("model:N", scale=alt.Scale(range=[1, 1]), title="Prediction"))

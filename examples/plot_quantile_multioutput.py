@@ -1,6 +1,6 @@
 """
-Multiple-Output Quantile Regression with QRFs
-=============================================
+Multi-target Quantile Regression with QRFs
+==========================================
 
 This example demonstrates how to fit a single quantile regressor for multiple
 target variables on a toy dataset. For each target, multiple quantiles can be
@@ -64,7 +64,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_
 qrf = RandomForestQuantileRegressor(max_samples_leaf=None, max_depth=4, random_state=random_seed)
 qrf.fit(X_train, y_train)  # fit on all of the targets simultaneously
 
-# Get multiple-output predictions at many quantiles.
+# Get multi-target predictions at specified quantiles.
 y_pred = qrf.predict(X, quantiles=quantiles)
 
 df = pd.DataFrame(
@@ -85,7 +85,7 @@ df = pd.DataFrame(
 )
 
 
-def plot_multioutputs(df, legend):
+def plot_multitargets(df, legend):
     # Slider for varying the displayed prediction intervals.
     slider = alt.binding_range(min=0, max=1, step=0.05, name="Prediction Interval: ")
     interval_selection = alt.param(value=0.95, bind=slider, name="interval")
@@ -151,6 +151,7 @@ def plot_multioutputs(df, legend):
         color=color,
         tooltip=tooltip,
     )
+
     chart = (
         (points + area + line)
         .add_params(interval_selection, click)
@@ -165,5 +166,5 @@ def plot_multioutputs(df, legend):
     return chart
 
 
-chart = plot_multioutputs(df, legend)
+chart = plot_multitargets(df, legend)
 chart
