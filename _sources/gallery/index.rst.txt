@@ -47,13 +47,13 @@ General-purpose, introductory and illustrative examples.
     
     <a class="imagegroup" href="plot_quantile_multioutput.html">
     <span
-        class="image" alt="Multiple-Output Quantile Regression with QRFs"
+        class="image" alt="Multi-target Quantile Regression with QRFs"
     
         style="background-image: url(../_static/plot_quantile_multioutput-thumb.png);"
     
     ></span>
 
-    <span class="image-title">Multiple-Output Quantile Regression with QRFs</span>
+    <span class="image-title">Multi-target Quantile Regression with QRFs</span>
     </a>
     
     <a class="imagegroup" href="plot_quantile_example.html">

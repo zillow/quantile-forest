@@ -415,143 +415,159 @@ adapted from `"Extrapolation-Aware Nonparametric Statistical Inference"
     )
 
 
-    def plot_extrapolations(df, title="", legend=False, x_domain=None, y_domain=None):
-        x_scale = None
-        if x_domain is not None:
-            x_scale = alt.Scale(domain=x_domain, nice=False, padding=0)
-        y_scale = None
-        if y_domain is not None:
-            y_scale = alt.Scale(domain=y_domain, nice=True)
+    def plot_qrf_vs_xtrapolation_comparison(df):
+        def plot_extrapolations(df, title="", legend=False, x_domain=None, y_domain=None):
+            x_scale = None
+            if x_domain is not None:
+                x_scale = alt.Scale(domain=x_domain, nice=False, padding=0)
+            y_scale = None
+            if y_domain is not None:
+                y_scale = alt.Scale(domain=y_domain, nice=True)
 
-        points_color = alt.value("#f2a619")
-        line_true_color = alt.value("black")
-        if legend:
-            points_color = alt.Color("point_label:N", scale=alt.Scale(range=["#f2a619"]), title=None)
-            line_true_color = alt.Color("line_label:N", scale=alt.Scale(range=["black"]), title=None)
+            points_color = alt.value("#f2a619")
+            line_true_color = alt.value("black")
+            if legend:
+                points_color = alt.Color(
+                    "point_label:N", scale=alt.Scale(range=["#f2a619"]), title=None
+                )
+                line_true_color = alt.Color(
+                    "line_label:N", scale=alt.Scale(range=["black"]), title=None
+                )
 
-        tooltip_true = [
-            alt.Tooltip("X_true:Q", format=",.3f", title="X"),
-            alt.Tooltip("y_true:Q", format=",.3f", title="Y"),
-        ]
+            tooltip_true = [
+                alt.Tooltip("X_true:Q", format=",.3f", title="X"),
+                alt.Tooltip("y_true:Q", format=",.3f", title="Y"),
+            ]
 
-        tooltip_pred = tooltip_true + [
-            alt.Tooltip("y_pred:Q", format=",.3f", title="Predicted Y"),
-            alt.Tooltip("y_pred_low:Q", format=",.3f", title="Predicted Lower Y"),
-            alt.Tooltip("y_pred_upp:Q", format=",.3f", title="Predicted Upper Y"),
-        ]
+            tooltip_pred = tooltip_true + [
+                alt.Tooltip("y_pred:Q", format=",.3f", title="Predicted Y"),
+                alt.Tooltip("y_pred_low:Q", format=",.3f", title="Predicted Lower Y"),
+                alt.Tooltip("y_pred_upp:Q", format=",.3f", title="Predicted Upper Y"),
+            ]
 
-        base = alt.Chart(df.assign(**{"point_label": "Observations", "line_label": func_str}))
+            base = alt.Chart(df.assign(**{"point_label": "Observations", "line_label": func_str}))
 
-        points_true = base.mark_circle(size=20).encode(
-            x=alt.X("X_true:Q", scale=x_scale, title="x"),
-            y=alt.Y("y_true:Q", scale=y_scale, title="y"),
-            color=points_color,
-            tooltip=tooltip_true,
-        )
+            points_true = base.mark_circle(size=20).encode(
+                x=alt.X("X_true:Q", scale=x_scale, title="x"),
+                y=alt.Y("y_true:Q", scale=y_scale, title="y"),
+                color=points_color,
+                tooltip=tooltip_true,
+            )
 
-        line_true = base.mark_line().encode(
-            x=alt.X("X_true:Q", scale=x_scale, title=""),
-            y=alt.Y("y_func:Q", scale=y_scale, title=""),
-            color=line_true_color,
-            tooltip=tooltip_true,
-        )
+            line_true = base.mark_line().encode(
+                x=alt.X("X_true:Q", scale=x_scale, title=""),
+                y=alt.Y("y_func:Q", scale=y_scale, title=""),
+                color=line_true_color,
+                tooltip=tooltip_true,
+            )
 
-        line_pred = base.mark_line(clip=True).encode(
-            x=alt.X("X_true:Q", title="", scale=x_scale),
-            y=alt.Y("y_pred:Q", scale=y_scale),
-            color=alt.condition(alt.datum["extrapolate"], alt.value("red"), alt.value("#006aff")),
-            tooltip=tooltip_pred,
-        )
+            line_pred = base.mark_line(clip=True).encode(
+                x=alt.X("X_true:Q", title="", scale=x_scale),
+                y=alt.Y("y_pred:Q", scale=y_scale),
+                color=alt.condition(alt.datum["extrapolate"], alt.value("red"), alt.value("#006aff")),
+                tooltip=tooltip_pred,
+            )
 
-        bar_pred = base.mark_bar(clip=True, width=2).encode(
-            x=alt.X("X_true"),
-            y=alt.Y("y_pred_low"),
-            y2=alt.Y2("y_pred_upp"),
-            color=alt.condition(alt.datum["extrapolate"], alt.value("red"), alt.value("#e0f2ff")),
-            opacity=alt.condition(alt.datum["extrapolate"], alt.value(0.05), alt.value(0.8)),
-            tooltip=tooltip_pred,
-        )
+            bar_pred = base.mark_bar(clip=True, width=2).encode(
+                x=alt.X("X_true"),
+                y=alt.Y("y_pred_low"),
+                y2=alt.Y2("y_pred_upp"),
+                color=alt.condition(alt.datum["extrapolate"], alt.value("red"), alt.value("#e0f2ff")),
+                opacity=alt.condition(alt.datum["extrapolate"], alt.value(0.05), alt.value(0.8)),
+                tooltip=tooltip_pred,
+            )
 
-        chart = bar_pred + points_true + line_true + line_pred
+            chart = bar_pred + points_true + line_true + line_pred
 
-        if "coverage" in df.columns:
-            text_coverage = (
-                base.transform_aggregate(coverage="mean(coverage)")
-                .transform_calculate(
-                    coverage_text=(
-                        f"'Extrapolated Coverage: '"
-                        f" + format({alt.datum['coverage'] * 100}, '.1f') + '%'"
-                        f" + ' (target = {(quantiles[1] - quantiles[0]) * 100}%)'"
+            if "coverage" in df.columns:
+                text_coverage = (
+                    base.transform_aggregate(coverage="mean(coverage)")
+                    .transform_calculate(
+                        coverage_text=(
+                            f"'Extrapolated Coverage: '"
+                            f" + format({alt.datum['coverage'] * 100}, '.1f') + '%'"
+                            f" + ' (target = {(quantiles[1] - quantiles[0]) * 100}%)'"
+                        )
+                    )
+                    .mark_text(align="left", baseline="top")
+                    .encode(
+                        x=alt.value(5),
+                        y=alt.value(5),
+                        text=alt.Text("coverage_text:N"),
                     )
                 )
-                .mark_text(align="left", baseline="top")
-                .encode(
-                    x=alt.value(5),
-                    y=alt.value(5),
-                    text=alt.Text("coverage_text:N"),
-                )
-            )
-            chart += text_coverage
+                chart += text_coverage
 
-        if legend:
-            # For desired legend ordering.
-            data = {
-                "y_pred_line": {"type": "line", "color": "#006aff", "name": "Predicted Median"},
-                "y_pred_area": {"type": "area", "color": "#e0f2ff", "name": "Predicted 95% Interval"},
-                "y_extrp_line": {"type": "line", "color": "red", "name": "Extrapolated Median"},
-                "y_extrp_area": {"type": "area", "color": "red", "name": "Extrapolated 95% Interval"},
-            }
-            for k, v in data.items():
-                blank = alt.Chart(pd.DataFrame({k: [v["name"]]}))
-                if v["type"] == "line":
-                    blank = blank.mark_line(color=k)
-                elif v["type"] == "area":
-                    blank = blank.mark_area(color=k)
-                blank = blank.encode(
-                    color=alt.Color(f"{k}:N", scale=alt.Scale(range=[v["color"]]), title=None)
-                )
-                chart += blank
-            chart = chart.resolve_scale(color="independent")
+            if legend:
+                # For desired legend ordering.
+                data = {
+                    "y_pred_line": {"type": "line", "color": "#006aff", "name": "Predicted Median"},
+                    "y_pred_area": {
+                        "type": "area",
+                        "color": "#e0f2ff",
+                        "name": "Predicted 95% Interval",
+                    },
+                    "y_extrp_line": {"type": "line", "color": "red", "name": "Extrapolated Median"},
+                    "y_extrp_area": {
+                        "type": "area",
+                        "color": "red",
+                        "name": "Extrapolated 95% Interval",
+                    },
+                }
+                for k, v in data.items():
+                    blank = alt.Chart(pd.DataFrame({k: [v["name"]]}))
+                    if v["type"] == "line":
+                        blank = blank.mark_line(color=k)
+                    elif v["type"] == "area":
+                        blank = blank.mark_area(color=k)
+                    blank = blank.encode(
+                        color=alt.Color(f"{k}:N", scale=alt.Scale(range=[v["color"]]), title=None)
+                    )
+                    chart += blank
+                chart = chart.resolve_scale(color="independent")
 
-        chart = chart.properties(height=200, width=300, title=title)
+            chart = chart.properties(height=200, width=300, title=title)
+            return chart
+
+        kwargs = {"x_domain": [0, 15], "y_domain": [-15, 20]}
+        xtra_mapper = {"bb_mid": "y_pred", "bb_low": "y_pred_low", "bb_upp": "y_pred_upp"}
+
+        chart1 = alt.layer(
+            plot_extrapolations(
+                df.query("~(test_left | test_right)").assign(**{"coverage": lambda x: x["cov_qrf"]}),
+                title="Extrapolation with Standard QRF",
+                **kwargs,
+            ).resolve_scale(color="independent"),
+            plot_extrapolations(df.query("test_left").assign(extrapolate=True), **kwargs),
+            plot_extrapolations(df.query("test_right").assign(extrapolate=True), **kwargs),
+        )
+        chart2 = alt.layer(
+            plot_extrapolations(
+                df.query("~(test_left | test_right)").assign(**{"coverage": lambda x: x["cov_xtr"]}),
+                title="Extrapolation with Xtrapolation Procedure",
+                legend=True,
+                **kwargs,
+            ).resolve_scale(color="independent"),
+            plot_extrapolations(
+                df.query("test_left")
+                .assign(extrapolate=True)
+                .drop(columns=["y_pred", "y_pred_low", "y_pred_upp"])
+                .rename(xtra_mapper, axis="columns"),
+                **kwargs,
+            ),
+            plot_extrapolations(
+                df.query("test_right")
+                .assign(extrapolate=True)
+                .drop(columns=["y_pred", "y_pred_low", "y_pred_upp"])
+                .rename(xtra_mapper, axis="columns"),
+                **kwargs,
+            ),
+        )
+        chart = chart1 | chart2
         return chart
 
 
-    kwargs = {"x_domain": [0, 15], "y_domain": [-15, 20]}
-    xtra_mapper = {"bb_mid": "y_pred", "bb_low": "y_pred_low", "bb_upp": "y_pred_upp"}
-
-    chart1 = alt.layer(
-        plot_extrapolations(
-            df.query("~(test_left | test_right)").assign(**{"coverage": lambda x: x["cov_qrf"]}),
-            title="Extrapolation with Standard QRF",
-            **kwargs,
-        ).resolve_scale(color="independent"),
-        plot_extrapolations(df.query("test_left").assign(extrapolate=True), **kwargs),
-        plot_extrapolations(df.query("test_right").assign(extrapolate=True), **kwargs),
-    )
-    chart2 = alt.layer(
-        plot_extrapolations(
-            df.query("~(test_left | test_right)").assign(**{"coverage": lambda x: x["cov_xtr"]}),
-            title="Extrapolation with Xtrapolation Procedure",
-            legend=True,
-            **kwargs,
-        ).resolve_scale(color="independent"),
-        plot_extrapolations(
-            df.query("test_left")
-            .assign(extrapolate=True)
-            .drop(columns=["y_pred", "y_pred_low", "y_pred_upp"])
-            .rename(xtra_mapper, axis="columns"),
-            **kwargs,
-        ),
-        plot_extrapolations(
-            df.query("test_right")
-            .assign(extrapolate=True)
-            .drop(columns=["y_pred", "y_pred_low", "y_pred_upp"])
-            .rename(xtra_mapper, axis="columns"),
-            **kwargs,
-        ),
-    )
-    chart = chart1 | chart2
+    chart = plot_qrf_vs_xtrapolation_comparison(df)
     chart
 
 
@@ -946,141 +962,157 @@ adapted from `"Extrapolation-Aware Nonparametric Statistical Inference"
             )
 
 
-            def plot_extrapolations(df, title="", legend=False, x_domain=None, y_domain=None):
-                x_scale = None
-                if x_domain is not None:
-                    x_scale = alt.Scale(domain=x_domain, nice=False, padding=0)
-                y_scale = None
-                if y_domain is not None:
-                    y_scale = alt.Scale(domain=y_domain, nice=True)
+            def plot_qrf_vs_xtrapolation_comparison(df):
+                def plot_extrapolations(df, title="", legend=False, x_domain=None, y_domain=None):
+                    x_scale = None
+                    if x_domain is not None:
+                        x_scale = alt.Scale(domain=x_domain, nice=False, padding=0)
+                    y_scale = None
+                    if y_domain is not None:
+                        y_scale = alt.Scale(domain=y_domain, nice=True)
 
-                points_color = alt.value("#f2a619")
-                line_true_color = alt.value("black")
-                if legend:
-                    points_color = alt.Color("point_label:N", scale=alt.Scale(range=["#f2a619"]), title=None)
-                    line_true_color = alt.Color("line_label:N", scale=alt.Scale(range=["black"]), title=None)
+                    points_color = alt.value("#f2a619")
+                    line_true_color = alt.value("black")
+                    if legend:
+                        points_color = alt.Color(
+                            "point_label:N", scale=alt.Scale(range=["#f2a619"]), title=None
+                        )
+                        line_true_color = alt.Color(
+                            "line_label:N", scale=alt.Scale(range=["black"]), title=None
+                        )
 
-                tooltip_true = [
-                    alt.Tooltip("X_true:Q", format=",.3f", title="X"),
-                    alt.Tooltip("y_true:Q", format=",.3f", title="Y"),
-                ]
+                    tooltip_true = [
+                        alt.Tooltip("X_true:Q", format=",.3f", title="X"),
+                        alt.Tooltip("y_true:Q", format=",.3f", title="Y"),
+                    ]
 
-                tooltip_pred = tooltip_true + [
-                    alt.Tooltip("y_pred:Q", format=",.3f", title="Predicted Y"),
-                    alt.Tooltip("y_pred_low:Q", format=",.3f", title="Predicted Lower Y"),
-                    alt.Tooltip("y_pred_upp:Q", format=",.3f", title="Predicted Upper Y"),
-                ]
+                    tooltip_pred = tooltip_true + [
+                        alt.Tooltip("y_pred:Q", format=",.3f", title="Predicted Y"),
+                        alt.Tooltip("y_pred_low:Q", format=",.3f", title="Predicted Lower Y"),
+                        alt.Tooltip("y_pred_upp:Q", format=",.3f", title="Predicted Upper Y"),
+                    ]
 
-                base = alt.Chart(df.assign(**{"point_label": "Observations", "line_label": func_str}))
+                    base = alt.Chart(df.assign(**{"point_label": "Observations", "line_label": func_str}))
 
-                points_true = base.mark_circle(size=20).encode(
-                    x=alt.X("X_true:Q", scale=x_scale, title="x"),
-                    y=alt.Y("y_true:Q", scale=y_scale, title="y"),
-                    color=points_color,
-                    tooltip=tooltip_true,
-                )
+                    points_true = base.mark_circle(size=20).encode(
+                        x=alt.X("X_true:Q", scale=x_scale, title="x"),
+                        y=alt.Y("y_true:Q", scale=y_scale, title="y"),
+                        color=points_color,
+                        tooltip=tooltip_true,
+                    )
 
-                line_true = base.mark_line().encode(
-                    x=alt.X("X_true:Q", scale=x_scale, title=""),
-                    y=alt.Y("y_func:Q", scale=y_scale, title=""),
-                    color=line_true_color,
-                    tooltip=tooltip_true,
-                )
+                    line_true = base.mark_line().encode(
+                        x=alt.X("X_true:Q", scale=x_scale, title=""),
+                        y=alt.Y("y_func:Q", scale=y_scale, title=""),
+                        color=line_true_color,
+                        tooltip=tooltip_true,
+                    )
 
-                line_pred = base.mark_line(clip=True).encode(
-                    x=alt.X("X_true:Q", title="", scale=x_scale),
-                    y=alt.Y("y_pred:Q", scale=y_scale),
-                    color=alt.condition(alt.datum["extrapolate"], alt.value("red"), alt.value("#006aff")),
-                    tooltip=tooltip_pred,
-                )
+                    line_pred = base.mark_line(clip=True).encode(
+                        x=alt.X("X_true:Q", title="", scale=x_scale),
+                        y=alt.Y("y_pred:Q", scale=y_scale),
+                        color=alt.condition(alt.datum["extrapolate"], alt.value("red"), alt.value("#006aff")),
+                        tooltip=tooltip_pred,
+                    )
 
-                bar_pred = base.mark_bar(clip=True, width=2).encode(
-                    x=alt.X("X_true"),
-                    y=alt.Y("y_pred_low"),
-                    y2=alt.Y2("y_pred_upp"),
-                    color=alt.condition(alt.datum["extrapolate"], alt.value("red"), alt.value("#e0f2ff")),
-                    opacity=alt.condition(alt.datum["extrapolate"], alt.value(0.05), alt.value(0.8)),
-                    tooltip=tooltip_pred,
-                )
+                    bar_pred = base.mark_bar(clip=True, width=2).encode(
+                        x=alt.X("X_true"),
+                        y=alt.Y("y_pred_low"),
+                        y2=alt.Y2("y_pred_upp"),
+                        color=alt.condition(alt.datum["extrapolate"], alt.value("red"), alt.value("#e0f2ff")),
+                        opacity=alt.condition(alt.datum["extrapolate"], alt.value(0.05), alt.value(0.8)),
+                        tooltip=tooltip_pred,
+                    )
 
-                chart = bar_pred + points_true + line_true + line_pred
+                    chart = bar_pred + points_true + line_true + line_pred
 
-                if "coverage" in df.columns:
-                    text_coverage = (
-                        base.transform_aggregate(coverage="mean(coverage)")
-                        .transform_calculate(
-                            coverage_text=(
-                                f"'Extrapolated Coverage: '"
-                                f" + format({alt.datum['coverage'] * 100}, '.1f') + '%'"
-                                f" + ' (target = {(quantiles[1] - quantiles[0]) * 100}%)'"
+                    if "coverage" in df.columns:
+                        text_coverage = (
+                            base.transform_aggregate(coverage="mean(coverage)")
+                            .transform_calculate(
+                                coverage_text=(
+                                    f"'Extrapolated Coverage: '"
+                                    f" + format({alt.datum['coverage'] * 100}, '.1f') + '%'"
+                                    f" + ' (target = {(quantiles[1] - quantiles[0]) * 100}%)'"
+                                )
+                            )
+                            .mark_text(align="left", baseline="top")
+                            .encode(
+                                x=alt.value(5),
+                                y=alt.value(5),
+                                text=alt.Text("coverage_text:N"),
                             )
                         )
-                        .mark_text(align="left", baseline="top")
-                        .encode(
-                            x=alt.value(5),
-                            y=alt.value(5),
-                            text=alt.Text("coverage_text:N"),
-                        )
-                    )
-                    chart += text_coverage
+                        chart += text_coverage
 
-                if legend:
-                    # For desired legend ordering.
-                    data = {
-                        "y_pred_line": {"type": "line", "color": "#006aff", "name": "Predicted Median"},
-                        "y_pred_area": {"type": "area", "color": "#e0f2ff", "name": "Predicted 95% Interval"},
-                        "y_extrp_line": {"type": "line", "color": "red", "name": "Extrapolated Median"},
-                        "y_extrp_area": {"type": "area", "color": "red", "name": "Extrapolated 95% Interval"},
-                    }
-                    for k, v in data.items():
-                        blank = alt.Chart(pd.DataFrame({k: [v["name"]]}))
-                        if v["type"] == "line":
-                            blank = blank.mark_line(color=k)
-                        elif v["type"] == "area":
-                            blank = blank.mark_area(color=k)
-                        blank = blank.encode(
-                            color=alt.Color(f"{k}:N", scale=alt.Scale(range=[v["color"]]), title=None)
-                        )
-                        chart += blank
-                    chart = chart.resolve_scale(color="independent")
+                    if legend:
+                        # For desired legend ordering.
+                        data = {
+                            "y_pred_line": {"type": "line", "color": "#006aff", "name": "Predicted Median"},
+                            "y_pred_area": {
+                                "type": "area",
+                                "color": "#e0f2ff",
+                                "name": "Predicted 95% Interval",
+                            },
+                            "y_extrp_line": {"type": "line", "color": "red", "name": "Extrapolated Median"},
+                            "y_extrp_area": {
+                                "type": "area",
+                                "color": "red",
+                                "name": "Extrapolated 95% Interval",
+                            },
+                        }
+                        for k, v in data.items():
+                            blank = alt.Chart(pd.DataFrame({k: [v["name"]]}))
+                            if v["type"] == "line":
+                                blank = blank.mark_line(color=k)
+                            elif v["type"] == "area":
+                                blank = blank.mark_area(color=k)
+                            blank = blank.encode(
+                                color=alt.Color(f"{k}:N", scale=alt.Scale(range=[v["color"]]), title=None)
+                            )
+                            chart += blank
+                        chart = chart.resolve_scale(color="independent")
 
-                chart = chart.properties(height=200, width=300, title=title)
+                    chart = chart.properties(height=200, width=300, title=title)
+                    return chart
+
+                kwargs = {"x_domain": [0, 15], "y_domain": [-15, 20]}
+                xtra_mapper = {"bb_mid": "y_pred", "bb_low": "y_pred_low", "bb_upp": "y_pred_upp"}
+
+                chart1 = alt.layer(
+                    plot_extrapolations(
+                        df.query("~(test_left | test_right)").assign(**{"coverage": lambda x: x["cov_qrf"]}),
+                        title="Extrapolation with Standard QRF",
+                        **kwargs,
+                    ).resolve_scale(color="independent"),
+                    plot_extrapolations(df.query("test_left").assign(extrapolate=True), **kwargs),
+                    plot_extrapolations(df.query("test_right").assign(extrapolate=True), **kwargs),
+                )
+                chart2 = alt.layer(
+                    plot_extrapolations(
+                        df.query("~(test_left | test_right)").assign(**{"coverage": lambda x: x["cov_xtr"]}),
+                        title="Extrapolation with Xtrapolation Procedure",
+                        legend=True,
+                        **kwargs,
+                    ).resolve_scale(color="independent"),
+                    plot_extrapolations(
+                        df.query("test_left")
+                        .assign(extrapolate=True)
+                        .drop(columns=["y_pred", "y_pred_low", "y_pred_upp"])
+                        .rename(xtra_mapper, axis="columns"),
+                        **kwargs,
+                    ),
+                    plot_extrapolations(
+                        df.query("test_right")
+                        .assign(extrapolate=True)
+                        .drop(columns=["y_pred", "y_pred_low", "y_pred_upp"])
+                        .rename(xtra_mapper, axis="columns"),
+                        **kwargs,
+                    ),
+                )
+                chart = chart1 | chart2
                 return chart
 
 
-            kwargs = {"x_domain": [0, 15], "y_domain": [-15, 20]}
-            xtra_mapper = {"bb_mid": "y_pred", "bb_low": "y_pred_low", "bb_upp": "y_pred_upp"}
-
-            chart1 = alt.layer(
-                plot_extrapolations(
-                    df.query("~(test_left | test_right)").assign(**{"coverage": lambda x: x["cov_qrf"]}),
-                    title="Extrapolation with Standard QRF",
-                    **kwargs,
-                ).resolve_scale(color="independent"),
-                plot_extrapolations(df.query("test_left").assign(extrapolate=True), **kwargs),
-                plot_extrapolations(df.query("test_right").assign(extrapolate=True), **kwargs),
-            )
-            chart2 = alt.layer(
-                plot_extrapolations(
-                    df.query("~(test_left | test_right)").assign(**{"coverage": lambda x: x["cov_xtr"]}),
-                    title="Extrapolation with Xtrapolation Procedure",
-                    legend=True,
-                    **kwargs,
-                ).resolve_scale(color="independent"),
-                plot_extrapolations(
-                    df.query("test_left")
-                    .assign(extrapolate=True)
-                    .drop(columns=["y_pred", "y_pred_low", "y_pred_upp"])
-                    .rename(xtra_mapper, axis="columns"),
-                    **kwargs,
-                ),
-                plot_extrapolations(
-                    df.query("test_right")
-                    .assign(extrapolate=True)
-                    .drop(columns=["y_pred", "y_pred_low", "y_pred_upp"])
-                    .rename(xtra_mapper, axis="columns"),
-                    **kwargs,
-                ),
-            )
-            chart = chart1 | chart2
+            chart = plot_qrf_vs_xtrapolation_comparison(df)
             chart

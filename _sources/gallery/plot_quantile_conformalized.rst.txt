@@ -169,137 +169,142 @@ by Carl McBride Ellis.
     df = df.merge(metrics, on=["alpha", "strategy"], how="left")
 
 
-    def plot_prediction_intervals(df, domain):
-        # Slider for varying the target coverage level.
-        slider = alt.binding_range(min=0, max=1, step=0.1, name="Coverage Target: ")
-        cov_selection = alt.param(value=0.9, bind=slider, name="coverage")
-        cov_tol = 0.01
+    def plot_prediction_intervals_by_strategy(df):
+        def plot_prediction_intervals(df, domain):
+            # Slider for varying the target coverage level.
+            slider = alt.binding_range(min=0, max=1, step=0.1, name="Coverage Target: ")
+            cov_selection = alt.param(value=0.9, bind=slider, name="coverage")
+            cov_tol = 0.01
 
-        click = alt.selection_point(fields=["y_label"], bind="legend")
+            click = alt.selection_point(fields=["y_label"], bind="legend")
 
-        color_circle = alt.Color(
-            "y_label:N",
-            scale=alt.Scale(domain=["Yes", "No"], range=["#f2a619", "red"]),
-            title="Within Interval",
-        )
-        color_bar = alt.value("#e0f2ff")
-
-        tooltip = [
-            alt.Tooltip("y_test:Q", format="$,d", title="True Price"),
-            alt.Tooltip("y_pred:Q", format="$,d", title="Predicted Price"),
-            alt.Tooltip("y_pred_low:Q", format="$,d", title="Predicted Lower Price"),
-            alt.Tooltip("y_pred_upp:Q", format="$,d", title="Predicted Upper Price"),
-            alt.Tooltip("y_label:N", title="Within Interval"),
-        ]
-
-        base = (
-            alt.Chart(df)
-            .transform_filter(
-                (1 - alt.datum["alpha"] - cov_tol <= cov_selection)
-                & (1 - alt.datum["alpha"] + cov_tol >= cov_selection)
+            color_circle = alt.Color(
+                "y_label:N",
+                scale=alt.Scale(domain=["Yes", "No"], range=["#f2a619", "red"]),
+                title="Within Interval",
             )
-            .transform_calculate(
-                y_label=(
-                    "((datum.y_test >= datum.y_pred_low) & (datum.y_test <= datum.y_pred_upp))"
-                    " ? 'Yes' : 'No'"
+            color_bar = alt.value("#e0f2ff")
+
+            tooltip = [
+                alt.Tooltip("y_test:Q", format="$,d", title="True Price"),
+                alt.Tooltip("y_pred:Q", format="$,d", title="Predicted Price"),
+                alt.Tooltip("y_pred_low:Q", format="$,d", title="Predicted Lower Price"),
+                alt.Tooltip("y_pred_upp:Q", format="$,d", title="Predicted Upper Price"),
+                alt.Tooltip("y_label:N", title="Within Interval"),
+            ]
+
+            base = (
+                alt.Chart(df)
+                .transform_filter(
+                    (1 - alt.datum["alpha"] - cov_tol <= cov_selection)
+                    & (1 - alt.datum["alpha"] + cov_tol >= cov_selection)
+                )
+                .transform_calculate(
+                    y_label=(
+                        "((datum.y_test >= datum.y_pred_low) & (datum.y_test <= datum.y_pred_upp))"
+                        " ? 'Yes' : 'No'"
+                    )
                 )
             )
-        )
 
-        circle = (
-            base.add_params(click)
-            .mark_circle(size=30)
-            .encode(
-                x=alt.X(
-                    "y_pred:Q",
-                    axis=alt.Axis(format="$,d"),
-                    scale=alt.Scale(domain=domain, nice=False),
-                    title="True Prices",
-                ),
-                y=alt.Y(
-                    "y_test:Q",
-                    axis=alt.Axis(format="$,d"),
-                    scale=alt.Scale(domain=domain, nice=False),
-                    title="Predicted Prices",
-                ),
-                color=alt.condition(click, color_circle, alt.value("lightgray")),
-                opacity=alt.condition(click, alt.value(1), alt.value(0)),
+            circle = (
+                base.add_params(click)
+                .mark_circle(size=30)
+                .encode(
+                    x=alt.X(
+                        "y_pred:Q",
+                        axis=alt.Axis(format="$,d"),
+                        scale=alt.Scale(domain=domain, nice=False),
+                        title="True Prices",
+                    ),
+                    y=alt.Y(
+                        "y_test:Q",
+                        axis=alt.Axis(format="$,d"),
+                        scale=alt.Scale(domain=domain, nice=False),
+                        title="Predicted Prices",
+                    ),
+                    color=alt.condition(click, color_circle, alt.value("lightgray")),
+                    opacity=alt.condition(click, alt.value(1), alt.value(0)),
+                    tooltip=tooltip,
+                )
+            )
+
+            bar = base.mark_bar(width=2).encode(
+                x=alt.X("y_pred:Q", scale=alt.Scale(domain=domain, padding=0), title=""),
+                y=alt.Y("y_pred_low:Q", scale=alt.Scale(domain=domain, padding=0), title=""),
+                y2=alt.Y2("y_pred_upp:Q", title=None),
+                color=alt.condition(click, color_bar, alt.value("lightgray")),
+                opacity=alt.condition(click, alt.value(0.8), alt.value(0)),
                 tooltip=tooltip,
             )
-        )
 
-        bar = base.mark_bar(width=2).encode(
-            x=alt.X("y_pred:Q", scale=alt.Scale(domain=domain, padding=0), title=""),
-            y=alt.Y("y_pred_low:Q", scale=alt.Scale(clamp=True, domain=domain, padding=0), title=""),
-            y2=alt.Y2("y_pred_upp:Q", title=None),
-            color=alt.condition(click, color_bar, alt.value("lightgray")),
-            opacity=alt.condition(click, alt.value(0.8), alt.value(0)),
-            tooltip=tooltip,
-        )
-
-        tick = base.mark_tick(orient="horizontal", thickness=1, width=5).encode(
-            x=alt.X("y_pred:Q", title=""),
-            color=alt.value("#006aff"),
-            opacity=alt.condition(click, alt.value(0.4), alt.value(0)),
-        )
-        tick_low = tick.encode(y=alt.Y("y_pred_low:Q", scale=alt.Scale(clamp=True), title=""))
-        tick_upp = tick.encode(y=alt.Y("y_pred_upp:Q", scale=alt.Scale(clamp=True), title=""))
-
-        diagonal = (
-            alt.Chart(pd.DataFrame({"var1": domain, "var2": domain}))
-            .mark_line(color="black", opacity=0.4, strokeDash=[2, 2])
-            .encode(
-                x=alt.X("var1:Q"),
-                y=alt.Y("var2:Q"),
+            tick = base.mark_tick(orient="horizontal", thickness=1, width=5).encode(
+                x=alt.X("y_pred:Q", title=""),
+                color=alt.value("#006aff"),
+                opacity=alt.condition(click, alt.value(0.4), alt.value(0)),
             )
-        )
+            tick_low = tick.encode(y=alt.Y("y_pred_low:Q", scale=alt.Scale(clamp=True), title=""))
+            tick_upp = tick.encode(y=alt.Y("y_pred_upp:Q", scale=alt.Scale(clamp=True), title=""))
 
-        text_coverage = (
-            base.transform_aggregate(
-                alpha="mean(alpha)", coverage="mean(coverage)", groupby=["strategy"]
-            )
-            .transform_calculate(
-                coverage_text=(
-                    f"'Coverage: ' + format(datum.coverage * 100, '.1f') + '%'"
-                    f" + ' (target = ' + format((1 - datum.alpha) * 100, '.1f') + '%)'"
+            diagonal = (
+                alt.Chart(pd.DataFrame({"var1": domain, "var2": domain}))
+                .mark_line(color="black", opacity=0.4, strokeDash=[2, 2])
+                .encode(
+                    x=alt.X("var1:Q"),
+                    y=alt.Y("var2:Q"),
                 )
             )
-            .mark_text(align="left", baseline="top")
-            .encode(
-                x=alt.value(5),
-                y=alt.value(5),
-                text=alt.Text("coverage_text:N"),
-            )
-        )
-        text_with = (
-            base.transform_aggregate(width="mean(width)", groupby=["strategy"])
-            .transform_calculate(
-                width_text=f"'Interval Width: ' + format({alt.datum['width']}, '$,d')"
-            )
-            .mark_text(align="left", baseline="top")
-            .encode(
-                x=alt.value(5),
-                y=alt.value(20),
-                text=alt.Text("width_text:N"),
-            )
-        )
 
-        chart = (bar + tick_low + tick_upp + circle + diagonal + text_coverage + text_with).add_params(
-            cov_selection
-        )
+            text_coverage = (
+                base.transform_aggregate(
+                    alpha="mean(alpha)", coverage="mean(coverage)", groupby=["strategy"]
+                )
+                .transform_calculate(
+                    coverage_text=(
+                        f"'Coverage: ' + format(datum.coverage * 100, '.1f') + '%'"
+                        f" + ' (target = ' + format((1 - datum.alpha) * 100, '.1f') + '%)'"
+                    )
+                )
+                .mark_text(align="left", baseline="top")
+                .encode(
+                    x=alt.value(5),
+                    y=alt.value(5),
+                    text=alt.Text("coverage_text:N"),
+                )
+            )
+            text_with = (
+                base.transform_aggregate(width="mean(width)", groupby=["strategy"])
+                .transform_calculate(
+                    width_text=f"'Interval Width: ' + format({alt.datum['width']}, '$,d')"
+                )
+                .mark_text(align="left", baseline="top")
+                .encode(
+                    x=alt.value(5),
+                    y=alt.value(20),
+                    text=alt.Text("width_text:N"),
+                )
+            )
+
+            chart = (
+                bar + tick_low + tick_upp + circle + diagonal + text_coverage + text_with
+            ).add_params(cov_selection)
+
+            return chart
+
+        chart = alt.hconcat()
+        for strategy in strategies.keys():
+            domain = [
+                int(np.min((df[["y_test", "y_pred"]].min(axis=0)))),  # min of all axes
+                int(np.max((df[["y_test", "y_pred"]].max(axis=0)))),  # max of all axes
+            ]
+            df_i = df.query(f"strategy == '{strategy}'").reset_index(drop=True)
+            base = plot_prediction_intervals(df_i, domain)
+            chart |= base.properties(height=225, width=300, title=strategies[strategy])
 
         return chart
 
 
-    chart = alt.hconcat()
-    for strategy in strategies.keys():
-        domain = [
-            int(np.min((df[["y_test", "y_pred"]].min(axis=0)))),  # min of all axes
-            int(np.max((df[["y_test", "y_pred"]].max(axis=0)))),  # max of all axes
-        ]
-        df_i = df.query(f"strategy == '{strategy}'").reset_index(drop=True)
-        base = plot_prediction_intervals(df_i, domain)
-        chart |= base.properties(height=225, width=300, title=strategies[strategy])
+    chart = plot_prediction_intervals_by_strategy(df)
     chart
 
 
@@ -448,135 +453,140 @@ by Carl McBride Ellis.
             df = df.merge(metrics, on=["alpha", "strategy"], how="left")
 
 
-            def plot_prediction_intervals(df, domain):
-                # Slider for varying the target coverage level.
-                slider = alt.binding_range(min=0, max=1, step=0.1, name="Coverage Target: ")
-                cov_selection = alt.param(value=0.9, bind=slider, name="coverage")
-                cov_tol = 0.01
+            def plot_prediction_intervals_by_strategy(df):
+                def plot_prediction_intervals(df, domain):
+                    # Slider for varying the target coverage level.
+                    slider = alt.binding_range(min=0, max=1, step=0.1, name="Coverage Target: ")
+                    cov_selection = alt.param(value=0.9, bind=slider, name="coverage")
+                    cov_tol = 0.01
 
-                click = alt.selection_point(fields=["y_label"], bind="legend")
+                    click = alt.selection_point(fields=["y_label"], bind="legend")
 
-                color_circle = alt.Color(
-                    "y_label:N",
-                    scale=alt.Scale(domain=["Yes", "No"], range=["#f2a619", "red"]),
-                    title="Within Interval",
-                )
-                color_bar = alt.value("#e0f2ff")
-
-                tooltip = [
-                    alt.Tooltip("y_test:Q", format="$,d", title="True Price"),
-                    alt.Tooltip("y_pred:Q", format="$,d", title="Predicted Price"),
-                    alt.Tooltip("y_pred_low:Q", format="$,d", title="Predicted Lower Price"),
-                    alt.Tooltip("y_pred_upp:Q", format="$,d", title="Predicted Upper Price"),
-                    alt.Tooltip("y_label:N", title="Within Interval"),
-                ]
-
-                base = (
-                    alt.Chart(df)
-                    .transform_filter(
-                        (1 - alt.datum["alpha"] - cov_tol <= cov_selection)
-                        & (1 - alt.datum["alpha"] + cov_tol >= cov_selection)
+                    color_circle = alt.Color(
+                        "y_label:N",
+                        scale=alt.Scale(domain=["Yes", "No"], range=["#f2a619", "red"]),
+                        title="Within Interval",
                     )
-                    .transform_calculate(
-                        y_label=(
-                            "((datum.y_test >= datum.y_pred_low) & (datum.y_test <= datum.y_pred_upp))"
-                            " ? 'Yes' : 'No'"
+                    color_bar = alt.value("#e0f2ff")
+
+                    tooltip = [
+                        alt.Tooltip("y_test:Q", format="$,d", title="True Price"),
+                        alt.Tooltip("y_pred:Q", format="$,d", title="Predicted Price"),
+                        alt.Tooltip("y_pred_low:Q", format="$,d", title="Predicted Lower Price"),
+                        alt.Tooltip("y_pred_upp:Q", format="$,d", title="Predicted Upper Price"),
+                        alt.Tooltip("y_label:N", title="Within Interval"),
+                    ]
+
+                    base = (
+                        alt.Chart(df)
+                        .transform_filter(
+                            (1 - alt.datum["alpha"] - cov_tol <= cov_selection)
+                            & (1 - alt.datum["alpha"] + cov_tol >= cov_selection)
+                        )
+                        .transform_calculate(
+                            y_label=(
+                                "((datum.y_test >= datum.y_pred_low) & (datum.y_test <= datum.y_pred_upp))"
+                                " ? 'Yes' : 'No'"
+                            )
                         )
                     )
-                )
 
-                circle = (
-                    base.add_params(click)
-                    .mark_circle(size=30)
-                    .encode(
-                        x=alt.X(
-                            "y_pred:Q",
-                            axis=alt.Axis(format="$,d"),
-                            scale=alt.Scale(domain=domain, nice=False),
-                            title="True Prices",
-                        ),
-                        y=alt.Y(
-                            "y_test:Q",
-                            axis=alt.Axis(format="$,d"),
-                            scale=alt.Scale(domain=domain, nice=False),
-                            title="Predicted Prices",
-                        ),
-                        color=alt.condition(click, color_circle, alt.value("lightgray")),
-                        opacity=alt.condition(click, alt.value(1), alt.value(0)),
+                    circle = (
+                        base.add_params(click)
+                        .mark_circle(size=30)
+                        .encode(
+                            x=alt.X(
+                                "y_pred:Q",
+                                axis=alt.Axis(format="$,d"),
+                                scale=alt.Scale(domain=domain, nice=False),
+                                title="True Prices",
+                            ),
+                            y=alt.Y(
+                                "y_test:Q",
+                                axis=alt.Axis(format="$,d"),
+                                scale=alt.Scale(domain=domain, nice=False),
+                                title="Predicted Prices",
+                            ),
+                            color=alt.condition(click, color_circle, alt.value("lightgray")),
+                            opacity=alt.condition(click, alt.value(1), alt.value(0)),
+                            tooltip=tooltip,
+                        )
+                    )
+
+                    bar = base.mark_bar(width=2).encode(
+                        x=alt.X("y_pred:Q", scale=alt.Scale(domain=domain, padding=0), title=""),
+                        y=alt.Y("y_pred_low:Q", scale=alt.Scale(domain=domain, padding=0), title=""),
+                        y2=alt.Y2("y_pred_upp:Q", title=None),
+                        color=alt.condition(click, color_bar, alt.value("lightgray")),
+                        opacity=alt.condition(click, alt.value(0.8), alt.value(0)),
                         tooltip=tooltip,
                     )
-                )
 
-                bar = base.mark_bar(width=2).encode(
-                    x=alt.X("y_pred:Q", scale=alt.Scale(domain=domain, padding=0), title=""),
-                    y=alt.Y("y_pred_low:Q", scale=alt.Scale(clamp=True, domain=domain, padding=0), title=""),
-                    y2=alt.Y2("y_pred_upp:Q", title=None),
-                    color=alt.condition(click, color_bar, alt.value("lightgray")),
-                    opacity=alt.condition(click, alt.value(0.8), alt.value(0)),
-                    tooltip=tooltip,
-                )
-
-                tick = base.mark_tick(orient="horizontal", thickness=1, width=5).encode(
-                    x=alt.X("y_pred:Q", title=""),
-                    color=alt.value("#006aff"),
-                    opacity=alt.condition(click, alt.value(0.4), alt.value(0)),
-                )
-                tick_low = tick.encode(y=alt.Y("y_pred_low:Q", scale=alt.Scale(clamp=True), title=""))
-                tick_upp = tick.encode(y=alt.Y("y_pred_upp:Q", scale=alt.Scale(clamp=True), title=""))
-
-                diagonal = (
-                    alt.Chart(pd.DataFrame({"var1": domain, "var2": domain}))
-                    .mark_line(color="black", opacity=0.4, strokeDash=[2, 2])
-                    .encode(
-                        x=alt.X("var1:Q"),
-                        y=alt.Y("var2:Q"),
+                    tick = base.mark_tick(orient="horizontal", thickness=1, width=5).encode(
+                        x=alt.X("y_pred:Q", title=""),
+                        color=alt.value("#006aff"),
+                        opacity=alt.condition(click, alt.value(0.4), alt.value(0)),
                     )
-                )
+                    tick_low = tick.encode(y=alt.Y("y_pred_low:Q", scale=alt.Scale(clamp=True), title=""))
+                    tick_upp = tick.encode(y=alt.Y("y_pred_upp:Q", scale=alt.Scale(clamp=True), title=""))
 
-                text_coverage = (
-                    base.transform_aggregate(
-                        alpha="mean(alpha)", coverage="mean(coverage)", groupby=["strategy"]
-                    )
-                    .transform_calculate(
-                        coverage_text=(
-                            f"'Coverage: ' + format(datum.coverage * 100, '.1f') + '%'"
-                            f" + ' (target = ' + format((1 - datum.alpha) * 100, '.1f') + '%)'"
+                    diagonal = (
+                        alt.Chart(pd.DataFrame({"var1": domain, "var2": domain}))
+                        .mark_line(color="black", opacity=0.4, strokeDash=[2, 2])
+                        .encode(
+                            x=alt.X("var1:Q"),
+                            y=alt.Y("var2:Q"),
                         )
                     )
-                    .mark_text(align="left", baseline="top")
-                    .encode(
-                        x=alt.value(5),
-                        y=alt.value(5),
-                        text=alt.Text("coverage_text:N"),
-                    )
-                )
-                text_with = (
-                    base.transform_aggregate(width="mean(width)", groupby=["strategy"])
-                    .transform_calculate(
-                        width_text=f"'Interval Width: ' + format({alt.datum['width']}, '$,d')"
-                    )
-                    .mark_text(align="left", baseline="top")
-                    .encode(
-                        x=alt.value(5),
-                        y=alt.value(20),
-                        text=alt.Text("width_text:N"),
-                    )
-                )
 
-                chart = (bar + tick_low + tick_upp + circle + diagonal + text_coverage + text_with).add_params(
-                    cov_selection
-                )
+                    text_coverage = (
+                        base.transform_aggregate(
+                            alpha="mean(alpha)", coverage="mean(coverage)", groupby=["strategy"]
+                        )
+                        .transform_calculate(
+                            coverage_text=(
+                                f"'Coverage: ' + format(datum.coverage * 100, '.1f') + '%'"
+                                f" + ' (target = ' + format((1 - datum.alpha) * 100, '.1f') + '%)'"
+                            )
+                        )
+                        .mark_text(align="left", baseline="top")
+                        .encode(
+                            x=alt.value(5),
+                            y=alt.value(5),
+                            text=alt.Text("coverage_text:N"),
+                        )
+                    )
+                    text_with = (
+                        base.transform_aggregate(width="mean(width)", groupby=["strategy"])
+                        .transform_calculate(
+                            width_text=f"'Interval Width: ' + format({alt.datum['width']}, '$,d')"
+                        )
+                        .mark_text(align="left", baseline="top")
+                        .encode(
+                            x=alt.value(5),
+                            y=alt.value(20),
+                            text=alt.Text("width_text:N"),
+                        )
+                    )
+
+                    chart = (
+                        bar + tick_low + tick_upp + circle + diagonal + text_coverage + text_with
+                    ).add_params(cov_selection)
+
+                    return chart
+
+                chart = alt.hconcat()
+                for strategy in strategies.keys():
+                    domain = [
+                        int(np.min((df[["y_test", "y_pred"]].min(axis=0)))),  # min of all axes
+                        int(np.max((df[["y_test", "y_pred"]].max(axis=0)))),  # max of all axes
+                    ]
+                    df_i = df.query(f"strategy == '{strategy}'").reset_index(drop=True)
+                    base = plot_prediction_intervals(df_i, domain)
+                    chart |= base.properties(height=225, width=300, title=strategies[strategy])
 
                 return chart
 
 
-            chart = alt.hconcat()
-            for strategy in strategies.keys():
-                domain = [
-                    int(np.min((df[["y_test", "y_pred"]].min(axis=0)))),  # min of all axes
-                    int(np.max((df[["y_test", "y_pred"]].max(axis=0)))),  # max of all axes
-                ]
-                df_i = df.query(f"strategy == '{strategy}'").reset_index(drop=True)
-                base = plot_prediction_intervals(df_i, domain)
-                chart |= base.properties(height=225, width=300, title=strategies[strategy])
+            chart = plot_prediction_intervals_by_strategy(df)
             chart

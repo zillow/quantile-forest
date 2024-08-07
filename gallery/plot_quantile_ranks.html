@@ -410,7 +410,9 @@ document.write(`
 <p>This example demonstrates the use of quantile regression forest (QRF) quantile
 ranks to identify potential outlier samples. In this scenario, we train a QRF
 model on a toy dataset and use quantile ranks to highlight values that deviate
-significantly from the expected range.</p>
+significantly from the expected range. Potential outliers are defined as
+points whose quantile rank falls outside the specified threshold interval
+around the median.</p>
 
 <div id="plot_quantile_ranks-rst-altair-plot-0">
 <script>
@@ -506,6 +508,7 @@ significantly from the expected range.</p>
         <span class="n">y</span><span class="o">=</span><span class="n">alt</span><span class="o">.</span><span class="n">Y</span><span class="p">(</span><span class="s2">&quot;y_pred:Q&quot;</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="n">alt</span><span class="o">.</span><span class="n">Axis</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s2">&quot;f(x)&quot;</span><span class="p">)),</span>
     <span class="p">)</span>
 
+    <span class="c1"># For desired legend labels.</span>
     <span class="n">dummy_legend</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">base</span><span class="o">.</span><span class="n">mark_line</span><span class="p">(</span><span class="n">opacity</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
         <span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">opacity</span><span class="o">=</span><span class="n">alt</span><span class="o">.</span><span class="n">Opacity</span><span class="p">(</span><span class="s2">&quot;model:N&quot;</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">alt</span><span class="o">.</span><span class="n">Scale</span><span class="p">(</span><span class="nb">range</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]),</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Prediction&quot;</span><span class="p">))</span>
