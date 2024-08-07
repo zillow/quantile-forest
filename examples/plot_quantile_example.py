@@ -14,6 +14,7 @@ from sklearn.model_selection import train_test_split
 
 from quantile_forest import RandomForestQuantileRegressor
 
+random_seed = 0
 n_samples = 1000
 bounds = [0, 10]
 quantiles = [0.025, 0.5, 0.975]
@@ -33,12 +34,12 @@ def make_toy_dataset(n_samples, bounds, add_noise=True, random_seed=0):
 
 
 # Create noisy data for modeling and non-noisy function data for illustration.
-X, y = make_toy_dataset(n_samples, bounds, add_noise=True, random_seed=0)
-X_func, y_func = make_toy_dataset(n_samples, bounds, add_noise=False, random_seed=0)
+X, y = make_toy_dataset(n_samples, bounds, add_noise=True, random_seed=random_seed)
+X_func, y_func = make_toy_dataset(n_samples, bounds, add_noise=False, random_seed=random_seed)
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=random_seed)
 
-qrf = RandomForestQuantileRegressor(max_depth=3, min_samples_leaf=5, random_state=0)
+qrf = RandomForestQuantileRegressor(max_depth=3, min_samples_leaf=5, random_state=random_seed)
 qrf.fit(X_train, y_train)
 
 y_pred_func = qrf.predict(X_func, quantiles=quantiles)
@@ -133,7 +134,7 @@ def plot_fit_and_intervals(df):
     chart = (
         (area_pred + points + line_true + line_pred + blank)
         .resolve_scale(color="independent")
-        .properties(height=400, width=650)
+        .properties(height=400, width=650, title="QRF Predictions vs. Ground Truth on Toy Dataset")
     )
 
     return chart

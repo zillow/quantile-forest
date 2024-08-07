@@ -25,7 +25,8 @@ from sklearn.utils.validation import check_random_state
 
 from quantile_forest import RandomForestQuantileRegressor
 
-rng = check_random_state(0)
+random_seed = 0
+rng = check_random_state(random_seed)
 
 n_test_samples = 25
 noise_std = 0.1
@@ -33,13 +34,17 @@ noise_std = 0.1
 # Load the Digits dataset.
 X, y = datasets.load_digits(return_X_y=True, as_frame=True)
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=n_test_samples, random_state=0)
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=n_test_samples, random_state=random_seed
+)
 
 
 def add_gaussian_noise(X, mean=0, std=0.1, random_state=None):
     """Add Gaussian noise to input data."""
     if random_state is None:
         rng = check_random_state(0)
+    elif isinstance(random_state, int):
+        rng = check_random_state(random_state)
     else:
         rng = random_state
 
@@ -73,13 +78,13 @@ def extract_floats(combined_df, scale=100):
 
 
 # Randomly add noise to the training and test data.
-X_train_noisy = X_train.pipe(add_gaussian_noise, std=noise_std, random_state=rng)
-X_test_noisy = X_test.pipe(add_gaussian_noise, std=noise_std, random_state=rng)
+X_train_noisy = X_train.pipe(add_gaussian_noise, std=noise_std, random_state=random_seed)
+X_test_noisy = X_test.pipe(add_gaussian_noise, std=noise_std, random_state=random_seed)
 
 # We set `max_samples_leaf=None` to ensure that every sample in the training
 # data is stored in the leaf nodes. By doing this, we allow the model to
 # consider all samples as potential candidates for proximity calculations.
-qrf = RandomForestQuantileRegressor(max_samples_leaf=None, random_state=0)
+qrf = RandomForestQuantileRegressor(max_samples_leaf=None, random_state=random_seed)
 qrf.fit(X_train_noisy, X_train)
 
 # Get the proximity counts.
@@ -177,6 +182,7 @@ def plot_digits_proximities(
             color=alt.Color("value_clean:Q", legend=None, scale=alt.Scale(scheme="greys")),
             opacity=alt.condition(alt.datum["value_clean"] == 0, alt.value(0), alt.value(0.67)),
             tooltip=[
+                alt.Tooltip("prox_idx", title="Proximity Index"),
                 alt.Tooltip("prox_cnt", title="Proximity Count"),
                 alt.Tooltip("target:Q", title="Digit"),
             ],

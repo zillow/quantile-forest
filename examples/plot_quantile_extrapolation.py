@@ -19,10 +19,12 @@ import math
 import altair as alt
 import numpy as np
 import pandas as pd
+from sklearn.utils.validation import check_random_state
 
 from quantile_forest import RandomForestQuantileRegressor
 
-np.random.seed(0)
+random_seed = 0
+rng = check_random_state(random_seed)
 
 n_samples = 500
 bounds = [0, 15]
@@ -31,14 +33,15 @@ func = lambda x: x * np.sin(x)
 func_str = "f(x) = x sin(x)"
 
 quantiles = [0.025, 0.975, 0.5]
-qrf_params = {"max_samples_leaf": None, "min_samples_leaf": 4, "random_state": 0}
+qrf_params = {"max_samples_leaf": None, "min_samples_leaf": 4, "random_state": random_seed}
 
 
-def make_func_Xy(func, bounds, n_samples):
+def make_func_Xy(func, bounds, n_samples, random_seed=0):
+    rng = np.random.RandomState(random_seed)
     x = np.linspace(bounds[0], bounds[1], n_samples)
     f = func(x)
     std = 0.01 + np.abs(x - 5.0) / 5.0
-    noise = np.random.normal(scale=std)
+    noise = rng.normal(scale=std)
     y = f + noise
     return np.atleast_2d(x).T, y
 
@@ -103,7 +106,7 @@ class Xtrapolation:
         return deriv_mat
 
     @staticmethod
-    def _get_tree_weight_matrix(X, Y, X_eval=None, n_trees=100, **kwargs):
+    def _get_tree_weight_matrix(X, Y, X_eval=None, n_trees=100, rng=None, **kwargs):
         """Fit forest and extract weights.
 
         This implementation extracts the weight matrix from a list of quantile
@@ -117,6 +120,8 @@ class Xtrapolation:
         if "random_state" in kwargs:
             del kwargs["random_state"]
         kwargs["bootstrap"] = False
+
+        rng = np.random.RandomState(0) if rng is None else rng
 
         trees = [RandomForestQuantileRegressor(random_state=i, **kwargs) for i in range(n_trees)]
 
@@ -132,7 +137,7 @@ class Xtrapolation:
 
         for tree in trees:
             # Draw bootstrap sample.
-            boot_sample = np.random.choice(np.arange(n), bn, replace=False)
+            boot_sample = rng.choice(np.arange(n), bn, replace=False)
             split1 = boot_sample[: int(bn / 2)]
             split2 = np.concatenate([boot_sample[int(bn / 2) :], np.arange(nn) + n])
 
@@ -155,7 +160,7 @@ class Xtrapolation:
 
         return weight_mat
 
-    def fit_weights(self, X, fval, x0=None, train=False, **kwargs):
+    def fit_weights(self, X, fval, x0=None, train=False, rng=None, **kwargs):
         """Compute random forest weights for derivative estimation."""
         n, d = X.shape
         fval = fval.flatten()
@@ -167,19 +172,21 @@ class Xtrapolation:
             for jj, var in enumerate(xtra_features):
                 var_order = list(range(d))
                 var_order = np.array([var] + var_order[:var] + var_order[var + 1 :])
-                weights[jj] = self._get_tree_weight_matrix(X[:, var_order], fval, x0, **kwargs)
+                weights[jj] = self._get_tree_weight_matrix(
+                    X[:, var_order], fval, x0, rng=rng, **kwargs
+                )
         else:
-            weights = self._get_tree_weight_matrix(X, fval, x0, **kwargs)[n:, :n]
+            weights = self._get_tree_weight_matrix(X, fval, x0, rng=rng, **kwargs)[n:, :n]
 
         return weights
 
-    def fit_derivatives(self, X, fval, pen=0.1, **kwargs):
+    def fit_derivatives(self, X, fval, pen=0.1, rng=None, **kwargs):
         """Estimate derivatives."""
         n, d = X.shape
         fval = fval.flatten()
 
         # Fit weights for local polynomial.
-        weights = self.fit_weights(X, fval, train=True, **kwargs)
+        weights = self.fit_weights(X, fval, train=True, rng=rng, **kwargs)
 
         # Estimate derivatives with local polynomial.
         derivatives = np.zeros((self.max_order_ + 1, n, d))
@@ -203,7 +210,7 @@ class Xtrapolation:
 
         return derivatives
 
-    def prediction_bounds(self, X, fval, x0, nn=50, **kwargs):
+    def prediction_bounds(self, X, fval, x0, nn=50, rng=None, **kwargs):
         """Compute extrapolation bounds."""
         n, d = X.shape
         fval = fval.flatten()
@@ -213,7 +220,7 @@ class Xtrapolation:
         xtra_features = list(range(d))
 
         # Fit derivatives.
-        derivatives = self.fit_derivatives(X, fval, **kwargs)
+        derivatives = self.fit_derivatives(X, fval, rng=rng, **kwargs)
 
         # Determine weighting for extrapolation points (using rotation).
         mu = derivatives[1].mean(axis=0)
@@ -293,7 +300,7 @@ class Xtrapolation:
         return bounds
 
 
-def train_test_split(train_indices, **kwargs):
+def train_test_split(train_indices, rng=None, **kwargs):
     """Fit model on training samples and extrapolate on test samples."""
     X_train = X[train_indices, :]
     y_train = y[train_indices]
@@ -308,7 +315,9 @@ def train_test_split(train_indices, **kwargs):
     for i in range(len(quantiles)):
         # Run Xtrapolation on quantile.
         xtra = Xtrapolation()
-        bounds_list[i] = xtra.prediction_bounds(X_train, qmat[train_indices, i], X, **kwargs)
+        bounds_list[i] = xtra.prediction_bounds(
+            X_train, qmat[train_indices, i], X, rng=rng, **kwargs
+        )
 
     return {
         "train_indices": train_indices,
@@ -331,33 +340,34 @@ def prob_randomized_pi(qmat, y, coverage):
     return prob_si
 
 
-def randomized_pi(qmat, prob_si, y):
+def randomized_pi(qmat, prob_si, y, random_state=None):
     """Calculate coverage."""
-    si_index = np.random.choice([False, True], len(y), replace=True, p=[prob_si, 1 - prob_si])
+    rng = np.random.RandomState(0) if random_state is None else random_state
+    si_index = rng.choice([False, True], len(y), replace=True, p=[prob_si, 1 - prob_si])
     included = (qmat[:, 0] < y) & (y < qmat[:, 1])
     boundary = (qmat[:, 0] == y) | (qmat[:, 1] == y)
     return included | (boundary & si_index)
 
 
-def get_coverage_qrf(qmat, train_indices, test_indices, y_train, level):
+def get_coverage_qrf(qmat, train_indices, test_indices, y_train, level, *args):
     """Calculate extrapolation coverage for regular quantile forest."""
     prob_si = prob_randomized_pi(qmat[train_indices, :], y_train, level)
-    qrf = randomized_pi(qmat, prob_si, y)
+    qrf = randomized_pi(qmat, prob_si, y, *args)
     return np.mean(qrf[test_indices])
 
 
-def get_coverage_xtr(bounds_list, train_indices, test_indices, y_train, level):
+def get_coverage_xtr(bounds_list, train_indices, test_indices, y_train, level, *args):
     """Calculate extrapolation coverage for Xtrapolation."""
     bb_low = np.max(bounds_list[0][:, :, 0], axis=1)
     bb_upp = np.min(bounds_list[1][:, :, 1], axis=1)
     bb_low_train, bb_upp_train = bb_low[train_indices], bb_upp[train_indices]
     prob_si = prob_randomized_pi(np.c_[bb_low_train, bb_upp_train], y_train, level)
-    xtra = randomized_pi(np.c_[bb_low, bb_upp], prob_si, y)
+    xtra = randomized_pi(np.c_[bb_low, bb_upp], prob_si, y, *args)
     return np.mean(xtra[test_indices])
 
 
 # Create the full dataset.
-X, y = make_func_Xy(func, bounds, n_samples)
+X, y = make_func_Xy(func, bounds, n_samples, random_seed=random_seed)
 
 # Fit and extrapolate based on train-test split (depending on X).
 extrap_min_idx = int(n_samples * (extrap_frac / 2))
@@ -365,10 +375,10 @@ extrap_max_idx = int(n_samples - (n_samples * (extrap_frac / 2)))
 sort_X = np.argsort(X.squeeze())
 train_indices = np.repeat(False, len(y))
 train_indices[sort_X[extrap_min_idx] : sort_X[extrap_max_idx]] = True
-res = train_test_split(train_indices, **qrf_params)
+res = train_test_split(train_indices, rng=rng, **qrf_params)
 
 # Get coverages on extrapolated samples.
-args = (train_indices, ~train_indices, y[train_indices], quantiles[1] - quantiles[0])
+args = (train_indices, ~train_indices, y[train_indices], quantiles[1] - quantiles[0], rng)
 cov_qrf = get_coverage_qrf(res["qmat"], *args)
 cov_xtr = get_coverage_xtr(res["bounds_list"], *args)
 

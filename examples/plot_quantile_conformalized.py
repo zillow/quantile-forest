@@ -25,31 +25,31 @@ from quantile_forest import RandomForestQuantileRegressor
 
 alt.data_transformers.disable_max_rows()
 
+random_seed = 0
+rng = check_random_state(random_seed)
+
+n_samples = 1000
+coverages = np.linspace(0, 1, num=11, endpoint=True).round(1).tolist()  # the "coverage level"
+
 strategies = {
     "qrf": "Quantile Regression Forest (QRF)",
     "cqr": "Conformalized Quantile Regression (CQR)",
 }
 
-random_state = 0
-rng = check_random_state(random_state)
-
-coverages = np.arange(0, 1.1, 0.1).round(1).tolist()  # the "coverage level"
-
 # Load the California Housing Prices dataset.
-california = datasets.fetch_california_housing()
-n_samples = min(california.target.size, 1000)
-perm = rng.permutation(n_samples)
-X = california.data[perm]
-y = california.target[perm]
+X, y = datasets.fetch_california_housing(as_frame=True, return_X_y=True)
+perm = rng.permutation(min(len(X), n_samples))
+X = X.iloc[perm]
+y = y.iloc[perm]
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=random_seed)
 
 
 def sort_y_values(y_test, y_pred, y_pis):
     """Sort the target values and predictions."""
     indices = np.argsort(y_test)
     return {
-        "y_test": y_test[indices],
+        "y_test": np.asarray(y_test)[indices],
         "y_pred": y_pred[indices],
         "y_pred_low": y_pis[:, 0][indices],
         "y_pred_upp": y_pis[:, 1][indices],
@@ -68,10 +68,10 @@ def mean_width_score(y_pred_low, y_pred_upp):
     return float(mean_width)
 
 
-def qrf_strategy(alpha, X_train, X_test, y_train, y_test):
+def qrf_strategy(alpha, X_train, X_test, y_train, y_test, random_state=None):
     quantiles = [alpha / 2, 1 - alpha / 2]
 
-    qrf = RandomForestQuantileRegressor(random_state=0)
+    qrf = RandomForestQuantileRegressor(random_state=random_state)
     qrf.fit(X_train, y_train)
 
     # Calculate the lower and upper quantile values on the test data.
@@ -88,15 +88,15 @@ def qrf_strategy(alpha, X_train, X_test, y_train, y_test):
     return pd.DataFrame(y_values).pipe(lambda x: x * 100_000).assign(strategy="qrf")
 
 
-def cqr_strategy(alpha, X_train, X_test, y_train, y_test):
+def cqr_strategy(alpha, X_train, X_test, y_train, y_test, random_state=None):
     quantiles = [alpha / 2, 1 - alpha / 2]
 
     # Create calibration set.
     X_train, X_calib, y_train, y_calib = train_test_split(
-        X_train, y_train, test_size=0.5, random_state=0
+        X_train, y_train, test_size=0.5, random_state=random_state
     )
 
-    qrf = RandomForestQuantileRegressor(random_state=0)
+    qrf = RandomForestQuantileRegressor(random_state=random_state)
     qrf.fit(X_train, y_train)
 
     # Calculate the lower and upper quantile values on the test data.
@@ -134,7 +134,7 @@ def cqr_strategy(alpha, X_train, X_test, y_train, y_test):
 dfs = []
 for cov_frac in coverages:
     alpha = float(round(1 - cov_frac, 2))
-    args = (alpha, X_train, X_test, y_train, y_test)
+    args = (alpha, X_train, X_test, y_train, y_test, random_seed)
     dfs.append(pd.concat([qrf_strategy(*args), cqr_strategy(*args)]).assign(alpha=alpha))
 df = pd.concat(dfs)
 

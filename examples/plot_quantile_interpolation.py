@@ -16,7 +16,8 @@ import pandas as pd
 
 from quantile_forest import RandomForestQuantileRegressor
 
-intervals = np.arange(0, 1.01, 0.01).round(2).tolist()
+random_seed = 0
+intervals = np.linspace(0, 1, num=101, endpoint=True).round(2).tolist()
 
 # Create toy dataset.
 X = np.array([[-1, -1], [-1, -1], [-1, -1], [1, 1], [1, 1]])
@@ -26,7 +27,7 @@ qrf = RandomForestQuantileRegressor(
     n_estimators=1,
     max_samples_leaf=None,
     bootstrap=False,
-    random_state=0,
+    random_state=random_seed,
 )
 qrf.fit(X, y)
 
@@ -134,9 +135,9 @@ def plot_interpolations(df, legend):
         (area + point)
         .add_params(interval_selection, click)
         .transform_filter(
-            "(datum.quantile_low == round((0.5 - interval / 2) * 1000) / 1000)"
+            "(datum.method == 'Actual')"
+            "| (datum.quantile_low == round((0.5 - interval / 2) * 1000) / 1000)"
             "| (datum.quantile_upp == round((0.5 + interval / 2) * 1000) / 1000)"
-            "| (datum.method == 'Actual')"
         )
         .properties(height=400)
         .facet(
@@ -144,11 +145,13 @@ def plot_interpolations(df, legend):
                 "X:N",
                 header=alt.Header(labelOrient="bottom", titleOrient="bottom"),
                 title="Samples (Feature Values)",
-            )
+            ),
+            title="QRF Prediction Intervals by Quantile Interpolation on Toy Dataset",
         )
         .configure_facet(spacing=15)
         .configure_range(category=alt.RangeScheme(list(legend.values())))
         .configure_scale(bandPaddingInner=0.9)
+        .configure_title(anchor="middle")
         .configure_view(stroke=None)
     )
 

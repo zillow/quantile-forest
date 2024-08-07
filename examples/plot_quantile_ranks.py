@@ -16,6 +16,7 @@ import pandas as pd
 
 from quantile_forest import RandomForestQuantileRegressor
 
+random_seed = 0
 n_samples = 5000
 bounds = [0, 10]
 
@@ -28,9 +29,9 @@ def make_toy_dataset(n_samples, bounds, random_seed=0):
     return X, y
 
 
-X, y = make_toy_dataset(n_samples, bounds, random_seed=0)
+X, y = make_toy_dataset(n_samples, bounds, random_seed=random_seed)
 
-params = {"max_samples_leaf": None, "min_samples_leaf": 50, "random_state": 0}
+params = {"max_samples_leaf": None, "min_samples_leaf": 50, "random_state": random_seed}
 qrf = RandomForestQuantileRegressor(**params).fit(X, y)
 
 y_pred = qrf.predict(X, quantiles=0.5)
@@ -94,7 +95,9 @@ def plot_fit_and_ranks(df):
     )
 
     chart = (dummy_legend + points + line_pred).properties(
-        height=400, width=650, title="QRF Predictions with Quantile Rank Thresholding"
+        height=400,
+        width=650,
+        title="QRF Predictions with Quantile Rank Thresholding on Toy Dataset",
     )
 
     return chart

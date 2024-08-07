@@ -22,9 +22,10 @@ from sklearn.model_selection import train_test_split
 
 from quantile_forest import RandomForestQuantileRegressor
 
+random_seed = 0
 n_samples = 500
 test_idx = 0
-quantiles = np.arange(0, 1.1, 0.1).round(1).tolist()
+quantiles = np.linspace(0, 1, num=11, endpoint=True).round(1).tolist()
 
 
 def get_shap_values(qrf, X, quantile=0.5, **kwargs):
@@ -69,9 +70,9 @@ X, y = datasets.fetch_california_housing(as_frame=True, return_X_y=True)
 X = X.iloc[:n_samples]
 y = y[:n_samples]
 y *= 100_000  # convert to dollars
-X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=random_seed)
 
-qrf = RandomForestQuantileRegressor(random_state=0)
+qrf = RandomForestQuantileRegressor(random_state=random_seed)
 qrf.fit(X_train, y_train)
 
 df = pd.concat(
@@ -103,7 +104,7 @@ def plot_shap_waterfall_with_quantiles(df, height=300):
         min=0,
         max=1,
         step=0.5 if len(quantiles) == 1 else 1 / (len(quantiles) - 1),
-        name="Quantile: ",
+        name="Predicted Quantile: ",
     )
 
     q_val = alt.selection_point(
