@@ -40,15 +40,17 @@ longitude of each instance. The model used is available on Hugging Face Hub
 
     alt.data_transformers.disable_max_rows()
 
+    random_seed = 0
+
     token = "<Hugging Face Access Token>"
     repo_id = "quantile-forest/california-housing-example"
     load_existing = True
 
-    quantiles = np.arange(0, 1.25, 0.25).round(2).tolist()
+    quantiles = np.linspace(0, 1, num=5, endpoint=True).round(2).tolist()
     sample_frac = 1
 
 
-    def fit_and_upload_model(token, repo_id, local_dir="./local_repo"):
+    def fit_and_upload_model(token, repo_id, local_dir="./local_repo", random_state=None):
         """Function used to fit the model and upload it to Hugging Face Hub."""
         from pathlib import Path
 
@@ -62,10 +64,10 @@ longitude of each instance. The model used is available on Hugging Face Hub
         from skops import card
 
         X, y = datasets.fetch_california_housing(as_frame=True, return_X_y=True)
-        X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+        X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=random_state)
 
         # Fit the model.
-        qrf = RandomForestQuantileRegressor(random_state=0).fit(X_train, y_train)
+        qrf = RandomForestQuantileRegressor(random_state=random_state).fit(X_train, y_train)
 
         # Save the model to a file.
         model_filename = "model.pkl"
@@ -158,7 +160,7 @@ longitude of each instance. The model used is available on Hugging Face Hub
 
 
     if not load_existing:
-        fit_and_upload_model(token, repo_id)
+        fit_and_upload_model(token, repo_id, random_state=random_seed)
 
     # Download the repository locally.
     local_dir = "./local_repo"
@@ -179,7 +181,7 @@ longitude of each instance. The model used is available on Hugging Face Hub
     df = (
         pd.DataFrame(y_pred, columns=quantiles)
         .reset_index()
-        .sample(frac=sample_frac, random_state=0)
+        .sample(frac=sample_frac, random_state=random_seed)
         .melt(id_vars=["index"], var_name="quantile", value_name="value")
         .merge(X[["Latitude", "Longitude", "Population"]].reset_index(), on="index", how="right")
     )
@@ -191,7 +193,7 @@ longitude of each instance. The model used is available on Hugging Face Hub
             min=0,
             max=1,
             step=0.5 if len(quantiles) == 1 else 1 / (len(quantiles) - 1),
-            name="Quantile: ",
+            name="Predicted Quantile: ",
         )
 
         q_val = alt.selection_point(
@@ -230,7 +232,7 @@ longitude of each instance. The model used is available on Hugging Face Hub
             .properties(
                 height=650,
                 width=650,
-                title="Quantile Estimates on the California Housing Dataset",
+                title="Quantile Predictions on the California Housing Dataset",
             )
         )
         return chart
@@ -258,15 +260,17 @@ longitude of each instance. The model used is available on Hugging Face Hub
 
             alt.data_transformers.disable_max_rows()
 
+            random_seed = 0
+
             token = "<Hugging Face Access Token>"
             repo_id = "quantile-forest/california-housing-example"
             load_existing = True
 
-            quantiles = np.arange(0, 1.25, 0.25).round(2).tolist()
+            quantiles = np.linspace(0, 1, num=5, endpoint=True).round(2).tolist()
             sample_frac = 1
 
 
-            def fit_and_upload_model(token, repo_id, local_dir="./local_repo"):
+            def fit_and_upload_model(token, repo_id, local_dir="./local_repo", random_state=None):
                 """Function used to fit the model and upload it to Hugging Face Hub."""
                 from pathlib import Path
 
@@ -280,10 +284,10 @@ longitude of each instance. The model used is available on Hugging Face Hub
                 from skops import card
 
                 X, y = datasets.fetch_california_housing(as_frame=True, return_X_y=True)
-                X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+                X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=random_state)
 
                 # Fit the model.
-                qrf = RandomForestQuantileRegressor(random_state=0).fit(X_train, y_train)
+                qrf = RandomForestQuantileRegressor(random_state=random_state).fit(X_train, y_train)
 
                 # Save the model to a file.
                 model_filename = "model.pkl"
@@ -376,7 +380,7 @@ longitude of each instance. The model used is available on Hugging Face Hub
 
 
             if not load_existing:
-                fit_and_upload_model(token, repo_id)
+                fit_and_upload_model(token, repo_id, random_state=random_seed)
 
             # Download the repository locally.
             local_dir = "./local_repo"
@@ -397,7 +401,7 @@ longitude of each instance. The model used is available on Hugging Face Hub
             df = (
                 pd.DataFrame(y_pred, columns=quantiles)
                 .reset_index()
-                .sample(frac=sample_frac, random_state=0)
+                .sample(frac=sample_frac, random_state=random_seed)
                 .melt(id_vars=["index"], var_name="quantile", value_name="value")
                 .merge(X[["Latitude", "Longitude", "Population"]].reset_index(), on="index", how="right")
             )
@@ -409,7 +413,7 @@ longitude of each instance. The model used is available on Hugging Face Hub
                     min=0,
                     max=1,
                     step=0.5 if len(quantiles) == 1 else 1 / (len(quantiles) - 1),
-                    name="Quantile: ",
+                    name="Predicted Quantile: ",
                 )
 
                 q_val = alt.selection_point(
@@ -448,7 +452,7 @@ longitude of each instance. The model used is available on Hugging Face Hub
                     .properties(
                         height=650,
                         width=650,
-                        title="Quantile Estimates on the California Housing Dataset",
+                        title="Quantile Predictions on the California Housing Dataset",
                     )
                 )
                 return chart

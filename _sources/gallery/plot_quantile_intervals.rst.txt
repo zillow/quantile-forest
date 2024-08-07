@@ -30,16 +30,18 @@ Figure 3 of `"Quantile Regression Forests"
 
     from quantile_forest import RandomForestQuantileRegressor
 
-    rng = check_random_state(0)
+    random_seed = 0
+    rng = check_random_state(random_seed)
+
+    n_samples = 1000
 
     # Load the California Housing Prices dataset.
-    california = datasets.fetch_california_housing()
-    n_samples = min(california.target.size, 1000)
-    perm = rng.permutation(n_samples)
-    X = california.data[perm]
-    y = california.target[perm]
+    X, y = datasets.fetch_california_housing(as_frame=True, return_X_y=True)
+    perm = rng.permutation(min(len(X), n_samples))
+    X = X.iloc[perm]
+    y = y.iloc[perm]
 
-    qrf = RandomForestQuantileRegressor(n_estimators=100, random_state=0)
+    qrf = RandomForestQuantileRegressor(random_state=random_seed)
 
     kf = KFold(n_splits=5)
     kf.get_n_splits(X)
@@ -47,8 +49,8 @@ Figure 3 of `"Quantile Regression Forests"
     # Using k-fold cross-validation, get predictions for all samples.
     data = {"y_true": [], "y_pred": [], "y_pred_low": [], "y_pred_upp": []}
     for train_index, test_index in kf.split(X):
-        X_train, y_train = X[train_index], y[train_index]
-        X_test, y_test = X[test_index], y[test_index]
+        X_train, y_train = X.iloc[train_index], y.iloc[train_index]
+        X_test, y_test = X.iloc[test_index], y.iloc[test_index]
 
         qrf.set_params(max_features=X_train.shape[1] // 3)
         qrf.fit(X_train, y_train)
@@ -212,16 +214,18 @@ Figure 3 of `"Quantile Regression Forests"
 
             from quantile_forest import RandomForestQuantileRegressor
 
-            rng = check_random_state(0)
+            random_seed = 0
+            rng = check_random_state(random_seed)
+
+            n_samples = 1000
 
             # Load the California Housing Prices dataset.
-            california = datasets.fetch_california_housing()
-            n_samples = min(california.target.size, 1000)
-            perm = rng.permutation(n_samples)
-            X = california.data[perm]
-            y = california.target[perm]
+            X, y = datasets.fetch_california_housing(as_frame=True, return_X_y=True)
+            perm = rng.permutation(min(len(X), n_samples))
+            X = X.iloc[perm]
+            y = y.iloc[perm]
 
-            qrf = RandomForestQuantileRegressor(n_estimators=100, random_state=0)
+            qrf = RandomForestQuantileRegressor(random_state=random_seed)
 
             kf = KFold(n_splits=5)
             kf.get_n_splits(X)
@@ -229,8 +233,8 @@ Figure 3 of `"Quantile Regression Forests"
             # Using k-fold cross-validation, get predictions for all samples.
             data = {"y_true": [], "y_pred": [], "y_pred_low": [], "y_pred_upp": []}
             for train_index, test_index in kf.split(X):
-                X_train, y_train = X[train_index], y[train_index]
-                X_test, y_test = X[test_index], y[test_index]
+                X_train, y_train = X.iloc[train_index], y.iloc[train_index]
+                X_test, y_test = X.iloc[test_index], y.iloc[test_index]
 
                 qrf.set_params(max_features=X_train.shape[1] // 3)
                 qrf.fit(X_train, y_train)
