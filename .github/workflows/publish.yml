@@ -1,11 +1,6 @@
 name: publish
 
-on:
-  push:
-    branches:
-      - main
-    tags:
-      - 'v*.*.*'
+on: push
 
 jobs:
   build_wheels:
