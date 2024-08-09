@@ -60,12 +60,6 @@ def plot_fit_and_ranks(df):
 
     base = alt.Chart(df)
 
-    color_points = alt.Color(
-        "outlier:N",
-        scale=alt.Scale(domain=["Yes", "No"], range=["red", "#f2a619"]),
-        title="Outlier",
-    )
-
     points = (
         base.add_params(interval_selection, click)
         .transform_calculate(
@@ -75,7 +69,15 @@ def plot_fit_and_ranks(df):
         .encode(
             x=alt.X("x:Q"),
             y=alt.Y("y:Q"),
-            color=alt.condition(click, color_points, alt.value("lightgray")),
+            color=alt.condition(
+                click,
+                alt.Color(
+                    "outlier:N",
+                    scale=alt.Scale(domain=["Yes", "No"], range=["red", "#f2a619"]),
+                    title="Outlier",
+                ),
+                alt.value("lightgray"),
+            ),
             tooltip=[
                 alt.Tooltip("x:Q", format=".3f", title="x"),
                 alt.Tooltip("y:Q", format=".3f", title="f(x)"),

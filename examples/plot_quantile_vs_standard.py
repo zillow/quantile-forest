@@ -76,12 +76,6 @@ def plot_prediction_histograms(df, legend):
 
     click = alt.selection_point(fields=["label"], bind="legend")
 
-    color = alt.condition(
-        click,
-        alt.Color("label:N", sort=list(legend.keys()), title=None),
-        alt.value("lightgray"),
-    )
-
     chart = (
         alt.Chart(df)
         .add_params(quantile_selection, click)
@@ -102,7 +96,11 @@ def plot_prediction_histograms(df, legend):
                 title="Actual and Predicted Target Values",
             ),
             y=alt.Y("count():Q", axis=alt.Axis(format=",d", title="Counts")),
-            color=color,
+            color=alt.condition(
+                click,
+                alt.Color("label:N", sort=list(legend.keys()), title=None),
+                alt.value("lightgray"),
+            ),
             xOffset=alt.XOffset("label:N"),
             tooltip=[
                 alt.Tooltip("label:N", title="Label"),

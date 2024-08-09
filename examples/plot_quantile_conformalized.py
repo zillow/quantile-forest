@@ -165,13 +165,6 @@ def plot_prediction_intervals_by_strategy(df):
 
         click = alt.selection_point(fields=["y_label"], bind="legend")
 
-        color_circle = alt.Color(
-            "y_label:N",
-            scale=alt.Scale(domain=["Yes", "No"], range=["#f2a619", "red"]),
-            title="Within Interval",
-        )
-        color_bar = alt.value("#e0f2ff")
-
         tooltip = [
             alt.Tooltip("y_test:Q", format="$,d", title="True Price"),
             alt.Tooltip("y_pred:Q", format="$,d", title="Predicted Price"),
@@ -210,7 +203,15 @@ def plot_prediction_intervals_by_strategy(df):
                     scale=alt.Scale(domain=domain, nice=False),
                     title="Predicted Prices",
                 ),
-                color=alt.condition(click, color_circle, alt.value("lightgray")),
+                color=alt.condition(
+                    click,
+                    alt.Color(
+                        "y_label:N",
+                        scale=alt.Scale(domain=["Yes", "No"], range=["#f2a619", "red"]),
+                        title="Within Interval",
+                    ),
+                    alt.value("lightgray"),
+                ),
                 opacity=alt.condition(click, alt.value(1), alt.value(0)),
                 tooltip=tooltip,
             )
@@ -220,7 +221,7 @@ def plot_prediction_intervals_by_strategy(df):
             x=alt.X("y_pred:Q", scale=alt.Scale(domain=domain, padding=0), title=""),
             y=alt.Y("y_pred_low:Q", scale=alt.Scale(domain=domain, padding=0), title=""),
             y2=alt.Y2("y_pred_upp:Q", title=None),
-            color=alt.condition(click, color_bar, alt.value("lightgray")),
+            color=alt.condition(click, alt.value("#e0f2ff"), alt.value("lightgray")),
             opacity=alt.condition(click, alt.value(0.8), alt.value(0)),
             tooltip=tooltip,
         )

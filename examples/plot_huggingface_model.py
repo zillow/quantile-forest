@@ -183,16 +183,12 @@ def plot_quantiles_by_latlon(df, quantiles):
         name="Predicted Quantile: ",
     )
 
-    q_val = alt.selection_point(
-        value=0.5,
-        bind=slider,
-        fields=["quantile"],
-    )
+    quantile_selection = alt.param(value=0.5, bind=slider, name="quantile")
 
     chart = (
         alt.Chart(df)
-        .add_params(q_val)
-        .transform_filter(f"datum['quantile'] == {q_val['quantile']}")
+        .add_params(quantile_selection)
+        .transform_filter("datum.quantile == quantile")
         .mark_circle()
         .encode(
             x=alt.X(
