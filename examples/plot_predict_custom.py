@@ -109,16 +109,16 @@ def plot_ecdf(df):
     sample_selection = alt.param(value=0, bind=slider, name="sample_idx")
 
     tooltip = [
-        alt.Tooltip("y_val", title="Response Value"),
-        alt.Tooltip("proba", title="Probability"),
+        alt.Tooltip("y_val:Q", title="Response Value"),
+        alt.Tooltip("proba:Q", title="Probability"),
     ]
 
     circles = (
         alt.Chart(df)
         .mark_circle(color="#006aff", opacity=1, size=50)
         .encode(
-            x=alt.X("y_val", title="Response Value"),
-            y=alt.Y("proba", title="Probability"),
+            x=alt.X("y_val:Q", title="Response Value"),
+            y=alt.Y("proba:Q", title="Probability"),
             tooltip=tooltip,
         )
     )
@@ -127,9 +127,9 @@ def plot_ecdf(df):
         alt.Chart(df)
         .mark_line(color="#006aff", size=2)
         .encode(
-            x=alt.X("y_val", title="Response Value"),
-            x2=alt.X2("y_val2"),
-            y=alt.Y("proba", title="Probability"),
+            x=alt.X("y_val:Q", title="Response Value"),
+            x2=alt.X2("y_val2:Q"),
+            y=alt.Y("proba:Q", title="Probability"),
             tooltip=tooltip,
         )
     )
@@ -137,7 +137,7 @@ def plot_ecdf(df):
     chart = (
         (circles + lines)
         .add_params(sample_selection)
-        .transform_filter(alt.datum.sample_idx == sample_selection)
+        .transform_filter(alt.datum["sample_idx"] == sample_selection)
         .properties(
             height=400,
             width=650,

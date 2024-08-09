@@ -54,7 +54,7 @@ df = pd.DataFrame(
 def plot_fit_and_ranks(df):
     # Slider for varying the interval that defines the upper and lower quantile rank thresholds.
     slider = alt.binding_range(min=0, max=1, step=0.01, name="Rank Interval Threshold: ")
-    rank_val = alt.param("rank_val", bind=slider, value=0.05)
+    interval_selection = alt.param("interval_selection", bind=slider, value=0.05)
 
     click = alt.selection_point(fields=["outlier"], bind="legend")
 
@@ -67,9 +67,9 @@ def plot_fit_and_ranks(df):
     )
 
     points = (
-        base.add_params(rank_val, click)
+        base.add_params(interval_selection, click)
         .transform_calculate(
-            outlier="abs(datum.y_rank - 0.5) > (0.5 - rank_val / 2) ? 'Yes' : 'No'"
+            outlier="abs(datum.y_rank - 0.5) > (0.5 - interval_selection / 2) ? 'Yes' : 'No'"
         )
         .mark_circle(opacity=0.5, size=25)
         .encode(

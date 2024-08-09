@@ -107,11 +107,7 @@ def plot_shap_waterfall_with_quantiles(df, height=300):
         name="Predicted Quantile: ",
     )
 
-    q_val = alt.selection_point(
-        value=0.5,
-        bind=slider,
-        fields=["quantile"],
-    )
+    q_val = alt.selection_point(value=0.5, bind=slider, fields=["quantile"])
 
     df_grouped = (
         df.groupby("quantile")[df.columns.tolist()]
@@ -227,14 +223,14 @@ def plot_shap_waterfall_with_quantiles(df, height=300):
         alt.Chart(df_text_labels)
         .transform_filter(q_val)
         .transform_filter(alt.datum["type"] == "start")
-        .mark_text(align="left", color="black", dx=0, dy=y_text_offset + 30)
+        .mark_text(align="left", color="black", dx=-16, dy=y_text_offset + 30)
         .encode(text=alt.Text("label"), x=alt.X("x:Q"))
     )
     text_label_end = (
         alt.Chart(df_text_labels)
         .transform_filter(q_val)
         .transform_filter(alt.datum["type"] == "end")
-        .mark_text(align="left", color="black", dx=0, dy=-y_text_offset - 10)
+        .mark_text(align="left", color="black", dx=-8, dy=-y_text_offset - 15)
         .encode(text=alt.Text("label"), x=alt.X("x:Q"))
     )
     text = text_bar_left + text_bar_right + text_label_start + text_label_end
@@ -259,16 +255,16 @@ def plot_shap_waterfall_with_quantiles(df, height=300):
     )
     tick_start_rule = (
         alt.Chart(df_text_labels)
-        .mark_rule(color="black", opacity=1, y=height, y2=height + 5)
         .transform_filter(q_val)
         .transform_filter(alt.datum["type"] == "start")
+        .mark_rule(color="black", opacity=1, y=height, y2=height + 6)
         .encode(x=alt.X("x:Q"))
     )
     tick_end_rule = (
         alt.Chart(df_text_labels)
-        .mark_rule(color="black", opacity=1, y=0, y2=5)
         .transform_filter(q_val)
         .transform_filter(alt.datum["type"] == "end")
+        .mark_rule(color="black", opacity=1, y=0, y2=-6)
         .encode(x=alt.X("x:Q"))
     )
     rules = feature_bar_rule + end_bar_rule + tick_start_rule + tick_end_rule

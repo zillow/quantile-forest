@@ -39,7 +39,6 @@ interpolations = {
     "Nearest": "#a6e5ff",
 }
 
-# legend = {"Actual": "#000000"} | interpolations
 legend = {"Actual": "#000000"}
 legend.update(interpolations)
 
