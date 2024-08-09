@@ -70,9 +70,7 @@ identifying similar samples, even when using noisy training and test data.
         X_noisy = scaler.inverse_transform(X_noisy)
 
         if isinstance(X, pd.DataFrame):
-            X_noisy = pd.DataFrame(X_noisy)
-            X_noisy.index = X.index
-            X_noisy.columns = X.columns
+            X_noisy = pd.DataFrame(X_noisy, index=X.index, columns=X.columns)
 
         return X_noisy
 
@@ -142,6 +140,14 @@ identifying similar samples, even when using noisy training and test data.
         height=225,
         width=225,
     ):
+        pixel_scale = 100
+        pixel_cols = [f"pixel_{y:01}_{x:01}" for y in range(8) for x in range(8)]
+        pixel_x = "split(datum.pixel, '_')[2]"
+        pixel_y = "split(datum.pixel, '_')[1]"
+
+        x_min = (df[pixel_cols] // pixel_scale).min().min()
+        x_max = (df[pixel_cols] // pixel_scale).max().max()
+
         n_samples = df["index"].nunique()
         n_subplot_rows = n_prox // n_prox_per_row
         subplot_dim = (width - subplot_spacing * (n_subplot_rows - 1)) / n_subplot_rows
@@ -160,23 +166,23 @@ identifying similar samples, even when using noisy training and test data.
             fields=["index"],
         )
 
+        scale = alt.Scale(domain=[x_min, x_max], scheme="greys")
+        opacity = (alt.value(0), alt.value(0.67))
+
         base = alt.Chart(df).add_params(idx_val).transform_filter(idx_val)
 
         chart1 = (
             base.transform_filter(f"datum.prox_idx == 0")
-            .transform_fold(
-                fold=[f"pixel_{y}_{x}" for y in range(8) for x in range(8)],
-                as_=["pixel", "value"],
-            )
-            .transform_calculate(value_clean="floor(datum.value / 100)")
-            .transform_calculate(value_noisy="datum.value - (datum.value_clean * 100)")
-            .transform_calculate(x="substring(datum.pixel, 8, 9)", y="substring(datum.pixel, 6, 7)")
+            .transform_fold(fold=pixel_cols, as_=["pixel", "value"])
+            .transform_calculate(value_clean=f"floor(datum.value / {pixel_scale})")
+            .transform_calculate(value_noisy=f"datum.value - (datum.value_clean * {pixel_scale})")
+            .transform_calculate(x=pixel_x, y=pixel_y)
             .mark_rect()
             .encode(
                 x=alt.X("x:N", axis=None),
                 y=alt.Y("y:N", axis=None),
-                color=alt.Color("value_noisy:Q", legend=None, scale=alt.Scale(scheme="greys")),
-                opacity=alt.condition(alt.datum["value_noisy"] == 0, alt.value(0), alt.value(0.67)),
+                color=alt.Color("value_noisy:Q", legend=None, scale=scale),
+                opacity=alt.condition(alt.datum["value_noisy"] == 0, *opacity),
                 tooltip=[
                     alt.Tooltip("target:Q", title="Digit"),
                     alt.Tooltip("value_noisy:Q", format=".3f", title="Pixel Value"),
@@ -188,16 +194,23 @@ identifying similar samples, even when using noisy training and test data.
         )
 
         chart2 = (
-            base.mark_rect()
-            .transform_filter(f"datum.prox_idx < {n_prox}")
+            base.transform_filter(f"datum.prox_idx < {n_prox}")
+            .transform_lookup(
+                lookup="prox_val",
+                from_=alt.LookupData(df_lookup, key="index", fields=pixel_cols + ["target"]),
+            )
+            .transform_fold(fold=pixel_cols, as_=["pixel", "value"])
+            .transform_calculate(value_clean=f"floor(datum.value / {pixel_scale})")
+            .transform_calculate(x=pixel_x, y=pixel_y)
+            .mark_rect()
             .encode(
                 x=alt.X("x:N", axis=None),
                 y=alt.Y("y:N", axis=None),
-                color=alt.Color("value_clean:Q", legend=None, scale=alt.Scale(scheme="greys")),
-                opacity=alt.condition(alt.datum["value_clean"] == 0, alt.value(0), alt.value(0.67)),
+                color=alt.Color("value_clean:Q", legend=None, scale=scale),
+                opacity=alt.condition(alt.datum["value_clean"] == 0, *opacity),
                 tooltip=[
-                    alt.Tooltip("prox_idx", title="Proximity Index"),
-                    alt.Tooltip("prox_cnt", title="Proximity Count"),
+                    alt.Tooltip("prox_idx:N", title="Proximity Index"),
+                    alt.Tooltip("prox_cnt:Q", title="Proximity Count"),
                     alt.Tooltip("target:Q", title="Digit"),
                 ],
                 facet=alt.Facet(
@@ -207,20 +220,6 @@ identifying similar samples, even when using noisy training and test data.
                     header=alt.Header(labels=False, labelFontSize=0, labelPadding=0),
                 ),
             )
-            .transform_lookup(
-                lookup="prox_val",
-                from_=alt.LookupData(
-                    df_lookup,
-                    key="index",
-                    fields=[f"pixel_{y}_{x}" for y in range(8) for x in range(8)] + ["target"],
-                ),
-            )
-            .transform_fold(
-                fold=[f"pixel_{y}_{x}" for y in range(8) for x in range(8)],
-                as_=["pixel", "value"],
-            )
-            .transform_calculate(value_clean="floor(datum.value / 100)")
-            .transform_calculate(x="substring(datum.pixel, 8, 9)", y="substring(datum.pixel, 6, 7)")
             .properties(
                 height=subplot_dim, width=subplot_dim, title=f"Proximity Digits (top {n_prox})"
             )
@@ -228,18 +227,15 @@ identifying similar samples, even when using noisy training and test data.
 
         chart3 = (
             base.transform_filter(f"datum.prox_idx == 0")
-            .transform_fold(
-                fold=[f"pixel_{y}_{x}" for y in range(8) for x in range(8)],
-                as_=["pixel", "value"],
-            )
-            .transform_calculate(value_clean="floor(datum.value / 100)")
-            .transform_calculate(x="substring(datum.pixel, 8, 9)", y="substring(datum.pixel, 6, 7)")
+            .transform_fold(fold=pixel_cols, as_=["pixel", "value"])
+            .transform_calculate(value_clean=f"floor(datum.value / {pixel_scale})")
+            .transform_calculate(x=pixel_x, y=pixel_y)
             .mark_rect()
             .encode(
                 x=alt.X("x:N", axis=None),
                 y=alt.Y("y:N", axis=None),
-                color=alt.Color("value_clean:Q", legend=None, scale=alt.Scale(scheme="greys")),
-                opacity=alt.condition(alt.datum["value_clean"] == 0, alt.value(0), alt.value(0.67)),
+                color=alt.Color("value_clean:Q", legend=None, scale=scale),
+                opacity=alt.condition(alt.datum["value_clean"] == 0, *opacity),
                 tooltip=[
                     alt.Tooltip("target:Q", title="Digit"),
                     alt.Tooltip("value_clean:Q", title="Pixel Value"),
@@ -312,9 +308,7 @@ identifying similar samples, even when using noisy training and test data.
                 X_noisy = scaler.inverse_transform(X_noisy)
 
                 if isinstance(X, pd.DataFrame):
-                    X_noisy = pd.DataFrame(X_noisy)
-                    X_noisy.index = X.index
-                    X_noisy.columns = X.columns
+                    X_noisy = pd.DataFrame(X_noisy, index=X.index, columns=X.columns)
 
                 return X_noisy
 
@@ -384,6 +378,14 @@ identifying similar samples, even when using noisy training and test data.
                 height=225,
                 width=225,
             ):
+                pixel_scale = 100
+                pixel_cols = [f"pixel_{y:01}_{x:01}" for y in range(8) for x in range(8)]
+                pixel_x = "split(datum.pixel, '_')[2]"
+                pixel_y = "split(datum.pixel, '_')[1]"
+
+                x_min = (df[pixel_cols] // pixel_scale).min().min()
+                x_max = (df[pixel_cols] // pixel_scale).max().max()
+
                 n_samples = df["index"].nunique()
                 n_subplot_rows = n_prox // n_prox_per_row
                 subplot_dim = (width - subplot_spacing * (n_subplot_rows - 1)) / n_subplot_rows
@@ -402,23 +404,23 @@ identifying similar samples, even when using noisy training and test data.
                     fields=["index"],
                 )
 
+                scale = alt.Scale(domain=[x_min, x_max], scheme="greys")
+                opacity = (alt.value(0), alt.value(0.67))
+
                 base = alt.Chart(df).add_params(idx_val).transform_filter(idx_val)
 
                 chart1 = (
                     base.transform_filter(f"datum.prox_idx == 0")
-                    .transform_fold(
-                        fold=[f"pixel_{y}_{x}" for y in range(8) for x in range(8)],
-                        as_=["pixel", "value"],
-                    )
-                    .transform_calculate(value_clean="floor(datum.value / 100)")
-                    .transform_calculate(value_noisy="datum.value - (datum.value_clean * 100)")
-                    .transform_calculate(x="substring(datum.pixel, 8, 9)", y="substring(datum.pixel, 6, 7)")
+                    .transform_fold(fold=pixel_cols, as_=["pixel", "value"])
+                    .transform_calculate(value_clean=f"floor(datum.value / {pixel_scale})")
+                    .transform_calculate(value_noisy=f"datum.value - (datum.value_clean * {pixel_scale})")
+                    .transform_calculate(x=pixel_x, y=pixel_y)
                     .mark_rect()
                     .encode(
                         x=alt.X("x:N", axis=None),
                         y=alt.Y("y:N", axis=None),
-                        color=alt.Color("value_noisy:Q", legend=None, scale=alt.Scale(scheme="greys")),
-                        opacity=alt.condition(alt.datum["value_noisy"] == 0, alt.value(0), alt.value(0.67)),
+                        color=alt.Color("value_noisy:Q", legend=None, scale=scale),
+                        opacity=alt.condition(alt.datum["value_noisy"] == 0, *opacity),
                         tooltip=[
                             alt.Tooltip("target:Q", title="Digit"),
                             alt.Tooltip("value_noisy:Q", format=".3f", title="Pixel Value"),
@@ -430,16 +432,23 @@ identifying similar samples, even when using noisy training and test data.
                 )
 
                 chart2 = (
-                    base.mark_rect()
-                    .transform_filter(f"datum.prox_idx < {n_prox}")
+                    base.transform_filter(f"datum.prox_idx < {n_prox}")
+                    .transform_lookup(
+                        lookup="prox_val",
+                        from_=alt.LookupData(df_lookup, key="index", fields=pixel_cols + ["target"]),
+                    )
+                    .transform_fold(fold=pixel_cols, as_=["pixel", "value"])
+                    .transform_calculate(value_clean=f"floor(datum.value / {pixel_scale})")
+                    .transform_calculate(x=pixel_x, y=pixel_y)
+                    .mark_rect()
                     .encode(
                         x=alt.X("x:N", axis=None),
                         y=alt.Y("y:N", axis=None),
-                        color=alt.Color("value_clean:Q", legend=None, scale=alt.Scale(scheme="greys")),
-                        opacity=alt.condition(alt.datum["value_clean"] == 0, alt.value(0), alt.value(0.67)),
+                        color=alt.Color("value_clean:Q", legend=None, scale=scale),
+                        opacity=alt.condition(alt.datum["value_clean"] == 0, *opacity),
                         tooltip=[
-                            alt.Tooltip("prox_idx", title="Proximity Index"),
-                            alt.Tooltip("prox_cnt", title="Proximity Count"),
+                            alt.Tooltip("prox_idx:N", title="Proximity Index"),
+                            alt.Tooltip("prox_cnt:Q", title="Proximity Count"),
                             alt.Tooltip("target:Q", title="Digit"),
                         ],
                         facet=alt.Facet(
@@ -449,20 +458,6 @@ identifying similar samples, even when using noisy training and test data.
                             header=alt.Header(labels=False, labelFontSize=0, labelPadding=0),
                         ),
                     )
-                    .transform_lookup(
-                        lookup="prox_val",
-                        from_=alt.LookupData(
-                            df_lookup,
-                            key="index",
-                            fields=[f"pixel_{y}_{x}" for y in range(8) for x in range(8)] + ["target"],
-                        ),
-                    )
-                    .transform_fold(
-                        fold=[f"pixel_{y}_{x}" for y in range(8) for x in range(8)],
-                        as_=["pixel", "value"],
-                    )
-                    .transform_calculate(value_clean="floor(datum.value / 100)")
-                    .transform_calculate(x="substring(datum.pixel, 8, 9)", y="substring(datum.pixel, 6, 7)")
                     .properties(
                         height=subplot_dim, width=subplot_dim, title=f"Proximity Digits (top {n_prox})"
                     )
@@ -470,18 +465,15 @@ identifying similar samples, even when using noisy training and test data.
 
                 chart3 = (
                     base.transform_filter(f"datum.prox_idx == 0")
-                    .transform_fold(
-                        fold=[f"pixel_{y}_{x}" for y in range(8) for x in range(8)],
-                        as_=["pixel", "value"],
-                    )
-                    .transform_calculate(value_clean="floor(datum.value / 100)")
-                    .transform_calculate(x="substring(datum.pixel, 8, 9)", y="substring(datum.pixel, 6, 7)")
+                    .transform_fold(fold=pixel_cols, as_=["pixel", "value"])
+                    .transform_calculate(value_clean=f"floor(datum.value / {pixel_scale})")
+                    .transform_calculate(x=pixel_x, y=pixel_y)
                     .mark_rect()
                     .encode(
                         x=alt.X("x:N", axis=None),
                         y=alt.Y("y:N", axis=None),
-                        color=alt.Color("value_clean:Q", legend=None, scale=alt.Scale(scheme="greys")),
-                        opacity=alt.condition(alt.datum["value_clean"] == 0, alt.value(0), alt.value(0.67)),
+                        color=alt.Color("value_clean:Q", legend=None, scale=scale),
+                        opacity=alt.condition(alt.datum["value_clean"] == 0, *opacity),
                         tooltip=[
                             alt.Tooltip("target:Q", title="Digit"),
                             alt.Tooltip("value_clean:Q", title="Pixel Value"),

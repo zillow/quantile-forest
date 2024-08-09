@@ -34,8 +34,6 @@ than the mean.
 
     from quantile_forest import RandomForestQuantileRegressor
 
-    alt.data_transformers.disable_max_rows()
-
     random_seed = 0
     rng = check_random_state(random_seed)
 
@@ -66,14 +64,16 @@ than the mean.
         "QRF (Median)": "#006aff",
     }
 
-    df = pd.concat(
-        [
-            pd.DataFrame({"actual": y_test, "rf": y_pred_rf, "qrf": y_pred_qrf[..., q_idx]}).assign(
-                quantile=quantile
-            )
-            for q_idx, quantile in enumerate(quantiles)
-        ],
-        ignore_index=True,
+
+    def format_frac(fraction):
+        formatted = ("%.3g" % fraction).rstrip("0").rstrip(".")
+        return formatted if formatted else "0"
+
+
+    df = pd.DataFrame({"actual": y_test, "rf": y_pred_rf}).join(
+        pd.DataFrame(
+            {f"qrf_{format_frac(q)}": y_pred_qrf[..., idx] for idx, q in enumerate(quantiles)}
+        )
     )
 
 
@@ -85,12 +85,7 @@ than the mean.
             step=0.5 if len(quantiles) == 1 else 1 / (len(quantiles) - 1),
             name="Predicted Quantile: ",
         )
-
-        q_val = alt.selection_point(
-            value=0.5,
-            bind=slider,
-            fields=["quantile"],
-        )
+        quantile_selection = alt.param(value=0.5, bind=slider, name="quantile")
 
         click = alt.selection_point(fields=["label"], bind="legend")
 
@@ -102,11 +97,12 @@ than the mean.
 
         chart = (
             alt.Chart(df)
-            .add_params(q_val, click)
-            .transform_filter(q_val)
-            .transform_calculate(calculate=f"round(datum.actual * 10) / 10", as_="Actual")
-            .transform_calculate(calculate=f"round(datum.rf * 10) / 10", as_="RF (Mean)")
-            .transform_calculate(calculate=f"round(datum.qrf * 10) / 10", as_="QRF (Quantile)")
+            .add_params(quantile_selection, click)
+            .transform_calculate(qrf_col="'qrf_' + quantile")
+            .transform_calculate(qrf="datum[datum.qrf_col]")
+            .transform_calculate(calculate="round(datum.actual * 10) / 10", as_="Actual")
+            .transform_calculate(calculate="round(datum.rf * 10) / 10", as_="RF (Mean)")
+            .transform_calculate(calculate="round(datum.qrf * 10) / 10", as_="QRF (Quantile)")
             .transform_fold(["Actual", "RF (Mean)", "QRF (Quantile)"], as_=["label", "value"])
             .mark_bar()
             .encode(
@@ -123,7 +119,7 @@ than the mean.
                 xOffset=alt.XOffset("label:N"),
                 tooltip=[
                     alt.Tooltip("label:N", title="Label"),
-                    alt.Tooltip("value:O", title="Value (binned)"),
+                    alt.Tooltip("value:Q", title="Value (binned)"),
                     alt.Tooltip("count():Q", format=",d", title="Counts"),
                 ],
             )
@@ -153,8 +149,6 @@ than the mean.
             from sklearn.utils.validation import check_random_state
 
             from quantile_forest import RandomForestQuantileRegressor
-
-            alt.data_transformers.disable_max_rows()
 
             random_seed = 0
             rng = check_random_state(random_seed)
@@ -186,14 +180,16 @@ than the mean.
                 "QRF (Median)": "#006aff",
             }
 
-            df = pd.concat(
-                [
-                    pd.DataFrame({"actual": y_test, "rf": y_pred_rf, "qrf": y_pred_qrf[..., q_idx]}).assign(
-                        quantile=quantile
-                    )
-                    for q_idx, quantile in enumerate(quantiles)
-                ],
-                ignore_index=True,
+
+            def format_frac(fraction):
+                formatted = ("%.3g" % fraction).rstrip("0").rstrip(".")
+                return formatted if formatted else "0"
+
+
+            df = pd.DataFrame({"actual": y_test, "rf": y_pred_rf}).join(
+                pd.DataFrame(
+                    {f"qrf_{format_frac(q)}": y_pred_qrf[..., idx] for idx, q in enumerate(quantiles)}
+                )
             )
 
 
@@ -205,12 +201,7 @@ than the mean.
                     step=0.5 if len(quantiles) == 1 else 1 / (len(quantiles) - 1),
                     name="Predicted Quantile: ",
                 )
-
-                q_val = alt.selection_point(
-                    value=0.5,
-                    bind=slider,
-                    fields=["quantile"],
-                )
+                quantile_selection = alt.param(value=0.5, bind=slider, name="quantile")
 
                 click = alt.selection_point(fields=["label"], bind="legend")
 
@@ -222,11 +213,12 @@ than the mean.
 
                 chart = (
                     alt.Chart(df)
-                    .add_params(q_val, click)
-                    .transform_filter(q_val)
-                    .transform_calculate(calculate=f"round(datum.actual * 10) / 10", as_="Actual")
-                    .transform_calculate(calculate=f"round(datum.rf * 10) / 10", as_="RF (Mean)")
-                    .transform_calculate(calculate=f"round(datum.qrf * 10) / 10", as_="QRF (Quantile)")
+                    .add_params(quantile_selection, click)
+                    .transform_calculate(qrf_col="'qrf_' + quantile")
+                    .transform_calculate(qrf="datum[datum.qrf_col]")
+                    .transform_calculate(calculate="round(datum.actual * 10) / 10", as_="Actual")
+                    .transform_calculate(calculate="round(datum.rf * 10) / 10", as_="RF (Mean)")
+                    .transform_calculate(calculate="round(datum.qrf * 10) / 10", as_="QRF (Quantile)")
                     .transform_fold(["Actual", "RF (Mean)", "QRF (Quantile)"], as_=["label", "value"])
                     .mark_bar()
                     .encode(
@@ -243,7 +235,7 @@ than the mean.
                         xOffset=alt.XOffset("label:N"),
                         tooltip=[
                             alt.Tooltip("label:N", title="Label"),
-                            alt.Tooltip("value:O", title="Value (binned)"),
+                            alt.Tooltip("value:Q", title="Value (binned)"),
                             alt.Tooltip("count():Q", format=",d", title="Counts"),
                         ],
                     )
