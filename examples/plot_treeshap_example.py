@@ -3,14 +3,15 @@ Tree SHAP with Quantile Regression Forests
 ==========================================
 
 This example demonstrates the use of SHAP (SHapley Additive exPlanations) to
-explain the predictions of a quantile regression forest (QRF) model. We
-generate a waterfall plot using the `Tree SHAP
+explain the predictions of a quantile regression forest (QRF) model. SHAP
+values offer insight into the contribution of each feature to the predicted
+value. We generate a waterfall plot using the `Tree SHAP
 <https://shap.readthedocs.io/en/latest/generated/shap.TreeExplainer.html#shap.TreeExplainer>`_
-method to visualize the explanations for a single instance across multiple
+method to visualize the explanations for a single sample across multiple
 quantiles. In a QRF, quantile estimation is applied during inference, meaning
-the selected quantile affects the expected value of the model output but does
-not alter the feature contributions. This plot allows us to observe how the
-SHAP explanations vary with different quantile choices.
+the selected quantile affects the specific value of the model output but does
+not alter the underlying feature contributions. This plot allows us to observe
+how the SHAP explanations vary with different quantile choices.
 """
 
 import altair as alt
@@ -29,6 +30,27 @@ quantiles = np.linspace(0, 1, num=11, endpoint=True).round(1).tolist()
 
 
 def get_shap_values(qrf, X, quantile=0.5, **kwargs):
+    """Get QRF model SHAP values using Tree SHAP.
+
+    Note that, at the time of writing, SHAP does not natively provide support
+    for models in which quantile estimation is applied during inference, such
+    as with QRFs. To address this limitation, this function adjusts the
+    explainer outputs based on the difference between the mean and quantile
+    predictions for each sample, creating new base and expected values.
+
+    Parameters
+    ----------
+    qrf : BaseForestQuantileRegressor
+        Quantile forest model object.
+    X : array-like, of shape (n_samples, n_features)
+        Input dataset for which SHAP values are calculated.
+    quantiles : float, default=0.5
+        Quantile for which SHAP values are calculated.
+
+    Returns
+    -------
+    shap.Explanation: The SHAP values explanation object.
+    """
     # Define a custom tree model.
     model = {
         "objective": qrf.criterion,
@@ -60,6 +82,7 @@ def get_shap_values(qrf, X, quantile=0.5, **kwargs):
 
 
 def get_shap_value_by_index(shap_values, index):
+    """Get QRF model SHAP values for a specified index."""
     shap_values_i = shap_values[index]
     shap_values_i.base_values = shap_values.base_values[index]
     return shap_values_i
@@ -75,6 +98,10 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=random_se
 qrf = RandomForestQuantileRegressor(random_state=random_seed)
 qrf.fit(X_train, y_train)
 
+shap_values_list = [
+    get_shap_value_by_index(get_shap_values(qrf, X_test, quantile=q), test_idx) for q in quantiles
+]
+
 df = pd.concat(
     [
         pd.DataFrame(
@@ -89,8 +116,7 @@ df = pd.concat(
                 "quantile": q,
             }
         )
-        for q in quantiles
-        for shap_i in [get_shap_value_by_index(get_shap_values(qrf, X_test, quantile=q), test_idx)]
+        for shap_i, q in zip(shap_values_list, quantiles)
     ],
     ignore_index=True,
 )
@@ -106,7 +132,7 @@ def plot_shap_waterfall_with_quantiles(df, height=300):
         step=0.5 if len(quantiles) == 1 else 1 / (len(quantiles) - 1),
         name="Predicted Quantile: ",
     )
-    quantile_selection = alt.param(value=0.5, bind=slider, name="quantile")
+    quantile_val = alt.param(value=0.5, bind=slider, name="quantile")
 
     df_grouped = (
         df.groupby("quantile")[df.columns.tolist()]
@@ -187,7 +213,8 @@ def plot_shap_waterfall_with_quantiles(df, height=300):
             alt.datum["shap_value"] > 0, alt.value("#ff0251"), alt.value("#018bfb")
         ),
         tooltip=[
-            alt.Tooltip("feature_name:N", title="Feature"),
+            alt.Tooltip("feature_name:N", title="Feature Name"),
+            alt.Tooltip("feature_value:Q", title="Feature Value"),
             alt.Tooltip("shap_value:Q", format=",.2f", title="SHAP Value"),
             alt.Tooltip("start:Q", format=",.2f", title="SHAP Start"),
             alt.Tooltip("end:Q", format=",.2f", title="SHAP End"),
@@ -270,7 +297,7 @@ def plot_shap_waterfall_with_quantiles(df, height=300):
 
     chart = (
         (bars + points + text + rules)
-        .add_params(quantile_selection)
+        .add_params(quantile_val)
         .configure_view(strokeOpacity=0)
         .properties(
             width=600, height=height, title="Waterfall Plot of SHAP Values for QRF Predictions"

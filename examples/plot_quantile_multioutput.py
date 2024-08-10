@@ -5,7 +5,7 @@ Multi-target Quantile Regression with QRFs
 This example demonstrates how to fit a single quantile regressor for multiple
 target variables on a toy dataset. For each target, multiple quantiles can be
 estimated simultaneously. In this example, the target variable has two output
-values for each sample, with a single regressor used to estimate many
+values for each sample, with a single regressor used to estimate multiple
 quantiles simultaneously. Three of these quantiles are visualized concurrently
 for each target: the median line and the area defined by the interval points.
 """
@@ -52,8 +52,7 @@ def make_func_Xy(funcs, bounds, n_samples):
 
 
 def format_frac(fraction):
-    formatted = ("%.3g" % fraction).rstrip("0").rstrip(".")
-    return formatted if formatted else "0"
+    return f"{fraction:.3g}".rstrip("0").rstrip(".") or "0"
 
 
 # Create the dataset with multiple target variables.
@@ -67,28 +66,26 @@ qrf.fit(X_train, y_train)  # fit on all of the targets simultaneously
 # Get multi-target predictions at specified quantiles.
 y_pred = qrf.predict(X, quantiles=quantiles)
 
+# Prepare the data frame.
 df = pd.DataFrame(
     {
         "x": np.tile(X.squeeze(), len(funcs)),
         "y": y.reshape(-1, order="F"),
         "y_true": np.concatenate([f["signal"](X.squeeze()) for f in funcs]),
         "y_pred": np.concatenate([y_pred[:, i, len(quantiles) // 2] for i in range(len(funcs))]),
-        "target": np.concatenate([[f"{i}"] * len(X) for i in range(len(funcs))]),
+        "target": np.concatenate([[str(i)] * len(X) for i in range(len(funcs))]),
     }
-).join(
-    pd.DataFrame(
-        {
-            f"q_{format_frac(q)}": np.concatenate([y_pred[:, t, idx] for t in range(len(funcs))])
-            for idx, q in enumerate(quantiles)
-        }
-    )
 )
+
+# Add quantile predictions to the data frame.
+for idx, q in enumerate(quantiles):
+    df[f"q_{format_frac(q)}"] = y_pred[:, :, idx].flatten(order="F")
 
 
 def plot_multitargets(df, legend):
     # Slider for varying the displayed prediction intervals.
     slider = alt.binding_range(min=0, max=1, step=0.05, name="Prediction Interval: ")
-    interval_selection = alt.param(value=0.95, bind=slider, name="interval")
+    interval_val = alt.param(value=0.95, bind=slider, name="interval")
 
     click = alt.selection_point(fields=["target"], bind="legend")
 
@@ -119,14 +116,14 @@ def plot_multitargets(df, legend):
     base = (
         alt.Chart(df)
         .transform_calculate(
-            quantile_low=f"round((0.5 - interval / 2) * 1000) / 1000",
-            quantile_upp=f"round((0.5 + interval / 2) * 1000) / 1000",
+            quantile_low="round((0.5 - interval / 2) * 1000) / 1000",
+            quantile_upp="round((0.5 + interval / 2) * 1000) / 1000",
             quantile_low_col="'q_' + datum.quantile_low",
             quantile_upp_col="'q_' + datum.quantile_upp",
         )
         .transform_calculate(
-            y_pred_low=f"datum[datum.quantile_low_col]",
-            y_pred_upp=f"datum[datum.quantile_upp_col]",
+            y_pred_low="datum[datum.quantile_low_col]",
+            y_pred_upp="datum[datum.quantile_upp_col]",
         )
     )
 
@@ -138,15 +135,15 @@ def plot_multitargets(df, legend):
     )
 
     line = base.mark_line(color="black", size=3).encode(
-        x=alt.X("x:Q", scale=alt.Scale(nice=False), title="x"),
-        y=alt.Y("y_pred:Q", title="y"),
+        x=alt.X("x:Q", scale=alt.Scale(nice=False), title="X"),
+        y=alt.Y("y_pred:Q", title="Y"),
         color=color,
         tooltip=tooltip,
     )
 
     area = base.mark_area(opacity=0.25).encode(
-        x=alt.X("x:Q", scale=alt.Scale(nice=False), title="x"),
-        y=alt.Y("y_pred_low:Q", title="y"),
+        x=alt.X("x:Q", scale=alt.Scale(nice=False), title="X"),
+        y=alt.Y("y_pred_low:Q", title="Y"),
         y2=alt.Y2("y_pred_upp:Q", title=None),
         color=color,
         tooltip=tooltip,
@@ -154,7 +151,7 @@ def plot_multitargets(df, legend):
 
     chart = (
         (points + area + line)
-        .add_params(interval_selection, click)
+        .add_params(interval_val, click)
         .configure_range(category=alt.RangeScheme(list(legend.values())))
         .properties(
             height=400,

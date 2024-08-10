@@ -3,8 +3,9 @@ Predicting with Quantile Regression Forests
 ===========================================
 
 This example demonstrates the use of a quantile regression forest (QRF) to
-predict a conditional median and prediction intervals. The example compares
-the QRF predictions to a ground truth function used to generate noisy samples.
+predict the conditional median and construct prediction intervals. The QRF
+predictions are compared to the ground truth function used to generate noisy
+samples.
 """
 
 import altair as alt
@@ -27,8 +28,8 @@ def make_toy_dataset(n_samples, bounds, add_noise=True, random_seed=0):
     f = x * np.sin(x)
 
     sigma = 0.25 + x / 10
-    noise = rng.lognormal(sigma=sigma) - np.exp(sigma**2 / 2)
-    y = f + (noise if add_noise else 0)
+    noise = rng.lognormal(sigma=sigma) - np.exp(sigma**2 / 2) if add_noise else np.zeros_like(f)
+    y = f + noise
 
     return np.atleast_2d(x).T, y
 
@@ -47,7 +48,7 @@ y_pred_test = qrf.predict(X_test, quantiles=quantiles)
 
 df = pd.DataFrame(
     {
-        "X": np.concatenate([X_func.reshape(-1), X_test.reshape(-1)]),
+        "x": np.concatenate([X_func.reshape(-1), X_test.reshape(-1)]),
         "y": np.concatenate([y_func, y_test]),
         "y_pred": np.concatenate([y_pred_func[:, 1], y_pred_test[:, 1]]),
         "y_pred_low": np.concatenate([y_pred_func[:, 0], y_pred_test[:, 0]]),
@@ -63,11 +64,11 @@ def plot_fit_and_intervals(df):
         .transform_filter(alt.datum["test"])  # filter to test data
         .mark_circle(color="#f2a619")
         .encode(
-            x=alt.X("X:Q", scale=alt.Scale(nice=False)),
+            x=alt.X("x:Q", scale=alt.Scale(nice=False)),
             y=alt.Y("y:Q", title=""),
             color=alt.Color("point_label:N", scale=alt.Scale(range=["#f2a619"]), title=None),
             tooltip=[
-                alt.Tooltip("X:Q", format=",.3f", title="X"),
+                alt.Tooltip("x:Q", format=",.3f", title="X"),
                 alt.Tooltip("y:Q", format=",.3f", title="Y"),
             ],
         )
@@ -78,11 +79,11 @@ def plot_fit_and_intervals(df):
         .transform_filter(~alt.datum["test"])  # filter to training data
         .mark_line(color="black", size=3)
         .encode(
-            x=alt.X("X:Q", scale=alt.Scale(nice=False)),
-            y=alt.Y("y:Q", title="f(x)"),
+            x=alt.X("x:Q", scale=alt.Scale(nice=False)),
+            y=alt.Y("y:Q", title="Y"),
             color=alt.Color("y_true_label:N", scale=alt.Scale(range=["black"]), title=None),
             tooltip=[
-                alt.Tooltip("X:Q", format=",.3f", title="X"),
+                alt.Tooltip("x:Q", format=",.3f", title="X"),
                 alt.Tooltip("y:Q", format=",.3f", title="Y"),
             ],
         )
@@ -93,11 +94,11 @@ def plot_fit_and_intervals(df):
         .transform_filter(~alt.datum["test"])  # filter to training data
         .mark_line(color="#006aff", size=5)
         .encode(
-            x=alt.X("X:Q", scale=alt.Scale(nice=False)),
+            x=alt.X("x:Q", scale=alt.Scale(nice=False)),
             y=alt.Y("y_pred:Q", title=""),
             color=alt.Color("y_pred_label:N", scale=alt.Scale(range=["#006aff"]), title=None),
             tooltip=[
-                alt.Tooltip("X:Q", format=",.3f", title="X"),
+                alt.Tooltip("x:Q", format=",.3f", title="X"),
                 alt.Tooltip("y:Q", format=",.3f", title="Y"),
                 alt.Tooltip("y_pred:Q", format=",.3f", title="Predicted Y"),
             ],
@@ -109,11 +110,11 @@ def plot_fit_and_intervals(df):
         .transform_filter(~alt.datum["test"])  # filter to training data
         .mark_area(color="#e0f2ff", opacity=0.8)
         .encode(
-            x=alt.X("X:Q", scale=alt.Scale(nice=False), title="x"),
+            x=alt.X("x:Q", scale=alt.Scale(nice=False), title="X"),
             y=alt.Y("y_pred_low:Q", title=""),
             y2=alt.Y2("y_pred_upp:Q", title=None),
             tooltip=[
-                alt.Tooltip("X:Q", format=",.3f", title="X"),
+                alt.Tooltip("x:Q", format=",.3f", title="X"),
                 alt.Tooltip("y:Q", format=",.3f", title="Y"),
                 alt.Tooltip("y_pred:Q", format=",.3f", title="Predicted Y"),
                 alt.Tooltip("y_pred_low:Q", format=",.3f", title="Predicted Lower Y"),

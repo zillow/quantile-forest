@@ -2,12 +2,14 @@
 Comparing Quantile Interpolation Methods
 ========================================
 
-This example illustrates the interpolation methods that can be applied during
-prediction when the desired quantile lies between two data points. In this toy
-example, the forest estimator creates a single split that separates samples
-1–3 and samples 4–5, with quantiles calculated separately for these two groups
-based on the actual sample values. The interpolation methods are used when a
-calculated quantile does not precisely correspond to one of the actual values.
+This example illustrates different interpolation methods that can be used
+during prediction in quantile regression forests (QRF). When a desired quantile
+lies between two data points, interpolation methods determine the predicted
+value. In this toy example, the QRF creates a split that divides the samples
+into two groups (samples 1–3 and samples 4–5), with quantiles calculated
+separately for each. The interpolation methods demonstrate how predictions are
+handled when a quantile does not exactly match a data point.
+
 """
 
 import altair as alt
@@ -23,6 +25,8 @@ intervals = np.linspace(0, 1, num=101, endpoint=True).round(2).tolist()
 X = np.array([[-1, -1], [-1, -1], [-1, -1], [1, 1], [1, 1]])
 y = np.array([-2, -1, 0, 1, 2])
 
+# We use a single estimator that retains all leaf samples and is trained without bootstrap.
+# By construction of the data, this leads to samples split between two terminal leaf nodes.
 qrf = RandomForestQuantileRegressor(
     n_estimators=1,
     max_samples_leaf=None,
@@ -55,10 +59,11 @@ for idx, interval in enumerate(intervals):
         "quantile_upp": [None] * len(y),
     }
 
+    quantiles = [0.5, round(0.5 - interval / 2, 3), round(0.5 + interval / 2, 3)]
+
     # Populate data based on prediction results with different interpolations.
     for interpolation in interpolations:
         # Get predictions at median and prediction intervals.
-        quantiles = [0.5, round(0.5 - interval / 2, 3), round(0.5 + interval / 2, 3)]
         y_pred = qrf.predict(X, quantiles=quantiles, interpolation=interpolation.lower())
 
         data["method"].extend([interpolation] * len(y))
@@ -77,7 +82,7 @@ df = pd.concat(dfs, ignore_index=True)
 def plot_interpolations(df, legend):
     # Slider for varying the prediction interval that determines the quantiles being interpolated.
     slider = alt.binding_range(min=0, max=1, step=0.01, name="Prediction Interval: ")
-    interval_selection = alt.param(value=0.9, bind=slider, name="interval")
+    interval_val = alt.param(value=0.9, bind=slider, name="interval")
 
     click = alt.selection_point(fields=["method"], bind="legend")
 
@@ -90,9 +95,9 @@ def plot_interpolations(df, legend):
     tooltip = [
         alt.Tooltip("method:N", title="Method"),
         alt.Tooltip("X:N", title="X Values"),
-        alt.Tooltip("y_pred:Q", format=".3f", title="Predicted Y"),
-        alt.Tooltip("y_pred_low:Q", format=".3f", title="Predicted Lower Y"),
-        alt.Tooltip("y_pred_upp:Q", format=".3f", title="Predicted Upper Y"),
+        alt.Tooltip("y_pred:Q", format=",.3f", title="Predicted Y"),
+        alt.Tooltip("y_pred_low:Q", format=",.3f", title="Predicted Lower Y"),
+        alt.Tooltip("y_pred_upp:Q", format=",.3f", title="Predicted Upper Y"),
         alt.Tooltip("quantile_low:Q", format=".3f", title="Lower Quantile"),
         alt.Tooltip("quantile_upp:Q", format=".3f", title="Upper Quantile"),
     ]
@@ -132,7 +137,7 @@ def plot_interpolations(df, legend):
 
     chart = (
         (area + point)
-        .add_params(interval_selection, click)
+        .add_params(interval_val, click)
         .transform_filter(
             "(datum.method == 'Actual')"
             "| (datum.quantile_low == round((0.5 - interval / 2) * 1000) / 1000)"

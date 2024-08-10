@@ -435,8 +435,8 @@ def plot_qrf_vs_xtrapolation_comparison(df):
         base = alt.Chart(df.assign(**{"point_label": "Observations", "line_label": func_str}))
 
         points_true = base.mark_circle(size=20).encode(
-            x=alt.X("X_true:Q", scale=x_scale, title="x"),
-            y=alt.Y("y_true:Q", scale=y_scale, title="y"),
+            x=alt.X("X_true:Q", scale=x_scale, title="X"),
+            y=alt.Y("y_true:Q", scale=y_scale, title="Y"),
             color=points_color,
             tooltip=tooltip_true,
         )
@@ -471,7 +471,7 @@ def plot_qrf_vs_xtrapolation_comparison(df):
                 base.transform_aggregate(coverage="mean(coverage)")
                 .transform_calculate(
                     coverage_text=(
-                        f"'Extrapolated Coverage: '"
+                        "'Extrapolated Coverage: '"
                         f" + format({alt.datum['coverage'] * 100}, '.1f') + '%'"
                         f" + ' (target = {(quantiles[1] - quantiles[0]) * 100}%)'"
                     )

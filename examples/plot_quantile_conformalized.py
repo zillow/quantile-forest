@@ -4,12 +4,13 @@ QRFs for Conformalized Quantile Regression
 
 This example demonstrates the use of a quantile regression forest (QRF) to
 construct reliable prediction intervals using conformalized quantile
-regression (CQR). CQR provides prediction intervals that attain valid
-coverage, whereas QRF may require additional calibration for reliable interval
-estimates. In this example, by using CQR, we achieve a level of coverage
-(i.e., the percentage of samples that actually fall within their prediction
-interval) that is generally closer to the target level. This example is
-adapted from `"Prediction intervals: Quantile Regression Forests"
+regression (CQR). While QRFs can estimate quantiles, they may require
+additional calibration to provide reliable interval estimates. CQR provides
+prediction intervals that attain valid coverage. In this example, we use CQR
+to enhance QRF by producing prediction intervals that achieve a level of
+coverage (i.e., the percentage of samples that actually fall within their
+prediction interval) that is generally closer to the target level. This
+example is adapted from `"Prediction intervals: Quantile Regression Forests"
 <https://www.kaggle.com/code/carlmcbrideellis/prediction-intervals-quantile-regression-forests>`_
 by Carl McBride Ellis.
 """
@@ -69,6 +70,7 @@ def mean_width_score(y_pred_low, y_pred_upp):
 
 
 def qrf_strategy(alpha, X_train, X_test, y_train, y_test, random_state=None):
+    """QRF (baseline) strategy."""
     quantiles = [alpha / 2, 1 - alpha / 2]
 
     qrf = RandomForestQuantileRegressor(random_state=random_state)
@@ -89,6 +91,7 @@ def qrf_strategy(alpha, X_train, X_test, y_train, y_test, random_state=None):
 
 
 def cqr_strategy(alpha, X_train, X_test, y_train, y_test, random_state=None):
+    """Conformalized Quantile Regression (CQR) strategy with a QRF."""
     quantiles = [alpha / 2, 1 - alpha / 2]
 
     # Create calibration set.
@@ -160,8 +163,7 @@ def plot_prediction_intervals_by_strategy(df):
     def plot_prediction_intervals(df, domain):
         # Slider for varying the target coverage level.
         slider = alt.binding_range(min=0, max=1, step=0.1, name="Coverage Target: ")
-        cov_selection = alt.param(value=0.9, bind=slider, name="coverage")
-        cov_tol = 0.01
+        coverage_val = alt.param(value=0.9, bind=slider, name="coverage")
 
         click = alt.selection_point(fields=["y_label"], bind="legend")
 
@@ -175,10 +177,7 @@ def plot_prediction_intervals_by_strategy(df):
 
         base = (
             alt.Chart(df)
-            .transform_filter(
-                (1 - alt.datum["alpha"] - cov_tol <= cov_selection)
-                & (1 - alt.datum["alpha"] + cov_tol >= cov_selection)
-            )
+            .transform_filter("round((1 - datum.alpha) * 100) / 100 == coverage")
             .transform_calculate(
                 y_label=(
                     "((datum.y_test >= datum.y_pred_low) & (datum.y_test <= datum.y_pred_upp))"
@@ -249,8 +248,8 @@ def plot_prediction_intervals_by_strategy(df):
             )
             .transform_calculate(
                 coverage_text=(
-                    f"'Coverage: ' + format(datum.coverage * 100, '.1f') + '%'"
-                    f" + ' (target = ' + format((1 - datum.alpha) * 100, '.1f') + '%)'"
+                    "'Coverage: ' + format(datum.coverage * 100, '.1f') + '%'"
+                    " + ' (target = ' + format((1 - datum.alpha) * 100, '.1f') + '%)'"
                 )
             )
             .mark_text(align="left", baseline="top")
@@ -262,9 +261,7 @@ def plot_prediction_intervals_by_strategy(df):
         )
         text_with = (
             base.transform_aggregate(width="mean(width)", groupby=["strategy"])
-            .transform_calculate(
-                width_text=f"'Interval Width: ' + format({alt.datum['width']}, '$,d')"
-            )
+            .transform_calculate(width_text="'Interval Width: ' + format(datum.width, '$,d')")
             .mark_text(align="left", baseline="top")
             .encode(
                 x=alt.value(5),
@@ -275,7 +272,7 @@ def plot_prediction_intervals_by_strategy(df):
 
         chart = (
             bar + tick_low + tick_upp + circle + diagonal + text_coverage + text_with
-        ).add_params(cov_selection)
+        ).add_params(coverage_val)
 
         return chart
 

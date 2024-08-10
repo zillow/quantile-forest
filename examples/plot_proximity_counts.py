@@ -3,16 +3,15 @@ Using Proximity Counts to Identify Similar Samples
 ==================================================
 
 This example demonstrates the use of quantile regression forest (QRF)
-proximity counts to identify similar samples in an unsupervised manner, as the
-target values are not used during model fitting. In this scenario, we train a
-QRF on a noisy dataset to predict individual pixel values (i.e., denoise). We
-then retrieve the proximity values for samples in a noisy test set. For each
-test sample digit, we visualize it alongside a set of similar (non-noisy)
-training samples determined by their proximity counts, as well as the
-non-noisy digit. The similar samples are ordered from the highest to the
-lowest proximity count for each digit, arranged from left to right and top to
-bottom. This example illustrates the effectiveness of proximity counts in
-identifying similar samples, even when using noisy training and test data.
+proximity counts to identify similar samples. In this scenario, we train a QRF
+on a noisy dataset to predict individual pixel values in an unsupervised
+manner (the target labels are not used during training) for denoising
+purposes. We then retrieve the proximity values for the noisy test samples. We
+visualize each test sample alongside a set of similar (non-noisy) training
+samples determined by their proximity counts. These similar samples are
+ordered from the highest to the lowest proximity count. This illustrates how
+proximity counts can effectively identify similar samples even in noisy
+conditions.
 """
 
 import altair as alt
@@ -41,12 +40,7 @@ X_train, X_test, y_train, y_test = train_test_split(
 
 def add_gaussian_noise(X, mean=0, std=0.1, random_state=None):
     """Add Gaussian noise to input data."""
-    if random_state is None:
-        rng = check_random_state(0)
-    elif isinstance(random_state, int):
-        rng = check_random_state(random_state)
-    else:
-        rng = random_state
+    rng = check_random_state(random_state)
 
     scaler = MinMaxScaler()
     X_scaled = scaler.fit_transform(X)
@@ -97,7 +91,6 @@ df = (
     .join(y_test)
     .reset_index()
     .join(df_prox)
-    .iloc[:n_test_samples]
     .explode("prox")
     .assign(
         **{
@@ -140,26 +133,16 @@ def plot_digits_proximities(
     subplot_dim = (width - subplot_spacing * (n_subplot_rows - 1)) / n_subplot_rows
 
     # Slider for determining the test index for which the data is being visualized.
-    slider = alt.binding_range(
-        min=0,
-        max=n_samples - 1,
-        step=1,
-        name="Test Index: ",
-    )
-
-    idx_val = alt.selection_point(
-        value=0,
-        bind=slider,
-        fields=["index"],
-    )
+    slider = alt.binding_range(min=0, max=n_samples - 1, step=1, name="Test Sample Index: ")
+    index_selection = alt.selection_point(value=0, bind=slider, fields=["index"])
 
     scale = alt.Scale(domain=[x_min, x_max], scheme="greys")
-    opacity = (alt.value(0), alt.value(0.67))
+    opacity = (alt.value(0), alt.value(0.5))
 
-    base = alt.Chart(df).add_params(idx_val).transform_filter(idx_val)
+    base = alt.Chart(df).add_params(index_selection).transform_filter(index_selection)
 
     chart1 = (
-        base.transform_filter(f"datum.prox_idx == 0")
+        base.transform_filter("datum.prox_idx == 0")
         .transform_fold(fold=pixel_cols, as_=["pixel", "value"])
         .transform_calculate(value_clean=f"floor(datum.value / {pixel_scale})")
         .transform_calculate(value_noisy=f"datum.value - (datum.value_clean * {pixel_scale})")
@@ -172,7 +155,7 @@ def plot_digits_proximities(
             opacity=alt.condition(alt.datum["value_noisy"] == 0, *opacity),
             tooltip=[
                 alt.Tooltip("target:Q", title="Digit"),
-                alt.Tooltip("value_noisy:Q", format=".3f", title="Pixel Value"),
+                alt.Tooltip("value_noisy:Q", format=",.3f", title="Pixel Value"),
                 alt.Tooltip("x:Q", title="Pixel X"),
                 alt.Tooltip("y:Q", title="Pixel Y"),
             ],
@@ -213,7 +196,7 @@ def plot_digits_proximities(
     )
 
     chart3 = (
-        base.transform_filter(f"datum.prox_idx == 0")
+        base.transform_filter("datum.prox_idx == 0")
         .transform_fold(fold=pixel_cols, as_=["pixel", "value"])
         .transform_calculate(value_clean=f"floor(datum.value / {pixel_scale})")
         .transform_calculate(x=pixel_x, y=pixel_y)
@@ -225,7 +208,7 @@ def plot_digits_proximities(
             opacity=alt.condition(alt.datum["value_clean"] == 0, *opacity),
             tooltip=[
                 alt.Tooltip("target:Q", title="Digit"),
-                alt.Tooltip("value_clean:Q", title="Pixel Value"),
+                alt.Tooltip("value_clean:Q", format=",.3f", title="Pixel Value"),
                 alt.Tooltip("x:Q", title="Pixel X"),
                 alt.Tooltip("y:Q", title="Pixel Y"),
             ],

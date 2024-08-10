@@ -3,12 +3,11 @@ Computing User-Specified Functions with QRFs
 ============================================
 
 This example demonstrates how to extract the empirical distribution from a
-quantile regression forest (QRF) for one or more samples to calculate a
-user-specified function of interest. While a QRF is designed to estimate
-quantiles from the empirical distribution calculated for each sample, it can
-also be useful to use this empirical distribution to calculate other
-quantities of interest. Here, we calculate the empirical cumulative
-distribution function (ECDF) for a test sample.
+quantile regression forest (QRF) to calculate user-specified functions of
+interest. While a QRF is designed to estimate quantiles, their empirical
+distributions can also be used to calculate other statistical quantities. In
+this scenario, we compute the empirical cumulative distribution function
+(ECDF) for test samples.
 """
 
 from itertools import chain
@@ -93,7 +92,7 @@ for idx in range(n_test_samples):
             "y_val": list(chain.from_iterable([y_i.quantiles for y_i in y_ecdf])),
             "y_val2": list(chain.from_iterable([y_i.quantiles for y_i in y_ecdf]))[1:] + [np.nan],
             "proba": list(chain.from_iterable([y_i.probabilities for y_i in y_ecdf])),
-            "sample_idx": [idx] * n_quantiles,
+            "index": [idx] * n_quantiles,
         }
     )
     dfs.append(df_i)
@@ -101,12 +100,12 @@ df = pd.concat(dfs, ignore_index=True)
 
 
 def plot_ecdf(df):
-    min_idx = df["sample_idx"].min()
-    max_idx = df["sample_idx"].max()
+    min_idx = df["index"].min()
+    max_idx = df["index"].max()
 
     # Slider for determining the sample index for which the custom function is being visualized.
-    slider = alt.binding_range(min=min_idx, max=max_idx, step=1, name="Sample Index: ")
-    sample_selection = alt.param(value=0, bind=slider, name="sample_idx")
+    slider = alt.binding_range(min=min_idx, max=max_idx, step=1, name="Test Sample Index: ")
+    index_selection = alt.selection_point(value=0, bind=slider, fields=["index"])
 
     tooltip = [
         alt.Tooltip("y_val:Q", title="Response Value"),
@@ -136,8 +135,8 @@ def plot_ecdf(df):
 
     chart = (
         (circles + lines)
-        .add_params(sample_selection)
-        .transform_filter(alt.datum["sample_idx"] == sample_selection)
+        .add_params(index_selection)
+        .transform_filter(index_selection)
         .properties(
             height=400,
             width=650,

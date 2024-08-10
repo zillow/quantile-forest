@@ -3,10 +3,10 @@ Using Quantile Ranks to Identify Potential Outliers
 ===================================================
 
 This example demonstrates the use of quantile regression forest (QRF) quantile
-ranks to identify potential outlier samples. In this scenario, we train a QRF
-model on a toy dataset and use quantile ranks to highlight values that deviate
-significantly from the expected range. Potential outliers are defined as
-points whose quantile rank falls outside the specified threshold interval
+ranks to identify potential outliers in a dataset. In this scenario, we train
+a QRF model on a toy dataset and use quantile ranks to highlight values that
+deviate significantly from the expected range. Potential outliers are defined
+as points whose quantile rank falls outside the specified threshold interval
 around the median.
 """
 
@@ -33,37 +33,33 @@ def make_toy_dataset(n_samples, bounds, random_seed=0):
 
 X, y = make_toy_dataset(n_samples, bounds, random_seed=random_seed)
 
-params = {"max_samples_leaf": None, "min_samples_leaf": 50, "random_state": random_seed}
-qrf = RandomForestQuantileRegressor(**params).fit(X, y)
+qrf = RandomForestQuantileRegressor(
+    max_samples_leaf=None,
+    min_samples_leaf=50,
+    random_state=random_seed,
+).fit(X, y)
 
 y_pred = qrf.predict(X, quantiles=0.5)
 
 # Get the quantile rank for all samples.
 y_ranks = qrf.quantile_ranks(X, y)
 
-df = pd.DataFrame(
-    {
-        "x": X.reshape(-1),
-        "y": y,
-        "y_pred": y_pred,
-        "y_rank": y_ranks,
-    }
-)
+df = pd.DataFrame({"x": X.reshape(-1), "y": y, "y_pred": y_pred, "y_rank": y_ranks})
 
 
 def plot_fit_and_ranks(df):
     # Slider for varying the interval that defines the upper and lower quantile rank thresholds.
     slider = alt.binding_range(min=0, max=1, step=0.01, name="Rank Interval Threshold: ")
-    interval_selection = alt.param("interval_selection", bind=slider, value=0.05)
+    interval_val = alt.param(value=0.05, bind=slider, name="interval")
 
     click = alt.selection_point(fields=["outlier"], bind="legend")
 
     base = alt.Chart(df)
 
     points = (
-        base.add_params(interval_selection, click)
+        base.add_params(interval_val, click)
         .transform_calculate(
-            outlier="abs(datum.y_rank - 0.5) > (0.5 - interval_selection / 2) ? 'Yes' : 'No'"
+            outlier="abs(datum.y_rank - 0.5) > (0.5 - interval / 2) ? 'Yes' : 'No'"
         )
         .mark_circle(opacity=0.5, size=25)
         .encode(
@@ -79,8 +75,8 @@ def plot_fit_and_ranks(df):
                 alt.value("lightgray"),
             ),
             tooltip=[
-                alt.Tooltip("x:Q", format=".3f", title="x"),
-                alt.Tooltip("y:Q", format=".3f", title="f(x)"),
+                alt.Tooltip("x:Q", format=",.3f", title="X"),
+                alt.Tooltip("y:Q", format=",.3f", title="Y"),
                 alt.Tooltip("y_rank:Q", format=".3f", title="Quantile Rank"),
                 alt.Tooltip("outlier:N", title="Outlier"),
             ],
@@ -88,8 +84,13 @@ def plot_fit_and_ranks(df):
     )
 
     line_pred = base.mark_line(color="#006aff", size=4).encode(
-        x=alt.X("x:Q", axis=alt.Axis(title="x")),
-        y=alt.Y("y_pred:Q", axis=alt.Axis(title="f(x)")),
+        x=alt.X("x:Q", axis=alt.Axis(title="X")),
+        y=alt.Y("y_pred:Q", axis=alt.Axis(title="Y")),
+        tooltip=[
+            alt.Tooltip("x:Q", format=",.3f", title="X"),
+            alt.Tooltip("y:Q", format=",.3f", title="Y"),
+            alt.Tooltip("y_pred:Q", format=",.3f", title="Predicted Y"),
+        ],
     )
 
     # For desired legend labels.
