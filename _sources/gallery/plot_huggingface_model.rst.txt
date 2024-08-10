@@ -14,9 +14,9 @@ This example demonstrates how to download a trained quantile regression forest
 (QRF) model from Hugging Face Hub and use it to estimate new quantiles. In
 this scenario, a QRF has been trained with default parameters on a train-test
 split of the California housing dataset and uploaded to Hugging Face Hub. The
-model is downloaded, and inference is performed over several quantiles for
-each instance in the dataset. The estimates are visualized by the latitude and
-longitude of each instance. The model used is available on Hugging Face Hub
+model is downloaded and used to perform inference across several quantiles for
+each dataset sample. The results are visualized by the latitude and longitude
+of each sample. The model used is available on Hugging Face Hub
 `here <https://huggingface.co/quantile-forest/california-housing-example>`_.
 
 
@@ -28,6 +28,7 @@ longitude of each instance. The model used is available on Hugging Face Hub
     import os
     import pickle
     import shutil
+    import tempfile
 
     import altair as alt
     import numpy as np
@@ -147,13 +148,16 @@ longitude of each instance. The model used is available on Hugging Face Hub
 
         # Create the repository on the Hugging Face Hub if it does not exist.
         # Push the model to the repository.
-        hub_utils.push(
-            repo_id=repo_id,
-            source=local_dir,
-            token=token,  # personal token to be downloaded from Hugging Face
-            commit_message="Model commit",
-            create_remote=True,
-        )
+        try:
+            hub_utils.push(
+                repo_id=repo_id,
+                source=local_dir,
+                token=token,  # personal token to be downloaded from Hugging Face
+                commit_message="Model commit",
+                create_remote=True,
+            )
+        except Exception as e:
+            print(f"Error pushing model to Hugging Face Hub: {e}")
 
         os.remove(model_filename)
         shutil.rmtree(local_dir)
@@ -162,17 +166,13 @@ longitude of each instance. The model used is available on Hugging Face Hub
     if not load_existing:
         fit_and_upload_model(token, repo_id, random_state=random_seed)
 
-    # Download the repository locally.
-    local_dir = "./local_repo"
-    if os.path.exists(local_dir):
-        shutil.rmtree(local_dir)
-    hub_utils.download(repo_id=repo_id, dst=local_dir)
-
-    # Load the fitted model.
+    # Download the repository locally and load the fitted model.
     model_filename = "model.pkl"
-    with open(f"{local_dir}/{model_filename}", "rb") as file:
-        qrf = pickle.load(file)
-    shutil.rmtree(local_dir)
+    local_dir = "./local_repo"
+    with tempfile.TemporaryDirectory() as local_dir:
+        hub_utils.download(repo_id=repo_id, dst=local_dir)
+        with open(f"{local_dir}/{model_filename}", "rb") as file:
+            qrf = pickle.load(file)
 
     # Estimate quantiles.
     X, y = datasets.fetch_california_housing(as_frame=True, return_X_y=True)
@@ -187,7 +187,7 @@ longitude of each instance. The model used is available on Hugging Face Hub
     )
 
 
-    def plot_quantiles_by_latlon(df, quantiles):
+    def plot_quantiles_by_latlon(df, quantiles, color_scheme="cividis"):
         # Slider for varying the displayed quantile estimates.
         slider = alt.binding_range(
             min=0,
@@ -196,11 +196,11 @@ longitude of each instance. The model used is available on Hugging Face Hub
             name="Predicted Quantile: ",
         )
 
-        quantile_selection = alt.param(value=0.5, bind=slider, name="quantile")
+        quantile_val = alt.param(value=0.5, bind=slider, name="quantile")
 
         chart = (
             alt.Chart(df)
-            .add_params(quantile_selection)
+            .add_params(quantile_val)
             .transform_filter("datum.quantile == quantile")
             .mark_circle()
             .encode(
@@ -216,7 +216,7 @@ longitude of each instance. The model used is available on Hugging Face Hub
                     scale=alt.Scale(zero=False),
                     title="Latitude",
                 ),
-                color=alt.Color("value:Q", scale=alt.Scale(scheme="cividis"), title="Prediction"),
+                color=alt.Color("value:Q", scale=alt.Scale(scheme=color_scheme), title="Prediction"),
                 size=alt.Size("Population:Q"),
                 tooltip=[
                     alt.Tooltip("index:N", title="Row ID"),
@@ -244,6 +244,7 @@ longitude of each instance. The model used is available on Hugging Face Hub
             import os
             import pickle
             import shutil
+            import tempfile
 
             import altair as alt
             import numpy as np
@@ -363,13 +364,16 @@ longitude of each instance. The model used is available on Hugging Face Hub
 
                 # Create the repository on the Hugging Face Hub if it does not exist.
                 # Push the model to the repository.
-                hub_utils.push(
-                    repo_id=repo_id,
-                    source=local_dir,
-                    token=token,  # personal token to be downloaded from Hugging Face
-                    commit_message="Model commit",
-                    create_remote=True,
-                )
+                try:
+                    hub_utils.push(
+                        repo_id=repo_id,
+                        source=local_dir,
+                        token=token,  # personal token to be downloaded from Hugging Face
+                        commit_message="Model commit",
+                        create_remote=True,
+                    )
+                except Exception as e:
+                    print(f"Error pushing model to Hugging Face Hub: {e}")
 
                 os.remove(model_filename)
                 shutil.rmtree(local_dir)
@@ -378,17 +382,13 @@ longitude of each instance. The model used is available on Hugging Face Hub
             if not load_existing:
                 fit_and_upload_model(token, repo_id, random_state=random_seed)
 
-            # Download the repository locally.
-            local_dir = "./local_repo"
-            if os.path.exists(local_dir):
-                shutil.rmtree(local_dir)
-            hub_utils.download(repo_id=repo_id, dst=local_dir)
-
-            # Load the fitted model.
+            # Download the repository locally and load the fitted model.
             model_filename = "model.pkl"
-            with open(f"{local_dir}/{model_filename}", "rb") as file:
-                qrf = pickle.load(file)
-            shutil.rmtree(local_dir)
+            local_dir = "./local_repo"
+            with tempfile.TemporaryDirectory() as local_dir:
+                hub_utils.download(repo_id=repo_id, dst=local_dir)
+                with open(f"{local_dir}/{model_filename}", "rb") as file:
+                    qrf = pickle.load(file)
 
             # Estimate quantiles.
             X, y = datasets.fetch_california_housing(as_frame=True, return_X_y=True)
@@ -403,7 +403,7 @@ longitude of each instance. The model used is available on Hugging Face Hub
             )
 
 
-            def plot_quantiles_by_latlon(df, quantiles):
+            def plot_quantiles_by_latlon(df, quantiles, color_scheme="cividis"):
                 # Slider for varying the displayed quantile estimates.
                 slider = alt.binding_range(
                     min=0,
@@ -412,11 +412,11 @@ longitude of each instance. The model used is available on Hugging Face Hub
                     name="Predicted Quantile: ",
                 )
 
-                quantile_selection = alt.param(value=0.5, bind=slider, name="quantile")
+                quantile_val = alt.param(value=0.5, bind=slider, name="quantile")
 
                 chart = (
                     alt.Chart(df)
-                    .add_params(quantile_selection)
+                    .add_params(quantile_val)
                     .transform_filter("datum.quantile == quantile")
                     .mark_circle()
                     .encode(
@@ -432,7 +432,7 @@ longitude of each instance. The model used is available on Hugging Face Hub
                             scale=alt.Scale(zero=False),
                             title="Latitude",
                         ),
-                        color=alt.Color("value:Q", scale=alt.Scale(scheme="cividis"), title="Prediction"),
+                        color=alt.Color("value:Q", scale=alt.Scale(scheme=color_scheme), title="Prediction"),
                         size=alt.Size("Population:Q"),
                         tooltip=[
                             alt.Tooltip("index:N", title="Row ID"),

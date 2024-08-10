@@ -599,6 +599,35 @@ to train each base estimator.</p>
 </dd>
 </dl>
 </dd>
+<dt class="field-even">Attributes<span class="colon">:</span></dt>
+<dd class="field-even"><dl>
+<dt><strong>estimator_</strong><span class="classifier"><a class="reference external" href="https://scikit-learn.org/stable/modules/generated/sklearn.tree.ExtraTreeRegressor.html#sklearn.tree.ExtraTreeRegressor" title="(in scikit-learn v1.5)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ExtraTreeRegressor</span></code></a></span></dt><dd><p>The child estimator template used to create the collection of fitted
+sub-estimators.</p>
+<div class="versionadded">
+<p><span class="versionmodified added">New in scikit-learn version 1.2:  </span><code class="docutils literal notranslate"><span class="pre">base_estimator_</span></code> was renamed to <code class="docutils literal notranslate"><span class="pre">estimator_</span></code>.</p>
+</div>
+</dd>
+<dt><strong>estimators_</strong><span class="classifier">list of DecisionTreeRegressor</span></dt><dd><p>The collection of fitted sub-estimators.</p>
+</dd>
+<dt><a class="reference internal" href="#quantile_forest.ExtraTreesQuantileRegressor.feature_importances_" title="quantile_forest.ExtraTreesQuantileRegressor.feature_importances_"><code class="xref py py-obj docutils literal notranslate"><span class="pre">feature_importances_</span></code></a><span class="classifier">ndarray of shape (n_features,)</span></dt><dd><p>The impurity-based feature importances.</p>
+</dd>
+<dt><strong>n_features_in_</strong><span class="classifier">int</span></dt><dd><p>Number of features seen during <a class="reference external" href="https://scikit-learn.org/stable/glossary.html#term-fit" title="(in scikit-learn v1.5)"><span class="xref std std-term">fit</span></a>.</p>
+</dd>
+<dt><strong>feature_names_in_</strong><span class="classifier">ndarray of shape (<code class="docutils literal notranslate"><span class="pre">n_features_in_</span></code>,)</span></dt><dd><p>Names of features seen during <a class="reference external" href="https://scikit-learn.org/stable/glossary.html#term-fit" title="(in scikit-learn v1.5)"><span class="xref std std-term">fit</span></a>. Defined only when <code class="docutils literal notranslate"><span class="pre">X</span></code>
+has feature names that are all strings.</p>
+</dd>
+<dt><strong>n_outputs_</strong><span class="classifier">int</span></dt><dd><p>The number of outputs.</p>
+</dd>
+<dt><strong>oob_score_</strong><span class="classifier">float</span></dt><dd><p>Score of the training dataset obtained using an out-of-bag estimate.
+This attribute exists only when <code class="docutils literal notranslate"><span class="pre">oob_score</span></code> is True.</p>
+</dd>
+<dt><strong>oob_prediction_</strong><span class="classifier">ndarray of shape (n_samples,) or (n_samples, n_outputs)</span></dt><dd><p>Prediction computed with out-of-bag estimate on the training set.
+This attribute exists only when <code class="docutils literal notranslate"><span class="pre">oob_score</span></code> is True.</p>
+</dd>
+<dt><a class="reference internal" href="#quantile_forest.ExtraTreesQuantileRegressor.estimators_samples_" title="quantile_forest.ExtraTreesQuantileRegressor.estimators_samples_"><code class="xref py py-obj docutils literal notranslate"><span class="pre">estimators_samples_</span></code></a><span class="classifier">list of arrays</span></dt><dd><p>The subset of drawn samples for each base estimator.</p>
+</dd>
+</dl>
+</dd>
 </dl>
 <div class="admonition seealso">
 <p class="admonition-title">See also</p>
@@ -638,37 +667,6 @@ Machine Learning, 63(1), 3-42, 2006.</p>
 <span class="go">0.3...</span>
 </pre></div>
 </div>
-<dl class="field-list">
-<dt class="field-odd">Attributes<span class="colon">:</span></dt>
-<dd class="field-odd"><dl>
-<dt><strong>estimator_</strong><span class="classifier"><a class="reference external" href="https://scikit-learn.org/stable/modules/generated/sklearn.tree.ExtraTreeRegressor.html#sklearn.tree.ExtraTreeRegressor" title="(in scikit-learn v1.5)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ExtraTreeRegressor</span></code></a></span></dt><dd><p>The child estimator template used to create the collection of fitted
-sub-estimators.</p>
-<div class="versionadded">
-<p><span class="versionmodified added">New in scikit-learn version 1.2:  </span><code class="docutils literal notranslate"><span class="pre">base_estimator_</span></code> was renamed to <code class="docutils literal notranslate"><span class="pre">estimator_</span></code>.</p>
-</div>
-</dd>
-<dt><strong>estimators_</strong><span class="classifier">list of DecisionTreeRegressor</span></dt><dd><p>The collection of fitted sub-estimators.</p>
-</dd>
-<dt><a class="reference internal" href="#quantile_forest.ExtraTreesQuantileRegressor.feature_importances_" title="quantile_forest.ExtraTreesQuantileRegressor.feature_importances_"><code class="xref py py-obj docutils literal notranslate"><span class="pre">feature_importances_</span></code></a><span class="classifier">ndarray of shape (n_features,)</span></dt><dd><p>The impurity-based feature importances.</p>
-</dd>
-<dt><strong>n_features_in_</strong><span class="classifier">int</span></dt><dd><p>Number of features seen during <a class="reference external" href="https://scikit-learn.org/stable/glossary.html#term-fit" title="(in scikit-learn v1.5)"><span class="xref std std-term">fit</span></a>.</p>
-</dd>
-<dt><strong>feature_names_in_</strong><span class="classifier">ndarray of shape (<code class="docutils literal notranslate"><span class="pre">n_features_in_</span></code>,)</span></dt><dd><p>Names of features seen during <a class="reference external" href="https://scikit-learn.org/stable/glossary.html#term-fit" title="(in scikit-learn v1.5)"><span class="xref std std-term">fit</span></a>. Defined only when <code class="docutils literal notranslate"><span class="pre">X</span></code>
-has feature names that are all strings.</p>
-</dd>
-<dt><strong>n_outputs_</strong><span class="classifier">int</span></dt><dd><p>The number of outputs.</p>
-</dd>
-<dt><strong>oob_score_</strong><span class="classifier">float</span></dt><dd><p>Score of the training dataset obtained using an out-of-bag estimate.
-This attribute exists only when <code class="docutils literal notranslate"><span class="pre">oob_score</span></code> is True.</p>
-</dd>
-<dt><strong>oob_prediction_</strong><span class="classifier">ndarray of shape (n_samples,) or (n_samples, n_outputs)</span></dt><dd><p>Prediction computed with out-of-bag estimate on the training set.
-This attribute exists only when <code class="docutils literal notranslate"><span class="pre">oob_score</span></code> is True.</p>
-</dd>
-<dt><a class="reference internal" href="#quantile_forest.ExtraTreesQuantileRegressor.estimators_samples_" title="quantile_forest.ExtraTreesQuantileRegressor.estimators_samples_"><code class="xref py py-obj docutils literal notranslate"><span class="pre">estimators_samples_</span></code></a><span class="classifier">list of arrays</span></dt><dd><p>The subset of drawn samples for each base estimator.</p>
-</dd>
-</dl>
-</dd>
-</dl>
 <p class="rubric">Methods</p>
 <div class="pst-scrollable-table-container"><table class="autosummary longtable table autosummary">
 <tbody>
