@@ -793,7 +793,9 @@ def check_max_samples_leaf(name):
         est.fit(X, y)
 
         max_leaf_size = 0
-        for _, tree_lookup in enumerate(est._get_y_train_leaves(X, 1)):
+        y_train_leaves, _ = est._get_y_train_leaves(X, y[:1])
+        for i in range(len(y_train_leaves)):
+            tree_lookup = y_train_leaves[i]
             for leaf_samples in np.squeeze(tree_lookup, -2):
                 n_leaf_samples = len([x for x in leaf_samples if x != 0])
                 if n_leaf_samples > max_leaf_size:
@@ -819,7 +821,7 @@ def check_max_samples_leaf(name):
             est.param_validation = param_validation
             assert_raises(ValueError, est.fit, X, y)
             est.max_samples_leaf = max_samples_leaf
-            assert_raises(ValueError, est._get_y_train_leaves, X, 1)
+            assert_raises(ValueError, est._get_y_train_leaves, X, y)
 
 
 @pytest.mark.parametrize("name", FOREST_REGRESSORS)

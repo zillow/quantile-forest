@@ -563,12 +563,16 @@ cdef class QuantileForest:
         Training target values. Assumes values are sorted in ascending order.
 
     y_train_leaves : array-like of shape \
-            (n_estimators, n_leaves, n_outputs, n_indices)
+            (n_estimators, n_leaves, n_indices, n_outputs)
         List of trees, each with a list of nodes, each with a list of indices
         of the training samples residing at that node. Nodes with no samples
         (e.g., internal nodes) are empty. Internal nodes are included so that
         leaf node indices match their ``est.apply`` outputs. Each node list is
         padded to equal length with 0s.
+
+    y_bound_leaves : array-like of shape (n_estimators, n_leaves, 2)
+        Minimum and maximum bounds for target values for each leaf node. Used
+        to enforce monotonicity constraints.
 
     sparse_pickle : bool, default=False
         Pickle using a SciPy sparse matrix.
@@ -578,38 +582,56 @@ cdef class QuantileForest:
         self,
         cnp.ndarray[float64_t, ndim=2] y_train,
         cnp.ndarray[intp_t, ndim=4] y_train_leaves,
+        cnp.ndarray[float64_t, ndim=3] y_bound_leaves=None,
         bint sparse_pickle=<bint>False,
     ):
         """Constructor."""
         self.y_train = y_train
         self.y_train_leaves = y_train_leaves
+        self.y_bound_leaves = y_bound_leaves
         self.sparse_pickle = sparse_pickle
 
     def __reduce__(self):
         """Reduce re-implementation, for pickling."""
         if self.sparse_pickle:
             y_train_leaves = np.empty(shape=(0, 0, 0, 0), dtype=np.int64)
-            kwargs = {"y_train_leaves": np.asarray(self.y_train_leaves)}
+            y_bound_leaves = None
+            kwargs = {
+                "y_train_leaves": np.asarray(self.y_train_leaves),
+                "y_bound_leaves": (
+                    None if self.y_bound_leaves is None else np.asarray(self.y_bound_leaves)
+                ),
+            }
         else:
             y_train_leaves = np.asarray(self.y_train_leaves)
+            y_bound_leaves = (
+                None if self.y_bound_leaves is None else np.asarray(self.y_bound_leaves)
+            )
             kwargs = {}
-        args = (np.asarray(self.y_train), y_train_leaves, self.sparse_pickle)
+        args = (np.asarray(self.y_train), y_train_leaves, y_bound_leaves, self.sparse_pickle)
         return (QuantileForest, args, self.__getstate__(**kwargs))
 
     def __getstate__(self, **kwargs):
         """Getstate re-implementation, for pickling."""
         d = {}
         if self.sparse_pickle:
-            matrix = kwargs["y_train_leaves"]
-            reshape = (matrix.shape[2], matrix.shape[0] * matrix.shape[1] * matrix.shape[2])
-            d["shape"] = matrix.shape
-            d["matrix"] = sparse.csc_matrix(matrix.reshape(reshape))
+            matrix1 = kwargs["y_train_leaves"]
+            reshape1 = (matrix1.shape[2], matrix1.shape[0] * matrix1.shape[1] * matrix1.shape[2])
+            d["shape1"] = matrix1.shape
+            d["matrix1"] = sparse.csc_matrix(matrix1.reshape(reshape1))
+
+            matrix2 = kwargs["y_bound_leaves"]
+            reshape2 = (matrix2.shape[2], matrix2.shape[0] * matrix2.shape[1])
+            d["shape2"] = matrix2.shape
+            d["matrix2"] = sparse.csc_matrix(matrix2.reshape(reshape2))
+
         return d
 
     def __setstate__(self, d):
         """Setstate re-implementation, for unpickling."""
         if self.sparse_pickle:
-            self.y_train_leaves = d["matrix"].toarray().reshape(d["shape"])
+            self.y_train_leaves = d["matrix1"].toarray().reshape(d["shape1"])
+            self.y_bound_leaves = d["matrix2"].toarray().reshape(d["shape2"])
 
     cpdef cnp.ndarray predict(
         self,
@@ -664,12 +686,12 @@ cdef class QuantileForest:
         cdef vector[double] leaf_samples
         cdef vector[double] leaf_weights
         cdef vector[vector[intp_t]] train_indices
-        cdef vector[vector[double]] train_weights
+        cdef vector[vector[double]] train_weights, clip_mins, clip_maxs
         cdef intp_t idx, train_idx
-        cdef double train_wgt
+        cdef double clip_min, clip_max, train_wgt
         cdef vector[int] n_leaf_samples
         cdef int n_total_samples, n_total_trees
-        cdef double train_weight
+        cdef double train_weight, sample_value
         cdef vector[vector[double]] leaf_preds
         cdef vector[double] pred
         cdef cnp.ndarray[float64_t, ndim=3] preds
@@ -710,6 +732,8 @@ cdef class QuantileForest:
         with nogil:
             idx = 1 if aggregate_leaves_first else n_trees
             train_indices = vector[vector[intp_t]](idx)
+            clip_mins = vector[vector[double]](idx)
+            clip_maxs = vector[vector[double]](idx)
 
             n_leaf_samples = vector[int](n_trees)
             leaf_preds = vector[vector[double]](n_quantiles)
@@ -738,6 +762,12 @@ cdef class QuantileForest:
                     for k in range(<intp_t>(leaf_preds.size())):
                         leaf_preds[k].clear()
 
+                    # Initialize arrays for clipping.
+                    for k in range(<intp_t>(clip_mins.size())):
+                        clip_mins[k].clear()
+                    for k in range(<intp_t>(clip_maxs.size())):
+                        clip_maxs[k].clear()
+
                     # Accumulate training indices across leaves for each tree.
                     # If `aggregate_leaves_first`, also accumulate across trees.
                     for k in range(n_trees):
@@ -748,6 +778,14 @@ cdef class QuantileForest:
                                 &self.y_train_leaves[k, X_leaves[i, k], j, 0],
                                 &self.y_train_leaves[k, X_leaves[i, k], j, max_idx],
                             )
+
+                            if self.y_bound_leaves is not None:
+                                # Repeat the insertion of the corresponding clipping bounds.
+                                clip_min = self.y_bound_leaves[k, X_leaves[i, k], 0]
+                                clip_max = self.y_bound_leaves[k, X_leaves[i, k], 1]
+                                for _ in range(max_idx):
+                                    clip_mins[idx].push_back(clip_min)
+                                    clip_maxs[idx].push_back(clip_max)
 
                     if weighted_quantile:
                         for k in range(<intp_t>(train_weights.size())):
@@ -807,9 +845,16 @@ cdef class QuantileForest:
                             leaf_samples.clear()
 
                             # Get training target values associated with indices.
-                            for train_idx in train_indices[k]:
+                            for l in range(<intp_t>(train_indices[k].size())):
+                                train_idx = train_indices[k][l]
                                 if train_idx != 0:
-                                    leaf_samples.push_back(self.y_train[j][train_idx - 1])
+                                    # Apply clipping to each training sample.
+                                    sample_value = self.y_train[j][train_idx - 1]
+                                    if self.y_bound_leaves is not None:
+                                        clip_min = clip_mins[k][l]
+                                        clip_max = clip_maxs[k][l]
+                                        sample_value = max(min(sample_value, clip_max), clip_min)
+                                    leaf_samples.push_back(sample_value)
 
                             # Calculate quantiles (or mean).
                             if not use_mean:
