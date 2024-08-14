@@ -732,8 +732,6 @@ cdef class QuantileForest:
         with nogil:
             idx = 1 if aggregate_leaves_first else n_trees
             train_indices = vector[vector[intp_t]](idx)
-            clip_mins = vector[vector[double]](idx)
-            clip_maxs = vector[vector[double]](idx)
 
             n_leaf_samples = vector[int](n_trees)
             leaf_preds = vector[vector[double]](n_quantiles)
@@ -831,7 +829,7 @@ cdef class QuantileForest:
                             leaf_samples.clear()
 
                             # Get training target values associated with indices.
-                            for train_idx in  train_indices[k]:
+                            for train_idx in train_indices[k]:
                                 if train_idx != 0:
                                     leaf_samples.push_back(self.y_train[j][train_idx - 1])
 
