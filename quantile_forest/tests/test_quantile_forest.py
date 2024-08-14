@@ -1290,7 +1290,7 @@ def check_monotonic_constraints(name, max_samples_leaf):
         bootstrap=True,
     )
 
-    for oob_score in [True]:
+    for oob_score in [False, True]:
         if not oob_score:
             est.fit(X_train, y_train)
         else:
