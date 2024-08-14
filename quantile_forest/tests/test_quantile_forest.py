@@ -1274,6 +1274,7 @@ def check_monotonic_constraints(name, max_samples_leaf):
     X_train = X[train]
     y_train = y[train]
     X_test = np.copy(X[test])
+    y_test = np.copy(y[test])
     X_test_incr = np.copy(X_test)
     X_test_decr = np.copy(X_test)
     X_test_incr[:, 0] += 10
@@ -1283,23 +1284,27 @@ def check_monotonic_constraints(name, max_samples_leaf):
     monotonic_cst[1] = -1
 
     est = ForestRegressor(
-        n_estimators=5,
-        max_depth=8,
         max_samples_leaf=max_samples_leaf,
         monotonic_cst=monotonic_cst,
         max_leaf_nodes=n_samples_train,
+        bootstrap=True,
     )
 
-    est.fit(X_train, y_train)
-    y = est.predict(X_test)
+    for oob_score in [True]:
+        if not oob_score:
+            est.fit(X_train, y_train)
+        else:
+            est.fit(X_test, y_test)
 
-    # Check the monotonic increase constraint.
-    y_incr = est.predict(X_test_incr)
-    assert np.all(y_incr >= y)
+        y = est.predict(X_test, oob_score=oob_score)
 
-    # Check the monotonic decrease constraint.
-    y_decr = est.predict(X_test_decr)
-    assert np.all(y_decr <= y)
+        # Check the monotonic increase constraint.
+        y_incr = est.predict(X_test_incr, oob_score=oob_score)
+        assert np.all(y_incr >= y)
+
+        # Check the monotonic decrease constraint.
+        y_decr = est.predict(X_test_decr, oob_score=oob_score)
+        assert np.all(y_decr <= y)
 
 
 @pytest.mark.parametrize("name", FOREST_REGRESSORS)

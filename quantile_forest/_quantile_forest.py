@@ -669,7 +669,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
                         train_indices = np.zeros(len(X), dtype=int)
                         train_indices[indices] = y_train_leaves[tree, leaves, output, 0]
                         if self.monotonic_cst is not None:
-                            clip_min, clip_max = np.zeros(len(X)), np.zeros(len(X))
+                            clip_min, clip_max = np.full(len(X), -np.inf), np.full(len(X), np.inf)
                             clip_min[indices] = y_bound_leaves[tree, leaves, 0]
                             clip_max[indices] = y_bound_leaves[tree, leaves, 1]
                     leaf_values[:, tree] = y_train[train_indices - 1, output]
