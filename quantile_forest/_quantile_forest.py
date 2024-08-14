@@ -349,13 +349,11 @@ class BaseForestQuantileRegressor(ForestRegressor):
                     for j in range(y_dim):
                         y_train_leaves[i, leaf_idx, j, : len(y_indices)] = y_indices
 
-        y_bound_leaves = self._get_y_bound_leaves(
-            X_leaves_bootstrap, bootstrap_indices, y, max_node_count
-        )
+        y_bound_leaves = self._get_y_bound_leaves(y, y_train_leaves, max_node_count)
 
         return y_train_leaves, y_bound_leaves
 
-    def _get_y_bound_leaves(self, X_leaves_bootstrap, bootstrap_indices, y, max_node_count):
+    def _get_y_bound_leaves(self, y, y_train_leaves, max_node_count):
         if self.monotonic_cst is None:
             return None
 
@@ -366,17 +364,16 @@ class BaseForestQuantileRegressor(ForestRegressor):
 
             min_values = np.full(tree.node_count, np.inf)
             max_values = np.full(tree.node_count, -np.inf)
-            mid_values = np.full(tree.node_count, np.nan)
 
             # Populate the leaf nodes with actual target values.
             for node_idx in range(tree.node_count):
                 if tree.children_left[node_idx] == tree.children_right[node_idx]:  # leaf node
-                    leaf_indices = np.where(X_leaves_bootstrap[:, i] == node_idx)[0]
-                    leaf_targets = y[bootstrap_indices[:, i][leaf_indices] - 1]
+                    leaf_indices = y_train_leaves[i, node_idx]
+                    leaf_indices = leaf_indices[leaf_indices != 0]
                     if len(leaf_indices) > 0:
+                        leaf_targets = y[leaf_indices - 1]
                         min_values[node_idx] = np.min(leaf_targets)
                         max_values[node_idx] = np.max(leaf_targets)
-                        mid_values[node_idx] = np.mean(leaf_targets)
 
             # Propagate values from leaves to root.
             for node_idx in range(tree.node_count - 1, -1, -1):
@@ -389,42 +386,29 @@ class BaseForestQuantileRegressor(ForestRegressor):
                     max_values[node_idx] = max(max_values[left_child], max_values[right_child])
 
             # Traverse from root to leaves to enforce monotonicity.
-            stack = [(0, -np.inf, np.inf)]  # start with root node (node 0)
+            stack = [(0, min_values[0], max_values[0])]  # start with root node (node 0)
 
             while stack:
                 node_idx, min_bound, max_bound = stack.pop()
 
                 if tree.children_left[node_idx] == tree.children_right[node_idx]:  # leaf node
                     # The bounds have already been calculated in the leaf.
-                    y_bound_leaves[i, node_idx] = [
-                        # max(min_values[node_idx], min_bound), min(max_values[node_idx], max_bound),
-                        min_bound,
-                        max_bound,
-                    ]
+                    y_bound_leaves[i, node_idx] = [min_bound, max_bound]
                 else:  # non-leaf node
                     feature_idx = tree.feature[node_idx]
                     left_child = tree.children_left[node_idx]
                     right_child = tree.children_right[node_idx]
 
-                    mid = (min_values[left_child] + max_values[right_child]) / 2
-                    mid = max(min_values[left_child], min(mid, max_values[right_child]))
+                    # Calculate mid to respect the current node's bounds.
+                    mid = (max_values[left_child] + min_values[right_child]) / 2
+                    mid = np.clip(mid, min_bound, max_bound)
 
                     if self.monotonic_cst[feature_idx] == 1:  # increasing monotonicity
-                        stack.append(
-                            # (left_child, min_bound, min(max_bound, max_values[node_idx]))
-                            (left_child, min_bound, np.nanmin([mid, np.inf]))
-                        )
-                        stack.append(
-                            # (right_child, max(min_bound, min_values[node_idx]), max_bound)
-                            (right_child, np.nanmax([mid, -np.inf]), max_bound)
-                        )
+                        stack.append((left_child, min_bound, max(mid, min_bound)))
+                        stack.append((right_child, min(mid, max_bound), max_bound))
                     elif self.monotonic_cst[feature_idx] == -1:  # decreasing monotonicity
-                        # stack.append((left_child, max(min_bound, min_values[node_idx]), max_bound))
-                        stack.append((left_child, np.nanmax([mid, -np.inf]), max_bound))
-                        # stack.append(
-                        #     (right_child, min_bound, min(max_bound, max_values[node_idx]))
-                        # )
-                        stack.append((right_child, min_bound, np.nanmin([mid, np.inf])))
+                        stack.append((left_child, max(mid, min_bound), max_bound))
+                        stack.append((right_child, min_bound, min(mid, max_bound)))
                     else:
                         stack.append((left_child, min_bound, max_bound))
                         stack.append((right_child, min_bound, max_bound))

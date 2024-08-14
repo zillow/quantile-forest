@@ -1256,6 +1256,58 @@ def test_proximity_counts_oob(name):
     check_proximity_counts_oob(name)
 
 
+def check_monotonic_constraints(name, max_samples_leaf):
+    ForestRegressor = FOREST_REGRESSORS[name]
+
+    n_samples = 1000
+    n_samples_train = 900
+
+    # Build a regression task using 5 informative features.
+    X, y = datasets.make_regression(
+        n_samples=n_samples,
+        n_features=5,
+        n_informative=5,
+        random_state=0,
+    )
+    train = np.arange(n_samples_train)
+    test = np.arange(n_samples_train, n_samples)
+    X_train = X[train]
+    y_train = y[train]
+    X_test = np.copy(X[test])
+    X_test_incr = np.copy(X_test)
+    X_test_decr = np.copy(X_test)
+    X_test_incr[:, 0] += 10
+    X_test_decr[:, 1] += 10
+    monotonic_cst = np.zeros(X.shape[1])
+    monotonic_cst[0] = 1
+    monotonic_cst[1] = -1
+
+    est = ForestRegressor(
+        n_estimators=5,
+        max_depth=8,
+        max_samples_leaf=max_samples_leaf,
+        monotonic_cst=monotonic_cst,
+        max_leaf_nodes=n_samples_train,
+    )
+
+    est.fit(X_train, y_train)
+    y = est.predict(X_test)
+
+    # Check the monotonic increase constraint.
+    y_incr = est.predict(X_test_incr)
+    assert np.all(y_incr >= y)
+
+    # Check the monotonic decrease constraint.
+    y_decr = est.predict(X_test_decr)
+    assert np.all(y_decr <= y)
+
+
+@pytest.mark.parametrize("name", FOREST_REGRESSORS)
+@pytest.mark.parametrize("max_samples_leaf", [1])
+def test_monotonic_constraints(name, max_samples_leaf):
+    check_monotonic_constraints(name, max_samples_leaf)
+
+
 def check_serialization(name):
     # Check model serialization/deserialization.
 

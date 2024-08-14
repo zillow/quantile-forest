@@ -686,12 +686,12 @@ cdef class QuantileForest:
         cdef vector[double] leaf_samples
         cdef vector[double] leaf_weights
         cdef vector[vector[intp_t]] train_indices
-        cdef vector[vector[double]] train_weights, clip_mins, clip_maxs
+        cdef vector[vector[double]] train_weights
         cdef intp_t idx, train_idx
-        cdef double clip_min, clip_max, train_wgt
+        cdef double train_wgt
         cdef vector[int] n_leaf_samples
         cdef int n_total_samples, n_total_trees
-        cdef double train_weight, sample_value
+        cdef double train_weight
         cdef vector[vector[double]] leaf_preds
         cdef vector[double] pred
         cdef cnp.ndarray[float64_t, ndim=3] preds
@@ -762,12 +762,6 @@ cdef class QuantileForest:
                     for k in range(<intp_t>(leaf_preds.size())):
                         leaf_preds[k].clear()
 
-                    # Initialize arrays for clipping.
-                    for k in range(<intp_t>(clip_mins.size())):
-                        clip_mins[k].clear()
-                    for k in range(<intp_t>(clip_maxs.size())):
-                        clip_maxs[k].clear()
-
                     # Accumulate training indices across leaves for each tree.
                     # If `aggregate_leaves_first`, also accumulate across trees.
                     for k in range(n_trees):
@@ -778,14 +772,6 @@ cdef class QuantileForest:
                                 &self.y_train_leaves[k, X_leaves[i, k], j, 0],
                                 &self.y_train_leaves[k, X_leaves[i, k], j, max_idx],
                             )
-
-                            if self.y_bound_leaves is not None:
-                                # Repeat the insertion of the corresponding clipping bounds.
-                                clip_min = self.y_bound_leaves[k, X_leaves[i, k], 0]
-                                clip_max = self.y_bound_leaves[k, X_leaves[i, k], 1]
-                                for _ in range(max_idx):
-                                    clip_mins[idx].push_back(clip_min)
-                                    clip_maxs[idx].push_back(clip_max)
 
                     if weighted_quantile:
                         for k in range(<intp_t>(train_weights.size())):
@@ -845,16 +831,9 @@ cdef class QuantileForest:
                             leaf_samples.clear()
 
                             # Get training target values associated with indices.
-                            for l in range(<intp_t>(train_indices[k].size())):
-                                train_idx = train_indices[k][l]
+                            for train_idx in  train_indices[k]:
                                 if train_idx != 0:
-                                    # Apply clipping to each training sample.
-                                    sample_value = self.y_train[j][train_idx - 1]
-                                    if self.y_bound_leaves is not None:
-                                        clip_min = clip_mins[k][l]
-                                        clip_max = clip_maxs[k][l]
-                                        sample_value = max(min(sample_value, clip_max), clip_min)
-                                    leaf_samples.push_back(sample_value)
+                                    leaf_samples.push_back(self.y_train[j][train_idx - 1])
 
                             # Calculate quantiles (or mean).
                             if not use_mean:
