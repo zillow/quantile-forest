@@ -195,10 +195,13 @@ class BaseForestQuantileRegressor(ForestRegressor):
         if sample_weight is not None:
             sample_weight = np.asarray(sample_weight)[sorter]
 
-        # Get map of tree leaf nodes to training indices and target bounds.
-        y_train_leaves, y_bound_leaves = self._get_y_train_leaves(
+        # Get map of tree leaf nodes to training indices.
+        y_train_leaves = self._get_y_train_leaves(
             X, y_sorted, sorter=sorter, sample_weight=sample_weight
         )
+
+        # Get map of tree leaf nodes to target value bounds.
+        y_bound_leaves = self._get_y_bound_leaves(y_sorted, y_train_leaves)
 
         # Create quantile forest object.
         self.forest_ = QuantileForest(
@@ -249,10 +252,6 @@ class BaseForestQuantileRegressor(ForestRegressor):
             no samples (e.g., internal nodes) are empty. Internal nodes are
             included so that leaf node indices match their ``est.apply``
             outputs. Each node list is padded to equal length with 0s.
-
-        y_bound_leaves : array-like of shape (n_estimators, n_leaves, 2)
-            Minimum and maximum bounds for target values for each leaf node.
-            Used to enforce monotonicity constraints.
         """
         n_samples = X.shape[0]
         y_dim = y.shape[-1]
@@ -321,9 +320,10 @@ class BaseForestQuantileRegressor(ForestRegressor):
                 sample_count = np.max(np.bincount(X_leaves_bootstrap[:, i]))
                 if sample_count > max_samples_leaf:
                     max_samples_leaf = sample_count
+        self.max_node_count = max_node_count
 
         # Initialize NumPy array (more efficient serialization than dict/list).
-        shape = (self.n_estimators, max_node_count, y_dim, max_samples_leaf)
+        shape = (self.n_estimators, self.max_node_count, y_dim, max_samples_leaf)
         y_train_leaves = np.zeros(shape, dtype=np.int64)
 
         for i, estimator in enumerate(self.estimators_):
@@ -356,11 +356,9 @@ class BaseForestQuantileRegressor(ForestRegressor):
                     for j in range(y_dim):
                         y_train_leaves[i, leaf_idx, j, : len(y_indices)] = y_indices
 
-        y_bound_leaves = self._get_y_bound_leaves(y, y_train_leaves, max_node_count)
+        return y_train_leaves
 
-        return y_train_leaves, y_bound_leaves
-
-    def _get_y_bound_leaves(self, y, y_train_leaves, max_node_count):
+    def _get_y_bound_leaves(self, y, y_train_leaves):
         """Return the bounds for target values for each leaf node.
 
         The target value bounds are used to enforce monotonicity constraints.
@@ -378,9 +376,6 @@ class BaseForestQuantileRegressor(ForestRegressor):
             included so that leaf node indices match their ``est.apply``
             outputs. Each node list is padded to equal length with 0s.
 
-        max_node_count : int
-            The maximum number of nodes across all trees.
-
         Returns
         -------
         y_bound_leaves : array-like of shape (n_estimators, n_leaves, 2)
@@ -390,7 +385,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
         if self.monotonic_cst is None:
             return None
 
-        y_bound_leaves = np.full((self.n_estimators, max_node_count, 2), [-np.inf, np.inf])
+        y_bound_leaves = np.full((self.n_estimators, self.max_node_count, 2), [-np.inf, np.inf])
 
         for i, estimator in enumerate(self.estimators_):
             tree = estimator.tree_

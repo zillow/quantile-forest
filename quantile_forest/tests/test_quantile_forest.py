@@ -793,7 +793,7 @@ def check_max_samples_leaf(name):
         est.fit(X, y)
 
         max_leaf_size = 0
-        y_train_leaves, _ = est._get_y_train_leaves(X, y[:1])
+        y_train_leaves = est._get_y_train_leaves(X, y[:1])
         for i in range(len(y_train_leaves)):
             tree_lookup = y_train_leaves[i]
             for leaf_samples in np.squeeze(tree_lookup, -2):
