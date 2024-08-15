@@ -197,12 +197,18 @@ class BaseForestQuantileRegressor(ForestRegressor):
 
         # Get map of tree leaf nodes to training indices.
         y_train_leaves = self._get_y_train_leaves(
-            X, y_sorted.shape[-1], sorter=sorter, sample_weight=sample_weight
+            X, y_sorted, sorter=sorter, sample_weight=sample_weight
         )
+
+        # Get map of tree leaf nodes to target value bounds.
+        y_bound_leaves = self._get_y_bound_leaves(y_sorted, y_train_leaves)
 
         # Create quantile forest object.
         self.forest_ = QuantileForest(
-            y_sorted.astype(np.float64).T, y_train_leaves, sparse_pickle=sparse_pickle
+            y_sorted.astype(np.float64).T,
+            y_train_leaves,
+            y_bound_leaves,
+            sparse_pickle=sparse_pickle,
         )
 
         self.sorter_ = sorter
@@ -212,7 +218,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
 
         return self
 
-    def _get_y_train_leaves(self, X, y_dim, sorter=None, sample_weight=None):
+    def _get_y_train_leaves(self, X, y, sorter=None, sample_weight=None):
         """Return a mapping of each leaf node to its list of training indices.
 
         The ``apply`` function is used on the ``X`` values to obtain the leaf
@@ -225,8 +231,8 @@ class BaseForestQuantileRegressor(ForestRegressor):
             to ``dtype=np.float32``. If a sparse matrix is provided, it will be
             converted into a sparse ``csc_matrix``.
 
-        y_dim : int
-            The number of target outputs for each y value.
+        y : array-like of shape (n_samples, n_outputs)
+            The target outputs for each y value.
 
         sorter : array-like of shape (n_samples, n_outputs), default=None
             The indices that would sort the target values in ascending order.
@@ -240,7 +246,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
         Returns
         -------
         y_train_leaves : array-like of shape \
-                (n_estimators, n_leaves, n_outputs, n_indices)
+                (n_estimators, n_leaves, n_indices, n_outputs)
             List of trees, each with a list of nodes, each with a list of
             indices of the training samples residing at that node. Nodes with
             no samples (e.g., internal nodes) are empty. Internal nodes are
@@ -248,6 +254,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
             outputs. Each node list is padded to equal length with 0s.
         """
         n_samples = X.shape[0]
+        y_dim = y.shape[-1]
 
         if isinstance(self.max_samples_leaf, (Integral, np.integer)):
             max_samples_leaf = self.max_samples_leaf
@@ -263,6 +270,13 @@ class BaseForestQuantileRegressor(ForestRegressor):
                 "`max_samples_leaf` must be of integer, float, or None type, "
                 f"got {type(self.max_samples_leaf)}."
             )
+
+        if self.monotonic_cst is not None:
+            if max_samples_leaf != 1:
+                raise ValueError(
+                    "Monotonicity constraints are not supported with multiple values per leaf. "
+                    "To apply monotonicity constraints, set `max_samples_leaf=1`."
+                )
 
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", UserWarning)
@@ -306,9 +320,10 @@ class BaseForestQuantileRegressor(ForestRegressor):
                 sample_count = np.max(np.bincount(X_leaves_bootstrap[:, i]))
                 if sample_count > max_samples_leaf:
                     max_samples_leaf = sample_count
+        self.max_node_count = max_node_count
 
         # Initialize NumPy array (more efficient serialization than dict/list).
-        shape = (self.n_estimators, max_node_count, y_dim, max_samples_leaf)
+        shape = (self.n_estimators, self.max_node_count, y_dim, max_samples_leaf)
         y_train_leaves = np.zeros(shape, dtype=np.int64)
 
         for i, estimator in enumerate(self.estimators_):
@@ -342,6 +357,89 @@ class BaseForestQuantileRegressor(ForestRegressor):
                         y_train_leaves[i, leaf_idx, j, : len(y_indices)] = y_indices
 
         return y_train_leaves
+
+    def _get_y_bound_leaves(self, y, y_train_leaves):
+        """Return the bounds for target values for each leaf node.
+
+        The target value bounds are used to enforce monotonicity constraints.
+
+        Parameters
+        ----------
+        y : array-like of shape (n_samples, n_outputs)
+            The target outputs for each y value.
+
+        y_train_leaves : array-like of shape \
+                (n_estimators, n_leaves, n_indices, n_outputs)
+            List of trees, each with a list of nodes, each with a list of
+            indices of the training samples residing at that node. Nodes with
+            no samples (e.g., internal nodes) are empty. Internal nodes are
+            included so that leaf node indices match their ``est.apply``
+            outputs. Each node list is padded to equal length with 0s.
+
+        Returns
+        -------
+        y_bound_leaves : array-like of shape (n_estimators, n_leaves, 2)
+            Minimum and maximum bounds for target values for each leaf node.
+            Used to enforce monotonicity constraints. None if no constraints.
+        """
+        if self.monotonic_cst is None:
+            return None
+
+        y_bound_leaves = np.full((self.n_estimators, self.max_node_count, 2), [-np.inf, np.inf])
+
+        for i, estimator in enumerate(self.estimators_):
+            tree = estimator.tree_
+
+            min_values = np.full(tree.node_count, np.inf)
+            max_values = np.full(tree.node_count, -np.inf)
+
+            # Iterate over all nodes in reverse order (leaves to root).
+            for node_idx in range(tree.node_count - 1, -1, -1):
+                if tree.children_left[node_idx] == tree.children_right[node_idx]:  # leaf node
+                    # Populate the leaf nodes with actual target values.
+                    leaf_indices = y_train_leaves[i, node_idx]
+                    leaf_indices = leaf_indices[leaf_indices != 0]
+                    if leaf_indices.size > 0:
+                        leaf_targets = y[leaf_indices - 1]
+                        min_values[node_idx] = min(leaf_targets)
+                        max_values[node_idx] = max(leaf_targets)
+                else:  # non-leaf node
+                    # The min and max of the parent is the min/max of its children.
+                    left_child = tree.children_left[node_idx]
+                    right_child = tree.children_right[node_idx]
+                    min_values[node_idx] = min(min_values[left_child], min_values[right_child])
+                    max_values[node_idx] = max(max_values[left_child], max_values[right_child])
+
+            # Traverse from root to leaves to enforce monotonicity.
+            stack = [(0, min_values[0], max_values[0])]  # start with root node (node 0)
+
+            while stack:
+                node_idx, min_bound, max_bound = stack.pop()
+                if tree.children_left[node_idx] == tree.children_right[node_idx]:  # leaf node
+                    # The bounds have already been calculated in the leaf.
+                    y_bound_leaves[i, node_idx] = [min_bound, max_bound]
+                else:  # non-leaf node
+                    feature_idx = tree.feature[node_idx]
+
+                    left_child = tree.children_left[node_idx]
+                    right_child = tree.children_right[node_idx]
+
+                    if self.monotonic_cst[feature_idx] == 0:
+                        stack.append((left_child, min_bound, max_bound))
+                        stack.append((right_child, min_bound, max_bound))
+                    else:
+                        # Calculate midpoint that respects the current node's bounds.
+                        mid = (max_values[left_child] + min_values[right_child]) / 2
+                        mid = max(min(mid, max_bound), min_bound)
+
+                        if self.monotonic_cst[feature_idx] == 1:  # increasing monotonicity
+                            stack.append((left_child, min_bound, mid))
+                            stack.append((right_child, mid, max_bound))
+                        elif self.monotonic_cst[feature_idx] == -1:  # decreasing monotonicity
+                            stack.append((left_child, mid, max_bound))
+                            stack.append((right_child, min_bound, mid))
+
+        return y_bound_leaves
 
     def _oob_samples(self, X, indices=None, duplicates=None):
         """Generate out-of-bag (OOB) samples for each base estimator.
@@ -579,19 +677,30 @@ class BaseForestQuantileRegressor(ForestRegressor):
 
         if self.max_samples_leaf == 1:  # optimize for single-sample-per-leaf performance
             y_train_leaves = np.asarray(self.forest_.y_train_leaves)
+            y_bound_leaves = np.asarray(self.forest_.y_bound_leaves)
             y_train = np.asarray(self.forest_.y_train).T
             y_pred = np.empty((len(X), y_train.shape[1], len(quantiles)))
             for output in range(y_train.shape[1]):
                 leaf_values = np.empty((len(X), self.n_estimators))
                 for tree in range(self.n_estimators):
-                    if X_indices is None:  # IB scoring
-                        train_indices = y_train_leaves[tree, X_leaves[:, tree], output, 0]
-                    else:  # OOB scoring
+                    if X_indices is None:  # in-bag scoring
+                        leaves = X_leaves[:, tree]
+                        train_indices = y_train_leaves[tree, leaves, output, 0]
+                        if self.monotonic_cst is not None:
+                            clip_min = y_bound_leaves[tree, leaves, 0]
+                            clip_max = y_bound_leaves[tree, leaves, 1]
+                    else:  # out-of-bag scoring
                         indices = X_indices[:, tree] == 1
                         leaves = X_leaves[indices, tree]
                         train_indices = np.zeros(len(X), dtype=int)
                         train_indices[indices] = y_train_leaves[tree, leaves, output, 0]
+                        if self.monotonic_cst is not None:
+                            clip_min, clip_max = np.full(len(X), -np.inf), np.full(len(X), np.inf)
+                            clip_min[indices] = y_bound_leaves[tree, leaves, 0]
+                            clip_max[indices] = y_bound_leaves[tree, leaves, 1]
                     leaf_values[:, tree] = y_train[train_indices - 1, output]
+                    if self.monotonic_cst is not None:
+                        leaf_values[:, tree] = np.clip(leaf_values[:, tree], clip_min, clip_max)
                     leaf_values[train_indices == 0, tree] = np.nan
                 if len(quantiles) == 1 and quantiles[0] == -1:  # calculate mean
                     func = np.mean if X_indices is None else np.nanmean
@@ -1042,7 +1151,8 @@ class RandomForestQuantileRegressor(BaseForestQuantileRegressor):
 
         Monotonicity constraints are not supported for:
           - multioutput regressions (i.e. when `n_outputs_ > 1`),
-          - regressions trained on data with missing values.
+          - regressions trained on data with missing values,
+          - trees with large leaf samples (i.e. when `max_samples_leaf > 1`).
 
         .. sklearn-versionadded:: 1.4
 
@@ -1387,7 +1497,8 @@ class ExtraTreesQuantileRegressor(BaseForestQuantileRegressor):
 
         Monotonicity constraints are not supported for:
           - multioutput regressions (i.e. when `n_outputs_ > 1`),
-          - regressions trained on data with missing values.
+          - regressions trained on data with missing values,
+          - trees with large leaf samples (i.e. when `max_samples_leaf > 1`).
 
         .. sklearn-versionadded:: 1.4
 

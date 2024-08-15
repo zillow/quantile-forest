@@ -793,7 +793,9 @@ def check_max_samples_leaf(name):
         est.fit(X, y)
 
         max_leaf_size = 0
-        for _, tree_lookup in enumerate(est._get_y_train_leaves(X, 1)):
+        y_train_leaves = est._get_y_train_leaves(X, y[:1])
+        for i in range(len(y_train_leaves)):
+            tree_lookup = y_train_leaves[i]
             for leaf_samples in np.squeeze(tree_lookup, -2):
                 n_leaf_samples = len([x for x in leaf_samples if x != 0])
                 if n_leaf_samples > max_leaf_size:
@@ -819,7 +821,7 @@ def check_max_samples_leaf(name):
             est.param_validation = param_validation
             assert_raises(ValueError, est.fit, X, y)
             est.max_samples_leaf = max_samples_leaf
-            assert_raises(ValueError, est._get_y_train_leaves, X, 1)
+            assert_raises(ValueError, est._get_y_train_leaves, X, y)
 
 
 @pytest.mark.parametrize("name", FOREST_REGRESSORS)
@@ -1254,7 +1256,73 @@ def test_proximity_counts_oob(name):
     check_proximity_counts_oob(name)
 
 
-def check_serialization(name):
+def check_monotonic_constraints(name, max_samples_leaf):
+    ForestRegressor = FOREST_REGRESSORS[name]
+
+    n_samples = 1000
+    n_samples_train = 900
+
+    # Build a regression task using 5 informative features.
+    X, y = datasets.make_regression(
+        n_samples=n_samples,
+        n_features=5,
+        n_informative=5,
+        random_state=0,
+    )
+    train = np.arange(n_samples_train)
+    test = np.arange(n_samples_train, n_samples)
+    X_train = X[train]
+    y_train = y[train]
+    X_test = np.copy(X[test])
+    y_test = np.copy(y[test])
+    X_test_incr = np.copy(X_test)
+    X_test_decr = np.copy(X_test)
+    X_test_incr[:, 0] += 10
+    X_test_decr[:, 1] += 10
+    monotonic_cst = np.zeros(X.shape[1])
+    monotonic_cst[0] = 1
+    monotonic_cst[1] = -1
+
+    est = ForestRegressor(
+        max_samples_leaf=max_samples_leaf,
+        monotonic_cst=monotonic_cst,
+        max_leaf_nodes=n_samples_train,
+        bootstrap=True,
+    )
+
+    for oob_score in [False, True]:
+        if not oob_score:
+            est.fit(X_train, y_train)
+        else:
+            est.fit(X_test, y_test)
+
+        y = est.predict(X_test, oob_score=oob_score)
+
+        # Check the monotonic increase constraint.
+        y_incr = est.predict(X_test_incr, oob_score=oob_score)
+        assert np.all(y_incr >= y)
+
+        # Check the monotonic decrease constraint.
+        y_decr = est.predict(X_test_decr, oob_score=oob_score)
+        assert np.all(y_decr <= y)
+
+    # Check error if `max_samples_leaf` != 1.
+    est = ForestRegressor(
+        max_samples_leaf=None,
+        monotonic_cst=monotonic_cst,
+        max_leaf_nodes=n_samples_train,
+        bootstrap=True,
+    )
+    assert_raises(ValueError, est.fit, X_train, y_train)
+
+
+@pytest.mark.parametrize("name", FOREST_REGRESSORS)
+@pytest.mark.parametrize("max_samples_leaf", [1])
+def test_monotonic_constraints(name, max_samples_leaf):
+    check_monotonic_constraints(name, max_samples_leaf)
+
+
+def check_serialization(name, sparse_pickle):
     # Check model serialization/deserialization.
 
     X = X_california
@@ -1263,7 +1331,7 @@ def check_serialization(name):
     ForestRegressor = FOREST_REGRESSORS[name]
 
     est = ForestRegressor(n_estimators=10, random_state=0)
-    est.fit(X, y)
+    est.fit(X, y, sparse_pickle=sparse_pickle)
 
     dumped = pickle.dumps(est)
     est_loaded = pickle.loads(dumped)
@@ -1273,8 +1341,9 @@ def check_serialization(name):
 
 
 @pytest.mark.parametrize("name", FOREST_REGRESSORS)
-def test_serialization(name):
-    check_serialization(name)
+@pytest.mark.parametrize("sparse_pickle", [False, True])
+def test_serialization(name, sparse_pickle):
+    check_serialization(name, sparse_pickle)
 
 
 def test_calc_quantile():
