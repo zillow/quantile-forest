@@ -563,7 +563,7 @@ cdef class QuantileForest:
         Training target values. Assumes values are sorted in ascending order.
 
     y_train_leaves : array-like of shape \
-            (n_estimators, n_leaves, n_indices, n_outputs)
+            (n_estimators, n_leaves, n_outputs, n_indices)
         List of trees, each with a list of nodes, each with a list of indices
         of the training samples residing at that node. Nodes with no samples
         (e.g., internal nodes) are empty. Internal nodes are included so that
