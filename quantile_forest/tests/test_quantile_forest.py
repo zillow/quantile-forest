@@ -1313,7 +1313,7 @@ def check_monotonic_constraints(name, max_samples_leaf):
         max_leaf_nodes=n_samples_train,
         bootstrap=True,
     )
-    assert_raises(ValueError, est.fit, X, y)
+    assert_raises(ValueError, est.fit, X_train, y_train)
 
 
 @pytest.mark.parametrize("name", FOREST_REGRESSORS)
