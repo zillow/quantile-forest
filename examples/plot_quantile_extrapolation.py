@@ -145,7 +145,7 @@ class Xtrapolation:
             tree.fit(X[split1, :], Y[split1].flatten())
 
             # Extract tree weight matrix.
-            y_train_leaves = tree._get_y_train_leaves(X[split2, :], 1)
+            y_train_leaves = tree._get_y_train_leaves(X[split2, :], Y)
             nrows = X[split2, :].shape[0]
             matrix = np.zeros((nrows, nrows))
             for leaf in y_train_leaves[0]:
