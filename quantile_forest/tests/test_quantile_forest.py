@@ -1306,6 +1306,14 @@ def check_monotonic_constraints(name, max_samples_leaf):
         y_decr = est.predict(X_test_decr, oob_score=oob_score)
         assert np.all(y_decr <= y)
 
+    # Check error if `max_samples_leaf` != 1.
+    est = ForestRegressor(
+        max_samples_leaf=None,
+        monotonic_cst=monotonic_cst,
+        max_leaf_nodes=n_samples_train,
+        bootstrap=True,
+    )
+    assert_raises(ValueError, est.fit, X, y)
 
 @pytest.mark.parametrize("name", FOREST_REGRESSORS)
 @pytest.mark.parametrize("max_samples_leaf", [1])
