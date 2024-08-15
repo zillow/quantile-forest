@@ -85,14 +85,16 @@ dfs = []
 for idx in range(n_test_samples):
     # Calculate the ECDF from output array.
     y_ecdf = [sp.stats.ecdf(y_i).cdf for y_i in y_out[idx].reshape(1, -1)]
-    n_quantiles = len(list(chain.from_iterable([y_i.quantiles for y_i in y_ecdf])))
+
+    quantiles = list(chain.from_iterable([y_i.quantiles for y_i in y_ecdf]))
+    probabilities = list(chain.from_iterable([y_i.probabilities for y_i in y_ecdf]))
 
     df_i = pd.DataFrame(
         {
-            "y_val": list(chain.from_iterable([y_i.quantiles for y_i in y_ecdf])),
-            "y_val2": list(chain.from_iterable([y_i.quantiles for y_i in y_ecdf]))[1:] + [np.nan],
-            "proba": list(chain.from_iterable([y_i.probabilities for y_i in y_ecdf])),
-            "index": [idx] * n_quantiles,
+            "y_val": quantiles,
+            "y_val2": quantiles[1:] + [np.nan],
+            "proba": probabilities,
+            "index": [idx] * len(quantiles),
         }
     )
     dfs.append(df_i)
