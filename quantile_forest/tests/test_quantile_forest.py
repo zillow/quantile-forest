@@ -1298,6 +1298,9 @@ def check_monotonic_constraints(name, max_samples_leaf):
 
         y = est.predict(X_test, oob_score=oob_score)
 
+        score = est.score(X_test, y_test, quantiles=0.5)
+        assert score > 0.75
+
         # Check the monotonic increase constraint.
         y_incr = est.predict(X_test_incr, oob_score=oob_score)
         assert np.all(y_incr >= y)
