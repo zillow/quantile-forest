@@ -570,7 +570,8 @@ cdef class QuantileForest:
         leaf node indices match their ``est.apply`` outputs. Each node list is
         padded to equal length with 0s.
 
-    y_bound_leaves : array-like of shape (n_estimators, n_leaves, 2)
+    y_bound_leaves : array-like of shape (n_estimators, n_leaves, 2), \
+            default=None
         Minimum and maximum bounds for target values for each leaf node. Used
         to enforce monotonicity constraints.
 
