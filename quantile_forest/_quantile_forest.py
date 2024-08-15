@@ -393,17 +393,17 @@ class BaseForestQuantileRegressor(ForestRegressor):
             min_values = np.full(tree.node_count, np.inf)
             max_values = np.full(tree.node_count, -np.inf)
 
+            # Iterate over all nodes in reverse order (leaves to root).
             for node_idx in range(tree.node_count - 1, -1, -1):
                 if tree.children_left[node_idx] == tree.children_right[node_idx]:  # leaf node
                     # Populate the leaf nodes with actual target values.
                     leaf_indices = y_train_leaves[i, node_idx]
                     leaf_indices = leaf_indices[leaf_indices != 0]
-                    if len(leaf_indices) > 0:
+                    if leaf_indices.size > 0:
                         leaf_targets = y[leaf_indices - 1]
-                        min_values[node_idx] = np.min(leaf_targets)
-                        max_values[node_idx] = np.max(leaf_targets)
+                        min_values[node_idx] = min(leaf_targets)
+                        max_values[node_idx] = max(leaf_targets)
                 else:  # non-leaf node
-                    # Propagate values from leaves to root.
                     # The min and max of the parent is the min/max of its children.
                     left_child = tree.children_left[node_idx]
                     right_child = tree.children_right[node_idx]
@@ -420,22 +420,24 @@ class BaseForestQuantileRegressor(ForestRegressor):
                     y_bound_leaves[i, node_idx] = [min_bound, max_bound]
                 else:  # non-leaf node
                     feature_idx = tree.feature[node_idx]
+
                     left_child = tree.children_left[node_idx]
                     right_child = tree.children_right[node_idx]
 
-                    # Calculate midpoint that respects the current node's bounds.
-                    mid = (max_values[left_child] + min_values[right_child]) / 2
-                    mid = np.clip(mid, min_bound, max_bound)
-
-                    if self.monotonic_cst[feature_idx] == 1:  # increasing monotonicity
-                        stack.append((left_child, min_bound, mid))
-                        stack.append((right_child, mid, max_bound))
-                    elif self.monotonic_cst[feature_idx] == -1:  # decreasing monotonicity
-                        stack.append((left_child, mid, max_bound))
-                        stack.append((right_child, min_bound, mid))
-                    else:
+                    if self.monotonic_cst[feature_idx] == 0:
                         stack.append((left_child, min_bound, max_bound))
                         stack.append((right_child, min_bound, max_bound))
+                    else:
+                        # Calculate midpoint that respects the current node's bounds.
+                        mid = (max_values[left_child] + min_values[right_child]) / 2
+                        mid = max(min(mid, max_bound), min_bound)
+
+                        if self.monotonic_cst[feature_idx] == 1:  # increasing monotonicity
+                            stack.append((left_child, min_bound, mid))
+                            stack.append((right_child, mid, max_bound))
+                        elif self.monotonic_cst[feature_idx] == -1:  # decreasing monotonicity
+                            stack.append((left_child, mid, max_bound))
+                            stack.append((right_child, min_bound, mid))
 
         return y_bound_leaves
 
