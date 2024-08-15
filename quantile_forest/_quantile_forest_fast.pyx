@@ -573,7 +573,7 @@ cdef class QuantileForest:
     y_bound_leaves : array-like of shape (n_estimators, n_leaves, 2), \
             default=None
         Minimum and maximum bounds for target values for each leaf node. Used
-        to enforce monotonicity constraints.
+        to enforce monotonicity constraints. None if no constraints.
 
     sparse_pickle : bool, default=False
         Pickle using a SciPy sparse matrix.

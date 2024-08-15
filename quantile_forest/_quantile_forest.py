@@ -380,7 +380,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
         -------
         y_bound_leaves : array-like of shape (n_estimators, n_leaves, 2)
             Minimum and maximum bounds for target values for each leaf node.
-            Used to enforce monotonicity constraints.
+            Used to enforce monotonicity constraints. None if no constraints.
         """
         if self.monotonic_cst is None:
             return None
