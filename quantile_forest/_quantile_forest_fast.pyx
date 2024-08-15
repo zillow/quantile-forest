@@ -593,7 +593,7 @@ cdef class QuantileForest:
 
         if self.y_bound_leaves is None:
             self.y_bound_leaves = np.empty(shape=(0, 0, 0), dtype=np.float64)
- 
+
     def __reduce__(self):
         """Reduce re-implementation, for pickling."""
         if self.sparse_pickle:
