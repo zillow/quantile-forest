@@ -1313,7 +1313,7 @@ def test_monotonic_constraints(name, max_samples_leaf):
     check_monotonic_constraints(name, max_samples_leaf)
 
 
-def check_serialization(name):
+def check_serialization(name, sparse_pickle):
     # Check model serialization/deserialization.
 
     X = X_california
@@ -1322,7 +1322,7 @@ def check_serialization(name):
     ForestRegressor = FOREST_REGRESSORS[name]
 
     est = ForestRegressor(n_estimators=10, random_state=0)
-    est.fit(X, y)
+    est.fit(X, y, sparse_pickle=sparse_pickle)
 
     dumped = pickle.dumps(est)
     est_loaded = pickle.loads(dumped)
@@ -1332,8 +1332,9 @@ def check_serialization(name):
 
 
 @pytest.mark.parametrize("name", FOREST_REGRESSORS)
-def test_serialization(name):
-    check_serialization(name)
+@pytest.mark.parametrize("sparse_pickle", [False, True])
+def test_serialization(name, sparse_pickle):
+    check_serialization(name, sparse_pickle)
 
 
 def test_calc_quantile():

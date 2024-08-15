@@ -591,22 +591,21 @@ cdef class QuantileForest:
         self.y_bound_leaves = y_bound_leaves
         self.sparse_pickle = sparse_pickle
 
+        if self.y_bound_leaves is None:
+            self.y_bound_leaves = np.empty(shape=(0, 0, 0), dtype=np.float64)
+ 
     def __reduce__(self):
         """Reduce re-implementation, for pickling."""
         if self.sparse_pickle:
             y_train_leaves = np.empty(shape=(0, 0, 0, 0), dtype=np.int64)
-            y_bound_leaves = None
+            y_bound_leaves = np.empty(shape=(0, 0, 0), dtype=np.float64)
             kwargs = {
                 "y_train_leaves": np.asarray(self.y_train_leaves),
-                "y_bound_leaves": (
-                    None if self.y_bound_leaves is None else np.asarray(self.y_bound_leaves)
-                ),
+                "y_bound_leaves": np.asarray(self.y_bound_leaves),
             }
         else:
             y_train_leaves = np.asarray(self.y_train_leaves)
-            y_bound_leaves = (
-                None if self.y_bound_leaves is None else np.asarray(self.y_bound_leaves)
-            )
+            y_bound_leaves = np.asarray(self.y_bound_leaves)
             kwargs = {}
         args = (np.asarray(self.y_train), y_train_leaves, y_bound_leaves, self.sparse_pickle)
         return (QuantileForest, args, self.__getstate__(**kwargs))
