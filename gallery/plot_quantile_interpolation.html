@@ -432,10 +432,11 @@ handled when a quantile does not exactly match a data point.</p>
 </div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">altair</span> <span class="k">as</span> <span class="nn">alt</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">from</span> <span class="nn">sklearn.utils.validation</span> <span class="kn">import</span> <span class="n">check_random_state</span>
 
 <span class="kn">from</span> <span class="nn">quantile_forest</span> <span class="kn">import</span> <span class="n">RandomForestQuantileRegressor</span>
 
-<span class="n">random_seed</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="n">random_state</span> <span class="o">=</span> <span class="n">check_random_state</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
 <span class="n">intervals</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">num</span><span class="o">=</span><span class="mi">101</span><span class="p">,</span> <span class="n">endpoint</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
 
 <span class="c1"># Create toy dataset.</span>
@@ -448,7 +449,7 @@ handled when a quantile does not exactly match a data point.</p>
     <span class="n">n_estimators</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
     <span class="n">max_samples_leaf</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="n">bootstrap</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-    <span class="n">random_state</span><span class="o">=</span><span class="n">random_seed</span><span class="p">,</span>
+    <span class="n">random_state</span><span class="o">=</span><span class="n">random_state</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="n">qrf</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
 

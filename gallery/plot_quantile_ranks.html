@@ -433,39 +433,40 @@ around the median.</p>
 <span class="kn">import</span> <span class="nn">altair</span> <span class="k">as</span> <span class="nn">alt</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">from</span> <span class="nn">sklearn.utils.validation</span> <span class="kn">import</span> <span class="n">check_random_state</span>
 
 <span class="kn">from</span> <span class="nn">quantile_forest</span> <span class="kn">import</span> <span class="n">RandomForestQuantileRegressor</span>
 
-<span class="n">random_seed</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="n">random_state</span> <span class="o">=</span> <span class="n">check_random_state</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
 <span class="n">n_samples</span> <span class="o">=</span> <span class="mi">5000</span>
 <span class="n">bounds</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">]</span>
 
 
-<span class="k">def</span> <span class="nf">make_toy_dataset</span><span class="p">(</span><span class="n">n_samples</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">random_seed</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
-    <span class="n">rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">RandomState</span><span class="p">(</span><span class="n">random_seed</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">make_toy_dataset</span><span class="p">(</span><span class="n">n_samples</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+    <span class="n">random_state</span> <span class="o">=</span> <span class="n">check_random_state</span><span class="p">(</span><span class="n">random_state</span><span class="p">)</span>
     <span class="n">X_1d</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">*</span><span class="n">bounds</span><span class="p">,</span> <span class="n">num</span><span class="o">=</span><span class="n">n_samples</span><span class="p">)</span>
     <span class="n">X</span> <span class="o">=</span> <span class="n">X_1d</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-    <span class="n">y</span> <span class="o">=</span> <span class="n">X_1d</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">X_1d</span><span class="p">)</span> <span class="o">+</span> <span class="n">rng</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">scale</span><span class="o">=</span><span class="n">X_1d</span> <span class="o">/</span> <span class="n">math</span><span class="o">.</span><span class="n">e</span><span class="p">)</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">X_1d</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">X_1d</span><span class="p">)</span> <span class="o">+</span> <span class="n">random_state</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">scale</span><span class="o">=</span><span class="n">X_1d</span> <span class="o">/</span> <span class="n">math</span><span class="o">.</span><span class="n">e</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span>
 
 
-<span class="n">X</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">make_toy_dataset</span><span class="p">(</span><span class="n">n_samples</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">random_seed</span><span class="o">=</span><span class="n">random_seed</span><span class="p">)</span>
+<span class="n">X</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">make_toy_dataset</span><span class="p">(</span><span class="n">n_samples</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 
 <span class="n">qrf</span> <span class="o">=</span> <span class="n">RandomForestQuantileRegressor</span><span class="p">(</span>
     <span class="n">max_samples_leaf</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="n">min_samples_leaf</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>
-    <span class="n">random_state</span><span class="o">=</span><span class="n">random_seed</span><span class="p">,</span>
+    <span class="n">random_state</span><span class="o">=</span><span class="n">random_state</span><span class="p">,</span>
 <span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
 
 <span class="n">y_pred</span> <span class="o">=</span> <span class="n">qrf</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">quantiles</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
 
 <span class="c1"># Get the quantile rank for all samples.</span>
-<span class="n">y_ranks</span> <span class="o">=</span> <span class="n">qrf</span><span class="o">.</span><span class="n">quantile_ranks</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+<span class="n">y_rank</span> <span class="o">=</span> <span class="n">qrf</span><span class="o">.</span><span class="n">quantile_ranks</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
 
-<span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="n">X</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="s2">&quot;y&quot;</span><span class="p">:</span> <span class="n">y</span><span class="p">,</span> <span class="s2">&quot;y_pred&quot;</span><span class="p">:</span> <span class="n">y_pred</span><span class="p">,</span> <span class="s2">&quot;y_rank&quot;</span><span class="p">:</span> <span class="n">y_ranks</span><span class="p">})</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="n">X</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="s2">&quot;y&quot;</span><span class="p">:</span> <span class="n">y</span><span class="p">,</span> <span class="s2">&quot;y_pred&quot;</span><span class="p">:</span> <span class="n">y_pred</span><span class="p">,</span> <span class="s2">&quot;y_rank&quot;</span><span class="p">:</span> <span class="n">y_rank</span><span class="p">})</span>
 
 
-<span class="k">def</span> <span class="nf">plot_fit_and_ranks</span><span class="p">(</span><span class="n">df</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">plot_pred_and_ranks</span><span class="p">(</span><span class="n">df</span><span class="p">):</span>
     <span class="c1"># Slider for varying the interval that defines the upper and lower quantile rank thresholds.</span>
     <span class="n">slider</span> <span class="o">=</span> <span class="n">alt</span><span class="o">.</span><span class="n">binding_range</span><span class="p">(</span><span class="nb">min</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Rank Interval Threshold: &quot;</span><span class="p">)</span>
     <span class="n">interval_val</span> <span class="o">=</span> <span class="n">alt</span><span class="o">.</span><span class="n">param</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span> <span class="n">bind</span><span class="o">=</span><span class="n">slider</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;interval&quot;</span><span class="p">)</span>
@@ -519,15 +520,15 @@ around the median.</p>
     <span class="p">)</span>
 
     <span class="n">chart</span> <span class="o">=</span> <span class="p">(</span><span class="n">dummy_legend</span> <span class="o">+</span> <span class="n">points</span> <span class="o">+</span> <span class="n">line_pred</span><span class="p">)</span><span class="o">.</span><span class="n">properties</span><span class="p">(</span>
+        <span class="n">title</span><span class="o">=</span><span class="s2">&quot;QRF Predictions with Quantile Rank Thresholding on Toy Dataset&quot;</span><span class="p">,</span>
         <span class="n">height</span><span class="o">=</span><span class="mi">400</span><span class="p">,</span>
         <span class="n">width</span><span class="o">=</span><span class="mi">650</span><span class="p">,</span>
-        <span class="n">title</span><span class="o">=</span><span class="s2">&quot;QRF Predictions with Quantile Rank Thresholding on Toy Dataset&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="k">return</span> <span class="n">chart</span>
 
 
-<span class="n">chart</span> <span class="o">=</span> <span class="n">plot_fit_and_ranks</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+<span class="n">chart</span> <span class="o">=</span> <span class="n">plot_pred_and_ranks</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
 <span class="n">chart</span>
 </pre></div>
 </div>

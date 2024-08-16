@@ -31,9 +31,7 @@ for each target: the median line and the area defined by the interval points.
 
     from quantile_forest import RandomForestQuantileRegressor
 
-    random_seed = 0
-    rng = check_random_state(random_seed)
-
+    random_state = check_random_state(0)
     n_samples = 2500
     bounds = [0, 100]
     quantiles = np.linspace(0, 1, num=41, endpoint=True).round(3).tolist()
@@ -42,11 +40,11 @@ for each target: the median line and the area defined by the interval points.
     funcs = [
         {
             "signal": lambda x: np.log1p(x + 1),
-            "noise": lambda x: np.log1p(x) * rng.uniform(size=len(x)),
+            "noise": lambda x: np.log1p(x) * random_state.uniform(size=len(x)),
         },
         {
             "signal": lambda x: np.log1p(np.sqrt(x)),
-            "noise": lambda x: np.log1p(x / 2) * rng.uniform(size=len(x)),
+            "noise": lambda x: np.log1p(x / 2) * random_state.uniform(size=len(x)),
         },
     ]
 
@@ -71,15 +69,14 @@ for each target: the median line and the area defined by the interval points.
     # Create the dataset with multiple target variables.
     X, y = make_func_Xy(funcs, bounds, n_samples)
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=random_seed)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=random_state)
 
-    qrf = RandomForestQuantileRegressor(max_samples_leaf=None, max_depth=4, random_state=random_seed)
+    qrf = RandomForestQuantileRegressor(max_samples_leaf=None, max_depth=4, random_state=random_state)
     qrf.fit(X_train, y_train)  # fit on all of the targets simultaneously
 
     # Get multi-target predictions at specified quantiles.
     y_pred = qrf.predict(X, quantiles=quantiles)
 
-    # Prepare the data frame.
     df = pd.DataFrame(
         {
             "x": np.tile(X.squeeze(), len(funcs)),
@@ -87,12 +84,9 @@ for each target: the median line and the area defined by the interval points.
             "y_true": np.concatenate([f["signal"](X.squeeze()) for f in funcs]),
             "y_pred": np.concatenate([y_pred[:, i, len(quantiles) // 2] for i in range(len(funcs))]),
             "target": np.concatenate([[str(i)] * len(X) for i in range(len(funcs))]),
+            **{f"q_{format_frac(q_i)}": y_i.ravel() for q_i, y_i in zip(quantiles, y_pred.T)},
         }
     )
-
-    # Add quantile predictions to the data frame.
-    for idx, q in enumerate(quantiles):
-        df[f"q_{format_frac(q)}"] = y_pred[:, :, idx].flatten(order="F")
 
 
     def plot_multitargets(df, legend):
@@ -191,9 +185,7 @@ for each target: the median line and the area defined by the interval points.
 
             from quantile_forest import RandomForestQuantileRegressor
 
-            random_seed = 0
-            rng = check_random_state(random_seed)
-
+            random_state = check_random_state(0)
             n_samples = 2500
             bounds = [0, 100]
             quantiles = np.linspace(0, 1, num=41, endpoint=True).round(3).tolist()
@@ -202,11 +194,11 @@ for each target: the median line and the area defined by the interval points.
             funcs = [
                 {
                     "signal": lambda x: np.log1p(x + 1),
-                    "noise": lambda x: np.log1p(x) * rng.uniform(size=len(x)),
+                    "noise": lambda x: np.log1p(x) * random_state.uniform(size=len(x)),
                 },
                 {
                     "signal": lambda x: np.log1p(np.sqrt(x)),
-                    "noise": lambda x: np.log1p(x / 2) * rng.uniform(size=len(x)),
+                    "noise": lambda x: np.log1p(x / 2) * random_state.uniform(size=len(x)),
                 },
             ]
 
@@ -231,15 +223,14 @@ for each target: the median line and the area defined by the interval points.
             # Create the dataset with multiple target variables.
             X, y = make_func_Xy(funcs, bounds, n_samples)
 
-            X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=random_seed)
+            X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=random_state)
 
-            qrf = RandomForestQuantileRegressor(max_samples_leaf=None, max_depth=4, random_state=random_seed)
+            qrf = RandomForestQuantileRegressor(max_samples_leaf=None, max_depth=4, random_state=random_state)
             qrf.fit(X_train, y_train)  # fit on all of the targets simultaneously
 
             # Get multi-target predictions at specified quantiles.
             y_pred = qrf.predict(X, quantiles=quantiles)
 
-            # Prepare the data frame.
             df = pd.DataFrame(
                 {
                     "x": np.tile(X.squeeze(), len(funcs)),
@@ -247,12 +238,9 @@ for each target: the median line and the area defined by the interval points.
                     "y_true": np.concatenate([f["signal"](X.squeeze()) for f in funcs]),
                     "y_pred": np.concatenate([y_pred[:, i, len(quantiles) // 2] for i in range(len(funcs))]),
                     "target": np.concatenate([[str(i)] * len(X) for i in range(len(funcs))]),
+                    **{f"q_{format_frac(q_i)}": y_i.ravel() for q_i, y_i in zip(quantiles, y_pred.T)},
                 }
             )
-
-            # Add quantile predictions to the data frame.
-            for idx, q in enumerate(quantiles):
-                df[f"q_{format_frac(q)}"] = y_pred[:, :, idx].flatten(order="F")
 
 
             def plot_multitargets(df, legend):

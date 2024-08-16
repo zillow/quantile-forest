@@ -25,35 +25,36 @@ samples.
     import numpy as np
     import pandas as pd
     from sklearn.model_selection import train_test_split
+    from sklearn.utils.validation import check_random_state
 
     from quantile_forest import RandomForestQuantileRegressor
 
-    random_seed = 0
+    random_state = check_random_state(0)
     n_samples = 1000
     bounds = [0, 10]
     quantiles = [0.025, 0.5, 0.975]
 
 
-    def make_toy_dataset(n_samples, bounds, add_noise=True, random_seed=0):
-        rng = np.random.RandomState(random_seed)
+    def make_toy_dataset(n_samples, bounds, add_noise=True, random_state=0):
+        random_state = check_random_state(random_state)
 
-        x = rng.uniform(*bounds, size=n_samples)
+        x = random_state.uniform(*bounds, size=n_samples)
         f = x * np.sin(x)
 
         sigma = 0.25 + x / 10
-        noise = rng.lognormal(sigma=sigma) - np.exp(sigma**2 / 2) if add_noise else np.zeros_like(f)
-        y = f + noise
+        noise = random_state.lognormal(sigma=sigma) - np.exp(sigma**2 / 2)
+        y = f + (noise if add_noise else np.zeros_like(f))
 
         return np.atleast_2d(x).T, y
 
 
     # Create noisy data for modeling and non-noisy function data for illustration.
-    X, y = make_toy_dataset(n_samples, bounds, add_noise=True, random_seed=random_seed)
-    X_func, y_func = make_toy_dataset(n_samples, bounds, add_noise=False, random_seed=random_seed)
+    X, y = make_toy_dataset(n_samples, bounds, add_noise=True, random_state=0)
+    X_func, y_func = make_toy_dataset(n_samples, bounds, add_noise=False, random_state=0)
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=random_seed)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=random_state)
 
-    qrf = RandomForestQuantileRegressor(max_depth=3, min_samples_leaf=5, random_state=random_seed)
+    qrf = RandomForestQuantileRegressor(max_depth=3, min_samples_leaf=5, random_state=random_state)
     qrf.fit(X_train, y_train)
 
     y_pred_func = qrf.predict(X_func, quantiles=quantiles)
@@ -148,7 +149,7 @@ samples.
         chart = (
             (area_pred + points + line_true + line_pred + blank)
             .resolve_scale(color="independent")
-            .properties(height=400, width=650, title="QRF Predictions vs. Ground Truth on Toy Dataset")
+            .properties(title="QRF Predictions vs. Ground Truth on Toy Dataset", height=400, width=650)
         )
 
         return chart
@@ -165,35 +166,36 @@ samples.
             import numpy as np
             import pandas as pd
             from sklearn.model_selection import train_test_split
+            from sklearn.utils.validation import check_random_state
 
             from quantile_forest import RandomForestQuantileRegressor
 
-            random_seed = 0
+            random_state = check_random_state(0)
             n_samples = 1000
             bounds = [0, 10]
             quantiles = [0.025, 0.5, 0.975]
 
 
-            def make_toy_dataset(n_samples, bounds, add_noise=True, random_seed=0):
-                rng = np.random.RandomState(random_seed)
+            def make_toy_dataset(n_samples, bounds, add_noise=True, random_state=0):
+                random_state = check_random_state(random_state)
 
-                x = rng.uniform(*bounds, size=n_samples)
+                x = random_state.uniform(*bounds, size=n_samples)
                 f = x * np.sin(x)
 
                 sigma = 0.25 + x / 10
-                noise = rng.lognormal(sigma=sigma) - np.exp(sigma**2 / 2) if add_noise else np.zeros_like(f)
-                y = f + noise
+                noise = random_state.lognormal(sigma=sigma) - np.exp(sigma**2 / 2)
+                y = f + (noise if add_noise else np.zeros_like(f))
 
                 return np.atleast_2d(x).T, y
 
 
             # Create noisy data for modeling and non-noisy function data for illustration.
-            X, y = make_toy_dataset(n_samples, bounds, add_noise=True, random_seed=random_seed)
-            X_func, y_func = make_toy_dataset(n_samples, bounds, add_noise=False, random_seed=random_seed)
+            X, y = make_toy_dataset(n_samples, bounds, add_noise=True, random_state=0)
+            X_func, y_func = make_toy_dataset(n_samples, bounds, add_noise=False, random_state=0)
 
-            X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=random_seed)
+            X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=random_state)
 
-            qrf = RandomForestQuantileRegressor(max_depth=3, min_samples_leaf=5, random_state=random_seed)
+            qrf = RandomForestQuantileRegressor(max_depth=3, min_samples_leaf=5, random_state=random_state)
             qrf.fit(X_train, y_train)
 
             y_pred_func = qrf.predict(X_func, quantiles=quantiles)
@@ -288,7 +290,7 @@ samples.
                 chart = (
                     (area_pred + points + line_true + line_pred + blank)
                     .resolve_scale(color="independent")
-                    .properties(height=400, width=650, title="QRF Predictions vs. Ground Truth on Toy Dataset")
+                    .properties(title="QRF Predictions vs. Ground Truth on Toy Dataset", height=400, width=650)
                 )
 
                 return chart
