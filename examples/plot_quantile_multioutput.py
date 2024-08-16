@@ -148,9 +148,9 @@ def plot_multitargets(df, legend):
         .add_params(interval_val, click)
         .configure_range(category=alt.RangeScheme(list(legend.values())))
         .properties(
+            title="Multi-target Predictions and Prediction Intervals on Toy Dataset",
             height=400,
             width=650,
-            title="Multi-target Predictions and Prediction Intervals on Toy Dataset",
         )
     )
 

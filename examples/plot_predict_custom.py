@@ -106,9 +106,19 @@ def plot_ecdf(df):
 
     # Slider for determining the sample index for which the custom function is being visualized.
     slider = alt.binding_range(min=min_idx, max=max_idx, step=1, name="Test Sample Index: ")
-    index_selection = alt.selection_point(value=0, bind=slider, fields=["index"])
+    index_selection = alt.selection_point(
+        value=0,
+        bind=slider,
+        empty=False,
+        fields=["index"],
+        on="click",
+        nearest=True,
+    )
 
+    color = alt.condition(index_selection, alt.value("#006aff"), alt.value("lightgray"))
+    opacity = alt.condition(index_selection, alt.value(1), alt.value(0.2))
     tooltip = [
+        alt.Tooltip("index:Q", title="Sample Index"),
         alt.Tooltip("y_val:Q", title="Response Value"),
         alt.Tooltip("proba:Q", title="Probability"),
     ]
@@ -119,6 +129,8 @@ def plot_ecdf(df):
         .encode(
             x=alt.X("y_val:Q", title="Response Value"),
             y=alt.Y("proba:Q", title="Probability"),
+            color=color,
+            opacity=opacity,
             tooltip=tooltip,
         )
     )
@@ -130,14 +142,19 @@ def plot_ecdf(df):
             x=alt.X("y_val:Q", title="Response Value"),
             x2=alt.X2("y_val2:Q"),
             y=alt.Y("proba:Q", title="Probability"),
+            color=color,
+            opacity=opacity,
             tooltip=tooltip,
         )
     )
 
+    # Ensure the selected sample index values overlay the unselected values.
+    chart_base = circles + lines
+    chart_selected = (circles + lines).transform_filter(index_selection)
+
     chart = (
-        (circles + lines)
+        (chart_base + chart_selected)
         .add_params(index_selection)
-        .transform_filter(index_selection)
         .properties(
             title="Empirical Cumulative Distribution Function (ECDF) Plot",
             height=400,

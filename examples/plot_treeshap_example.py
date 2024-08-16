@@ -95,6 +95,7 @@ perm = random_state.permutation(min(len(X), n_samples))
 X = X.iloc[perm]
 y = y.iloc[perm]
 y *= 100_000  # convert to dollars
+
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, random_state=random_state)
 
 qrf = RandomForestQuantileRegressor(random_state=random_state)
