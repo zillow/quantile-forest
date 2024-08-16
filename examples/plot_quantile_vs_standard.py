@@ -21,23 +21,21 @@ from sklearn.utils.validation import check_random_state
 
 from quantile_forest import RandomForestQuantileRegressor
 
-random_seed = 0
-rng = check_random_state(random_seed)
-
+random_state = check_random_state(0)
 quantiles = np.linspace(0, 1, num=101, endpoint=True).round(2).tolist()
 
 # Create right-skewed dataset.
 n_samples = 5000
 a, loc, scale = 7, -1, 1
 skewnorm_rv = sp.stats.skewnorm(a, loc, scale)
-skewnorm_rv.random_state = rng
+skewnorm_rv.random_state = random_state
 y = skewnorm_rv.rvs(n_samples)
-X = rng.randn(n_samples, 2) * y.reshape(-1, 1)
+X = random_state.randn(n_samples, 2) * y.reshape(-1, 1)
 
-regr_rf = RandomForestRegressor(random_state=random_seed)
-regr_qrf = RandomForestQuantileRegressor(random_state=random_seed)
+regr_rf = RandomForestRegressor(random_state=random_state)
+regr_qrf = RandomForestQuantileRegressor(random_state=random_state)
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=random_seed)
+X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=random_state)
 
 regr_rf.fit(X_train, y_train)
 regr_qrf.fit(X_train, y_train)
@@ -60,7 +58,7 @@ df = pd.DataFrame(
     {
         "actual": y_test,
         "rf": y_pred_rf,
-        **{f"qrf_{format_frac(q)}": y_pred_qrf[..., idx] for idx, q in enumerate(quantiles)},
+        **{f"qrf_{format_frac(q_i)}": y_i.ravel() for q_i, y_i in zip(quantiles, y_pred_qrf.T)},
     }
 )
 
@@ -111,9 +109,9 @@ def plot_prediction_histograms(df, legend):
         )
         .configure_range(category=alt.RangeScheme(list(legend.values())))
         .properties(
+            title="Distribution of QRF vs. RF Predictions on Right-Skewed Distribution",
             height=400,
             width=650,
-            title="Distribution of QRF vs. RF Predictions on Right-Skewed Distribution",
         )
     )
     return chart

@@ -17,18 +17,16 @@ from sklearn.utils.validation import check_random_state
 
 from quantile_forest import RandomForestQuantileRegressor
 
-random_seed = 0
-rng = check_random_state(random_seed)
-
+random_state = check_random_state(0)
 n_samples = 1000
 
 # Load the California Housing Prices dataset.
 X, y = datasets.fetch_california_housing(as_frame=True, return_X_y=True)
-perm = rng.permutation(min(len(X), n_samples))
+perm = random_state.permutation(min(len(X), n_samples))
 X = X.iloc[perm]
 y = y.iloc[perm]
 
-qrf = RandomForestQuantileRegressor(random_state=random_seed)
+qrf = RandomForestQuantileRegressor(random_state=random_state)
 
 kf = KFold(n_splits=5)
 kf.get_n_splits(X)

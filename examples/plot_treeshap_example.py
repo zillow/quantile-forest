@@ -20,11 +20,12 @@ import pandas as pd
 import shap
 from sklearn import datasets
 from sklearn.model_selection import train_test_split
+from sklearn.utils.validation import check_random_state
 
 from quantile_forest import RandomForestQuantileRegressor
 
-random_seed = 0
-n_samples = 500
+random_state = check_random_state(0)
+n_samples = 1000
 test_idx = 0
 quantiles = np.linspace(0, 1, num=11, endpoint=True).round(1).tolist()
 
@@ -90,12 +91,13 @@ def get_shap_value_by_index(shap_values, index):
 
 # Load the California Housing Prices dataset.
 X, y = datasets.fetch_california_housing(as_frame=True, return_X_y=True)
-X = X.iloc[:n_samples]
-y = y[:n_samples]
+perm = random_state.permutation(min(len(X), n_samples))
+X = X.iloc[perm]
+y = y.iloc[perm]
 y *= 100_000  # convert to dollars
-X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=random_seed)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, random_state=random_state)
 
-qrf = RandomForestQuantileRegressor(random_state=random_seed)
+qrf = RandomForestQuantileRegressor(random_state=random_state)
 qrf.fit(X_train, y_train)
 
 shap_values_list = [
@@ -160,8 +162,8 @@ def plot_shap_waterfall_with_quantiles(df, height=300):
         .reset_index(drop=True)
     )
 
-    x_min = min(df["base_value"].min(), df["model_output"].min())
-    x_max = max(df["base_value"].max(), df["model_output"].max())
+    x_min = df_grouped[["base_value", "model_output", "start", "end"]].min().min()
+    x_max = df_grouped[["base_value", "model_output", "start", "end"]].max().max()
     x_shift = (x_max - x_min) / 100
 
     y_rule_offset = round(height / df_grouped["feature"].nunique() / 2) - 2
@@ -204,7 +206,7 @@ def plot_shap_waterfall_with_quantiles(df, height=300):
         x=alt.X(
             "start:Q",
             axis=alt.Axis(format=",.2f", grid=False),
-            scale=alt.Scale(domain=[x_min, x_max], zero=False),
+            scale=alt.Scale(domain=[x_min - 10 * x_shift, x_max + 10 * x_shift], zero=False),
             title=None,
         ),
         x2=alt.X2("end_shifted:Q"),
@@ -300,7 +302,7 @@ def plot_shap_waterfall_with_quantiles(df, height=300):
         .add_params(quantile_val)
         .configure_view(strokeOpacity=0)
         .properties(
-            width=600, height=height, title="Waterfall Plot of SHAP Values for QRF Predictions"
+            title="Waterfall Plot of SHAP Values for QRF Predictions", height=height, width=600
         )
     )
 

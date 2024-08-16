@@ -15,39 +15,40 @@ import math
 import altair as alt
 import numpy as np
 import pandas as pd
+from sklearn.utils.validation import check_random_state
 
 from quantile_forest import RandomForestQuantileRegressor
 
-random_seed = 0
+random_state = check_random_state(0)
 n_samples = 5000
 bounds = [0, 10]
 
 
-def make_toy_dataset(n_samples, bounds, random_seed=0):
-    rng = np.random.RandomState(random_seed)
+def make_toy_dataset(n_samples, bounds, random_state=0):
+    random_state = check_random_state(random_state)
     X_1d = np.linspace(*bounds, num=n_samples)
     X = X_1d.reshape(-1, 1)
-    y = X_1d * np.cos(X_1d) + rng.normal(scale=X_1d / math.e)
+    y = X_1d * np.cos(X_1d) + random_state.normal(scale=X_1d / math.e)
     return X, y
 
 
-X, y = make_toy_dataset(n_samples, bounds, random_seed=random_seed)
+X, y = make_toy_dataset(n_samples, bounds, random_state=0)
 
 qrf = RandomForestQuantileRegressor(
     max_samples_leaf=None,
     min_samples_leaf=50,
-    random_state=random_seed,
+    random_state=random_state,
 ).fit(X, y)
 
 y_pred = qrf.predict(X, quantiles=0.5)
 
 # Get the quantile rank for all samples.
-y_ranks = qrf.quantile_ranks(X, y)
+y_rank = qrf.quantile_ranks(X, y)
 
-df = pd.DataFrame({"x": X.reshape(-1), "y": y, "y_pred": y_pred, "y_rank": y_ranks})
+df = pd.DataFrame({"x": X.reshape(-1), "y": y, "y_pred": y_pred, "y_rank": y_rank})
 
 
-def plot_fit_and_ranks(df):
+def plot_pred_and_ranks(df):
     # Slider for varying the interval that defines the upper and lower quantile rank thresholds.
     slider = alt.binding_range(min=0, max=1, step=0.01, name="Rank Interval Threshold: ")
     interval_val = alt.param(value=0.05, bind=slider, name="interval")
@@ -101,13 +102,13 @@ def plot_fit_and_ranks(df):
     )
 
     chart = (dummy_legend + points + line_pred).properties(
+        title="QRF Predictions with Quantile Rank Thresholding on Toy Dataset",
         height=400,
         width=650,
-        title="QRF Predictions with Quantile Rank Thresholding on Toy Dataset",
     )
 
     return chart
 
 
-chart = plot_fit_and_ranks(df)
+chart = plot_pred_and_ranks(df)
 chart

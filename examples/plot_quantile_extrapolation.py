@@ -23,9 +23,7 @@ from sklearn.utils.validation import check_random_state
 
 from quantile_forest import RandomForestQuantileRegressor
 
-random_seed = 0
-rng = check_random_state(random_seed)
-
+random_state = check_random_state(0)
 n_samples = 500
 bounds = [0, 15]
 extrap_frac = 0.25
@@ -33,16 +31,19 @@ func = lambda x: x * np.sin(x)
 func_str = "f(x) = x sin(x)"
 
 quantiles = [0.025, 0.975, 0.5]
-qrf_params = {"max_samples_leaf": None, "min_samples_leaf": 4, "random_state": random_seed}
+qrf_params = {"max_samples_leaf": None, "min_samples_leaf": 4, "random_state": random_state}
 
 
-def make_func_Xy(func, bounds, n_samples, random_seed=0):
-    rng = np.random.RandomState(random_seed)
+def make_func_Xy(func, bounds, n_samples, add_noise=True, random_state=0):
+    random_state = check_random_state(random_state)
+
     x = np.linspace(bounds[0], bounds[1], n_samples)
     f = func(x)
+
     std = 0.01 + np.abs(x - 5.0) / 5.0
-    noise = rng.normal(scale=std)
+    noise = random_state.normal(scale=std) if add_noise else np.zeros_like(f)
     y = f + noise
+
     return np.atleast_2d(x).T, y
 
 
@@ -367,7 +368,7 @@ def get_coverage_xtr(bounds_list, train_indices, test_indices, y_train, level, *
 
 
 # Create the full dataset.
-X, y = make_func_Xy(func, bounds, n_samples, random_seed=random_seed)
+X, y = make_func_Xy(func, bounds, n_samples, add_noise=True, random_state=0)
 
 # Fit and extrapolate based on train-test split (depending on X).
 extrap_min_idx = int(n_samples * (extrap_frac / 2))
@@ -375,10 +376,10 @@ extrap_max_idx = int(n_samples - (n_samples * (extrap_frac / 2)))
 sort_X = np.argsort(X.squeeze())
 train_indices = np.repeat(False, len(y))
 train_indices[sort_X[extrap_min_idx] : sort_X[extrap_max_idx]] = True
-res = train_test_split(train_indices, rng=rng, **qrf_params)
+res = train_test_split(train_indices, rng=random_state, **qrf_params)
 
 # Get coverages on extrapolated samples.
-args = (train_indices, ~train_indices, y[train_indices], quantiles[1] - quantiles[0], rng)
+args = (train_indices, ~train_indices, y[train_indices], quantiles[1] - quantiles[0], random_state)
 cov_qrf = get_coverage_qrf(res["qmat"], *args)
 cov_xtr = get_coverage_xtr(res["bounds_list"], *args)
 
@@ -513,7 +514,7 @@ def plot_qrf_vs_xtrapolation_comparison(df):
                 chart += blank
             chart = chart.resolve_scale(color="independent")
 
-        chart = chart.properties(height=200, width=300, title=title)
+        chart = chart.properties(title=title, height=200, width=300)
         return chart
 
     kwargs = {"x_domain": [0, 15], "y_domain": [-15, 20]}

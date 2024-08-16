@@ -21,6 +21,7 @@ import altair as alt
 import numpy as np
 import pandas as pd
 from sklearn import datasets
+from sklearn.utils.validation import check_random_state
 from skops import hub_utils
 
 import quantile_forest
@@ -28,12 +29,11 @@ from quantile_forest import RandomForestQuantileRegressor
 
 alt.data_transformers.disable_max_rows()
 
-random_seed = 0
-
 token = "<Hugging Face Access Token>"
 repo_id = "quantile-forest/california-housing-example"
 load_existing = True
 
+random_state = check_random_state(0)
 quantiles = np.linspace(0, 1, num=5, endpoint=True).round(2).tolist()
 sample_frac = 1
 
@@ -151,7 +151,7 @@ with open(qrf_pkl_filename, 'rb') as file:
 
 
 if not load_existing:
-    fit_and_upload_model(token, repo_id, random_state=random_seed)
+    fit_and_upload_model(token, repo_id, random_state=random_state)
 
 # Download the repository locally and load the fitted model.
 model_filename = "model.pkl"
@@ -168,7 +168,7 @@ y_pred = qrf.predict(X, quantiles=quantiles) * 100_000  # predict in dollars
 df = (
     pd.DataFrame(y_pred, columns=quantiles)
     .reset_index()
-    .sample(frac=sample_frac, random_state=random_seed)
+    .sample(frac=sample_frac, random_state=random_state)
     .melt(id_vars=["index"], var_name="quantile", value_name="value")
     .merge(X[["Latitude", "Longitude", "Population"]].reset_index(), on="index", how="right")
 )
@@ -213,9 +213,9 @@ def plot_quantiles_by_latlon(df, quantiles, color_scheme="cividis"):
             ],
         )
         .properties(
+            title="Quantile Predictions on the California Housing Dataset",
             height=650,
             width=650,
-            title="Quantile Predictions on the California Housing Dataset",
         )
     )
     return chart

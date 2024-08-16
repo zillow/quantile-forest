@@ -22,9 +22,7 @@ from sklearn.utils.validation import check_random_state
 
 from quantile_forest import RandomForestQuantileRegressor
 
-random_seed = 0
-rng = check_random_state(random_seed)
-
+random_state = check_random_state(0)
 n_test_samples = 100
 
 
@@ -70,13 +68,14 @@ def predict(reg, X, quantiles=0.5, what=None):
 
 X, y = datasets.load_diabetes(return_X_y=True)
 X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=n_test_samples, random_state=random_seed
+    X, y, test_size=n_test_samples, random_state=random_state
 )
 
-reg = RandomForestQuantileRegressor(random_state=random_seed).fit(X_train, y_train)
+reg = RandomForestQuantileRegressor(random_state=random_state).fit(X_train, y_train)
 
-# Define a user-specified function; here we randomly sample 1000 values with replacement.
-func = lambda x: rng.choice(x, size=1000)
+# Define a user-specified function.
+# Here we randomly sample 1,000 values with replacement from the empirical distribution.
+func = lambda x: random_state.choice(x, size=1000)
 
 # Output array with the user-specified function applied to each sample's empirical distribution.
 y_out = predict(reg, X_test, what=func)
@@ -140,9 +139,9 @@ def plot_ecdf(df):
         .add_params(index_selection)
         .transform_filter(index_selection)
         .properties(
+            title="Empirical Cumulative Distribution Function (ECDF) Plot",
             height=400,
             width=650,
-            title="Empirical Cumulative Distribution Function (ECDF) Plot",
         )
     )
     return chart

@@ -15,10 +15,11 @@ handled when a quantile does not exactly match a data point.
 import altair as alt
 import numpy as np
 import pandas as pd
+from sklearn.utils.validation import check_random_state
 
 from quantile_forest import RandomForestQuantileRegressor
 
-random_seed = 0
+random_state = check_random_state(0)
 intervals = np.linspace(0, 1, num=101, endpoint=True).round(2).tolist()
 
 # Create toy dataset.
@@ -31,7 +32,7 @@ qrf = RandomForestQuantileRegressor(
     n_estimators=1,
     max_samples_leaf=None,
     bootstrap=False,
-    random_state=random_seed,
+    random_state=random_state,
 )
 qrf.fit(X, y)
 

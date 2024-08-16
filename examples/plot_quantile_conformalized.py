@@ -24,12 +24,10 @@ from sklearn.utils.validation import check_random_state
 
 from quantile_forest import RandomForestQuantileRegressor
 
-alt.data_transformers.disable_max_rows()
-
 random_seed = 0
-rng = check_random_state(random_seed)
+random_state = check_random_state(random_seed)
 
-n_samples = 1000
+n_samples = 900
 coverages = np.linspace(0, 1, num=11, endpoint=True).round(1).tolist()  # the "coverage level"
 
 strategies = {
@@ -39,11 +37,11 @@ strategies = {
 
 # Load the California Housing Prices dataset.
 X, y = datasets.fetch_california_housing(as_frame=True, return_X_y=True)
-perm = rng.permutation(min(len(X), n_samples))
+perm = random_state.permutation(min(len(X), n_samples))
 X = X.iloc[perm]
 y = y.iloc[perm]
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=random_seed)
+X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=random_state)
 
 
 def sort_y_values(y_test, y_pred, y_pis):
@@ -73,7 +71,7 @@ def qrf_strategy(alpha, X_train, X_test, y_train, y_test, random_state=None):
     """QRF (baseline) strategy."""
     quantiles = [alpha / 2, 1 - alpha / 2]
 
-    qrf = RandomForestQuantileRegressor(random_state=random_state)
+    qrf = RandomForestQuantileRegressor(max_samples_leaf=None, random_state=random_state)
     qrf.fit(X_train, y_train)
 
     # Calculate the lower and upper quantile values on the test data.
@@ -99,7 +97,7 @@ def cqr_strategy(alpha, X_train, X_test, y_train, y_test, random_state=None):
         X_train, y_train, test_size=0.5, random_state=random_state
     )
 
-    qrf = RandomForestQuantileRegressor(random_state=random_state)
+    qrf = RandomForestQuantileRegressor(max_samples_leaf=None, random_state=random_state)
     qrf.fit(X_train, y_train)
 
     # Calculate the lower and upper quantile values on the test data.

@@ -24,9 +24,7 @@ from sklearn.utils.validation import check_random_state
 
 from quantile_forest import RandomForestQuantileRegressor
 
-random_seed = 0
-rng = check_random_state(random_seed)
-
+random_state = check_random_state(0)
 n_test_samples = 25
 noise_std = 0.1
 
@@ -34,18 +32,18 @@ noise_std = 0.1
 X, y = datasets.load_digits(return_X_y=True, as_frame=True)
 
 X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=n_test_samples, random_state=random_seed
+    X, y, test_size=n_test_samples, random_state=random_state
 )
 
 
 def add_gaussian_noise(X, mean=0, std=0.1, random_state=None):
     """Add Gaussian noise to input data."""
-    rng = check_random_state(random_state)
+    random_state = check_random_state(random_state)
 
     scaler = MinMaxScaler()
     X_scaled = scaler.fit_transform(X)
 
-    noise = rng.normal(mean, std, X_scaled.shape)
+    noise = random_state.normal(mean, std, X_scaled.shape)
     X_noisy = np.clip(X_scaled + noise, 0, 1)
 
     X_noisy = scaler.inverse_transform(X_noisy)
@@ -70,20 +68,20 @@ def extract_floats(combined_df, scale=100):
 
 
 # Randomly add noise to the training and test data.
-X_train_noisy = X_train.pipe(add_gaussian_noise, std=noise_std, random_state=random_seed)
-X_test_noisy = X_test.pipe(add_gaussian_noise, std=noise_std, random_state=random_seed)
+X_train_noisy = X_train.pipe(add_gaussian_noise, std=noise_std, random_state=random_state)
+X_test_noisy = X_test.pipe(add_gaussian_noise, std=noise_std, random_state=random_state)
 
 # We set `max_samples_leaf=None` to ensure that every sample in the training
 # data is stored in the leaf nodes. By doing this, we allow the model to
 # consider all samples as potential candidates for proximity calculations.
-qrf = RandomForestQuantileRegressor(max_samples_leaf=None, random_state=random_seed)
+qrf = RandomForestQuantileRegressor(max_samples_leaf=None, random_state=random_state)
 qrf.fit(X_train_noisy, X_train)
 
 # Get the proximity counts.
 proximities = qrf.proximity_counts(X_test_noisy)
 
 df_prox = pd.DataFrame(
-    {"prox": [[(j, *p) for j, p in enumerate(proximities[i])] for i in range(len(X_test))]}
+    {"prox": [[(i, *p) for i, p in enumerate(proximities[x])] for x in range(len(X_test))]}
 )
 
 df = (
@@ -142,7 +140,7 @@ def plot_digits_proximities(
     base = alt.Chart(df).add_params(index_selection).transform_filter(index_selection)
 
     chart1 = (
-        base.transform_filter("datum.prox_idx == 0")
+        base.transform_filter("datum.prox_idx == 0")  # filter to one test sample row
         .transform_fold(fold=pixel_cols, as_=["pixel", "value"])
         .transform_calculate(value_clean=f"floor(datum.value / {pixel_scale})")
         .transform_calculate(value_noisy=f"datum.value - (datum.value_clean * {pixel_scale})")
@@ -196,7 +194,7 @@ def plot_digits_proximities(
     )
 
     chart3 = (
-        base.transform_filter("datum.prox_idx == 0")
+        base.transform_filter("datum.prox_idx == 0")  # filter to one test sample row
         .transform_fold(fold=pixel_cols, as_=["pixel", "value"])
         .transform_calculate(value_clean=f"floor(datum.value / {pixel_scale})")
         .transform_calculate(x=pixel_x, y=pixel_y)
@@ -208,12 +206,12 @@ def plot_digits_proximities(
             opacity=alt.condition(alt.datum["value_clean"] == 0, *opacity),
             tooltip=[
                 alt.Tooltip("target:Q", title="Digit"),
-                alt.Tooltip("value_clean:Q", format=",.3f", title="Pixel Value"),
+                alt.Tooltip("value_clean:Q", format=",.0f", title="Pixel Value"),
                 alt.Tooltip("x:Q", title="Pixel X"),
                 alt.Tooltip("y:Q", title="Pixel Y"),
             ],
         )
-        .properties(height=height, width=width, title="Test Digit (original)")
+        .properties(title="Test Digit (original)", height=height, width=width)
     )
 
     chart_spacer = alt.Chart(pd.DataFrame()).mark_rect().properties(width=subplot_dim * 2)
