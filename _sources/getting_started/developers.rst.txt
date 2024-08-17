@@ -36,9 +36,17 @@ On macOS, run::
 Test and Coverage
 ~~~~~~~~~~~~~~~~~
 
+Ensure that `pytest` and `pytest-cov` are installed::
+
+  $ pip install pytest pytest-cov
+
 To test the code::
 
   $ python -m pytest quantile_forest -v
+
+To test the code and produce a coverage report::
+
+  $ python -m pytest quantile_forest --cov-report html --cov=quantile_forest
 
 To test the documentation::
 

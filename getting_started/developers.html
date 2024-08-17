@@ -459,8 +459,16 @@ document.write(`
 </section>
 <section id="test-and-coverage">
 <h2>Test and Coverage<a class="headerlink" href="#test-and-coverage" title="Link to this heading">#</a></h2>
+<p>Ensure that <code class="docutils literal notranslate"><span class="pre">pytest</span></code> and <code class="docutils literal notranslate"><span class="pre">pytest-cov</span></code> are installed:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ pip install pytest pytest-cov
+</pre></div>
+</div>
 <p>To test the code:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ python -m pytest quantile_forest -v
+</pre></div>
+</div>
+<p>To test the code and produce a coverage report:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ python -m pytest quantile_forest --cov-report html --cov=quantile_forest
 </pre></div>
 </div>
 <p>To test the documentation:</p>

@@ -437,11 +437,10 @@ how the SHAP explanations vary with different quantile choices.</p>
 <span class="kn">import</span> <span class="nn">shap</span>
 <span class="kn">from</span> <span class="nn">sklearn</span> <span class="kn">import</span> <span class="n">datasets</span>
 <span class="kn">from</span> <span class="nn">sklearn.model_selection</span> <span class="kn">import</span> <span class="n">train_test_split</span>
-<span class="kn">from</span> <span class="nn">sklearn.utils.validation</span> <span class="kn">import</span> <span class="n">check_random_state</span>
 
 <span class="kn">from</span> <span class="nn">quantile_forest</span> <span class="kn">import</span> <span class="n">RandomForestQuantileRegressor</span>
 
-<span class="n">random_state</span> <span class="o">=</span> <span class="n">check_random_state</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">random_state</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">RandomState</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
 <span class="n">n_samples</span> <span class="o">=</span> <span class="mi">1000</span>
 <span class="n">test_idx</span> <span class="o">=</span> <span class="mi">0</span>
 <span class="n">quantiles</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">num</span><span class="o">=</span><span class="mi">11</span><span class="p">,</span> <span class="n">endpoint</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
@@ -547,12 +546,12 @@ how the SHAP explanations vary with different quantile choices.</p>
 
     <span class="c1"># Slider for varying the applied quantile estimates.</span>
     <span class="n">slider</span> <span class="o">=</span> <span class="n">alt</span><span class="o">.</span><span class="n">binding_range</span><span class="p">(</span>
+        <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Predicted Quantile: &quot;</span><span class="p">,</span>
         <span class="nb">min</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
         <span class="nb">max</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
         <span class="n">step</span><span class="o">=</span><span class="mf">0.5</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">quantiles</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">quantiles</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">),</span>
-        <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Predicted Quantile: &quot;</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="n">quantile_val</span> <span class="o">=</span> <span class="n">alt</span><span class="o">.</span><span class="n">param</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">bind</span><span class="o">=</span><span class="n">slider</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;quantile&quot;</span><span class="p">)</span>
+    <span class="n">quantile_val</span> <span class="o">=</span> <span class="n">alt</span><span class="o">.</span><span class="n">param</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;quantile&quot;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">bind</span><span class="o">=</span><span class="n">slider</span><span class="p">)</span>
 
     <span class="n">df_grouped</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">df</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">&quot;quantile&quot;</span><span class="p">)[</span><span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">tolist</span><span class="p">()]</span>

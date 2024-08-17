@@ -30,11 +30,10 @@ distributions.
     import scipy as sp
     from sklearn.ensemble import RandomForestRegressor
     from sklearn.model_selection import train_test_split
-    from sklearn.utils.validation import check_random_state
 
     from quantile_forest import RandomForestQuantileRegressor
 
-    random_state = check_random_state(0)
+    random_state = np.random.RandomState(0)
     quantiles = np.linspace(0, 1, num=101, endpoint=True).round(2).tolist()
 
     # Create right-skewed dataset.
@@ -79,14 +78,14 @@ distributions.
     def plot_prediction_histograms(df, legend):
         # Slider for varying the quantile value used for generating the QRF histogram.
         slider = alt.binding_range(
+            name="Predicted Quantile: ",
             min=0,
             max=1,
             step=0.5 if len(quantiles) == 1 else 1 / (len(quantiles) - 1),
-            name="Predicted Quantile: ",
         )
         quantile_val = alt.param(value=0.5, bind=slider, name="quantile")
 
-        click = alt.selection_point(fields=["label"], bind="legend")
+        click = alt.selection_point(bind="legend", fields=["label"], on="click")
 
         chart = (
             alt.Chart(df)
@@ -113,6 +112,7 @@ distributions.
                     alt.Color("label:N", sort=list(legend.keys()), title=None),
                     alt.value("lightgray"),
                 ),
+                opacity=alt.condition(click, alt.value(1), alt.value(0.5)),
                 xOffset=alt.XOffset("label:N"),
                 tooltip=[
                     alt.Tooltip("label:N", title="Label"),
@@ -143,11 +143,10 @@ distributions.
             import scipy as sp
             from sklearn.ensemble import RandomForestRegressor
             from sklearn.model_selection import train_test_split
-            from sklearn.utils.validation import check_random_state
 
             from quantile_forest import RandomForestQuantileRegressor
 
-            random_state = check_random_state(0)
+            random_state = np.random.RandomState(0)
             quantiles = np.linspace(0, 1, num=101, endpoint=True).round(2).tolist()
 
             # Create right-skewed dataset.
@@ -192,14 +191,14 @@ distributions.
             def plot_prediction_histograms(df, legend):
                 # Slider for varying the quantile value used for generating the QRF histogram.
                 slider = alt.binding_range(
+                    name="Predicted Quantile: ",
                     min=0,
                     max=1,
                     step=0.5 if len(quantiles) == 1 else 1 / (len(quantiles) - 1),
-                    name="Predicted Quantile: ",
                 )
                 quantile_val = alt.param(value=0.5, bind=slider, name="quantile")
 
-                click = alt.selection_point(fields=["label"], bind="legend")
+                click = alt.selection_point(bind="legend", fields=["label"], on="click")
 
                 chart = (
                     alt.Chart(df)
@@ -226,6 +225,7 @@ distributions.
                             alt.Color("label:N", sort=list(legend.keys()), title=None),
                             alt.value("lightgray"),
                         ),
+                        opacity=alt.condition(click, alt.value(1), alt.value(0.5)),
                         xOffset=alt.XOffset("label:N"),
                         tooltip=[
                             alt.Tooltip("label:N", title="Label"),

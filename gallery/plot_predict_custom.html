@@ -436,11 +436,10 @@ this scenario, we compute the empirical cumulative distribution function
 <span class="kn">import</span> <span class="nn">scipy</span> <span class="k">as</span> <span class="nn">sp</span>
 <span class="kn">from</span> <span class="nn">sklearn</span> <span class="kn">import</span> <span class="n">datasets</span>
 <span class="kn">from</span> <span class="nn">sklearn.model_selection</span> <span class="kn">import</span> <span class="n">train_test_split</span>
-<span class="kn">from</span> <span class="nn">sklearn.utils.validation</span> <span class="kn">import</span> <span class="n">check_random_state</span>
 
 <span class="kn">from</span> <span class="nn">quantile_forest</span> <span class="kn">import</span> <span class="n">RandomForestQuantileRegressor</span>
 
-<span class="n">random_state</span> <span class="o">=</span> <span class="n">check_random_state</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">random_state</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">RandomState</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
 <span class="n">n_test_samples</span> <span class="o">=</span> <span class="mi">100</span>
 
 
@@ -523,7 +522,7 @@ this scenario, we compute the empirical cumulative distribution function
     <span class="n">max_idx</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;index&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
 
     <span class="c1"># Slider for determining the sample index for which the custom function is being visualized.</span>
-    <span class="n">slider</span> <span class="o">=</span> <span class="n">alt</span><span class="o">.</span><span class="n">binding_range</span><span class="p">(</span><span class="nb">min</span><span class="o">=</span><span class="n">min_idx</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="n">max_idx</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Test Sample Index: &quot;</span><span class="p">)</span>
+    <span class="n">slider</span> <span class="o">=</span> <span class="n">alt</span><span class="o">.</span><span class="n">binding_range</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;Test Sample Index: &quot;</span><span class="p">,</span> <span class="nb">min</span><span class="o">=</span><span class="n">min_idx</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="n">max_idx</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
     <span class="n">index_selection</span> <span class="o">=</span> <span class="n">alt</span><span class="o">.</span><span class="n">selection_point</span><span class="p">(</span>
         <span class="n">value</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
         <span class="n">bind</span><span class="o">=</span><span class="n">slider</span><span class="p">,</span>
