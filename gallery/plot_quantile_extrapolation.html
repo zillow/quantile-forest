@@ -442,11 +442,10 @@ adapted from <a class="reference external" href="https://arxiv.org/abs/2402.0975
 
 <span class="n">random_state</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">RandomState</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
 <span class="n">n_samples</span> <span class="o">=</span> <span class="mi">500</span>
-<span class="n">bounds</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">15</span><span class="p">]</span>
 <span class="n">extrap_frac</span> <span class="o">=</span> <span class="mf">0.25</span>
+<span class="n">bounds</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">15</span><span class="p">]</span>
 <span class="n">func</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
 <span class="n">func_str</span> <span class="o">=</span> <span class="s2">&quot;f(x) = x sin(x)&quot;</span>
-
 <span class="n">quantiles</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.025</span><span class="p">,</span> <span class="mf">0.975</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">]</span>
 <span class="n">qrf_params</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;max_samples_leaf&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;min_samples_leaf&quot;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span> <span class="s2">&quot;random_state&quot;</span><span class="p">:</span> <span class="n">random_state</span><span class="p">}</span>
 
@@ -820,8 +819,8 @@ adapted from <a class="reference external" href="https://arxiv.org/abs/2402.0975
 <span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">plot_qrf_vs_xtrapolation_comparison</span><span class="p">(</span><span class="n">df</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">plot_extrapolations</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">legend</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">x_domain</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">y_domain</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">plot_qrf_vs_xtrapolation_comparison</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">func_str</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">plot_extrapolations</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">legend</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">func_str</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">x_domain</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">y_domain</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="n">x_scale</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">if</span> <span class="n">x_domain</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">x_scale</span> <span class="o">=</span> <span class="n">alt</span><span class="o">.</span><span class="n">Scale</span><span class="p">(</span><span class="n">domain</span><span class="o">=</span><span class="n">x_domain</span><span class="p">,</span> <span class="n">nice</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
@@ -934,7 +933,7 @@ adapted from <a class="reference external" href="https://arxiv.org/abs/2402.0975
         <span class="n">chart</span> <span class="o">=</span> <span class="n">chart</span><span class="o">.</span><span class="n">properties</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">300</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">chart</span>
 
-    <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;x_domain&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">15</span><span class="p">],</span> <span class="s2">&quot;y_domain&quot;</span><span class="p">:</span> <span class="p">[</span><span class="o">-</span><span class="mi">15</span><span class="p">,</span> <span class="mi">20</span><span class="p">]}</span>
+    <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;func_str&quot;</span><span class="p">:</span> <span class="n">func_str</span><span class="p">,</span> <span class="s2">&quot;x_domain&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">15</span><span class="p">],</span> <span class="s2">&quot;y_domain&quot;</span><span class="p">:</span> <span class="p">[</span><span class="o">-</span><span class="mi">15</span><span class="p">,</span> <span class="mi">20</span><span class="p">]}</span>
     <span class="n">xtra_mapper</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;bb_mid&quot;</span><span class="p">:</span> <span class="s2">&quot;y_pred&quot;</span><span class="p">,</span> <span class="s2">&quot;bb_low&quot;</span><span class="p">:</span> <span class="s2">&quot;y_pred_low&quot;</span><span class="p">,</span> <span class="s2">&quot;bb_upp&quot;</span><span class="p">:</span> <span class="s2">&quot;y_pred_upp&quot;</span><span class="p">}</span>
 
     <span class="n">chart1</span> <span class="o">=</span> <span class="n">alt</span><span class="o">.</span><span class="n">layer</span><span class="p">(</span>
@@ -972,7 +971,7 @@ adapted from <a class="reference external" href="https://arxiv.org/abs/2402.0975
     <span class="k">return</span> <span class="n">chart</span>
 
 
-<span class="n">chart</span> <span class="o">=</span> <span class="n">plot_qrf_vs_xtrapolation_comparison</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+<span class="n">chart</span> <span class="o">=</span> <span class="n">plot_qrf_vs_xtrapolation_comparison</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">func_str</span><span class="p">)</span>
 <span class="n">chart</span>
 </pre></div>
 </div>
