@@ -200,7 +200,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
             X, y_sorted, sorter=sorter, sample_weight=sample_weight
         )
 
-        # Get map of tree leaf nodes to target value bounds.
+        # Get map of tree leaf nodes to target value bounds (for monotonicity constraints).
         y_bound_leaves = self._get_y_bound_leaves(y_sorted, y_train_leaves)
 
         # Create quantile forest object.
@@ -254,7 +254,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
             outputs. Each node list is padded to equal length with 0s.
         """
         n_samples = X.shape[0]
-        y_dim = y.shape[-1]
+        n_outputs = y.shape[-1]
 
         if isinstance(self.max_samples_leaf, (Integral, np.integer)):
             max_samples_leaf = self.max_samples_leaf
@@ -322,7 +322,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
                     max_samples_leaf = sample_count
 
         # Initialize NumPy array (more efficient serialization than dict/list).
-        shape = (self.n_estimators, max_node_count, y_dim, max_samples_leaf)
+        shape = (self.n_estimators, max_node_count, n_outputs, max_samples_leaf)
         y_train_leaves = np.zeros(shape, dtype=np.int64)
 
         for i, estimator in enumerate(self.estimators_):
@@ -347,12 +347,12 @@ class BaseForestQuantileRegressor(ForestRegressor):
                     y_indices = random.sample(y_indices, max_samples_leaf)
 
                 if sorter is not None:
-                    y_indices = np.asarray(y_indices).reshape(-1, y_dim).swapaxes(0, 1)
+                    y_indices = np.asarray(y_indices).reshape(-1, n_outputs).swapaxes(0, 1)
 
-                    for j in range(y_dim):
+                    for j in range(n_outputs):
                         y_train_leaves[i, leaf_idx, j, : len(y_indices[j])] = y_indices[j]
                 else:
-                    for j in range(y_dim):
+                    for j in range(n_outputs):
                         y_train_leaves[i, leaf_idx, j, : len(y_indices)] = y_indices
 
         return y_train_leaves
@@ -1152,7 +1152,7 @@ class RandomForestQuantileRegressor(BaseForestQuantileRegressor):
         Monotonicity constraints are not supported for:
           - multioutput regressions (i.e. when `n_outputs_ > 1`),
           - regressions trained on data with missing values,
-          - trees with large leaf samples (i.e. when `max_samples_leaf > 1`).
+          - trees with multi-sample leaves (i.e. when `max_samples_leaf > 1`).
 
         .. sklearn-versionadded:: 1.4
 
@@ -1498,7 +1498,7 @@ class ExtraTreesQuantileRegressor(BaseForestQuantileRegressor):
         Monotonicity constraints are not supported for:
           - multioutput regressions (i.e. when `n_outputs_ > 1`),
           - regressions trained on data with missing values,
-          - trees with large leaf samples (i.e. when `max_samples_leaf > 1`).
+          - trees with multi-sample leaves (i.e. when `max_samples_leaf > 1`).
 
         .. sklearn-versionadded:: 1.4
 

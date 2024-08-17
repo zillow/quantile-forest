@@ -330,6 +330,9 @@ cpdef vector[double] calc_weighted_quantile(
     sorted_quantile_indices = vector[double](n_quantiles)
     for i in range(<intp_t>(sorted_quantile_indices.size())):
         sorted_quantile_indices[i] = <double>i
+
+    # Sort the quantiles in ascending order to help reuse calculations for efficiency.
+    # The sorted quantile indices allow assigning output based on the original ordering.
     parallel_qsort_asc(quantiles, sorted_quantile_indices, 0, n_quantiles - 1)
 
     out = vector[double](n_quantiles)
