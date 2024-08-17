@@ -15,11 +15,10 @@ handled when a quantile does not exactly match a data point.
 import altair as alt
 import numpy as np
 import pandas as pd
-from sklearn.utils.validation import check_random_state
 
 from quantile_forest import RandomForestQuantileRegressor
 
-random_state = check_random_state(0)
+random_state = np.random.RandomState(0)
 intervals = np.linspace(0, 1, num=101, endpoint=True).round(2).tolist()
 
 # Create toy dataset.
@@ -82,10 +81,10 @@ df = pd.concat(dfs, ignore_index=True)
 
 def plot_interpolations(df, legend):
     # Slider for varying the prediction interval that determines the quantiles being interpolated.
-    slider = alt.binding_range(min=0, max=1, step=0.01, name="Prediction Interval: ")
-    interval_val = alt.param(value=0.9, bind=slider, name="interval")
+    slider = alt.binding_range(name="Prediction Interval: ", min=0, max=1, step=0.01)
+    interval_val = alt.param(name="interval", value=0.9, bind=slider)
 
-    click = alt.selection_point(fields=["method"], bind="legend")
+    click = alt.selection_point(bind="legend", fields=["method"], on="click")
 
     color = alt.condition(
         click,
@@ -151,7 +150,7 @@ def plot_interpolations(df, legend):
                 header=alt.Header(labelOrient="bottom", titleOrient="bottom"),
                 title="Samples (Feature Values)",
             ),
-            title="QRF Prediction Intervals by Quantile Interpolation on Toy Dataset",
+            title="QRF Predictions by Quantile Interpolation on Toy Dataset",
         )
         .configure_facet(spacing=15)
         .configure_range(category=alt.RangeScheme(list(legend.values())))

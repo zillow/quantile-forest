@@ -17,7 +17,7 @@ from sklearn.utils.validation import check_random_state
 
 from quantile_forest import RandomForestQuantileRegressor
 
-random_state = check_random_state(0)
+random_state = np.random.RandomState(0)
 n_samples = 1000
 
 # Load the California Housing Prices dataset.

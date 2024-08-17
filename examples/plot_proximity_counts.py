@@ -24,7 +24,7 @@ from sklearn.utils.validation import check_random_state
 
 from quantile_forest import RandomForestQuantileRegressor
 
-random_state = check_random_state(0)
+random_state = np.random.RandomState(0)
 n_test_samples = 25
 noise_std = 0.1
 
@@ -131,7 +131,7 @@ def plot_digits_proximities(
     subplot_dim = (width - subplot_spacing * (n_subplot_rows - 1)) / n_subplot_rows
 
     # Slider for determining the test index for which the data is being visualized.
-    slider = alt.binding_range(min=0, max=n_samples - 1, step=1, name="Test Sample Index: ")
+    slider = alt.binding_range(name="Test Sample Index: ", min=0, max=n_samples - 1, step=1)
     index_selection = alt.selection_point(value=0, bind=slider, fields=["index"])
 
     scale = alt.Scale(domain=[x_min, x_max], scheme="greys")

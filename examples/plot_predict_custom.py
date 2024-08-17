@@ -18,11 +18,10 @@ import pandas as pd
 import scipy as sp
 from sklearn import datasets
 from sklearn.model_selection import train_test_split
-from sklearn.utils.validation import check_random_state
 
 from quantile_forest import RandomForestQuantileRegressor
 
-random_state = check_random_state(0)
+random_state = np.random.RandomState(0)
 n_test_samples = 100
 
 
@@ -105,7 +104,7 @@ def plot_ecdf(df):
     max_idx = df["index"].max()
 
     # Slider for determining the sample index for which the custom function is being visualized.
-    slider = alt.binding_range(min=min_idx, max=max_idx, step=1, name="Test Sample Index: ")
+    slider = alt.binding_range(name="Test Sample Index: ", min=min_idx, max=max_idx, step=1)
     index_selection = alt.selection_point(
         value=0,
         bind=slider,

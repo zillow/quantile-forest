@@ -25,7 +25,7 @@ from sklearn.utils.validation import check_random_state
 from quantile_forest import RandomForestQuantileRegressor
 
 random_seed = 0
-random_state = check_random_state(random_seed)
+random_state = np.random.RandomState(random_seed)
 
 n_samples = 900
 coverages = np.linspace(0, 1, num=11, endpoint=True).round(1).tolist()  # the "coverage level"
@@ -160,10 +160,10 @@ df = df.merge(metrics, on=["alpha", "strategy"], how="left")
 def plot_prediction_intervals_by_strategy(df):
     def plot_prediction_intervals(df, domain):
         # Slider for varying the target coverage level.
-        slider = alt.binding_range(min=0, max=1, step=0.1, name="Coverage Target: ")
-        coverage_val = alt.param(value=0.9, bind=slider, name="coverage")
+        slider = alt.binding_range(name="Coverage Target: ", min=0, max=1, step=0.1)
+        coverage_val = alt.param(name="coverage", value=0.9, bind=slider)
 
-        click = alt.selection_point(fields=["y_label"], bind="legend")
+        click = alt.selection_point(bind="legend", fields=["y_label"])
 
         tooltip = [
             alt.Tooltip("y_test:Q", format="$,d", title="True Price"),

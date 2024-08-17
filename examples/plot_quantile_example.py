@@ -16,7 +16,7 @@ from sklearn.utils.validation import check_random_state
 
 from quantile_forest import RandomForestQuantileRegressor
 
-random_state = check_random_state(0)
+random_state = np.random.RandomState(0)
 n_samples = 1000
 bounds = [0, 10]
 quantiles = [0.025, 0.5, 0.975]

@@ -20,11 +20,10 @@ import pandas as pd
 import shap
 from sklearn import datasets
 from sklearn.model_selection import train_test_split
-from sklearn.utils.validation import check_random_state
 
 from quantile_forest import RandomForestQuantileRegressor
 
-random_state = check_random_state(0)
+random_state = np.random.RandomState(0)
 n_samples = 1000
 test_idx = 0
 quantiles = np.linspace(0, 1, num=11, endpoint=True).round(1).tolist()
@@ -130,12 +129,12 @@ def plot_shap_waterfall_with_quantiles(df, height=300):
 
     # Slider for varying the applied quantile estimates.
     slider = alt.binding_range(
+        name="Predicted Quantile: ",
         min=0,
         max=1,
         step=0.5 if len(quantiles) == 1 else 1 / (len(quantiles) - 1),
-        name="Predicted Quantile: ",
     )
-    quantile_val = alt.param(value=0.5, bind=slider, name="quantile")
+    quantile_val = alt.param(name="quantile", value=0.5, bind=slider)
 
     df_grouped = (
         df.groupby("quantile")[df.columns.tolist()]

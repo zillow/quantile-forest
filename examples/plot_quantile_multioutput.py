@@ -14,11 +14,10 @@ import altair as alt
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
-from sklearn.utils.validation import check_random_state
 
 from quantile_forest import RandomForestQuantileRegressor
 
-random_state = check_random_state(0)
+random_state = np.random.RandomState(0)
 n_samples = 2500
 bounds = [0, 100]
 quantiles = np.linspace(0, 1, num=41, endpoint=True).round(3).tolist()
@@ -78,10 +77,10 @@ df = pd.DataFrame(
 
 def plot_multitargets(df, legend):
     # Slider for varying the displayed prediction intervals.
-    slider = alt.binding_range(min=0, max=1, step=0.05, name="Prediction Interval: ")
-    interval_val = alt.param(value=0.95, bind=slider, name="interval")
+    slider = alt.binding_range(name="Prediction Interval: ", min=0, max=1, step=0.05)
+    interval_val = alt.param(name="interval", value=0.95, bind=slider)
 
-    click = alt.selection_point(fields=["target"], bind="legend")
+    click = alt.selection_point(bind="legend", fields=["target"], on="click")
 
     color = alt.condition(
         click,

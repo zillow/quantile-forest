@@ -19,7 +19,7 @@ from sklearn.utils.validation import check_random_state
 
 from quantile_forest import RandomForestQuantileRegressor
 
-random_state = check_random_state(0)
+random_state = np.random.RandomState(0)
 n_samples = 5000
 bounds = [0, 10]
 
@@ -50,10 +50,10 @@ df = pd.DataFrame({"x": X.reshape(-1), "y": y, "y_pred": y_pred, "y_rank": y_ran
 
 def plot_pred_and_ranks(df):
     # Slider for varying the interval that defines the upper and lower quantile rank thresholds.
-    slider = alt.binding_range(min=0, max=1, step=0.01, name="Rank Interval Threshold: ")
-    interval_val = alt.param(value=0.05, bind=slider, name="interval")
+    slider = alt.binding_range(name="Rank Interval Threshold: ", min=0, max=1, step=0.01)
+    interval_val = alt.param(name="interval", value=0.05, bind=slider)
 
-    click = alt.selection_point(fields=["outlier"], bind="legend")
+    click = alt.selection_point(bind="legend", fields=["outlier"], on="click")
 
     base = alt.Chart(df)
 

@@ -21,7 +21,6 @@ import altair as alt
 import numpy as np
 import pandas as pd
 from sklearn import datasets
-from sklearn.utils.validation import check_random_state
 from skops import hub_utils
 
 import quantile_forest
@@ -33,7 +32,7 @@ token = "<Hugging Face Access Token>"
 repo_id = "quantile-forest/california-housing-example"
 load_existing = True
 
-random_state = check_random_state(0)
+random_state = np.random.RandomState(0)
 quantiles = np.linspace(0, 1, num=5, endpoint=True).round(2).tolist()
 sample_frac = 1
 
@@ -177,13 +176,13 @@ df = (
 def plot_quantiles_by_latlon(df, quantiles, color_scheme="cividis"):
     # Slider for varying the displayed quantile estimates.
     slider = alt.binding_range(
+        name="Predicted Quantile: ",
         min=0,
         max=1,
         step=0.5 if len(quantiles) == 1 else 1 / (len(quantiles) - 1),
-        name="Predicted Quantile: ",
     )
 
-    quantile_val = alt.param(value=0.5, bind=slider, name="quantile")
+    quantile_val = alt.param(name="quantile", value=0.5, bind=slider)
 
     chart = (
         alt.Chart(df)
