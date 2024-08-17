@@ -28,6 +28,9 @@ random_state = np.random.RandomState(0)
 n_test_samples = 25
 noise_std = 0.1
 
+pixel_dim = (8, 8)  # pixel dimensions (width and height)
+pixel_scale = 100  # scale multipler for combining clean and noisy values
+
 # Load the Digits dataset.
 X, y = datasets.load_digits(return_X_y=True, as_frame=True)
 
@@ -85,7 +88,7 @@ df_prox = pd.DataFrame(
 )
 
 df = (
-    combine_floats(X_test, X_test_noisy)  # combine to reduce transmitted data
+    combine_floats(X_test, X_test_noisy, scale=pixel_scale)  # combine to reduce transmitted data
     .join(y_test)
     .reset_index()
     .join(df_prox)
@@ -103,7 +106,7 @@ df = (
 
 # Create a data frame for looking up training proximities.
 df_lookup = (
-    combine_floats(X_train, X_train_noisy)  # combine to reduce transmitted data
+    combine_floats(X_train, X_train_noisy, scale=pixel_scale)  # combine to reduce transmitted data
     .assign(**{"index": np.arange(len(X_train))})
     .join(y_train)
 )
@@ -112,14 +115,15 @@ df_lookup = (
 def plot_digits_proximities(
     df,
     df_lookup,
+    pixel_dim=(8, 8),
+    pixel_scale=100,
     n_prox=25,
     n_prox_per_row=5,
     subplot_spacing=10,
     height=225,
     width=225,
 ):
-    pixel_scale = 100
-    pixel_cols = [f"pixel_{y:01}_{x:01}" for y in range(8) for x in range(8)]
+    pixel_cols = [f"pixel_{y:01}_{x:01}" for y in range(pixel_dim[1]) for x in range(pixel_dim[0])]
     pixel_x = "split(datum.pixel, '_')[2]"
     pixel_y = "split(datum.pixel, '_')[1]"
 
@@ -227,5 +231,5 @@ def plot_digits_proximities(
     return chart
 
 
-chart = plot_digits_proximities(df, df_lookup)
+chart = plot_digits_proximities(df, df_lookup, pixel_dim=pixel_dim, pixel_scale=pixel_scale)
 chart

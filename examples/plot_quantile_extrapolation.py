@@ -25,11 +25,10 @@ from quantile_forest import RandomForestQuantileRegressor
 
 random_state = np.random.RandomState(0)
 n_samples = 500
-bounds = [0, 15]
 extrap_frac = 0.25
+bounds = [0, 15]
 func = lambda x: x * np.sin(x)
 func_str = "f(x) = x sin(x)"
-
 quantiles = [0.025, 0.975, 0.5]
 qrf_params = {"max_samples_leaf": None, "min_samples_leaf": 4, "random_state": random_state}
 
@@ -403,8 +402,8 @@ df = pd.DataFrame(
 )
 
 
-def plot_qrf_vs_xtrapolation_comparison(df):
-    def plot_extrapolations(df, title="", legend=False, x_domain=None, y_domain=None):
+def plot_qrf_vs_xtrapolation_comparison(df, func_str):
+    def plot_extrapolations(df, title="", legend=False, func_str="", x_domain=None, y_domain=None):
         x_scale = None
         if x_domain is not None:
             x_scale = alt.Scale(domain=x_domain, nice=False, padding=0)
@@ -517,7 +516,7 @@ def plot_qrf_vs_xtrapolation_comparison(df):
         chart = chart.properties(title=title, height=200, width=300)
         return chart
 
-    kwargs = {"x_domain": [0, 15], "y_domain": [-15, 20]}
+    kwargs = {"func_str": func_str, "x_domain": [0, 15], "y_domain": [-15, 20]}
     xtra_mapper = {"bb_mid": "y_pred", "bb_low": "y_pred_low", "bb_upp": "y_pred_upp"}
 
     chart1 = alt.layer(
@@ -555,5 +554,5 @@ def plot_qrf_vs_xtrapolation_comparison(df):
     return chart
 
 
-chart = plot_qrf_vs_xtrapolation_comparison(df)
+chart = plot_qrf_vs_xtrapolation_comparison(df, func_str)
 chart

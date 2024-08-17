@@ -21,10 +21,10 @@ from sklearn.model_selection import train_test_split
 from quantile_forest import RandomForestQuantileRegressor
 
 random_state = np.random.RandomState(0)
+n_samples = 5000
 quantiles = np.linspace(0, 1, num=101, endpoint=True).round(2).tolist()
 
 # Create right-skewed dataset.
-n_samples = 5000
 a, loc, scale = 7, -1, 1
 skewnorm_rv = sp.stats.skewnorm(a, loc, scale)
 skewnorm_rv.random_state = random_state
@@ -48,16 +48,11 @@ legend = {
     "QRF (Median)": "#006aff",
 }
 
-
-def format_frac(fraction):
-    return f"{fraction:.3g}".rstrip("0").rstrip(".") or "0"
-
-
 df = pd.DataFrame(
     {
         "actual": y_test,
         "rf": y_pred_rf,
-        **{f"qrf_{format_frac(q_i)}": y_i.ravel() for q_i, y_i in zip(quantiles, y_pred_qrf.T)},
+        **{f"qrf_{q_i:.3g}": y_i.ravel() for q_i, y_i in zip(quantiles, y_pred_qrf.T)},
     }
 )
 

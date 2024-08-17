@@ -27,17 +27,16 @@ funcs = [
     {
         "signal": lambda x: np.log1p(x + 1),
         "noise": lambda x: np.log1p(x) * random_state.uniform(size=len(x)),
+        "legend": {"0": "#f2a619"},  # plot legend value and color
     },
     {
         "signal": lambda x: np.log1p(np.sqrt(x)),
         "noise": lambda x: np.log1p(x / 2) * random_state.uniform(size=len(x)),
+        "legend": {"1": "#006aff"},  # plot legend value and color
     },
 ]
 
-legend = {
-    "0": "#f2a619",
-    "1": "#006aff",
-}
+legend = {k: v for f in funcs for k, v in f["legend"].items()}
 
 
 def make_func_Xy(funcs, bounds, n_samples):
@@ -46,10 +45,6 @@ def make_func_Xy(funcs, bounds, n_samples):
     for i, func in enumerate(funcs):
         y[:, i] = func["signal"](x) + func["noise"](x)
     return np.atleast_2d(x).T, y
-
-
-def format_frac(fraction):
-    return f"{fraction:.3g}".rstrip("0").rstrip(".") or "0"
 
 
 # Create the dataset with multiple target variables.
@@ -70,7 +65,7 @@ df = pd.DataFrame(
         "y_true": np.concatenate([f["signal"](X.squeeze()) for f in funcs]),
         "y_pred": np.concatenate([y_pred[:, i, len(quantiles) // 2] for i in range(len(funcs))]),
         "target": np.concatenate([[str(i)] * len(X) for i in range(len(funcs))]),
-        **{f"q_{format_frac(q_i)}": y_i.ravel() for q_i, y_i in zip(quantiles, y_pred.T)},
+        **{f"q_{q_i:.3g}": y_i.ravel() for q_i, y_i in zip(quantiles, y_pred.T)},
     }
 )
 
