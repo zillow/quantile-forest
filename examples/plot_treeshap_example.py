@@ -202,7 +202,7 @@ def plot_shap_waterfall_with_quantiles(df, height=300):
         )
     )
 
-    bars = base.mark_bar().encode(
+    bar = base.mark_bar().encode(
         x=alt.X(
             "start:Q",
             axis=alt.Axis(format=",.2f", grid=False),
@@ -223,8 +223,8 @@ def plot_shap_waterfall_with_quantiles(df, height=300):
         ],
     )
 
-    points = (
-        bars.transform_filter(f"abs(datum.shap_value) > {x_shift}")
+    point = (
+        bar.transform_filter(f"abs(datum.shap_value) > {x_shift}")
         .mark_point(filled=True, opacity=1, size=125)
         .encode(
             x=alt.X("end_shifted:Q", title=None),
@@ -234,7 +234,7 @@ def plot_shap_waterfall_with_quantiles(df, height=300):
         )
     )
 
-    text_bar_left = bars.mark_text(
+    text_bar_left = bar.mark_text(
         align="left",
         baseline="middle",
         dx=5,
@@ -243,7 +243,7 @@ def plot_shap_waterfall_with_quantiles(df, height=300):
         text="value_label",
         opacity=alt.condition(alt.datum["shap_value"] > 0, alt.value(0), alt.value(1)),
     )
-    text_bar_right = bars.mark_text(align="right", baseline="middle", dx=-5, color="black").encode(
+    text_bar_right = bar.mark_text(align="right", baseline="middle", dx=-5, color="black").encode(
         text="value_label",
         opacity=alt.condition(alt.datum["shap_value"] > 0, alt.value(1), alt.value(0)),
     )
@@ -295,10 +295,10 @@ def plot_shap_waterfall_with_quantiles(df, height=300):
         .mark_rule(color="black", opacity=1, y=0, y2=-6)
         .encode(x=alt.X("x:Q"))
     )
-    rules = feature_bar_rule + end_bar_rule + tick_start_rule + tick_end_rule
+    rule = feature_bar_rule + end_bar_rule + tick_start_rule + tick_end_rule
 
     chart = (
-        (bars + points + text + rules)
+        (bar + point + text + rule)
         .add_params(quantile_val)
         .configure_view(strokeOpacity=0)
         .properties(

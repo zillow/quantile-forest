@@ -57,10 +57,19 @@ def plot_pred_and_ranks(df):
 
     base = alt.Chart(df)
 
-    points = (
+    # For desired legend labels.
+    dummy_legend = (
+        base.mark_line(opacity=1)
+        .encode(opacity=alt.Opacity("model:N", scale=alt.Scale(range=[1, 1]), title="Prediction"))
+        .transform_calculate(model="'Median'")
+    )
+
+    circle = (
         base.add_params(interval_val, click)
         .transform_calculate(
-            outlier="abs(datum.y_rank - 0.5) > (0.5 - interval / 2) ? 'Yes' : 'No'"
+            outlier="abs(datum.y_rank - 0.5) > (0.5 - interval / 2) ? 'Yes' : 'No'",
+            threshold_low="0 + interval / 2",
+            threshold_upp="1 - interval / 2",
         )
         .mark_circle(opacity=0.5, size=25)
         .encode(
@@ -78,6 +87,10 @@ def plot_pred_and_ranks(df):
             tooltip=[
                 alt.Tooltip("x:Q", format=",.3f", title="X"),
                 alt.Tooltip("y:Q", format=",.3f", title="Y"),
+                alt.Tooltip("y_pred:Q", format=",.3f", title="Predicted Y"),
+                alt.Tooltip("y_rank:Q", format=".3f", title="Quantile Rank"),
+                alt.Tooltip("threshold_low:Q", format=".3f", title="Lower Threshold"),
+                alt.Tooltip("threshold_upp:Q", format=".3f", title="Upper Threshold"),
                 alt.Tooltip("y_rank:Q", format=".3f", title="Quantile Rank"),
                 alt.Tooltip("outlier:N", title="Outlier"),
             ],
@@ -94,14 +107,7 @@ def plot_pred_and_ranks(df):
         ],
     )
 
-    # For desired legend labels.
-    dummy_legend = (
-        base.mark_line(opacity=1)
-        .encode(opacity=alt.Opacity("model:N", scale=alt.Scale(range=[1, 1]), title="Prediction"))
-        .transform_calculate(model="'Median'")
-    )
-
-    chart = (dummy_legend + points + line_pred).properties(
+    chart = (dummy_legend + circle + line_pred).properties(
         title="QRF Predictions with Quantile Rank Thresholding on Toy Dataset",
         height=400,
         width=650,

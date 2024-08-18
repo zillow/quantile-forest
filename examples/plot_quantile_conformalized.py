@@ -183,6 +183,23 @@ def plot_prediction_intervals_by_strategy(df):
             )
         )
 
+        bar = base.mark_bar(width=2).encode(
+            x=alt.X("y_pred:Q", scale=alt.Scale(domain=domain, padding=0), title=""),
+            y=alt.Y("y_pred_low:Q", scale=alt.Scale(domain=domain, padding=0), title=""),
+            y2=alt.Y2("y_pred_upp:Q", title=None),
+            color=alt.condition(click, alt.value("#e0f2ff"), alt.value("lightgray")),
+            opacity=alt.condition(click, alt.value(0.8), alt.value(0)),
+            tooltip=tooltip,
+        )
+
+        tick = base.mark_tick(orient="horizontal", thickness=1, width=5).encode(
+            x=alt.X("y_pred:Q", title=""),
+            color=alt.value("#006aff"),
+            opacity=alt.condition(click, alt.value(0.4), alt.value(0)),
+        )
+        tick_low = tick.encode(y=alt.Y("y_pred_low:Q", scale=alt.Scale(clamp=True), title=""))
+        tick_upp = tick.encode(y=alt.Y("y_pred_upp:Q", scale=alt.Scale(clamp=True), title=""))
+
         circle = (
             base.add_params(click)
             .mark_circle(size=30)
@@ -212,23 +229,6 @@ def plot_prediction_intervals_by_strategy(df):
                 tooltip=tooltip,
             )
         )
-
-        bar = base.mark_bar(width=2).encode(
-            x=alt.X("y_pred:Q", scale=alt.Scale(domain=domain, padding=0), title=""),
-            y=alt.Y("y_pred_low:Q", scale=alt.Scale(domain=domain, padding=0), title=""),
-            y2=alt.Y2("y_pred_upp:Q", title=None),
-            color=alt.condition(click, alt.value("#e0f2ff"), alt.value("lightgray")),
-            opacity=alt.condition(click, alt.value(0.8), alt.value(0)),
-            tooltip=tooltip,
-        )
-
-        tick = base.mark_tick(orient="horizontal", thickness=1, width=5).encode(
-            x=alt.X("y_pred:Q", title=""),
-            color=alt.value("#006aff"),
-            opacity=alt.condition(click, alt.value(0.4), alt.value(0)),
-        )
-        tick_low = tick.encode(y=alt.Y("y_pred_low:Q", scale=alt.Scale(clamp=True), title=""))
-        tick_upp = tick.encode(y=alt.Y("y_pred_upp:Q", scale=alt.Scale(clamp=True), title=""))
 
         diagonal = (
             alt.Chart(pd.DataFrame({"var1": domain, "var2": domain}))

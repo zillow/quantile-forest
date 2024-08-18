@@ -115,17 +115,10 @@ def plot_multitargets(df, legend):
         )
     )
 
-    points = base.mark_circle(color="black", opacity=0.25, size=25).encode(
+    circle = base.mark_circle(color="black", opacity=0.25, size=25).encode(
         x=alt.X("x:Q", scale=alt.Scale(nice=False)),
         y=alt.Y("y:Q"),
         color=alt.condition(click, alt.Color("target:N"), alt.value("lightgray")),
-        tooltip=tooltip,
-    )
-
-    line = base.mark_line(color="black", size=3).encode(
-        x=alt.X("x:Q", scale=alt.Scale(nice=False), title="X"),
-        y=alt.Y("y_pred:Q", title="Y"),
-        color=color,
         tooltip=tooltip,
     )
 
@@ -137,8 +130,15 @@ def plot_multitargets(df, legend):
         tooltip=tooltip,
     )
 
+    line = base.mark_line(color="black", size=3).encode(
+        x=alt.X("x:Q", scale=alt.Scale(nice=False), title="X"),
+        y=alt.Y("y_pred:Q", title="Y"),
+        color=color,
+        tooltip=tooltip,
+    )
+
     chart = (
-        (points + area + line)
+        (circle + area + line)
         .add_params(interval_val, click)
         .configure_range(category=alt.RangeScheme(list(legend.values())))
         .properties(

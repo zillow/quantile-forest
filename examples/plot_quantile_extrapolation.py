@@ -434,7 +434,16 @@ def plot_qrf_vs_xtrapolation_comparison(df, func_str):
 
         base = alt.Chart(df.assign(**{"point_label": "Observations", "line_label": func_str}))
 
-        points_true = base.mark_circle(size=20).encode(
+        bar_pred = base.mark_bar(clip=True, width=2).encode(
+            x=alt.X("X_true"),
+            y=alt.Y("y_pred_low"),
+            y2=alt.Y2("y_pred_upp"),
+            color=alt.condition(alt.datum["extrapolate"], alt.value("red"), alt.value("#e0f2ff")),
+            opacity=alt.condition(alt.datum["extrapolate"], alt.value(0.05), alt.value(0.8)),
+            tooltip=tooltip_pred,
+        )
+
+        circle_true = base.mark_circle(size=20).encode(
             x=alt.X("X_true:Q", scale=x_scale, title="X"),
             y=alt.Y("y_true:Q", scale=y_scale, title="Y"),
             color=points_color,
@@ -455,16 +464,7 @@ def plot_qrf_vs_xtrapolation_comparison(df, func_str):
             tooltip=tooltip_pred,
         )
 
-        bar_pred = base.mark_bar(clip=True, width=2).encode(
-            x=alt.X("X_true"),
-            y=alt.Y("y_pred_low"),
-            y2=alt.Y2("y_pred_upp"),
-            color=alt.condition(alt.datum["extrapolate"], alt.value("red"), alt.value("#e0f2ff")),
-            opacity=alt.condition(alt.datum["extrapolate"], alt.value(0.05), alt.value(0.8)),
-            tooltip=tooltip_pred,
-        )
-
-        chart = bar_pred + points_true + line_true + line_pred
+        chart = bar_pred + circle_true + line_true + line_pred
 
         if "coverage" in df.columns:
             text_coverage = (

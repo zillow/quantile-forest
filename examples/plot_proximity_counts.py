@@ -29,7 +29,7 @@ n_test_samples = 25
 noise_std = 0.1
 
 pixel_dim = (8, 8)  # pixel dimensions (width and height)
-pixel_scale = 100  # scale multipler for combining clean and noisy values
+pixel_scale = 1000  # scale multipler for combining clean and noisy values
 
 # Load the Digits dataset.
 X, y = datasets.load_digits(return_X_y=True, as_frame=True)
@@ -116,14 +116,19 @@ def plot_digits_proximities(
     df,
     df_lookup,
     pixel_dim=(8, 8),
-    pixel_scale=100,
+    pixel_scale=1000,
     n_prox=25,
     n_prox_per_row=5,
     subplot_spacing=10,
     height=225,
     width=225,
 ):
-    pixel_cols = [f"pixel_{y:01}_{x:01}" for y in range(pixel_dim[1]) for x in range(pixel_dim[0])]
+    dim_x = pixel_dim[0]
+    dim_y = pixel_dim[1]
+    num_x = len(str(dim_x))
+    num_y = len(str(dim_y))
+
+    pixel_cols = [f"pixel_{y:0{num_y}}_{x:0{num_x}}" for y in range(dim_y) for x in range(dim_x)]
     pixel_x = "split(datum.pixel, '_')[2]"
     pixel_y = "split(datum.pixel, '_')[1]"
 

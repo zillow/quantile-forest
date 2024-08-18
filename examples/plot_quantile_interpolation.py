@@ -102,23 +102,7 @@ def plot_interpolations(df, legend):
         alt.Tooltip("quantile_upp:Q", format=".3f", title="Upper Quantile"),
     ]
 
-    point = (
-        alt.Chart(df, width=alt.Step(20))
-        .mark_circle(opacity=1, size=75)
-        .encode(
-            x=alt.X(
-                "method:N",
-                axis=alt.Axis(labels=False, tickSize=0),
-                sort=list(legend.keys()),
-                title=None,
-            ),
-            y=alt.Y("y_pred:Q", title="Actual and Predicted Values"),
-            color=color,
-            tooltip=tooltip,
-        )
-    )
-
-    area = (
+    bar_pred = (
         alt.Chart(df)
         .mark_bar()
         .encode(
@@ -135,8 +119,24 @@ def plot_interpolations(df, legend):
         )
     )
 
+    circle_pred = (
+        alt.Chart(df, width=alt.Step(20))
+        .mark_circle(opacity=1, size=75)
+        .encode(
+            x=alt.X(
+                "method:N",
+                axis=alt.Axis(labels=False, tickSize=0),
+                sort=list(legend.keys()),
+                title=None,
+            ),
+            y=alt.Y("y_pred:Q", title="Actual and Predicted Values"),
+            color=color,
+            tooltip=tooltip,
+        )
+    )
+
     chart = (
-        (area + point)
+        (bar_pred + circle_pred)
         .add_params(interval_val, click)
         .transform_filter(
             "(datum.method == 'Actual')"

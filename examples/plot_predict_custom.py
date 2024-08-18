@@ -122,7 +122,7 @@ def plot_ecdf(df):
         alt.Tooltip("proba:Q", title="Probability"),
     ]
 
-    circles = (
+    circle = (
         alt.Chart(df)
         .mark_circle(color="#006aff", opacity=1, size=50)
         .encode(
@@ -134,7 +134,7 @@ def plot_ecdf(df):
         )
     )
 
-    lines = (
+    line = (
         alt.Chart(df)
         .mark_line(color="#006aff", size=2)
         .encode(
@@ -148,8 +148,8 @@ def plot_ecdf(df):
     )
 
     # Ensure the selected sample index values overlay the unselected values.
-    chart_base = circles + lines
-    chart_selected = (circles + lines).transform_filter(index_selection)
+    chart_base = circle + line
+    chart_selected = (circle + line).transform_filter(index_selection)
 
     chart = (
         (chart_base + chart_selected)

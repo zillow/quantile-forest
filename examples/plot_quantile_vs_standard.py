@@ -65,7 +65,7 @@ def plot_prediction_histograms(df, legend):
         max=1,
         step=0.5 if len(quantiles) == 1 else 1 / (len(quantiles) - 1),
     )
-    quantile_val = alt.param(value=0.5, bind=slider, name="quantile")
+    quantile_val = alt.param(name="quantile", value=0.5, bind=slider)
 
     click = alt.selection_point(bind="legend", fields=["label"], on="click")
 

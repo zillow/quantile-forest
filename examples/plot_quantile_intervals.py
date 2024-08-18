@@ -146,17 +146,6 @@ def plot_calibration_and_intervals(df):
             y_pred_width=alt.datum["y_pred_upp"] - alt.datum["y_pred_low"]
         )
 
-        circle = base.mark_circle(size=30).encode(
-            x=alt.X("idx:Q", axis=alt.Axis(format=",d"), title="Ordered Samples"),
-            y=alt.Y(
-                "y_true:Q",
-                axis=alt.Axis(format="$,d"),
-                title="Observed Values and Prediction Intervals (centered)",
-            ),
-            color=alt.value("#f2a619"),
-            tooltip=tooltip,
-        )
-
         bar = base.mark_bar(opacity=0.8, width=2).encode(
             x=alt.X("idx:Q", scale=alt.Scale(domain=x_domain, padding=0), title=""),
             y=alt.Y("y_pred_low:Q", scale=alt.Scale(domain=y_domain, padding=0), title=""),
@@ -171,6 +160,17 @@ def plot_calibration_and_intervals(df):
         )
         tick_low = tick.encode(y=alt.Y("y_pred_low:Q", title=""))
         tick_upp = tick.encode(y=alt.Y("y_pred_upp:Q", title=""))
+
+        circle = base.mark_circle(size=30).encode(
+            x=alt.X("idx:Q", axis=alt.Axis(format=",d"), title="Ordered Samples"),
+            y=alt.Y(
+                "y_true:Q",
+                axis=alt.Axis(format="$,d"),
+                title="Observed Values and Prediction Intervals (centered)",
+            ),
+            color=alt.value("#f2a619"),
+            tooltip=tooltip,
+        )
 
         chart = bar + tick_low + tick_upp + circle
         return chart
