@@ -619,7 +619,7 @@ how the SHAP explanations vary with different quantile choices.</p>
         <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">bars</span> <span class="o">=</span> <span class="n">base</span><span class="o">.</span><span class="n">mark_bar</span><span class="p">()</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span>
+    <span class="n">bar</span> <span class="o">=</span> <span class="n">base</span><span class="o">.</span><span class="n">mark_bar</span><span class="p">()</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span>
         <span class="n">x</span><span class="o">=</span><span class="n">alt</span><span class="o">.</span><span class="n">X</span><span class="p">(</span>
             <span class="s2">&quot;start:Q&quot;</span><span class="p">,</span>
             <span class="n">axis</span><span class="o">=</span><span class="n">alt</span><span class="o">.</span><span class="n">Axis</span><span class="p">(</span><span class="nb">format</span><span class="o">=</span><span class="s2">&quot;,.2f&quot;</span><span class="p">,</span> <span class="n">grid</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
@@ -640,8 +640,8 @@ how the SHAP explanations vary with different quantile choices.</p>
         <span class="p">],</span>
     <span class="p">)</span>
 
-    <span class="n">points</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">bars</span><span class="o">.</span><span class="n">transform_filter</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;abs(datum.shap_value) &gt; </span><span class="si">{</span><span class="n">x_shift</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">point</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">bar</span><span class="o">.</span><span class="n">transform_filter</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;abs(datum.shap_value) &gt; </span><span class="si">{</span><span class="n">x_shift</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="o">.</span><span class="n">mark_point</span><span class="p">(</span><span class="n">filled</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">opacity</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">125</span><span class="p">)</span>
         <span class="o">.</span><span class="n">encode</span><span class="p">(</span>
             <span class="n">x</span><span class="o">=</span><span class="n">alt</span><span class="o">.</span><span class="n">X</span><span class="p">(</span><span class="s2">&quot;end_shifted:Q&quot;</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="kc">None</span><span class="p">),</span>
@@ -651,7 +651,7 @@ how the SHAP explanations vary with different quantile choices.</p>
         <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">text_bar_left</span> <span class="o">=</span> <span class="n">bars</span><span class="o">.</span><span class="n">mark_text</span><span class="p">(</span>
+    <span class="n">text_bar_left</span> <span class="o">=</span> <span class="n">bar</span><span class="o">.</span><span class="n">mark_text</span><span class="p">(</span>
         <span class="n">align</span><span class="o">=</span><span class="s2">&quot;left&quot;</span><span class="p">,</span>
         <span class="n">baseline</span><span class="o">=</span><span class="s2">&quot;middle&quot;</span><span class="p">,</span>
         <span class="n">dx</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
@@ -660,7 +660,7 @@ how the SHAP explanations vary with different quantile choices.</p>
         <span class="n">text</span><span class="o">=</span><span class="s2">&quot;value_label&quot;</span><span class="p">,</span>
         <span class="n">opacity</span><span class="o">=</span><span class="n">alt</span><span class="o">.</span><span class="n">condition</span><span class="p">(</span><span class="n">alt</span><span class="o">.</span><span class="n">datum</span><span class="p">[</span><span class="s2">&quot;shap_value&quot;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">alt</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">alt</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="mi">1</span><span class="p">)),</span>
     <span class="p">)</span>
-    <span class="n">text_bar_right</span> <span class="o">=</span> <span class="n">bars</span><span class="o">.</span><span class="n">mark_text</span><span class="p">(</span><span class="n">align</span><span class="o">=</span><span class="s2">&quot;right&quot;</span><span class="p">,</span> <span class="n">baseline</span><span class="o">=</span><span class="s2">&quot;middle&quot;</span><span class="p">,</span> <span class="n">dx</span><span class="o">=-</span><span class="mi">5</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;black&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span>
+    <span class="n">text_bar_right</span> <span class="o">=</span> <span class="n">bar</span><span class="o">.</span><span class="n">mark_text</span><span class="p">(</span><span class="n">align</span><span class="o">=</span><span class="s2">&quot;right&quot;</span><span class="p">,</span> <span class="n">baseline</span><span class="o">=</span><span class="s2">&quot;middle&quot;</span><span class="p">,</span> <span class="n">dx</span><span class="o">=-</span><span class="mi">5</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;black&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span>
         <span class="n">text</span><span class="o">=</span><span class="s2">&quot;value_label&quot;</span><span class="p">,</span>
         <span class="n">opacity</span><span class="o">=</span><span class="n">alt</span><span class="o">.</span><span class="n">condition</span><span class="p">(</span><span class="n">alt</span><span class="o">.</span><span class="n">datum</span><span class="p">[</span><span class="s2">&quot;shap_value&quot;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">alt</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="n">alt</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="mi">0</span><span class="p">)),</span>
     <span class="p">)</span>
@@ -712,10 +712,10 @@ how the SHAP explanations vary with different quantile choices.</p>
         <span class="o">.</span><span class="n">mark_rule</span><span class="p">(</span><span class="n">color</span><span class="o">=</span><span class="s2">&quot;black&quot;</span><span class="p">,</span> <span class="n">opacity</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">y2</span><span class="o">=-</span><span class="mi">6</span><span class="p">)</span>
         <span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">alt</span><span class="o">.</span><span class="n">X</span><span class="p">(</span><span class="s2">&quot;x:Q&quot;</span><span class="p">))</span>
     <span class="p">)</span>
-    <span class="n">rules</span> <span class="o">=</span> <span class="n">feature_bar_rule</span> <span class="o">+</span> <span class="n">end_bar_rule</span> <span class="o">+</span> <span class="n">tick_start_rule</span> <span class="o">+</span> <span class="n">tick_end_rule</span>
+    <span class="n">rule</span> <span class="o">=</span> <span class="n">feature_bar_rule</span> <span class="o">+</span> <span class="n">end_bar_rule</span> <span class="o">+</span> <span class="n">tick_start_rule</span> <span class="o">+</span> <span class="n">tick_end_rule</span>
 
     <span class="n">chart</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="p">(</span><span class="n">bars</span> <span class="o">+</span> <span class="n">points</span> <span class="o">+</span> <span class="n">text</span> <span class="o">+</span> <span class="n">rules</span><span class="p">)</span>
+        <span class="p">(</span><span class="n">bar</span> <span class="o">+</span> <span class="n">point</span> <span class="o">+</span> <span class="n">text</span> <span class="o">+</span> <span class="n">rule</span><span class="p">)</span>
         <span class="o">.</span><span class="n">add_params</span><span class="p">(</span><span class="n">quantile_val</span><span class="p">)</span>
         <span class="o">.</span><span class="n">configure_view</span><span class="p">(</span><span class="n">strokeOpacity</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
         <span class="o">.</span><span class="n">properties</span><span class="p">(</span>

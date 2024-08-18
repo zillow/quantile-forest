@@ -540,7 +540,7 @@ this scenario, we compute the empirical cumulative distribution function
         <span class="n">alt</span><span class="o">.</span><span class="n">Tooltip</span><span class="p">(</span><span class="s2">&quot;proba:Q&quot;</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Probability&quot;</span><span class="p">),</span>
     <span class="p">]</span>
 
-    <span class="n">circles</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">circle</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">alt</span><span class="o">.</span><span class="n">Chart</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
         <span class="o">.</span><span class="n">mark_circle</span><span class="p">(</span><span class="n">color</span><span class="o">=</span><span class="s2">&quot;#006aff&quot;</span><span class="p">,</span> <span class="n">opacity</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
         <span class="o">.</span><span class="n">encode</span><span class="p">(</span>
@@ -552,7 +552,7 @@ this scenario, we compute the empirical cumulative distribution function
         <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">lines</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">line</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">alt</span><span class="o">.</span><span class="n">Chart</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
         <span class="o">.</span><span class="n">mark_line</span><span class="p">(</span><span class="n">color</span><span class="o">=</span><span class="s2">&quot;#006aff&quot;</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
         <span class="o">.</span><span class="n">encode</span><span class="p">(</span>
@@ -566,8 +566,8 @@ this scenario, we compute the empirical cumulative distribution function
     <span class="p">)</span>
 
     <span class="c1"># Ensure the selected sample index values overlay the unselected values.</span>
-    <span class="n">chart_base</span> <span class="o">=</span> <span class="n">circles</span> <span class="o">+</span> <span class="n">lines</span>
-    <span class="n">chart_selected</span> <span class="o">=</span> <span class="p">(</span><span class="n">circles</span> <span class="o">+</span> <span class="n">lines</span><span class="p">)</span><span class="o">.</span><span class="n">transform_filter</span><span class="p">(</span><span class="n">index_selection</span><span class="p">)</span>
+    <span class="n">chart_base</span> <span class="o">=</span> <span class="n">circle</span> <span class="o">+</span> <span class="n">line</span>
+    <span class="n">chart_selected</span> <span class="o">=</span> <span class="p">(</span><span class="n">circle</span> <span class="o">+</span> <span class="n">line</span><span class="p">)</span><span class="o">.</span><span class="n">transform_filter</span><span class="p">(</span><span class="n">index_selection</span><span class="p">)</span>
 
     <span class="n">chart</span> <span class="o">=</span> <span class="p">(</span>
         <span class="p">(</span><span class="n">chart_base</span> <span class="o">+</span> <span class="n">chart_selected</span><span class="p">)</span>

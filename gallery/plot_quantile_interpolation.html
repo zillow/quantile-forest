@@ -519,23 +519,7 @@ handled when a quantile does not exactly match a data point.</p>
         <span class="n">alt</span><span class="o">.</span><span class="n">Tooltip</span><span class="p">(</span><span class="s2">&quot;quantile_upp:Q&quot;</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;.3f&quot;</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Upper Quantile&quot;</span><span class="p">),</span>
     <span class="p">]</span>
 
-    <span class="n">point</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">alt</span><span class="o">.</span><span class="n">Chart</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="n">alt</span><span class="o">.</span><span class="n">Step</span><span class="p">(</span><span class="mi">20</span><span class="p">))</span>
-        <span class="o">.</span><span class="n">mark_circle</span><span class="p">(</span><span class="n">opacity</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">75</span><span class="p">)</span>
-        <span class="o">.</span><span class="n">encode</span><span class="p">(</span>
-            <span class="n">x</span><span class="o">=</span><span class="n">alt</span><span class="o">.</span><span class="n">X</span><span class="p">(</span>
-                <span class="s2">&quot;method:N&quot;</span><span class="p">,</span>
-                <span class="n">axis</span><span class="o">=</span><span class="n">alt</span><span class="o">.</span><span class="n">Axis</span><span class="p">(</span><span class="n">labels</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">tickSize</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span>
-                <span class="n">sort</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">legend</span><span class="o">.</span><span class="n">keys</span><span class="p">()),</span>
-                <span class="n">title</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-            <span class="p">),</span>
-            <span class="n">y</span><span class="o">=</span><span class="n">alt</span><span class="o">.</span><span class="n">Y</span><span class="p">(</span><span class="s2">&quot;y_pred:Q&quot;</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Actual and Predicted Values&quot;</span><span class="p">),</span>
-            <span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="p">,</span>
-            <span class="n">tooltip</span><span class="o">=</span><span class="n">tooltip</span><span class="p">,</span>
-        <span class="p">)</span>
-    <span class="p">)</span>
-
-    <span class="n">area</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">bar_pred</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">alt</span><span class="o">.</span><span class="n">Chart</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
         <span class="o">.</span><span class="n">mark_bar</span><span class="p">()</span>
         <span class="o">.</span><span class="n">encode</span><span class="p">(</span>
@@ -552,8 +536,24 @@ handled when a quantile does not exactly match a data point.</p>
         <span class="p">)</span>
     <span class="p">)</span>
 
+    <span class="n">circle_pred</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">alt</span><span class="o">.</span><span class="n">Chart</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="n">alt</span><span class="o">.</span><span class="n">Step</span><span class="p">(</span><span class="mi">20</span><span class="p">))</span>
+        <span class="o">.</span><span class="n">mark_circle</span><span class="p">(</span><span class="n">opacity</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">75</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">encode</span><span class="p">(</span>
+            <span class="n">x</span><span class="o">=</span><span class="n">alt</span><span class="o">.</span><span class="n">X</span><span class="p">(</span>
+                <span class="s2">&quot;method:N&quot;</span><span class="p">,</span>
+                <span class="n">axis</span><span class="o">=</span><span class="n">alt</span><span class="o">.</span><span class="n">Axis</span><span class="p">(</span><span class="n">labels</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">tickSize</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span>
+                <span class="n">sort</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">legend</span><span class="o">.</span><span class="n">keys</span><span class="p">()),</span>
+                <span class="n">title</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="n">y</span><span class="o">=</span><span class="n">alt</span><span class="o">.</span><span class="n">Y</span><span class="p">(</span><span class="s2">&quot;y_pred:Q&quot;</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Actual and Predicted Values&quot;</span><span class="p">),</span>
+            <span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="p">,</span>
+            <span class="n">tooltip</span><span class="o">=</span><span class="n">tooltip</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
     <span class="n">chart</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="p">(</span><span class="n">area</span> <span class="o">+</span> <span class="n">point</span><span class="p">)</span>
+        <span class="p">(</span><span class="n">bar_pred</span> <span class="o">+</span> <span class="n">circle_pred</span><span class="p">)</span>
         <span class="o">.</span><span class="n">add_params</span><span class="p">(</span><span class="n">interval_val</span><span class="p">,</span> <span class="n">click</span><span class="p">)</span>
         <span class="o">.</span><span class="n">transform_filter</span><span class="p">(</span>
             <span class="s2">&quot;(datum.method == &#39;Actual&#39;)&quot;</span>

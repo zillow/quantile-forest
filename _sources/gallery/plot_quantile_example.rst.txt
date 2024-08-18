@@ -73,7 +73,25 @@ samples.
 
 
     def plot_fit_and_intervals(df):
-        points = (
+        area_pred = (
+            alt.Chart(df)
+            .transform_filter(~alt.datum["test"])  # filter to training data
+            .mark_area(color="#e0f2ff", opacity=0.8)
+            .encode(
+                x=alt.X("x:Q", scale=alt.Scale(nice=False), title="X"),
+                y=alt.Y("y_pred_low:Q", title=""),
+                y2=alt.Y2("y_pred_upp:Q", title=None),
+                tooltip=[
+                    alt.Tooltip("x:Q", format=",.3f", title="X"),
+                    alt.Tooltip("y:Q", format=",.3f", title="Y"),
+                    alt.Tooltip("y_pred:Q", format=",.3f", title="Predicted Y"),
+                    alt.Tooltip("y_pred_low:Q", format=",.3f", title="Predicted Lower Y"),
+                    alt.Tooltip("y_pred_upp:Q", format=",.3f", title="Predicted Upper Y"),
+                ],
+            )
+        )
+
+        circle_test = (
             alt.Chart(df.assign(**{"point_label": "Test Observations"}))
             .transform_filter(alt.datum["test"])  # filter to test data
             .mark_circle(color="#f2a619")
@@ -119,24 +137,6 @@ samples.
             )
         )
 
-        area_pred = (
-            alt.Chart(df)
-            .transform_filter(~alt.datum["test"])  # filter to training data
-            .mark_area(color="#e0f2ff", opacity=0.8)
-            .encode(
-                x=alt.X("x:Q", scale=alt.Scale(nice=False), title="X"),
-                y=alt.Y("y_pred_low:Q", title=""),
-                y2=alt.Y2("y_pred_upp:Q", title=None),
-                tooltip=[
-                    alt.Tooltip("x:Q", format=",.3f", title="X"),
-                    alt.Tooltip("y:Q", format=",.3f", title="Y"),
-                    alt.Tooltip("y_pred:Q", format=",.3f", title="Predicted Y"),
-                    alt.Tooltip("y_pred_low:Q", format=",.3f", title="Predicted Lower Y"),
-                    alt.Tooltip("y_pred_upp:Q", format=",.3f", title="Predicted Upper Y"),
-                ],
-            )
-        )
-
         # For desired legend ordering.
         blank = (
             alt.Chart(pd.DataFrame({"y_area_label": ["Predicted 95% Interval"]}))
@@ -147,7 +147,7 @@ samples.
         )
 
         chart = (
-            (area_pred + points + line_true + line_pred + blank)
+            (area_pred + circle_test + line_true + line_pred + blank)
             .resolve_scale(color="independent")
             .properties(title="QRF Predictions vs. Ground Truth on Toy Dataset", height=400, width=650)
         )
@@ -214,7 +214,25 @@ samples.
 
 
             def plot_fit_and_intervals(df):
-                points = (
+                area_pred = (
+                    alt.Chart(df)
+                    .transform_filter(~alt.datum["test"])  # filter to training data
+                    .mark_area(color="#e0f2ff", opacity=0.8)
+                    .encode(
+                        x=alt.X("x:Q", scale=alt.Scale(nice=False), title="X"),
+                        y=alt.Y("y_pred_low:Q", title=""),
+                        y2=alt.Y2("y_pred_upp:Q", title=None),
+                        tooltip=[
+                            alt.Tooltip("x:Q", format=",.3f", title="X"),
+                            alt.Tooltip("y:Q", format=",.3f", title="Y"),
+                            alt.Tooltip("y_pred:Q", format=",.3f", title="Predicted Y"),
+                            alt.Tooltip("y_pred_low:Q", format=",.3f", title="Predicted Lower Y"),
+                            alt.Tooltip("y_pred_upp:Q", format=",.3f", title="Predicted Upper Y"),
+                        ],
+                    )
+                )
+
+                circle_test = (
                     alt.Chart(df.assign(**{"point_label": "Test Observations"}))
                     .transform_filter(alt.datum["test"])  # filter to test data
                     .mark_circle(color="#f2a619")
@@ -260,24 +278,6 @@ samples.
                     )
                 )
 
-                area_pred = (
-                    alt.Chart(df)
-                    .transform_filter(~alt.datum["test"])  # filter to training data
-                    .mark_area(color="#e0f2ff", opacity=0.8)
-                    .encode(
-                        x=alt.X("x:Q", scale=alt.Scale(nice=False), title="X"),
-                        y=alt.Y("y_pred_low:Q", title=""),
-                        y2=alt.Y2("y_pred_upp:Q", title=None),
-                        tooltip=[
-                            alt.Tooltip("x:Q", format=",.3f", title="X"),
-                            alt.Tooltip("y:Q", format=",.3f", title="Y"),
-                            alt.Tooltip("y_pred:Q", format=",.3f", title="Predicted Y"),
-                            alt.Tooltip("y_pred_low:Q", format=",.3f", title="Predicted Lower Y"),
-                            alt.Tooltip("y_pred_upp:Q", format=",.3f", title="Predicted Upper Y"),
-                        ],
-                    )
-                )
-
                 # For desired legend ordering.
                 blank = (
                     alt.Chart(pd.DataFrame({"y_area_label": ["Predicted 95% Interval"]}))
@@ -288,7 +288,7 @@ samples.
                 )
 
                 chart = (
-                    (area_pred + points + line_true + line_pred + blank)
+                    (area_pred + circle_test + line_true + line_pred + blank)
                     .resolve_scale(color="independent")
                     .properties(title="QRF Predictions vs. Ground Truth on Toy Dataset", height=400, width=650)
                 )
