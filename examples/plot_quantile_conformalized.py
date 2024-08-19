@@ -34,7 +34,7 @@ strategies = {
     "cqr": "Conformalized Quantile Regression (CQR)",
 }
 
-# Load the California Housing Prices dataset.
+# Load the California Housing dataset.
 X, y = datasets.fetch_california_housing(as_frame=True, return_X_y=True)
 perm = random_state.permutation(min(len(X), n_samples))
 X = X.iloc[perm]

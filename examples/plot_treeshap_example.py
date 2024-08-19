@@ -88,7 +88,7 @@ def get_shap_value_by_index(shap_values, index):
     return shap_values_i
 
 
-# Load the California Housing Prices dataset.
+# Load the California Housing dataset.
 X, y = datasets.fetch_california_housing(as_frame=True, return_X_y=True)
 perm = random_state.permutation(min(len(X), n_samples))
 X = X.iloc[perm]
@@ -100,6 +100,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, random_
 qrf = RandomForestQuantileRegressor(random_state=random_state)
 qrf.fit(X_train, y_train)
 
+# Get the SHAP values at each quantile for the specified test sample.
 shap_values_list = [
     get_shap_value_by_index(get_shap_values(qrf, X_test, quantile=q), test_idx) for q in quantiles
 ]

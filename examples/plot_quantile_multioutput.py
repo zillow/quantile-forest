@@ -40,6 +40,7 @@ legend = {k: v for f in funcs for k, v in f["legend"].items()}
 
 
 def make_func_Xy(funcs, bounds, n_samples):
+    """Make a dataset from a specified function."""
     x = np.linspace(*bounds, n_samples)
     y = np.empty((len(x), len(funcs)))
     for i, func in enumerate(funcs):
@@ -47,7 +48,7 @@ def make_func_Xy(funcs, bounds, n_samples):
     return np.atleast_2d(x).T, y
 
 
-# Create the dataset with multiple target variables.
+# Create a dataset with multiple target variables.
 X, y = make_func_Xy(funcs, bounds, n_samples)
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=random_state)
@@ -56,7 +57,7 @@ qrf = RandomForestQuantileRegressor(max_samples_leaf=None, max_depth=4, random_s
 qrf.fit(X_train, y_train)  # fit on all of the targets simultaneously
 
 # Get multi-target predictions at specified quantiles.
-y_pred = qrf.predict(X, quantiles=quantiles)
+y_pred = qrf.predict(X, quantiles=quantiles)  # shape = (n_samples, n_targets, n_quantiles)
 
 df = pd.DataFrame(
     {

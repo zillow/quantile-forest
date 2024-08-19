@@ -5,13 +5,12 @@ Using Proximity Counts to Identify Similar Samples
 This example demonstrates the use of quantile regression forest (QRF)
 proximity counts to identify similar samples. In this scenario, we train a QRF
 on a noisy dataset to predict individual pixel values in an unsupervised
-manner (the target labels are not used during training) for denoising
-purposes. We then retrieve the proximity values for the noisy test samples. We
-visualize each test sample alongside a set of similar (non-noisy) training
-samples determined by their proximity counts. These similar samples are
-ordered from the highest to the lowest proximity count. This illustrates how
-proximity counts can effectively identify similar samples even in noisy
-conditions.
+manner for denoising purposes; the target labels are not used during training.
+We then retrieve the proximity values for the noisy test samples. We visualize
+each test sample alongside a set of similar (non-noisy) training samples
+determined by their proximity counts. These similar samples are ordered from
+the highest to the lowest proximity count. This illustrates how proximity
+counts can effectively identify similar samples even in noisy conditions.
 """
 
 import altair as alt
@@ -57,20 +56,20 @@ def add_gaussian_noise(X, mean=0, std=0.1, random_state=None):
     return X_noisy
 
 
-def combine_floats(df1, df2, scale=100):
+def combine_floats(df1, df2, scale=1000):
     """Combine two floats from separate data frames into a single number."""
     combined_df = df1 * scale + df2
     return combined_df
 
 
-def extract_floats(combined_df, scale=100):
+def extract_floats(combined_df, scale=1000):
     """Extract the original floats from the combined data frame."""
     df1 = np.floor(combined_df / scale)
     df2 = combined_df - (df1 * scale)
     return df1, df2
 
 
-# Randomly add noise to the training and test data.
+# Randomly add Gaussian noise to the training and test data.
 X_train_noisy = X_train.pipe(add_gaussian_noise, std=noise_std, random_state=random_state)
 X_test_noisy = X_test.pipe(add_gaussian_noise, std=noise_std, random_state=random_state)
 
@@ -78,10 +77,13 @@ X_test_noisy = X_test.pipe(add_gaussian_noise, std=noise_std, random_state=rando
 # data is stored in the leaf nodes. By doing this, we allow the model to
 # consider all samples as potential candidates for proximity calculations.
 qrf = RandomForestQuantileRegressor(max_samples_leaf=None, random_state=random_state)
+
+# Fit the model to predict the non-noisy pixels from noisy pixels (i.e., to denoise).
+# We fit a single multi-target model, with each pixel treated as a distinct target.
 qrf.fit(X_train_noisy, X_train)
 
 # Get the proximity counts.
-proximities = qrf.proximity_counts(X_test_noisy)
+proximities = qrf.proximity_counts(X_test_noisy)  # output is a list of tuples for each sample
 
 df_prox = pd.DataFrame(
     {"prox": [[(i, *p) for i, p in enumerate(proximities[x])] for x in range(len(X_test))]}
@@ -107,8 +109,8 @@ df = (
 # Create a data frame for looking up training proximities.
 df_lookup = (
     combine_floats(X_train, X_train_noisy, scale=pixel_scale)  # combine to reduce transmitted data
-    .assign(**{"index": np.arange(len(X_train))})
     .join(y_train)
+    .assign(**{"index": np.arange(len(X_train))})  # align with proximities, which are zero-indexed
 )
 
 
@@ -123,12 +125,10 @@ def plot_digits_proximities(
     height=225,
     width=225,
 ):
-    dim_x = pixel_dim[0]
-    dim_y = pixel_dim[1]
-    num_x = len(str(dim_x))
-    num_y = len(str(dim_y))
+    dim_x, dim_y = pixel_dim[0], pixel_dim[1]
+    dgt_x, dgt_y = len(str(dim_x)), len(str(dim_y))
 
-    pixel_cols = [f"pixel_{y:0{num_y}}_{x:0{num_x}}" for y in range(dim_y) for x in range(dim_x)]
+    pixel_cols = [f"pixel_{y:0{dgt_y}}_{x:0{dgt_x}}" for y in range(dim_y) for x in range(dim_x)]
     pixel_x = "split(datum.pixel, '_')[2]"
     pixel_y = "split(datum.pixel, '_')[1]"
 
@@ -171,7 +171,7 @@ def plot_digits_proximities(
     )
 
     chart2 = (
-        base.transform_filter(f"datum.prox_idx < {n_prox}")
+        base.transform_filter(f"datum.prox_idx < {n_prox}")  # filter to the display proximities
         .transform_lookup(
             lookup="prox_val",
             from_=alt.LookupData(df_lookup, key="index", fields=pixel_cols + ["target"]),

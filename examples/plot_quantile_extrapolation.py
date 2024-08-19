@@ -34,6 +34,7 @@ qrf_params = {"max_samples_leaf": None, "min_samples_leaf": 4, "random_state": r
 
 
 def make_func_Xy(func, bounds, n_samples, add_noise=True, random_state=0):
+    """Make a dataset from a specified function."""
     random_state = check_random_state(random_state)
 
     x = np.linspace(bounds[0], bounds[1], n_samples)
@@ -366,7 +367,7 @@ def get_coverage_xtr(bounds_list, train_indices, test_indices, y_train, level, *
     return np.mean(xtra[test_indices])
 
 
-# Create the full dataset.
+# Create a dataset that requires extrapolation.
 X, y = make_func_Xy(func, bounds, n_samples, add_noise=True, random_state=0)
 
 # Fit and extrapolate based on train-test split (depending on X).
@@ -377,7 +378,7 @@ train_indices = np.repeat(False, len(y))
 train_indices[sort_X[extrap_min_idx] : sort_X[extrap_max_idx]] = True
 res = train_test_split(train_indices, rng=random_state, **qrf_params)
 
-# Get coverages on extrapolated samples.
+# Get coverages for extrapolated samples.
 args = (train_indices, ~train_indices, y[train_indices], quantiles[1] - quantiles[0], random_state)
 cov_qrf = get_coverage_qrf(res["qmat"], *args)
 cov_xtr = get_coverage_xtr(res["bounds_list"], *args)

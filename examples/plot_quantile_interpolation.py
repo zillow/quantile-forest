@@ -21,7 +21,7 @@ from quantile_forest import RandomForestQuantileRegressor
 random_state = np.random.RandomState(0)
 intervals = np.linspace(0, 1, num=101, endpoint=True).round(2).tolist()
 
-# Create toy dataset.
+# Create a simple toy dataset.
 X = np.array([[-1, -1], [-1, -1], [-1, -1], [1, 1], [1, 1]])
 y = np.array([-2, -1, 0, 1, 2])
 
@@ -59,11 +59,12 @@ for idx, interval in enumerate(intervals):
         "quantile_upp": [None] * len(y),
     }
 
+    # Make predictions at the median and intervals.
     quantiles = [0.5, round(0.5 - interval / 2, 3), round(0.5 + interval / 2, 3)]
 
     # Populate data based on prediction results with different interpolations.
     for interpolation in interpolations:
-        # Get predictions at median and prediction intervals.
+        # Get predictions using the specified quantiles and interpolation method.
         y_pred = qrf.predict(X, quantiles=quantiles, interpolation=interpolation.lower())
 
         data["method"].extend([interpolation] * len(y))

@@ -50,7 +50,9 @@ def fit_and_upload_model(token, repo_id, local_dir="./local_repo", random_state=
     from sklearn.model_selection import train_test_split
     from skops import card
 
+    # Load the California Housing dataset.
     X, y = datasets.fetch_california_housing(as_frame=True, return_X_y=True)
+
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=random_state)
 
     # Fit the model.
@@ -160,7 +162,7 @@ with tempfile.TemporaryDirectory() as local_dir:
     with open(f"{local_dir}/{model_filename}", "rb") as file:
         qrf = pickle.load(file)
 
-# Estimate quantiles.
+# Fetch the California Housing dataset and estimate quantiles.
 X, y = datasets.fetch_california_housing(as_frame=True, return_X_y=True)
 y_pred = qrf.predict(X, quantiles=quantiles) * 100_000  # predict in dollars
 

@@ -19,7 +19,7 @@ from quantile_forest import RandomForestQuantileRegressor
 random_state = np.random.RandomState(0)
 n_samples = 1000
 
-# Load the California Housing Prices dataset.
+# Load the California Housing dataset.
 X, y = datasets.fetch_california_housing(as_frame=True, return_X_y=True)
 perm = random_state.permutation(min(len(X), n_samples))
 X = X.iloc[perm]
@@ -27,7 +27,7 @@ y = y.iloc[perm]
 
 qrf = RandomForestQuantileRegressor(random_state=random_state)
 
-kf = KFold(n_splits=5)
+kf = KFold(n_splits=5, shuffle=True, random_state=random_state)
 kf.get_n_splits(X)
 
 # Using k-fold cross-validation, get predictions for all samples.

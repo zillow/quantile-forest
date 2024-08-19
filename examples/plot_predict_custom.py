@@ -25,12 +25,12 @@ random_state = np.random.RandomState(0)
 n_test_samples = 100
 
 
-def predict(reg, X, quantiles=0.5, what=None):
+def predict(qrf, X, quantiles=0.5, what=None):
     """Custom prediction method that allows user-specified function.
 
     Parameters
     ----------
-    reg : BaseForestQuantileRegressor
+    qrf : BaseForestQuantileRegressor
         Quantile forest model object.
     X : array-like, of shape (n_samples, n_features)
         New test data.
@@ -45,16 +45,16 @@ def predict(reg, X, quantiles=0.5, what=None):
     Output array with the user-specified function applied (if any).
     """
     if what is None:
-        return reg.predict(X, quantiles=quantiles)
+        return qrf.predict(X, quantiles=quantiles)
 
-    # Get the complete set of proximities (training indices) for each sample.
-    proximities = reg.proximity_counts(X)
+    # Get the complete set of proximities for each sample.
+    proximities = qrf.proximity_counts(X)
 
     # Retrieve the unsorted training responses from the model (stored in sorted order).
-    reverse_sorter = np.argsort(reg.sorter_, axis=0)
-    y_train = np.empty_like(reg.forest_.y_train).T
+    reverse_sorter = np.argsort(qrf.sorter_, axis=0)
+    y_train = np.empty_like(qrf.forest_.y_train).T
     for i in range(y_train.shape[1]):
-        y_train[:, i] = np.asarray(reg.forest_.y_train)[i, reverse_sorter[:, i]]
+        y_train[:, i] = np.asarray(qrf.forest_.y_train)[i, reverse_sorter[:, i]]
 
     # For each sample, construct an array of the training responses used for prediction.
     s = [np.concatenate([np.repeat(y_train[i[0]], i[1]) for i in prox]) for prox in proximities]
@@ -65,25 +65,28 @@ def predict(reg, X, quantiles=0.5, what=None):
     return y_out
 
 
+# Load the Diabetes dataset.
 X, y = datasets.load_diabetes(return_X_y=True)
+
 X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=n_test_samples, random_state=random_state
 )
 
-reg = RandomForestQuantileRegressor(random_state=random_state).fit(X_train, y_train)
+qrf = RandomForestQuantileRegressor(random_state=random_state).fit(X_train, y_train)
 
 # Define a user-specified function.
 # Here we randomly sample 1,000 values with replacement from the empirical distribution.
 func = lambda x: random_state.choice(x, size=1000)
 
 # Output array with the user-specified function applied to each sample's empirical distribution.
-y_out = predict(reg, X_test, what=func)
+y_out = predict(qrf, X_test, what=func)
 
 dfs = []
 for idx in range(n_test_samples):
     # Calculate the ECDF from output array.
     y_ecdf = [sp.stats.ecdf(y_i).cdf for y_i in y_out[idx].reshape(1, -1)]
 
+    # Get quantiles (x-axis) and probabilities (y-axis).
     quantiles = list(chain.from_iterable([y_i.quantiles for y_i in y_ecdf]))
     probabilities = list(chain.from_iterable([y_i.probabilities for y_i in y_ecdf]))
 

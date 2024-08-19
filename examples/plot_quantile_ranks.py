@@ -25,6 +25,7 @@ bounds = [0, 10]
 
 
 def make_toy_dataset(n_samples, bounds, random_state=0):
+    """Make a toy dataset."""
     random_state = check_random_state(random_state)
     X_1d = np.linspace(*bounds, num=n_samples)
     X = X_1d.reshape(-1, 1)
@@ -32,6 +33,7 @@ def make_toy_dataset(n_samples, bounds, random_state=0):
     return X, y
 
 
+# Create a toy dataset.
 X, y = make_toy_dataset(n_samples, bounds, random_state=0)
 
 qrf = RandomForestQuantileRegressor(
@@ -43,7 +45,7 @@ qrf = RandomForestQuantileRegressor(
 y_pred = qrf.predict(X, quantiles=0.5)
 
 # Get the quantile rank for all samples.
-y_rank = qrf.quantile_ranks(X, y)
+y_rank = qrf.quantile_ranks(X, y)  # output is a value in the range [0, 1] for each sample
 
 df = pd.DataFrame({"x": X.reshape(-1), "y": y, "y_pred": y_pred, "y_rank": y_rank})
 
