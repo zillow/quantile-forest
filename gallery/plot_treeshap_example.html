@@ -505,7 +505,7 @@ how the SHAP explanations vary with different quantile choices.</p>
     <span class="k">return</span> <span class="n">shap_values_i</span>
 
 
-<span class="c1"># Load the California Housing Prices dataset.</span>
+<span class="c1"># Load the California Housing dataset.</span>
 <span class="n">X</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">datasets</span><span class="o">.</span><span class="n">fetch_california_housing</span><span class="p">(</span><span class="n">as_frame</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">return_X_y</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="n">perm</span> <span class="o">=</span> <span class="n">random_state</span><span class="o">.</span><span class="n">permutation</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">X</span><span class="p">),</span> <span class="n">n_samples</span><span class="p">))</span>
 <span class="n">X</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">perm</span><span class="p">]</span>
@@ -517,6 +517,7 @@ how the SHAP explanations vary with different quantile choices.</p>
 <span class="n">qrf</span> <span class="o">=</span> <span class="n">RandomForestQuantileRegressor</span><span class="p">(</span><span class="n">random_state</span><span class="o">=</span><span class="n">random_state</span><span class="p">)</span>
 <span class="n">qrf</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">)</span>
 
+<span class="c1"># Get the SHAP values at each quantile for the specified test sample.</span>
 <span class="n">shap_values_list</span> <span class="o">=</span> <span class="p">[</span>
     <span class="n">get_shap_value_by_index</span><span class="p">(</span><span class="n">get_shap_values</span><span class="p">(</span><span class="n">qrf</span><span class="p">,</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">quantile</span><span class="o">=</span><span class="n">q</span><span class="p">),</span> <span class="n">test_idx</span><span class="p">)</span> <span class="k">for</span> <span class="n">q</span> <span class="ow">in</span> <span class="n">quantiles</span>
 <span class="p">]</span>

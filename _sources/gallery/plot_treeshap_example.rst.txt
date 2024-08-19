@@ -101,7 +101,7 @@ how the SHAP explanations vary with different quantile choices.
         return shap_values_i
 
 
-    # Load the California Housing Prices dataset.
+    # Load the California Housing dataset.
     X, y = datasets.fetch_california_housing(as_frame=True, return_X_y=True)
     perm = random_state.permutation(min(len(X), n_samples))
     X = X.iloc[perm]
@@ -113,6 +113,7 @@ how the SHAP explanations vary with different quantile choices.
     qrf = RandomForestQuantileRegressor(random_state=random_state)
     qrf.fit(X_train, y_train)
 
+    # Get the SHAP values at each quantile for the specified test sample.
     shap_values_list = [
         get_shap_value_by_index(get_shap_values(qrf, X_test, quantile=q), test_idx) for q in quantiles
     ]
@@ -403,7 +404,7 @@ how the SHAP explanations vary with different quantile choices.
                 return shap_values_i
 
 
-            # Load the California Housing Prices dataset.
+            # Load the California Housing dataset.
             X, y = datasets.fetch_california_housing(as_frame=True, return_X_y=True)
             perm = random_state.permutation(min(len(X), n_samples))
             X = X.iloc[perm]
@@ -415,6 +416,7 @@ how the SHAP explanations vary with different quantile choices.
             qrf = RandomForestQuantileRegressor(random_state=random_state)
             qrf.fit(X_train, y_train)
 
+            # Get the SHAP values at each quantile for the specified test sample.
             shap_values_list = [
                 get_shap_value_by_index(get_shap_values(qrf, X_test, quantile=q), test_idx) for q in quantiles
             ]

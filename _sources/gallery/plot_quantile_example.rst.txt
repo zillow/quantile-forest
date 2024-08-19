@@ -36,6 +36,7 @@ samples.
 
 
     def make_toy_dataset(n_samples, bounds, add_noise=True, random_state=0):
+        """Make a toy dataset."""
         random_state = check_random_state(random_state)
 
         x = random_state.uniform(*bounds, size=n_samples)
@@ -48,7 +49,7 @@ samples.
         return np.atleast_2d(x).T, y
 
 
-    # Create noisy data for modeling and non-noisy function data for illustration.
+    # Create a noisy dataset for modeling and a non-noisy version for illustration.
     X, y = make_toy_dataset(n_samples, bounds, add_noise=True, random_state=0)
     X_func, y_func = make_toy_dataset(n_samples, bounds, add_noise=False, random_state=0)
 
@@ -57,17 +58,17 @@ samples.
     qrf = RandomForestQuantileRegressor(max_depth=3, min_samples_leaf=5, random_state=random_state)
     qrf.fit(X_train, y_train)
 
-    y_pred_func = qrf.predict(X_func, quantiles=quantiles)
-    y_pred_test = qrf.predict(X_test, quantiles=quantiles)
+    y_pred_test = qrf.predict(X_test, quantiles=quantiles)  # predict on noisy samples
+    y_pred_func = qrf.predict(X_func, quantiles=quantiles)  # predict on non-noisy samples
 
     df = pd.DataFrame(
         {
-            "x": np.concatenate([X_func.reshape(-1), X_test.reshape(-1)]),
-            "y": np.concatenate([y_func, y_test]),
-            "y_pred": np.concatenate([y_pred_func[:, 1], y_pred_test[:, 1]]),
-            "y_pred_low": np.concatenate([y_pred_func[:, 0], y_pred_test[:, 0]]),
-            "y_pred_upp": np.concatenate([y_pred_func[:, 2], y_pred_test[:, 2]]),
-            "test": [False] * len(y_func) + [True] * len(y_test),
+            "x": np.concatenate([X_test.reshape(-1), X_func.reshape(-1)]),
+            "y": np.concatenate([y_test, y_func]),
+            "y_pred": np.concatenate([y_pred_test[:, 1], y_pred_func[:, 1]]),
+            "y_pred_low": np.concatenate([y_pred_test[:, 0], y_pred_func[:, 0]]),
+            "y_pred_upp": np.concatenate([y_pred_test[:, 2], y_pred_func[:, 2]]),
+            "test": [True] * len(y_test) + [False] * len(y_func),
         }
     )
 
@@ -75,7 +76,7 @@ samples.
     def plot_fit_and_intervals(df):
         area_pred = (
             alt.Chart(df)
-            .transform_filter(~alt.datum["test"])  # filter to training data
+            .transform_filter(~alt.datum["test"])  # filter to non-test data
             .mark_area(color="#e0f2ff", opacity=0.8)
             .encode(
                 x=alt.X("x:Q", scale=alt.Scale(nice=False), title="X"),
@@ -108,7 +109,7 @@ samples.
 
         line_true = (
             alt.Chart(df.assign(**{"y_true_label": "f(x) = x sin(x)"}))
-            .transform_filter(~alt.datum["test"])  # filter to training data
+            .transform_filter(~alt.datum["test"])  # filter to non-test data
             .mark_line(color="black", size=3)
             .encode(
                 x=alt.X("x:Q", scale=alt.Scale(nice=False)),
@@ -123,7 +124,7 @@ samples.
 
         line_pred = (
             alt.Chart(df.assign(**{"y_pred_label": "Predicted Median"}))
-            .transform_filter(~alt.datum["test"])  # filter to training data
+            .transform_filter(~alt.datum["test"])  # filter to non-test data
             .mark_line(color="#006aff", size=5)
             .encode(
                 x=alt.X("x:Q", scale=alt.Scale(nice=False)),
@@ -177,6 +178,7 @@ samples.
 
 
             def make_toy_dataset(n_samples, bounds, add_noise=True, random_state=0):
+                """Make a toy dataset."""
                 random_state = check_random_state(random_state)
 
                 x = random_state.uniform(*bounds, size=n_samples)
@@ -189,7 +191,7 @@ samples.
                 return np.atleast_2d(x).T, y
 
 
-            # Create noisy data for modeling and non-noisy function data for illustration.
+            # Create a noisy dataset for modeling and a non-noisy version for illustration.
             X, y = make_toy_dataset(n_samples, bounds, add_noise=True, random_state=0)
             X_func, y_func = make_toy_dataset(n_samples, bounds, add_noise=False, random_state=0)
 
@@ -198,17 +200,17 @@ samples.
             qrf = RandomForestQuantileRegressor(max_depth=3, min_samples_leaf=5, random_state=random_state)
             qrf.fit(X_train, y_train)
 
-            y_pred_func = qrf.predict(X_func, quantiles=quantiles)
-            y_pred_test = qrf.predict(X_test, quantiles=quantiles)
+            y_pred_test = qrf.predict(X_test, quantiles=quantiles)  # predict on noisy samples
+            y_pred_func = qrf.predict(X_func, quantiles=quantiles)  # predict on non-noisy samples
 
             df = pd.DataFrame(
                 {
-                    "x": np.concatenate([X_func.reshape(-1), X_test.reshape(-1)]),
-                    "y": np.concatenate([y_func, y_test]),
-                    "y_pred": np.concatenate([y_pred_func[:, 1], y_pred_test[:, 1]]),
-                    "y_pred_low": np.concatenate([y_pred_func[:, 0], y_pred_test[:, 0]]),
-                    "y_pred_upp": np.concatenate([y_pred_func[:, 2], y_pred_test[:, 2]]),
-                    "test": [False] * len(y_func) + [True] * len(y_test),
+                    "x": np.concatenate([X_test.reshape(-1), X_func.reshape(-1)]),
+                    "y": np.concatenate([y_test, y_func]),
+                    "y_pred": np.concatenate([y_pred_test[:, 1], y_pred_func[:, 1]]),
+                    "y_pred_low": np.concatenate([y_pred_test[:, 0], y_pred_func[:, 0]]),
+                    "y_pred_upp": np.concatenate([y_pred_test[:, 2], y_pred_func[:, 2]]),
+                    "test": [True] * len(y_test) + [False] * len(y_func),
                 }
             )
 
@@ -216,7 +218,7 @@ samples.
             def plot_fit_and_intervals(df):
                 area_pred = (
                     alt.Chart(df)
-                    .transform_filter(~alt.datum["test"])  # filter to training data
+                    .transform_filter(~alt.datum["test"])  # filter to non-test data
                     .mark_area(color="#e0f2ff", opacity=0.8)
                     .encode(
                         x=alt.X("x:Q", scale=alt.Scale(nice=False), title="X"),
@@ -249,7 +251,7 @@ samples.
 
                 line_true = (
                     alt.Chart(df.assign(**{"y_true_label": "f(x) = x sin(x)"}))
-                    .transform_filter(~alt.datum["test"])  # filter to training data
+                    .transform_filter(~alt.datum["test"])  # filter to non-test data
                     .mark_line(color="black", size=3)
                     .encode(
                         x=alt.X("x:Q", scale=alt.Scale(nice=False)),
@@ -264,7 +266,7 @@ samples.
 
                 line_pred = (
                     alt.Chart(df.assign(**{"y_pred_label": "Predicted Median"}))
-                    .transform_filter(~alt.datum["test"])  # filter to training data
+                    .transform_filter(~alt.datum["test"])  # filter to non-test data
                     .mark_line(color="#006aff", size=5)
                     .encode(
                         x=alt.X("x:Q", scale=alt.Scale(nice=False)),

@@ -443,6 +443,7 @@ around the median.</p>
 
 
 <span class="k">def</span> <span class="nf">make_toy_dataset</span><span class="p">(</span><span class="n">n_samples</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Make a toy dataset.&quot;&quot;&quot;</span>
     <span class="n">random_state</span> <span class="o">=</span> <span class="n">check_random_state</span><span class="p">(</span><span class="n">random_state</span><span class="p">)</span>
     <span class="n">X_1d</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">*</span><span class="n">bounds</span><span class="p">,</span> <span class="n">num</span><span class="o">=</span><span class="n">n_samples</span><span class="p">)</span>
     <span class="n">X</span> <span class="o">=</span> <span class="n">X_1d</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
@@ -450,6 +451,7 @@ around the median.</p>
     <span class="k">return</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span>
 
 
+<span class="c1"># Create a toy dataset.</span>
 <span class="n">X</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">make_toy_dataset</span><span class="p">(</span><span class="n">n_samples</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 
 <span class="n">qrf</span> <span class="o">=</span> <span class="n">RandomForestQuantileRegressor</span><span class="p">(</span>
@@ -461,7 +463,7 @@ around the median.</p>
 <span class="n">y_pred</span> <span class="o">=</span> <span class="n">qrf</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">quantiles</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
 
 <span class="c1"># Get the quantile rank for all samples.</span>
-<span class="n">y_rank</span> <span class="o">=</span> <span class="n">qrf</span><span class="o">.</span><span class="n">quantile_ranks</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+<span class="n">y_rank</span> <span class="o">=</span> <span class="n">qrf</span><span class="o">.</span><span class="n">quantile_ranks</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>  <span class="c1"># output is a value in the range [0, 1] for each sample</span>
 
 <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="n">X</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="s2">&quot;y&quot;</span><span class="p">:</span> <span class="n">y</span><span class="p">,</span> <span class="s2">&quot;y_pred&quot;</span><span class="p">:</span> <span class="n">y_pred</span><span class="p">,</span> <span class="s2">&quot;y_rank&quot;</span><span class="p">:</span> <span class="n">y_rank</span><span class="p">})</span>
 

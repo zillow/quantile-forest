@@ -451,6 +451,7 @@ adapted from <a class="reference external" href="https://arxiv.org/abs/2402.0975
 
 
 <span class="k">def</span> <span class="nf">make_func_Xy</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">n_samples</span><span class="p">,</span> <span class="n">add_noise</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Make a dataset from a specified function.&quot;&quot;&quot;</span>
     <span class="n">random_state</span> <span class="o">=</span> <span class="n">check_random_state</span><span class="p">(</span><span class="n">random_state</span><span class="p">)</span>
 
     <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">n_samples</span><span class="p">)</span>
@@ -783,7 +784,7 @@ adapted from <a class="reference external" href="https://arxiv.org/abs/2402.0975
     <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">xtra</span><span class="p">[</span><span class="n">test_indices</span><span class="p">])</span>
 
 
-<span class="c1"># Create the full dataset.</span>
+<span class="c1"># Create a dataset that requires extrapolation.</span>
 <span class="n">X</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">make_func_Xy</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">n_samples</span><span class="p">,</span> <span class="n">add_noise</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 
 <span class="c1"># Fit and extrapolate based on train-test split (depending on X).</span>
@@ -794,7 +795,7 @@ adapted from <a class="reference external" href="https://arxiv.org/abs/2402.0975
 <span class="n">train_indices</span><span class="p">[</span><span class="n">sort_X</span><span class="p">[</span><span class="n">extrap_min_idx</span><span class="p">]</span> <span class="p">:</span> <span class="n">sort_X</span><span class="p">[</span><span class="n">extrap_max_idx</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">True</span>
 <span class="n">res</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span><span class="n">train_indices</span><span class="p">,</span> <span class="n">rng</span><span class="o">=</span><span class="n">random_state</span><span class="p">,</span> <span class="o">**</span><span class="n">qrf_params</span><span class="p">)</span>
 
-<span class="c1"># Get coverages on extrapolated samples.</span>
+<span class="c1"># Get coverages for extrapolated samples.</span>
 <span class="n">args</span> <span class="o">=</span> <span class="p">(</span><span class="n">train_indices</span><span class="p">,</span> <span class="o">~</span><span class="n">train_indices</span><span class="p">,</span> <span class="n">y</span><span class="p">[</span><span class="n">train_indices</span><span class="p">],</span> <span class="n">quantiles</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">quantiles</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">random_state</span><span class="p">)</span>
 <span class="n">cov_qrf</span> <span class="o">=</span> <span class="n">get_coverage_qrf</span><span class="p">(</span><span class="n">res</span><span class="p">[</span><span class="s2">&quot;qmat&quot;</span><span class="p">],</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span>
 <span class="n">cov_xtr</span> <span class="o">=</span> <span class="n">get_coverage_xtr</span><span class="p">(</span><span class="n">res</span><span class="p">[</span><span class="s2">&quot;bounds_list&quot;</span><span class="p">],</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span>
