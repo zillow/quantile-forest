@@ -5,21 +5,29 @@
 Release Notes
 =============
 
+Version 1.3.9 (released Aug 23, 2024)
+-------------------------------------
+
+* Fix reproduction of scikit-learn trees with MAE criterion by `@reidjohnson <https://github.com/reidjohnson>`_ in `#77 <https://github.com/zillow/quantile-forest/pull/77>`_
+* Update documentation and examples
+
+**Full Changelog**: https://github.com/zillow/quantile-forest/compare/v1.3.8...v1.3.9
+
 Version 1.3.8 (released Aug 15, 2024)
 -------------------------------------
 
 * Bump pypa/cibuildwheel from 2.19.1 to 2.19.2 by `@dependabot <https://github.com/dependabot>`_ in `#63 <https://github.com/zillow/quantile-forest/pull/63>`_
-* Update Interpolation Docstring by `@reidjohnson <https://github.com/reidjohnson>`_ in `#64 <https://github.com/zillow/quantile-forest/pull/64>`_
-* Add Hugging Face Hub Example by `@reidjohnson <https://github.com/reidjohnson>`_ in `#65 <https://github.com/zillow/quantile-forest/pull/65>`_
-* Fix Doc Warning by `@reidjohnson <https://github.com/reidjohnson>`_ in `#66 <https://github.com/zillow/quantile-forest/pull/66>`_
-* Add Tree SHAP Example by `@reidjohnson <https://github.com/reidjohnson>`_ in `#67 <https://github.com/zillow/quantile-forest/pull/67>`_
-* Update Example Plots by `@reidjohnson <https://github.com/reidjohnson>`_ in `#68 <https://github.com/zillow/quantile-forest/pull/68>`_
-* Add Proximity Counts Example by `@reidjohnson <https://github.com/reidjohnson>`_ in `#70 <https://github.com/zillow/quantile-forest/pull/70>`_
-* Add Quantile Ranks Example by `@reidjohnson <https://github.com/reidjohnson>`_ in `#69 <https://github.com/zillow/quantile-forest/pull/69>`_
-* Fix Feature Name Warning by `@reidjohnson <https://github.com/reidjohnson>`_ in `#71 <https://github.com/zillow/quantile-forest/pull/71>`_
+* Update interpolation docstring by `@reidjohnson <https://github.com/reidjohnson>`_ in `#64 <https://github.com/zillow/quantile-forest/pull/64>`_
+* Add Hugging Face Hub example by `@reidjohnson <https://github.com/reidjohnson>`_ in `#65 <https://github.com/zillow/quantile-forest/pull/65>`_
+* Fix doc warning by `@reidjohnson <https://github.com/reidjohnson>`_ in `#66 <https://github.com/zillow/quantile-forest/pull/66>`_
+* Add Tree SHAP example by `@reidjohnson <https://github.com/reidjohnson>`_ in `#67 <https://github.com/zillow/quantile-forest/pull/67>`_
+* Update example plots by `@reidjohnson <https://github.com/reidjohnson>`_ in `#68 <https://github.com/zillow/quantile-forest/pull/68>`_
+* Add proximity counts example by `@reidjohnson <https://github.com/reidjohnson>`_ in `#70 <https://github.com/zillow/quantile-forest/pull/70>`_
+* Add quantile ranks example by `@reidjohnson <https://github.com/reidjohnson>`_ in `#69 <https://github.com/zillow/quantile-forest/pull/69>`_
+* Fix feature name warning by `@reidjohnson <https://github.com/reidjohnson>`_ in `#71 <https://github.com/zillow/quantile-forest/pull/71>`_
 * Bump pypa/cibuildwheel from 2.19.2 to 2.20.0 by `@dependabot <https://github.com/dependabot>`_ in `#72 <https://github.com/zillow/quantile-forest/pull/72>`_
 * Fix for `monotonic_cst`  by `@reidjohnson <https://github.com/reidjohnson>`_ in `#74 <https://github.com/zillow/quantile-forest/pull/74>`_
-* Fix Monotonic Constraint Performance by `@reidjohnson <https://github.com/reidjohnson>`_ in `#75 <https://github.com/zillow/quantile-forest/pull/75>`_
+* Fix monotonic constraint performance by `@reidjohnson <https://github.com/reidjohnson>`_ in `#75 <https://github.com/zillow/quantile-forest/pull/75>`_
 
 **Full Changelog**: https://github.com/zillow/quantile-forest/compare/v1.3.7...v1.3.8
 
@@ -131,7 +139,7 @@ Version 1.2.1 (released Oct 04, 2023)
 Version 1.2.0 (released Aug 01, 2023)
 -------------------------------------
 
-* Add optional default_quantiles parameter to the model initialization
+* Add optional `default_quantiles` parameter to the model initialization
 * Update documentation
 
 **Full Changelog**: https://github.com/zillow/quantile-forest/compare/v1.1.3...v1.2.0
@@ -182,7 +190,7 @@ Version 1.0.2 (released Mar 28, 2022)
 Version 1.0.1 (released Mar 23, 2022)
 -------------------------------------
 
-* Suppresses UserWarning
+* Suppress UserWarning
 
 **Full Changelog**: https://github.com/zillow/quantile-forest/compare/v1.0.0...v1.0.1
 

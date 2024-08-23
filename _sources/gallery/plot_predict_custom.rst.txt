@@ -116,6 +116,7 @@ this scenario, we compute the empirical cumulative distribution function
 
 
     def plot_ecdf(df):
+        """Plot the ECDF for test samples."""
         min_idx = df["index"].min()
         max_idx = df["index"].max()
 
@@ -279,6 +280,7 @@ this scenario, we compute the empirical cumulative distribution function
 
 
             def plot_ecdf(df):
+                """Plot the ECDF for test samples."""
                 min_idx = df["index"].min()
                 max_idx = df["index"].max()
 

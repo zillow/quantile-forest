@@ -189,6 +189,7 @@ of each sample. The model used is available on Hugging Face Hub
 
 
     def plot_quantiles_by_latlon(df, quantiles, color_scheme="cividis"):
+        """Plot quantile predictions on California Housing dataset by lat/lon."""
         # Slider for varying the displayed quantile estimates.
         slider = alt.binding_range(
             name="Predicted Quantile: ",
@@ -406,6 +407,7 @@ of each sample. The model used is available on Hugging Face Hub
 
 
             def plot_quantiles_by_latlon(df, quantiles, color_scheme="cividis"):
+                """Plot quantile predictions on California Housing dataset by lat/lon."""
                 # Slider for varying the displayed quantile estimates.
                 slider = alt.binding_range(
                     name="Predicted Quantile: ",

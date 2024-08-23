@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Quantile Regression Forests Prediction Intervals &#8212; quantile-forest 1.3.8 documentation</title>
+    <title>Quantile Regression Forests Prediction Intervals &#8212; quantile-forest 1.3.9 documentation</title>
   
   
   
@@ -40,7 +40,7 @@
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="../_static/documentation_options.js?v=3cbadadc"></script>
+    <script src="../_static/documentation_options.js?v=98c25ec5"></script>
     <script src="../_static/doctools.js?v=9a2dae69"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/design-tabs.js?v=f930bc37"></script>
@@ -128,8 +128,8 @@
     
     
     
-    <img src="../_static/quantile-forest-logo.png" class="logo__image only-light" alt="quantile-forest 1.3.8 documentation - Home"/>
-    <script>document.write(`<img src="../_static/quantile-forest-logo-white.png" class="logo__image only-dark" alt="quantile-forest 1.3.8 documentation - Home"/>`);</script>
+    <img src="../_static/quantile-forest-logo.png" class="logo__image only-light" alt="quantile-forest 1.3.9 documentation - Home"/>
+    <script>document.write(`<img src="../_static/quantile-forest-logo-white.png" class="logo__image only-dark" alt="quantile-forest 1.3.9 documentation - Home"/>`);</script>
   
   
 </a></div>
@@ -467,8 +467,10 @@ visualization is inspired by Figure 3 of <a class="reference external" href="htt
 <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="o">.</span><span class="n">pipe</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="o">*</span> <span class="mi">100_000</span><span class="p">)</span>  <span class="c1"># convert to dollars</span>
 
 
-<span class="k">def</span> <span class="nf">plot_calibration_and_intervals</span><span class="p">(</span><span class="n">df</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">plot_calibration</span><span class="p">(</span><span class="n">df</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">plot_california_calibration_and_intervals</span><span class="p">(</span><span class="n">df</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Plot calibration and intervals on California Housing dataset.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">_plot_calibration</span><span class="p">(</span><span class="n">df</span><span class="p">):</span>
         <span class="n">domain</span> <span class="o">=</span> <span class="p">[</span>
             <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">minimum</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;y_true&quot;</span><span class="p">],</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;y_pred&quot;</span><span class="p">]))),</span>  <span class="c1"># min of both axes</span>
             <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;y_true&quot;</span><span class="p">],</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;y_pred&quot;</span><span class="p">]))),</span>  <span class="c1"># max of both axes</span>
@@ -528,7 +530,7 @@ visualization is inspired by Figure 3 of <a class="reference external" href="htt
         <span class="n">chart</span> <span class="o">=</span> <span class="n">bar</span> <span class="o">+</span> <span class="n">tick_low</span> <span class="o">+</span> <span class="n">tick_upp</span> <span class="o">+</span> <span class="n">circle</span> <span class="o">+</span> <span class="n">diagonal</span>
         <span class="k">return</span> <span class="n">chart</span>
 
-    <span class="k">def</span> <span class="nf">plot_intervals</span><span class="p">(</span><span class="n">df</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_plot_intervals</span><span class="p">(</span><span class="n">df</span><span class="p">):</span>
         <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
 
         <span class="c1"># Order samples by interval width.</span>
@@ -592,14 +594,14 @@ visualization is inspired by Figure 3 of <a class="reference external" href="htt
         <span class="n">chart</span> <span class="o">=</span> <span class="n">bar</span> <span class="o">+</span> <span class="n">tick_low</span> <span class="o">+</span> <span class="n">tick_upp</span> <span class="o">+</span> <span class="n">circle</span>
         <span class="k">return</span> <span class="n">chart</span>
 
-    <span class="n">chart1</span> <span class="o">=</span> <span class="n">plot_calibration</span><span class="p">(</span><span class="n">df</span><span class="p">)</span><span class="o">.</span><span class="n">properties</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="mi">250</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">325</span><span class="p">)</span>
-    <span class="n">chart2</span> <span class="o">=</span> <span class="n">plot_intervals</span><span class="p">(</span><span class="n">df</span><span class="p">)</span><span class="o">.</span><span class="n">properties</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="mi">250</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">325</span><span class="p">)</span>
+    <span class="n">chart1</span> <span class="o">=</span> <span class="n">_plot_calibration</span><span class="p">(</span><span class="n">df</span><span class="p">)</span><span class="o">.</span><span class="n">properties</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="mi">250</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">325</span><span class="p">)</span>
+    <span class="n">chart2</span> <span class="o">=</span> <span class="n">_plot_intervals</span><span class="p">(</span><span class="n">df</span><span class="p">)</span><span class="o">.</span><span class="n">properties</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="mi">250</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">325</span><span class="p">)</span>
     <span class="n">chart</span> <span class="o">=</span> <span class="n">chart1</span> <span class="o">|</span> <span class="n">chart2</span>
 
     <span class="k">return</span> <span class="n">chart</span>
 
 
-<span class="n">chart</span> <span class="o">=</span> <span class="n">plot_calibration_and_intervals</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+<span class="n">chart</span> <span class="o">=</span> <span class="n">plot_california_calibration_and_intervals</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
 <span class="n">chart</span>
 </pre></div>
 </div>

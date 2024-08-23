@@ -41,7 +41,7 @@ counts can effectively identify similar samples even in noisy conditions.
     noise_std = 0.1
 
     pixel_dim = (8, 8)  # pixel dimensions (width and height)
-    pixel_scale = 1000  # scale multipler for combining clean and noisy values
+    pixel_scale = 1000  # scale multiplier for combining clean and noisy values
 
     # Load the Digits dataset.
     X, y = datasets.load_digits(return_X_y=True, as_frame=True)
@@ -138,6 +138,7 @@ counts can effectively identify similar samples even in noisy conditions.
         height=225,
         width=225,
     ):
+        """Plot Digits dataset proximities for test samples."""
         dim_x, dim_y = pixel_dim[0], pixel_dim[1]
         dgt_x, dgt_y = len(str(dim_x)), len(str(dim_y))
 
@@ -271,7 +272,7 @@ counts can effectively identify similar samples even in noisy conditions.
             noise_std = 0.1
 
             pixel_dim = (8, 8)  # pixel dimensions (width and height)
-            pixel_scale = 1000  # scale multipler for combining clean and noisy values
+            pixel_scale = 1000  # scale multiplier for combining clean and noisy values
 
             # Load the Digits dataset.
             X, y = datasets.load_digits(return_X_y=True, as_frame=True)
@@ -368,6 +369,7 @@ counts can effectively identify similar samples even in noisy conditions.
                 height=225,
                 width=225,
             ):
+                """Plot Digits dataset proximities for test samples."""
                 dim_x, dim_y = pixel_dim[0], pixel_dim[1]
                 dgt_x, dgt_y = len(str(dim_x)), len(str(dim_y))
 
