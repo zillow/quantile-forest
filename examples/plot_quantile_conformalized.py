@@ -157,7 +157,9 @@ df = df.merge(metrics, on=["alpha", "strategy"], how="left")
 
 
 def plot_prediction_intervals_by_strategy(df):
-    def plot_prediction_intervals(df, domain):
+    """Plot prediction intervals by interval estimate strategy."""
+
+    def _plot_prediction_intervals(df, domain):
         # Slider for varying the target coverage level.
         slider = alt.binding_range(name="Coverage Target: ", min=0, max=1, step=0.1)
         coverage_val = alt.param(name="coverage", value=0.9, bind=slider)
@@ -280,7 +282,7 @@ def plot_prediction_intervals_by_strategy(df):
             int(np.max((df[["y_test", "y_pred"]].max(axis=0)))),  # max of all axes
         ]
         df_i = df.query(f"strategy == '{strategy}'").reset_index(drop=True)
-        base = plot_prediction_intervals(df_i, domain)
+        base = _plot_prediction_intervals(df_i, domain)
         chart |= base.properties(height=225, width=300, title=strategies[strategy])
 
     return chart

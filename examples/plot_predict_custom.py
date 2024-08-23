@@ -103,6 +103,7 @@ df = pd.concat(dfs, ignore_index=True)
 
 
 def plot_ecdf(df):
+    """Plot the ECDF for test samples."""
     min_idx = df["index"].min()
     max_idx = df["index"].max()
 

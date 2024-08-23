@@ -50,8 +50,10 @@ for train_index, test_index in kf.split(X):
 df = pd.DataFrame(data).pipe(lambda x: x * 100_000)  # convert to dollars
 
 
-def plot_calibration_and_intervals(df):
-    def plot_calibration(df):
+def plot_california_calibration_and_intervals(df):
+    """Plot calibration and intervals on California Housing dataset."""
+
+    def _plot_calibration(df):
         domain = [
             int(np.min(np.minimum(df["y_true"], df["y_pred"]))),  # min of both axes
             int(np.max(np.maximum(df["y_true"], df["y_pred"]))),  # max of both axes
@@ -111,7 +113,7 @@ def plot_calibration_and_intervals(df):
         chart = bar + tick_low + tick_upp + circle + diagonal
         return chart
 
-    def plot_intervals(df):
+    def _plot_intervals(df):
         df = df.copy()
 
         # Order samples by interval width.
@@ -175,12 +177,12 @@ def plot_calibration_and_intervals(df):
         chart = bar + tick_low + tick_upp + circle
         return chart
 
-    chart1 = plot_calibration(df).properties(height=250, width=325)
-    chart2 = plot_intervals(df).properties(height=250, width=325)
+    chart1 = _plot_calibration(df).properties(height=250, width=325)
+    chart2 = _plot_intervals(df).properties(height=250, width=325)
     chart = chart1 | chart2
 
     return chart
 
 
-chart = plot_calibration_and_intervals(df)
+chart = plot_california_calibration_and_intervals(df)
 chart

@@ -30,7 +30,7 @@ bounds = [0, 15]
 func = lambda x: x * np.sin(x)
 func_str = "f(x) = x sin(x)"
 quantiles = [0.025, 0.975, 0.5]
-qrf_params = {"max_samples_leaf": None, "min_samples_leaf": 4, "random_state": random_state}
+qrf_params = {"min_samples_leaf": 4, "max_samples_leaf": None, "random_state": random_state}
 
 
 def make_func_Xy(func, bounds, n_samples, add_noise=True, random_state=0):
@@ -404,7 +404,16 @@ df = pd.DataFrame(
 
 
 def plot_qrf_vs_xtrapolation_comparison(df, func_str):
-    def plot_extrapolations(df, title="", legend=False, func_str="", x_domain=None, y_domain=None):
+    """Plot comparison of QRF vs Xtrapolation on extrapolated data."""
+
+    def _plot_extrapolations(
+        df,
+        title="",
+        legend=False,
+        func_str="",
+        x_domain=None,
+        y_domain=None,
+    ):
         x_scale = None
         if x_domain is not None:
             x_scale = alt.Scale(domain=x_domain, nice=False, padding=0)
@@ -521,29 +530,29 @@ def plot_qrf_vs_xtrapolation_comparison(df, func_str):
     xtra_mapper = {"bb_mid": "y_pred", "bb_low": "y_pred_low", "bb_upp": "y_pred_upp"}
 
     chart1 = alt.layer(
-        plot_extrapolations(
+        _plot_extrapolations(
             df.query("~(test_left | test_right)").assign(**{"coverage": lambda x: x["cov_qrf"]}),
             title="Extrapolation with Standard QRF",
             **kwargs,
         ).resolve_scale(color="independent"),
-        plot_extrapolations(df.query("test_left").assign(extrapolate=True), **kwargs),
-        plot_extrapolations(df.query("test_right").assign(extrapolate=True), **kwargs),
+        _plot_extrapolations(df.query("test_left").assign(extrapolate=True), **kwargs),
+        _plot_extrapolations(df.query("test_right").assign(extrapolate=True), **kwargs),
     )
     chart2 = alt.layer(
-        plot_extrapolations(
+        _plot_extrapolations(
             df.query("~(test_left | test_right)").assign(**{"coverage": lambda x: x["cov_xtr"]}),
             title="Extrapolation with Xtrapolation Procedure",
             legend=True,
             **kwargs,
         ).resolve_scale(color="independent"),
-        plot_extrapolations(
+        _plot_extrapolations(
             df.query("test_left")
             .assign(extrapolate=True)
             .drop(columns=["y_pred", "y_pred_low", "y_pred_upp"])
             .rename(xtra_mapper, axis="columns"),
             **kwargs,
         ),
-        plot_extrapolations(
+        _plot_extrapolations(
             df.query("test_right")
             .assign(extrapolate=True)
             .drop(columns=["y_pred", "y_pred_low", "y_pred_upp"])

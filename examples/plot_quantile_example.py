@@ -60,7 +60,8 @@ df = pd.DataFrame(
 )
 
 
-def plot_fit_and_intervals(df):
+def plot_predictions_and_intervals(df):
+    """Plot model predictions and prediction intervals with ground truth."""
     area_pred = (
         alt.Chart(df)
         .transform_filter(~alt.datum["test"])  # filter to non-test data
@@ -143,5 +144,5 @@ def plot_fit_and_intervals(df):
     return chart
 
 
-chart = plot_fit_and_intervals(df)
+chart = plot_predictions_and_intervals(df)
 chart

@@ -125,6 +125,7 @@ def plot_digits_proximities(
     height=225,
     width=225,
 ):
+    """Plot Digits dataset proximities for test samples."""
     dim_x, dim_y = pixel_dim[0], pixel_dim[1]
     dgt_x, dgt_y = len(str(dim_x)), len(str(dim_y))
 

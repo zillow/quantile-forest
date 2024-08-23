@@ -66,6 +66,7 @@ df = pd.DataFrame(
 
 
 def plot_prediction_histograms(df, legend):
+    """Plot histogram of predictions by model."""
     # Slider for varying the quantile value used for generating the QRF histogram.
     slider = alt.binding_range(
         name="Predicted Quantile: ",

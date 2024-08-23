@@ -37,8 +37,8 @@ def make_toy_dataset(n_samples, bounds, random_state=0):
 X, y = make_toy_dataset(n_samples, bounds, random_state=0)
 
 qrf = RandomForestQuantileRegressor(
-    max_samples_leaf=None,
     min_samples_leaf=50,
+    max_samples_leaf=None,
     random_state=random_state,
 ).fit(X, y)
 
@@ -51,6 +51,7 @@ df = pd.DataFrame({"x": X.reshape(-1), "y": y, "y_pred": y_pred, "y_rank": y_ran
 
 
 def plot_pred_and_ranks(df):
+    """Plot quantile predictions and ranks."""
     # Slider for varying the interval that defines the upper and lower quantile rank thresholds.
     slider = alt.binding_range(name="Rank Interval Threshold: ", min=0, max=1, step=0.01)
     interval_val = alt.param(name="interval", value=0.05, bind=slider)

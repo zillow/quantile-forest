@@ -126,6 +126,7 @@ df = pd.concat(
 
 
 def plot_shap_waterfall_with_quantiles(df, height=300):
+    """Plot SHAP waterfall plot by quantile predictions."""
     df = df.copy()
 
     # Slider for varying the applied quantile estimates.
