@@ -28,7 +28,7 @@ n_test_samples = 25
 noise_std = 0.1
 
 pixel_dim = (8, 8)  # pixel dimensions (width and height)
-pixel_scale = 1000  # scale multipler for combining clean and noisy values
+pixel_scale = 1000  # scale multiplier for combining clean and noisy values
 
 # Load the Digits dataset.
 X, y = datasets.load_digits(return_X_y=True, as_frame=True)
