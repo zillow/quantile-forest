@@ -681,8 +681,6 @@ cdef class QuantileForest:
         preds : array-like of shape (n_samples, n_outputs, n_quantiles)
             Quantiles or means for samples as floats.
         """
-        cdef vector[double] median = [0.5]
-
         cdef intp_t n_quantiles, n_samples, n_trees, n_outputs, n_train
         cdef intp_t i, j, k, l
         cdef bint use_mean
@@ -854,23 +852,11 @@ cdef class QuantileForest:
                                     leaf_preds[0].push_back(pred[0])
 
                     # Average the quantile predictions across accumulations.
-                    if not use_mean:
-                        for k in range(<intp_t>(leaf_preds.size())):
-                            if leaf_preds[k].size() == 1:
-                                preds_view[i, j, k] = leaf_preds[k][0]
-                            elif leaf_preds[k].size() > 1:
-                                pred = calc_quantile(
-                                    leaf_preds[k],
-                                    median,
-                                    interpolation,
-                                    issorted=False,
-                                )
-                                preds_view[i, j, k] = pred[0]
-                    else:
-                        if leaf_preds[0].size() == 1:
-                            preds_view[i, j, 0] = leaf_preds[0][0]
-                        elif leaf_preds[0].size() > 1:
-                            preds_view[i, j, 0] = calc_mean(leaf_preds[0])
+                    for k in range(<intp_t>(leaf_preds.size())):
+                        if leaf_preds[k].size() == 1:
+                            preds_view[i, j, k] = leaf_preds[k][0]
+                        elif leaf_preds[k].size() > 1:
+                            preds_view[i, j, k] = calc_mean(leaf_preds[k])
 
         return np.asarray(preds_view)
 

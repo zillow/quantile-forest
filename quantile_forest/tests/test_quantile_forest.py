@@ -458,23 +458,17 @@ def check_predict_quantiles(
                 n_estimators=1 if max_samples_leaf == 1 else 10,
                 random_state=0,
             )
-            est2 = ExtraTreesQuantileRegressor(
-                n_estimators=1 if max_samples_leaf == 1 else 10,
-                default_quantiles=None,
-                max_samples_leaf=max_samples_leaf,
-                random_state=0,
-            )
         else:
             est1 = RandomForestRegressor(
                 n_estimators=1 if max_samples_leaf == 1 else 10,
                 random_state=0,
             )
-            est2 = RandomForestQuantileRegressor(
-                n_estimators=1 if max_samples_leaf == 1 else 10,
-                default_quantiles=None,
-                max_samples_leaf=max_samples_leaf,
-                random_state=0,
-            )
+        est2 = ForestRegressor(
+            n_estimators=1 if max_samples_leaf == 1 else 10,
+            default_quantiles=None,
+            max_samples_leaf=max_samples_leaf,
+            random_state=0,
+        )
         y_pred_1 = est1.fit(X_train, y_train).predict(X_test)
         y_pred_2 = est2.fit(X_train, y_train).predict(
             X_test,
@@ -515,6 +509,28 @@ def check_predict_quantiles(
         assert y_pred.shape[1] == y.shape[1]
         assert np.any(y_pred[:, 0, ...] != y_pred[:, 1, ...])
         assert score > 0.95
+
+        # Check unaggregated predictions with absolute error criterion.
+        if quantiles == 0.5:
+            X_train_mae = np.array([[1], [1], [3], [1]])
+            y_train_mae = np.arange(4)
+
+            X_test_mae = np.array([[5], [4], [2], [0]])
+
+            params = {"criterion": "absolute_error", "max_depth": 1, "random_state": 0}
+
+            if name == "ExtraTreesQuantileRegressor":
+                est1 = ExtraTreesRegressor(**params)
+            else:
+                est1 = RandomForestRegressor(**params)
+            est2 = ForestRegressor(max_samples_leaf=None, **params)
+
+            est1.fit(X_train_mae, y_train_mae)
+            est2.fit(X_train_mae, y_train_mae)
+
+            y_pred1 = est1.predict(X_test_mae)
+            y_pred2 = est2.predict(X_test_mae, quantiles=0.5, aggregate_leaves_first=False)
+            assert_allclose(y_pred1, y_pred2)
 
     # Check that specifying `quantiles` overwrites `default_quantiles`.
     est1 = ForestRegressor(
