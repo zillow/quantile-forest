@@ -404,7 +404,7 @@ df = pd.DataFrame(
 
 
 def plot_qrf_vs_xtrapolation_comparison(df, func_str):
-    """Plot comparison of QRF vs Xtrapolation on extrapolated data."""
+    """Plot comparison of QRF vs. Xtrapolation on extrapolated data."""
 
     def _plot_extrapolations(
         df,
