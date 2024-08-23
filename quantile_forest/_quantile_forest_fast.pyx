@@ -681,8 +681,6 @@ cdef class QuantileForest:
         preds : array-like of shape (n_samples, n_outputs, n_quantiles)
             Quantiles or means for samples as floats.
         """
-        cdef vector[double] median = [0.5]
-
         cdef intp_t n_quantiles, n_samples, n_trees, n_outputs, n_train
         cdef intp_t i, j, k, l
         cdef bint use_mean
