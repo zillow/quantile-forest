@@ -101,8 +101,8 @@ def fit_and_upload_model(token, repo_id, local_dir="./local_repo", random_state=
 <summary> Click to expand </summary>
 
 ```python
-import pickle 
-with open(qrf_pkl_filename, 'rb') as file: 
+import pickle
+with open(qrf_pkl_filename, 'rb') as file:
     qrf = pickle.load(file)
 ```
 
