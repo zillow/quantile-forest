@@ -10,9 +10,9 @@ The quantile rank is the fraction of scores in a frequency distribution that are
     >>> from quantile_forest import RandomForestQuantileRegressor
     >>> X, y = datasets.load_diabetes(return_X_y=True)
     >>> X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25)
-    >>> reg = RandomForestQuantileRegressor().fit(X_train, y_train)
-    >>> y_ranks = reg.quantile_ranks(X_test, y_test)  # quantile ranks of y_test
+    >>> qrf = RandomForestQuantileRegressor().fit(X_train, y_train)
+    >>> y_ranks = qrf.quantile_ranks(X_test, y_test)  # quantile ranks for test data
 
-Out-of-bag (OOB) quantile ranks can be returned by specifying `oob_score = True`::
+Out-of-bag (OOB) quantile ranks can be returned by specifying `oob_score=True`::
 
-    >>> y_ranks_oob = reg.quantile_ranks(X_train, y_train, oob_score=True)
+    >>> y_ranks_oob = qrf.quantile_ranks(X_train, y_train, oob_score=True)
