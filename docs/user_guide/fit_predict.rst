@@ -15,35 +15,35 @@ Let's fit a quantile forest on a simple regression dataset::
     >>> from quantile_forest import RandomForestQuantileRegressor
     >>> X, y = datasets.load_diabetes(return_X_y=True)
     >>> X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25)
-    >>> reg = RandomForestQuantileRegressor()
-    >>> reg.fit(X_train, y_train)
+    >>> qrf = RandomForestQuantileRegressor()
+    >>> qrf.fit(X_train, y_train)
     RandomForestQuantileRegressor(...)
 
-During model initialization, the parameter `max_samples_leaf` can be specified, which determines the maximum number of samples per leaf node to retain. If `max_samples_leaf` is smaller than the number of samples in a given leaf node, then a subset of values are randomly selected. By default, the model retains one randomly selected sample per leaf node (`max_samples_leaf = 1`), which enables the use of optimizations at prediction time that are not available when a variable number of samples may be retained per leaf. All samples can be retained by specifying `max_samples_leaf = None`. Note that the number of retained samples can materially impact the size of the model object.
+During model initialization, the parameter `max_samples_leaf` can be specified, which determines the maximum number of samples per leaf node to retain. If `max_samples_leaf` is smaller than the number of samples in a given leaf node, then a subset of values are randomly selected. By default, the model retains one randomly selected sample per leaf node (`max_samples_leaf=1`), which enables the use of optimizations at prediction time that are not available when a variable number of samples may be retained per leaf. All samples can be retained by specifying `max_samples_leaf=None`. Note that the number of retained samples can materially impact the size of the model object.
 
 Making Predictions
 ~~~~~~~~~~~~~~~~~~
 
 A notable advantage of quantile forests is that they can be fit once, while arbitrary quantiles can be estimated at prediction time. Accordingly, since the quantiles can be specified at prediction time, the model accepts an optional parameter during the call to the `predict` method, which can be a float or list of floats that specify the empirical quantiles to return::
 
-    >>> y_pred = reg.predict(X_test, quantiles=[0.25, 0.5, 0.75])
+    >>> y_pred = qrf.predict(X_test, quantiles=[0.25, 0.5, 0.75])
     >>> y_pred.shape[1]
     3
 
-If the `predict` method is called without quantiles, the prediction defaults to the empirical median (`quantiles = 0.5`)::
+If the `predict` method is called without quantiles, the prediction defaults to the empirical median (`quantiles=0.5`)::
 
-    >>> y_pred = reg.predict(X_test)  # returns empirical median prediction
+    >>> y_pred = qrf.predict(X_test)  # returns empirical median prediction
 
-If the `predict` method is explicitly called with `quantiles = "mean"`, the prediction returns the empirical mean::
+If the `predict` method is explicitly called with `quantiles="mean"`, the prediction returns the empirical mean::
 
-    >>> y_pred = reg.predict(X_test, quantiles="mean")  # returns mean prediction
+    >>> y_pred = qrf.predict(X_test, quantiles="mean")  # returns mean prediction
 
 Default quantiles can be specified at model initialization using the `default_quantiles` parameter:
 
-    >>> reg = RandomForestQuantileRegressor(default_quantiles=[0.25, 0.5, 0.75])
-    >>> reg.fit(X_train, y_train)
+    >>> qrf = RandomForestQuantileRegressor(default_quantiles=[0.25, 0.5, 0.75])
+    >>> qrf.fit(X_train, y_train)
     RandomForestQuantileRegressor(default_quantiles=[0.25, 0.5, 0.75])
-    >>> y_pred = reg.predict(X_test)  # predicts using the default quantiles
+    >>> y_pred = qrf.predict(X_test)  # predicts using the default quantiles
     >>> y_pred.ndim == 2
     True
     >>> y_pred.shape[1] == 3
@@ -51,16 +51,16 @@ Default quantiles can be specified at model initialization using the `default_qu
 
 The default quantiles can be overwritten at prediction time by specifying a value for `quantiles`:
 
-    >>> reg = RandomForestQuantileRegressor(default_quantiles=[0.25, 0.5, 0.75])
-    >>> reg.fit(X_train, y_train)
+    >>> qrf = RandomForestQuantileRegressor(default_quantiles=[0.25, 0.5, 0.75])
+    >>> qrf.fit(X_train, y_train)
     RandomForestQuantileRegressor(default_quantiles=[0.25, 0.5, 0.75])
-    >>> y_pred = reg.predict(X_test, quantiles=0.5)  # uses override quantiles
+    >>> y_pred = qrf.predict(X_test, quantiles=0.5)  # uses override quantiles
     >>> y_pred.ndim == 1
     True
 
 The output of the `predict` method is an array with one column for each specified quantile or a single column if no quantiles are specified. The order of the output columns corresponds to the order of the quantiles, which can be specified in any order (i.e., they do not need to be monotonically ordered)::
 
-    >>> y_pred = reg.predict(X_test, quantiles=[0.5, 0.25, 0.75])
+    >>> y_pred = qrf.predict(X_test, quantiles=[0.5, 0.25, 0.75])
     >>> bool((y_pred[:, 0] >= y_pred[:, 1]).all())
     True
 
@@ -71,39 +71,39 @@ Multi-target quantile regression is also supported. If the target values are mul
     >>> X, y = datasets.make_regression(n_samples=100, n_targets=2, random_state=0)
     >>> y.shape
     (100, 2)
-    >>> reg_multi = RandomForestQuantileRegressor()
-    >>> reg_multi.fit(X, y)
+    >>> qrf_multi = RandomForestQuantileRegressor()
+    >>> qrf_multi.fit(X, y)
     RandomForestQuantileRegressor()
     >>> quantiles = [0.25, 0.5, 0.75]
-    >>> y_pred = reg_multi.predict(X, quantiles=quantiles)
+    >>> y_pred = qrf_multi.predict(X, quantiles=quantiles)
     >>> y_pred.ndim == 3
     True
     >>> y_pred.shape[0] == len(X)
     True
-    >>> y_pred.shape[-1] == len(quantiles)
+    >>> y_pred.shape[2] == len(quantiles)
     True
-    >>> y_pred.shape[1] == y.shape[1]
+    >>> y_pred.shape[1] == y.shape[1]  # number of targets
     True
 
 Quantile Weighting
 ~~~~~~~~~~~~~~~~~~
 
-By default, the predict method calculates quantiles using a weighted quantile method (`weighted_quantile = True`), which assigns a weight to each sample in the training set based on the number of times that it co-occurs in the same leaves as the test sample. When the number of samples in the training set is larger than the expected size of this list (i.e., :math:`n_{train} \gg n_{trees} \cdot n_{leaves} \cdot n_{leafsamples}`), it can be more efficient to calculate an unweighted quantile (`weighted_quantile = False`), which aggregates the list of training `y` values for each leaf node to which the test sample belongs across all trees. For a given input, both methods can return the same output values::
+By default, the predict method calculates quantiles using a weighted quantile method (`weighted_quantile=True`), which assigns a weight to each sample in the training set based on the number of times that it co-occurs in the same leaves as the test sample. When the number of samples in the training set is larger than the expected number of co-occurring samples across all trees, it can be more efficient to calculate an unweighted quantile (`weighted_quantile=False`), which aggregates a list of training `y` values for each leaf node to which the test sample belongs across all trees. For a given input, both methods can return the same output values::
 
     >>> import numpy as np
-    >>> y_pred_weighted = reg.predict(X_test, weighted_quantile=True)
-    >>> y_pred_unweighted = reg.predict(X_test, weighted_quantile=False)
+    >>> y_pred_weighted = qrf.predict(X_test, weighted_quantile=True)
+    >>> y_pred_unweighted = qrf.predict(X_test, weighted_quantile=False)
     >>> np.allclose(y_pred_weighted, y_pred_unweighted)
     True
 
-By default, the predict method calculates quantiles by giving each sample in a leaf (including repeated bootstrap samples) equal weight (`weighted_leaves = False`). If `weighted_leaves = True`, each sample will be weighted inversely according to the size of its leaf node. Note that this leaf-based weighting can only be used with weighted quantiles.
+By default, the predict method calculates quantiles by giving each sample in a leaf (including repeated bootstrap samples) equal weight (`weighted_leaves=False`). If `weighted_leaves=True`, each sample will be weighted inversely according to the size of its leaf node. Note that this leaf-based weighting can only be used with weighted quantiles.
 
 Out-of-Bag Estimation
 ~~~~~~~~~~~~~~~~~~~~~
 
-Out-of-bag (OOB) predictions can be returned by specifying `oob_score = True`::
+Out-of-bag (OOB) predictions can be returned by specifying `oob_score=True`::
 
-    >>> y_pred_oob = reg.predict(X_train, quantiles=[0.5], oob_score=True)
+    >>> y_pred_oob = qrf.predict(X_train, quantiles=0.5, oob_score=True)
 
 By default, when the `predict` method is called with the OOB flag set to True, it assumes that the input samples are the training samples, arranged in the same order as during model fitting. It accepts an optional parameter that can be used to specify the training index of each input sample, with -1 used to specify non-training samples that can in effect be scored in-bag (IB) during the same call::
 
@@ -111,7 +111,7 @@ By default, when the `predict` method is called with the OOB flag set to True, i
     >>> X_mixed = np.concatenate([X_train, X_test])
     >>> indices = np.concatenate([np.arange(len(X_train)), np.full(len(X_test), -1)])
     >>> kwargs = {"oob_score": True, "indices": indices}
-    >>> y_pred_mix = reg.predict(X_mixed, quantiles=[0.25, 0.5, 0.75], **kwargs)
+    >>> y_pred_mix = qrf.predict(X_mixed, quantiles=[0.25, 0.5, 0.75], **kwargs)
     >>> y_pred_train_oob = y_pred_mix[:len(X_train)]  # training predictions are OOB
     >>> y_pred_test = y_pred_mix[-len(X_test):]  # new test data predictions are IB
 
@@ -120,7 +120,7 @@ This allows all samples, both from the training and test sets, to be scored with
 Random Forest Predictions
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The predictions of a standard random forest can also be recovered from a quantile forest without retraining by passing `quantiles = "mean"` and `aggregate_leaves_first = False`, the latter which specifies a Boolean flag to average the leaf values before aggregating the leaves across trees. This configuration essentially replicates the prediction process used by a standard random forest regressor, which is an averaging of mean leaf values across trees::
+The predictions of a standard random forest can also be recovered from a quantile forest without retraining when initialized with `max_samples_leaf=None`. This can be accomplished at inference time by passing `quantiles="mean"` (or `quantiles=0.5` if the model was specifically fitted with `criterion="absolute_error"`) and `aggregate_leaves_first=False`, the latter which specifies a Boolean flag to average the leaf values before aggregating the leaves across trees. This configuration essentially replicates the prediction process used by a standard random forest regressor, which is an averaging of mean (or median) leaf values across trees::
 
     >>> import numpy as np
     >>> from sklearn import datasets
