@@ -1,12 +1,12 @@
 repos:
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v4.5.0
+  rev: v4.6.0
   hooks:
-    - id: check-case-conflict
-    - id: check-merge-conflict
-    - id: trailing-whitespace
+  - id: check-case-conflict
+  - id: check-merge-conflict
+  - id: trailing-whitespace
 - repo: https://github.com/psf/black
-  rev: 24.2.0
+  rev: 24.8.0
   hooks:
   - id: black
 - repo: https://github.com/pycqa/isort
@@ -18,7 +18,7 @@ repos:
     name: isort (cython)
     types: [cython]
 - repo: https://github.com/MarcoGorelli/cython-lint
-  rev: v0.16.0
+  rev: v0.16.2
   hooks:
   - id: cython-lint
   - id: double-quote-cython-strings
