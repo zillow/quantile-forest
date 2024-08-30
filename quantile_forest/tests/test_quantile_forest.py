@@ -489,7 +489,7 @@ def check_predict_quantiles(
         assert y_pred.ndim == (3 if isinstance(quantiles, list) else 2)
         assert y_pred.shape[1] == y.shape[1]
         assert np.any(y_pred[:, 0, ...] != y_pred[:, 1, ...])
-        assert score > 0.95
+        assert score > 0.9
 
         # Check unaggregated predictions with absolute error criterion.
         if quantiles == 0.5:

@@ -321,6 +321,9 @@ class BaseForestQuantileRegressor(ForestRegressor):
                 if sample_count > max_samples_leaf:
                     max_samples_leaf = sample_count
 
+        if sample_weight is not None:
+            sample_weight = np.squeeze(sample_weight)
+
         # Initialize NumPy array (more efficient serialization than dict/list).
         shape = (self.n_estimators, max_node_count, n_outputs, max_samples_leaf)
         y_train_leaves = np.zeros(shape, dtype=np.int64)
@@ -334,10 +337,9 @@ class BaseForestQuantileRegressor(ForestRegressor):
 
             # Map each leaf node to its list of training indices.
             for leaf_idx, leaf_values in zip(leaf_indices, leaf_values_list):
-                y_indices = bootstrap_indices[:, i][leaf_values]
+                y_indices = bootstrap_indices[:, i][leaf_values].reshape(-1, n_outputs)
 
                 if sample_weight is not None:
-                    sample_weight = np.squeeze(sample_weight)
                     y_indices = y_indices[sample_weight[y_indices - 1] > 0]
 
                 # Subsample leaf training indices (without replacement).
@@ -346,14 +348,10 @@ class BaseForestQuantileRegressor(ForestRegressor):
                         y_indices = list(y_indices)
                     y_indices = random.sample(y_indices, max_samples_leaf)
 
-                if sorter is not None:
-                    y_indices = np.asarray(y_indices).reshape(-1, n_outputs).swapaxes(0, 1)
+                y_indices = np.asarray(y_indices).reshape(n_outputs, -1)
 
-                    for j in range(n_outputs):
-                        y_train_leaves[i, leaf_idx, j, : len(y_indices[j])] = y_indices[j]
-                else:
-                    for j in range(n_outputs):
-                        y_train_leaves[i, leaf_idx, j, : len(y_indices)] = y_indices
+                for j in range(n_outputs):
+                    y_train_leaves[i, leaf_idx, j, : len(y_indices[j])] = y_indices[j]
 
         return y_train_leaves
 
