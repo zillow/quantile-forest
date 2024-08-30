@@ -26,7 +26,7 @@ n_samples = 5000
 quantiles = np.linspace(0, 1, num=101, endpoint=True).round(2).tolist()
 
 
-def make_skewed_dataset(a=7, loc=-1, scale=1, random_state=0):
+def make_skewed_dataset(n_samples, a=7, loc=-1, scale=1, random_state=0):
     """Make a skewed dataset."""
     random_state = check_random_state(random_state)
     skewnorm_rv = sp.stats.skewnorm(a, loc, scale)
@@ -37,7 +37,7 @@ def make_skewed_dataset(a=7, loc=-1, scale=1, random_state=0):
 
 
 # Create a right-skewed toy dataset.
-X, y = make_skewed_dataset(a=7, loc=-1, scale=1, random_state=0)
+X, y = make_skewed_dataset(n_samples, a=7, loc=-1, scale=1, random_state=0)
 
 regr_rf = RandomForestRegressor(random_state=random_state)
 regr_qrf = RandomForestQuantileRegressor(random_state=random_state)

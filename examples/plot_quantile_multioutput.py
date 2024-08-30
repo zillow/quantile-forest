@@ -39,8 +39,8 @@ funcs = [
 legend = {k: v for f in funcs for k, v in f["legend"].items()}
 
 
-def make_func_Xy(funcs, bounds, n_samples):
-    """Make a dataset from specified function(s)."""
+def make_funcs_Xy(funcs, bounds, n_samples):
+    """Make a dataset from specified function(s) with signal and noise."""
     x = np.linspace(*bounds, n_samples)
     y = np.empty((len(x), len(funcs)))
     for i, func in enumerate(funcs):
@@ -49,7 +49,7 @@ def make_func_Xy(funcs, bounds, n_samples):
 
 
 # Create a dataset with multiple target variables.
-X, y = make_func_Xy(funcs, bounds, n_samples)
+X, y = make_funcs_Xy(funcs, bounds, n_samples)
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=random_state)
 

@@ -33,7 +33,7 @@ quantiles = [0.025, 0.975, 0.5]
 qrf_params = {"min_samples_leaf": 4, "max_samples_leaf": None, "random_state": random_state}
 
 
-def make_func_Xy(func, bounds, n_samples, add_noise=True, random_state=0):
+def make_func_Xy(func, n_samples, bounds, add_noise=True, random_state=0):
     """Make a dataset from a specified function."""
     random_state = check_random_state(random_state)
 
@@ -146,7 +146,7 @@ class Xtrapolation:
             tree.fit(X[split1, :], Y[split1].flatten())
 
             # Extract tree weight matrix.
-            y_train_leaves = tree._get_y_train_leaves(X[split2, :], Y)
+            y_train_leaves = tree._get_y_train_leaves(X[split2, :], Y.reshape(-1, 1))
             nrows = X[split2, :].shape[0]
             matrix = np.zeros((nrows, nrows))
             for leaf in y_train_leaves[0]:
@@ -368,7 +368,7 @@ def get_coverage_xtr(bounds_list, train_indices, test_indices, y_train, level, *
 
 
 # Create a dataset that requires extrapolation.
-X, y = make_func_Xy(func, bounds, n_samples, add_noise=True, random_state=0)
+X, y = make_func_Xy(func, n_samples, bounds, add_noise=True, random_state=0)
 
 # Fit and extrapolate based on train-test split (depending on X).
 extrap_min_idx = int(n_samples * (extrap_frac / 2))
