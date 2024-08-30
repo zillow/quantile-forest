@@ -348,7 +348,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
                         y_indices = list(y_indices)
                     y_indices = random.sample(y_indices, max_samples_leaf)
 
-                y_indices = np.asarray(y_indices).reshape(n_outputs, -1)
+                y_indices = np.asarray(y_indices).T.reshape(n_outputs, -1)
 
                 for j in range(n_outputs):
                     y_train_leaves[i, leaf_idx, j, : len(y_indices[j])] = y_indices[j]
