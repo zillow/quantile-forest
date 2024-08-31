@@ -51,12 +51,8 @@ except ImportError:
     param_validation = False
 from sklearn.utils.validation import check_is_fitted
 
-from ._quantile_forest_fast import (
-    QuantileForest,
-    generate_unsampled_indices,
-    group_by_value,
-    map_leaf_nodes,
-)
+from ._quantile_forest_fast import QuantileForest
+from ._utils import generate_unsampled_indices, group_indices_by_value, map_indices_to_leaves
 
 sklearn_version = parse_version(sklearn.__version__)
 
@@ -316,7 +312,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
 
         for i, estimator in enumerate(self.estimators_):
             # Group training indices by leaf node.
-            leaf_indices, leaf_values_list = group_by_value(X_leaves_bootstrap[:, i])
+            leaf_indices, leaf_values_list = group_indices_by_value(X_leaves_bootstrap[:, i])
 
             if leaf_subsample:
                 random.seed(estimator.random_state)
@@ -341,7 +337,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
                 for j in range(n_outputs):
                     y_train_leaves[i, leaf_indices, j, 0] = y_indices[:, 0, j]
             else:  # get mapping for arbitrary leaf sizes
-                y_train_leaves[i] = map_leaf_nodes(
+                y_train_leaves[i] = map_indices_to_leaves(
                     y_train_leaves=y_train_leaves[i],
                     bootstrap_indices=bootstrap_indices[:, i],
                     leaf_indices=leaf_indices,
