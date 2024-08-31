@@ -359,9 +359,6 @@ class BaseForestQuantileRegressor(ForestRegressor):
                     bootstrap_indices=bootstrap_indices[:, i],
                     leaf_indices=leaf_indices,
                     leaf_values_list=leaf_values_list,
-                    max_node_count=max_node_count,
-                    max_samples_leaf=max_samples_leaf,
-                    n_outputs=n_outputs,
                 )
 
         return y_train_leaves

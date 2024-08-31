@@ -562,16 +562,14 @@ cpdef map_leaf_nodes(
     cnp.ndarray[intp_t, ndim=2] bootstrap_indices,
     vector[intp_t] leaf_indices,
     vector[vector[intp_t]] leaf_values_list,
-    int max_node_count,
-    int max_samples_leaf,
-    int n_outputs,
 ) noexcept:
-    cdef intp_t n_samples, n_leaves
+    cdef intp_t n_samples, n_outputs, n_leaves
     cdef intp_t i, j, k
     cdef vector[intp_t] leaf_values
     cdef intp_t leaf_index, leaf_value, y_index
     cdef intp_t[:, :, :] y_train_leaves_view
 
+    n_outputs = bootstrap_indices.shape[1]
     n_leaves = leaf_indices.size()
 
     y_train_leaves_view = y_train_leaves  # memoryview
