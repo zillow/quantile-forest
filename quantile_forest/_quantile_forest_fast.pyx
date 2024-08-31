@@ -523,7 +523,7 @@ cpdef vector[intp_t] generate_unsampled_indices(
     n_total_samples : int
         Number of total samples, sampled and unsampled.
 
-    duplicates : list of sets
+    duplicates : list of sets of ints
         List of sets of functionally identical indices.
 
     Returns
@@ -563,6 +563,28 @@ cpdef map_leaf_nodes(
     vector[intp_t] leaf_indices,
     vector[vector[intp_t]] leaf_values_list,
 ) noexcept:
+    """Return a mapping of training sample indices to a tree's leaf nodes.
+
+    Parameters
+    ----------
+    y_train_leaves : array-like of shape (n_leaves, n_outputs, n_samples)
+        Unpopulated mapping representing a list of nodes, each with a list of
+        indices of the training samples residing at that node.
+
+    bootstrap_indices : array-like of shape (n_samples, n_outputs)
+        Bootstrap indices of training samples.
+
+    leaf_indices : list of ints
+        List of leaf node indices. Values correspond to `leaf_values_list`.
+
+    leaf_values_list : list of list of ints
+        List of leaf node sample indices. Values correspond to `leaf_indices`.
+
+    Returns
+    -------
+    y_train_leaves : array-like of shape (n_leaves, n_outputs, n_samples)
+        Populated mapping of training sample indices to leaf nodes.
+    """
     cdef intp_t n_samples, n_outputs, n_leaves
     cdef intp_t i, j, k
     cdef vector[intp_t] leaf_values
