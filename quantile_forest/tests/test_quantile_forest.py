@@ -113,7 +113,7 @@ def check_california_criterion(name, criterion):
 
     # Test sample weights.
     regr = ForestRegressor(n_estimators=5, criterion=criterion, random_state=0)
-    sample_weight = np.ones(y_california.shape)
+    sample_weight = np.concatenate([np.zeros(1), np.ones(len(y_california) - 1)])
     regr.fit(X_california, y_california, sample_weight=sample_weight)
     score = regr.score(X_california, y_california, quantiles=0.5)
     assert score > 0.9, f"Failed with criterion {criterion}, sample weight and score={score}."
@@ -786,7 +786,12 @@ def check_max_samples_leaf(name):
 
     max_leaf_sizes = []
     for max_samples_leaf in [0.99 / len(X), 1, 3.0 / len(X), 5, 20, None]:
-        est = ForestRegressor(n_estimators=10, max_samples_leaf=max_samples_leaf, random_state=0)
+        est = ForestRegressor(
+            n_estimators=10,
+            min_samples_leaf=max_samples_leaf if max_samples_leaf is not None else len(X),
+            max_samples_leaf=max_samples_leaf,
+            random_state=0,
+        )
         est.fit(X, y)
 
         max_leaf_size = 0

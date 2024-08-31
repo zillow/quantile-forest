@@ -51,7 +51,7 @@ except ImportError:
     param_validation = False
 from sklearn.utils.validation import check_is_fitted
 
-from ._quantile_forest_fast import QuantileForest, generate_unsampled_indices
+from ._quantile_forest_fast import QuantileForest, generate_unsampled_indices, map_leaf_nodes
 
 sklearn_version = parse_version(sklearn.__version__)
 
@@ -69,8 +69,8 @@ def _group_by_value(a):
     a_sorted = a[sort_idx]
     unq_first = np.concatenate(([True], a_sorted[1:] != a_sorted[:-1]))
     unq_items = a_sorted[unq_first]
-    unq_count = np.diff(np.concatenate(np.nonzero(unq_first) + ([a.size],)))
-    unq_idx = np.split(sort_idx, np.cumsum(unq_count[:-1]))
+    unq_indices = np.flatnonzero(unq_first)
+    unq_idx = np.array_split(sort_idx, unq_indices[1:])
     return unq_items, unq_idx
 
 
@@ -303,9 +303,8 @@ class BaseForestQuantileRegressor(ForestRegressor):
         if sorter is not None:
             # Reassign bootstrap indices to account for target sorting.
             bootstrap_indices = np.argsort(sorter, axis=0)[bootstrap_indices]
-            if bootstrap_indices.shape[-1] == 1:
-                bootstrap_indices = np.squeeze(bootstrap_indices, -1)
 
+        bootstrap_indices = bootstrap_indices.reshape(-1, self.n_estimators, n_outputs)
         bootstrap_indices += 1  # for sparse matrix (0s as empty)
 
         # Get the maximum number of nodes (internal + leaves) across trees.
@@ -335,23 +334,35 @@ class BaseForestQuantileRegressor(ForestRegressor):
             if leaf_subsample:
                 random.seed(estimator.random_state)
 
+            if sample_weight is not None or leaf_subsample:
+                for j in range(len(leaf_values_list)):
+                    if sample_weight is not None:
+                        # Filter leaf samples with zero weight.
+                        weight_mask = sample_weight[leaf_values_list[j] - 1] > 0
+                        leaf_values_list[j] = leaf_values_list[j][weight_mask]
+                    if leaf_subsample:
+                        # Sample leaf to length `max_samples_leaf`.
+                        if len(leaf_values_list[j]) > max_samples_leaf:
+                            random.shuffle(leaf_values_list[j])  # to ensure random sampling
+                            leaf_values_list[j] = leaf_values_list[j][:max_samples_leaf]
+                    if len(leaf_values_list[j]) == 0:
+                        leaf_values_list[j] = [0]
+
             # Map each leaf node to its list of training indices.
-            for leaf_idx, leaf_values in zip(leaf_indices, leaf_values_list):
-                y_indices = bootstrap_indices[:, i][leaf_values].reshape(-1, n_outputs)
-
-                if sample_weight is not None:
-                    y_indices = y_indices[sample_weight[y_indices - 1] > 0]
-
-                # Subsample leaf training indices (without replacement).
-                if leaf_subsample and max_samples_leaf < len(y_indices):
-                    if not isinstance(y_indices, list):
-                        y_indices = list(y_indices)
-                    y_indices = random.sample(y_indices, max_samples_leaf)
-
-                y_indices = np.asarray(y_indices).T.reshape(n_outputs, -1)
-
+            if max_samples_leaf == 1:  # optimize for single-sample-per-leaf performance
+                y_indices = bootstrap_indices[:, i][leaf_values_list].reshape(-1, 1, n_outputs)
                 for j in range(n_outputs):
-                    y_train_leaves[i, leaf_idx, j, : len(y_indices[j])] = y_indices[j]
+                    y_train_leaves[i, leaf_indices, j, 0] = y_indices[:, 0, j]
+            else:  # get mapping for arbitrary leaf sizes
+                y_train_leaves[i] = map_leaf_nodes(
+                    y_train_leaves=y_train_leaves[i],
+                    bootstrap_indices=bootstrap_indices[:, i],
+                    leaf_indices=leaf_indices,
+                    leaf_values_list=leaf_values_list,
+                    max_node_count=max_node_count,
+                    max_samples_leaf=max_samples_leaf,
+                    n_outputs=n_outputs,
+                )
 
         return y_train_leaves
 
