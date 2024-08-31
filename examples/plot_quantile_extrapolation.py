@@ -33,7 +33,7 @@ quantiles = [0.025, 0.975, 0.5]
 qrf_params = {"min_samples_leaf": 4, "max_samples_leaf": None, "random_state": random_state}
 
 
-def make_func_Xy(func, n_samples, bounds, add_noise=True, random_state=0):
+def make_func_Xy(func, n_samples, bounds, add_noise=True, random_state=None):
     """Make a dataset from a specified function."""
     random_state = check_random_state(random_state)
 

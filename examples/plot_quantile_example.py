@@ -22,7 +22,7 @@ bounds = [0, 10]
 quantiles = [0.025, 0.5, 0.975]
 
 
-def make_toy_dataset(n_samples, bounds, add_noise=True, random_state=0):
+def make_toy_dataset(n_samples, bounds, add_noise=True, random_state=None):
     """Make a toy dataset."""
     random_state = check_random_state(random_state)
 

@@ -24,7 +24,7 @@ n_samples = 5000
 bounds = [0, 10]
 
 
-def make_toy_dataset(n_samples, bounds, random_state=0):
+def make_toy_dataset(n_samples, bounds, random_state=None):
     """Make a toy dataset."""
     random_state = check_random_state(random_state)
     X_1d = np.linspace(*bounds, num=n_samples)
@@ -40,7 +40,8 @@ qrf = RandomForestQuantileRegressor(
     min_samples_leaf=50,
     max_samples_leaf=None,
     random_state=random_state,
-).fit(X, y)
+)
+qrf.fit(X, y)
 
 y_pred = qrf.predict(X, quantiles=0.5)
 

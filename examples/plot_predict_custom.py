@@ -66,13 +66,14 @@ def predict(qrf, X, quantiles=0.5, what=None):
 
 
 # Load the Diabetes dataset.
-X, y = datasets.load_diabetes(return_X_y=True)
+X, y = datasets.load_diabetes(return_X_y=True, as_frame=True)
 
 X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=n_test_samples, random_state=random_state
 )
 
-qrf = RandomForestQuantileRegressor(random_state=random_state).fit(X_train, y_train)
+qrf = RandomForestQuantileRegressor(random_state=random_state)
+qrf.fit(X_train, y_train)
 
 # Define a user-specified function.
 # Here we randomly sample 1,000 values with replacement from the empirical distribution.

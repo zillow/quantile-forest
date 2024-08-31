@@ -35,7 +35,7 @@ strategies = {
 }
 
 # Load the California Housing dataset.
-X, y = datasets.fetch_california_housing(as_frame=True, return_X_y=True)
+X, y = datasets.fetch_california_housing(return_X_y=True, as_frame=True)
 perm = random_state.permutation(min(len(X), n_samples))
 X = X.iloc[perm]
 y = y.iloc[perm]
