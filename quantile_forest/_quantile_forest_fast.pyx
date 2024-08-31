@@ -523,7 +523,7 @@ cpdef vector[intp_t] generate_unsampled_indices(
     n_total_samples : int
         Number of total samples, sampled and unsampled.
 
-    duplicates : list of sets
+    duplicates : list of sets of ints
         List of sets of functionally identical indices.
 
     Returns
@@ -531,10 +531,10 @@ cpdef vector[intp_t] generate_unsampled_indices(
     unsampled_indices : array-like
         List of unsampled indices.
     """
+    cdef intp_t n_samples, n_duplicates
     cdef intp_t i
     cdef intp_t sampled_idx
     cdef set[intp_t] sampled_set
-    cdef intp_t n_samples, n_duplicates
     cdef vector[intp_t] unsampled_indices
 
     n_samples = sample_indices.size()
@@ -555,6 +555,61 @@ cpdef vector[intp_t] generate_unsampled_indices(
             unsampled_indices.push_back(i)
 
     return unsampled_indices
+
+
+cpdef map_leaf_nodes(
+    cnp.ndarray[intp_t, ndim=3] y_train_leaves,
+    cnp.ndarray[intp_t, ndim=2] bootstrap_indices,
+    vector[intp_t] leaf_indices,
+    vector[vector[intp_t]] leaf_values_list,
+) noexcept:
+    """Return a mapping of training sample indices to a tree's leaf nodes.
+
+    Parameters
+    ----------
+    y_train_leaves : array-like of shape (n_leaves, n_outputs, n_samples)
+        Unpopulated mapping representing a list of nodes, each with a list of
+        indices of the training samples residing at that node.
+
+    bootstrap_indices : array-like of shape (n_samples, n_outputs)
+        Bootstrap indices of training samples.
+
+    leaf_indices : list of ints
+        List of leaf node indices. Values correspond to `leaf_values_list`.
+
+    leaf_values_list : list of list of ints
+        List of leaf node sample indices. Values correspond to `leaf_indices`.
+
+    Returns
+    -------
+    y_train_leaves : array-like of shape (n_leaves, n_outputs, n_samples)
+        Populated mapping of training sample indices to leaf nodes.
+    """
+    cdef intp_t n_samples, n_outputs, n_leaves
+    cdef intp_t i, j, k
+    cdef vector[intp_t] leaf_values
+    cdef intp_t leaf_index, leaf_value, y_index
+    cdef intp_t[:, :, :] y_train_leaves_view
+
+    n_outputs = bootstrap_indices.shape[1]
+    n_leaves = leaf_indices.size()
+
+    y_train_leaves_view = y_train_leaves  # memoryview
+
+    with nogil:
+        for i in range(n_leaves):
+            leaf_index = leaf_indices[i]
+            leaf_values = leaf_values_list[i]
+
+            n_samples = leaf_values.size()
+            for j in range(n_samples):
+                leaf_value = leaf_values[j]
+                for k in range(n_outputs):
+                    y_index = bootstrap_indices[leaf_value, k]
+                    if y_index > 0:
+                        y_train_leaves_view[leaf_index, k, j] = y_index
+
+    return np.asarray(y_train_leaves_view)
 
 
 cdef class QuantileForest:
