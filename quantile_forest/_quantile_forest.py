@@ -220,7 +220,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
             Bootstrap indices of training samples.
 
         X_leaves_bootstrap : array-like of shape (n_samples, n_outputs)
-            Leaf nodes indices of the bootstrap training samples.
+            Leaf node indices of the bootstrap training samples.
 
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights. If None, then samples are equally weighted. Splits
@@ -230,7 +230,8 @@ class BaseForestQuantileRegressor(ForestRegressor):
             single class carrying a negative weight in either child node.
 
         leaf_subsample : bool
-            Subsample leaves.
+            Subsample leaf nodes. If True, leaves are randomly sampled to size
+            `max_samples_leaf`.
 
         max_node_count: int
             Maximum number of leaf nodes across all trees.
