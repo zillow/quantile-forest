@@ -51,27 +51,10 @@ except ImportError:
     param_validation = False
 from sklearn.utils.validation import check_is_fitted
 
-from ._quantile_forest_fast import QuantileForest, generate_unsampled_indices, map_leaf_nodes
+from ._quantile_forest_fast import QuantileForest
+from ._utils import generate_unsampled_indices, group_indices_by_value, map_indices_to_leaves
 
 sklearn_version = parse_version(sklearn.__version__)
-
-
-def _generate_unsampled_indices(sample_indices, n_total_samples, duplicates=None):
-    """Private function used by forest._get_y_train_leaves function."""
-    if duplicates is None:
-        duplicates = []
-    return generate_unsampled_indices(sample_indices, n_total_samples, duplicates)
-
-
-def _group_by_value(a):
-    """Private function used by forest._get_y_train_leaves function."""
-    sort_idx = np.argsort(a)
-    a_sorted = a[sort_idx]
-    unq_first = np.concatenate(([True], a_sorted[1:] != a_sorted[:-1]))
-    unq_items = a_sorted[unq_first]
-    unq_indices = np.flatnonzero(unq_first)
-    unq_idx = np.array_split(sort_idx, unq_indices[1:])
-    return unq_items, unq_idx
 
 
 class BaseForestQuantileRegressor(ForestRegressor):
@@ -329,7 +312,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
 
         for i, estimator in enumerate(self.estimators_):
             # Group training indices by leaf node.
-            leaf_indices, leaf_values_list = _group_by_value(X_leaves_bootstrap[:, i])
+            leaf_indices, leaf_values_list = group_indices_by_value(X_leaves_bootstrap[:, i])
 
             if leaf_subsample:
                 random.seed(estimator.random_state)
@@ -354,7 +337,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
                 for j in range(n_outputs):
                     y_train_leaves[i, leaf_indices, j, 0] = y_indices[:, 0, j]
             else:  # get mapping for arbitrary leaf sizes
-                y_train_leaves[i] = map_leaf_nodes(
+                y_train_leaves[i] = map_indices_to_leaves(
                     y_train_leaves=y_train_leaves[i],
                     bootstrap_indices=bootstrap_indices[:, i],
                     leaf_indices=leaf_indices,
@@ -552,8 +535,10 @@ class BaseForestQuantileRegressor(ForestRegressor):
         sample_indices = _generate_sample_indices(
             estimator.random_state, n_train_samples, n_samples_bootstrap
         )
-        unsampled_indices = _generate_unsampled_indices(
-            sample_indices, n_train_samples, duplicates=duplicates
+        unsampled_indices = generate_unsampled_indices(
+            sample_indices,
+            n_train_samples,
+            duplicates=[] if duplicates is None else duplicates,
         )
         return np.asarray(unsampled_indices)
 

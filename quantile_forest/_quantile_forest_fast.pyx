@@ -4,49 +4,17 @@ from libcpp.algorithm cimport sort as sort_cpp
 from libcpp.map cimport map
 from libcpp.pair cimport pair
 from libcpp.queue cimport priority_queue
-from libcpp.set cimport set
 from libcpp.string cimport string
 from libcpp.vector cimport vector
 
 import numpy as np
 cimport numpy as cnp
 
-cnp.import_array()
-
 from scipy import sparse
 
+from ._utils cimport parallel_qsort_asc
 
-cdef inline void parallel_qsort_asc(
-    vector[double]& a,
-    vector[double]& b,
-    int left,
-    int right,
-) noexcept nogil:
-    """Sort lists `a` and `b` in ascending order by `a`."""
-    cdef int i, j
-    cdef double pivot
-
-    i = left
-    j = right
-    pivot = a[(left + right) / 2]
-
-    while True:
-        while a[i] < pivot:
-            i += 1
-        while pivot < a[j]:
-            j -= 1
-        if i <= j:
-            a[i], a[j] = a[j], a[i]
-            b[i], b[j] = b[j], b[i]
-            i += 1
-            j -= 1
-        if i > j:
-            break
-
-    if left < j:
-        parallel_qsort_asc(a, b, left, j)
-    if i < right:
-        parallel_qsort_asc(a, b, i, right)
+cnp.import_array()
 
 
 cpdef double calc_mean(vector[double]& inputs) noexcept nogil:
@@ -506,110 +474,6 @@ cpdef double calc_quantile_rank(
         out = (left + right) * 0.5 / n_inputs
 
     return out
-
-
-cpdef vector[intp_t] generate_unsampled_indices(
-    vector[intp_t] sample_indices,
-    intp_t n_total_samples,
-    vector[set[intp_t]] duplicates,
-) noexcept nogil:
-    """Return a list of every unsampled index, accounting for duplicates.
-
-    Parameters
-    ----------
-    sample_indices : array-like of shape (n_samples)
-        Sampled indices.
-
-    n_total_samples : int
-        Number of total samples, sampled and unsampled.
-
-    duplicates : list of sets of ints
-        List of sets of functionally identical indices.
-
-    Returns
-    -------
-    unsampled_indices : array-like
-        List of unsampled indices.
-    """
-    cdef intp_t n_samples, n_duplicates
-    cdef intp_t i
-    cdef intp_t sampled_idx
-    cdef set[intp_t] sampled_set
-    cdef vector[intp_t] unsampled_indices
-
-    n_samples = sample_indices.size()
-    n_duplicates = duplicates.size()
-
-    for i in range(n_samples):
-        sampled_set.insert(sample_indices[i])
-
-    # Account for duplicates of sampled indices.
-    for i in range(n_duplicates):
-        for sampled_idx in duplicates[i]:
-            if sampled_set.count(sampled_idx):
-                sampled_set.insert(duplicates[i].begin(), duplicates[i].end())
-
-    # If the index is not in `sampled_set`, it is unsampled.
-    for i in range(n_total_samples):
-        if not sampled_set.count(i):
-            unsampled_indices.push_back(i)
-
-    return unsampled_indices
-
-
-cpdef map_leaf_nodes(
-    cnp.ndarray[intp_t, ndim=3] y_train_leaves,
-    cnp.ndarray[intp_t, ndim=2] bootstrap_indices,
-    vector[intp_t] leaf_indices,
-    vector[vector[intp_t]] leaf_values_list,
-) noexcept:
-    """Return a mapping of training sample indices to a tree's leaf nodes.
-
-    Parameters
-    ----------
-    y_train_leaves : array-like of shape (n_leaves, n_outputs, n_samples)
-        Unpopulated mapping representing a list of nodes, each with a list of
-        indices of the training samples residing at that node.
-
-    bootstrap_indices : array-like of shape (n_samples, n_outputs)
-        Bootstrap indices of training samples.
-
-    leaf_indices : list of ints
-        List of leaf node indices. Values correspond to `leaf_values_list`.
-
-    leaf_values_list : list of list of ints
-        List of leaf node sample indices. Values correspond to `leaf_indices`.
-
-    Returns
-    -------
-    y_train_leaves : array-like of shape (n_leaves, n_outputs, n_samples)
-        Populated mapping of training sample indices to leaf nodes.
-    """
-    cdef intp_t n_samples, n_outputs, n_leaves
-    cdef intp_t i, j, k
-    cdef vector[intp_t] leaf_values
-    cdef intp_t leaf_index, leaf_value, y_index
-    cdef intp_t[:, :, :] y_train_leaves_view
-
-    n_outputs = bootstrap_indices.shape[1]
-    n_leaves = leaf_indices.size()
-
-    y_train_leaves_view = y_train_leaves  # memoryview
-
-    with nogil:
-        for i in range(n_leaves):
-            leaf_index = leaf_indices[i]
-            leaf_values = leaf_values_list[i]
-
-            n_samples = leaf_values.size()
-            for j in range(n_samples):
-                leaf_value = leaf_values[j]
-                for k in range(n_outputs):
-                    y_index = bootstrap_indices[leaf_value, k]
-                    if y_index > 0:
-                        y_train_leaves_view[leaf_index, k, j] = y_index
-
-    return np.asarray(y_train_leaves_view)
 
 
 cdef class QuantileForest:
