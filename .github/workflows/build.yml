@@ -42,7 +42,7 @@ jobs:
 
       - name: Lint with flake8
         run: |
-          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics || exit 1
+          flake8 . --count --select=E9,F7,F63,F82 --show-source --statistics || exit 1
           flake8 . --count --exit-zero --statistics
 
       - name: Test with pytest
