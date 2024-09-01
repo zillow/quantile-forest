@@ -61,8 +61,8 @@ def test_map_indices_to_leaves():
     # Check mapping of indices to leaf nodes.
     y_train_leaves = np.zeros((3, 1, 3), dtype=np.int64)
     bootstrap_indices = np.array([[1], [2], [3], [4], [5]], dtype=np.int64)
-    leaf_indices = np.array([1, 2], dtype=np.int64)
-    leaf_values_list = [np.array([0, 1, 2], dtype=np.int64), np.array([3, 4], dtype=np.int64)]
+    leaf_indices = np.array([1, 2])
+    leaf_values_list = [np.array([0, 1, 2]), np.array([3, 4])]
 
     actual = map_indices_to_leaves(
         y_train_leaves,
