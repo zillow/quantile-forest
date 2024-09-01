@@ -176,7 +176,7 @@ cpdef map_indices_to_leaves(
     cnp.ndarray[intp_t, ndim=2] bootstrap_indices,
     vector[intp_t] leaf_indices,
     vector[vector[intp_t]] leaf_values_list,
-) noexcept:
+):
     """Return a mapping of training sample indices to a tree's leaf nodes.
 
     Parameters
