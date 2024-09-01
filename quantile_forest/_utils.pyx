@@ -172,7 +172,7 @@ cpdef group_indices_by_value(cnp.ndarray[intp_t, ndim=1] a):
 
 
 cpdef map_indices_to_leaves(
-    cnp.ndarray[intp_t, ndim=3] y_train_leaves,
+    cnp.ndarray[intp_t, ndim=3] y_train_leaves_slice,
     cnp.ndarray[intp_t, ndim=2] bootstrap_indices,
     vector[intp_t] leaf_indices,
     vector[vector[intp_t]] leaf_values_list,
@@ -181,7 +181,7 @@ cpdef map_indices_to_leaves(
 
     Parameters
     ----------
-    y_train_leaves : array-like of shape (n_leaves, n_outputs, n_samples)
+    y_train_leaves_slice : array-like of shape (n_leaves, n_outputs, n_samples)
         Unpopulated mapping representing a list of nodes, each with a list of
         indices of the training samples residing at that node.
 
@@ -196,19 +196,22 @@ cpdef map_indices_to_leaves(
 
     Returns
     -------
-    y_train_leaves : array-like of shape (n_leaves, n_outputs, n_samples)
-        Populated mapping of training sample indices to leaf nodes.
+    y_train_leaves_slice : array-like of shape (n_leaves, n_outputs, n_samples)
+        Populated mapping of training sample indices to leaf nodes. Nodes with
+            no samples (e.g., internal nodes) are empty. Internal nodes are
+            included so that leaf node indices match their ``est.apply``
+            outputs. Each node list is padded to equal length with 0s.
     """
     cdef intp_t n_samples, n_outputs, n_leaves
     cdef intp_t i, j, k
     cdef vector[intp_t] leaf_values
     cdef intp_t leaf_index, leaf_value, y_index
-    cdef intp_t[:, :, :] y_train_leaves_view
+    cdef intp_t[:, :, :] y_train_leaves_slice_view
 
     n_outputs = bootstrap_indices.shape[1]
     n_leaves = leaf_indices.size()
 
-    y_train_leaves_view = y_train_leaves  # memoryview
+    y_train_leaves_slice_view = y_train_leaves_slice  # memoryview
 
     with nogil:
         for i in range(n_leaves):
@@ -221,6 +224,6 @@ cpdef map_indices_to_leaves(
                 for k in range(n_outputs):
                     y_index = bootstrap_indices[leaf_value, k]
                     if y_index > 0:
-                        y_train_leaves_view[leaf_index, k, j] = y_index
+                        y_train_leaves_slice_view[leaf_index, k, j] = y_index
 
-    return np.asarray(y_train_leaves_view)
+    return np.asarray(y_train_leaves_slice_view)

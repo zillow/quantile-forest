@@ -49,6 +49,7 @@ try:
     from sklearn.utils._param_validation import Interval, RealNotInt
 except ImportError:
     param_validation = False
+from sklearn.utils.parallel import Parallel, delayed
 from sklearn.utils.validation import check_is_fitted
 
 from ._quantile_forest_fast import QuantileForest
@@ -201,6 +202,96 @@ class BaseForestQuantileRegressor(ForestRegressor):
 
         return self
 
+    def _map_indices_to_leaves(
+        self,
+        bootstrap_indices,
+        X_leaves_bootstrap,
+        sample_weight,
+        leaf_subsample,
+        max_node_count,
+        max_samples_leaf,
+        random_state,
+    ):
+        """Return a mapping of training sample indices to a tree's leaf nodes.
+
+        Parameters
+        ----------
+        bootstrap_indices : array-like of shape (n_samples, n_outputs)
+            Bootstrap indices of training samples.
+
+        X_leaves_bootstrap : array-like of shape (n_samples, n_outputs)
+            Leaf node indices of the bootstrap training samples.
+
+        sample_weight : array-like of shape (n_samples,), default=None
+            Sample weights. If None, then samples are equally weighted. Splits
+            that would create child nodes with net zero or negative weight are
+            ignored while searching for a split in each node. In the case of
+            classification, splits are also ignored if they would result in any
+            single class carrying a negative weight in either child node.
+
+        leaf_subsample : bool
+            Subsample leaf nodes. If True, leaves are randomly sampled to size
+            `max_samples_leaf`.
+
+        max_node_count: int
+            Maximum number of leaf nodes across all trees.
+
+        max_samples_leaf: int
+            Maximum number of samples per leaf node.
+
+        random_state : int, RandomState instance
+            Controls the sampling of the training indices at each leaf node.
+
+        Returns
+        -------
+        y_train_leaves_slice : array-like of shape \
+                (n_leaves, n_outputs, n_samples)
+            Mapping of training sample indices to tree's leaf nodes. Nodes with
+            no samples (e.g., internal nodes) are empty. Internal nodes are
+            included so that leaf node indices match their ``est.apply``
+            outputs. Each node list is padded to equal length with 0s.
+        """
+        n_outputs = bootstrap_indices.shape[1]
+
+        shape = (max_node_count, n_outputs, max_samples_leaf)
+        y_train_leaves_slice = np.zeros(shape, dtype=np.int64)
+
+        # Group training indices by leaf node.
+        leaf_indices, leaf_values_list = group_indices_by_value(X_leaves_bootstrap)
+
+        if leaf_subsample:
+            random.seed(random_state)
+
+        if leaf_subsample or sample_weight is not None:
+            for j in range(len(leaf_values_list)):
+                if sample_weight is not None:
+                    # Filter leaf samples with zero weight.
+                    weight_mask = sample_weight[leaf_values_list[j] - 1] > 0
+                    leaf_values_list[j] = leaf_values_list[j][weight_mask]
+                if leaf_subsample:
+                    # Sample leaf to length `max_samples_leaf`.
+                    if len(leaf_values_list[j]) > max_samples_leaf:
+                        random.shuffle(leaf_values_list[j])  # to ensure random sampling
+                        leaf_values_list[j] = leaf_values_list[j][:max_samples_leaf]
+                if len(leaf_values_list[j]) == 0:
+                    leaf_values_list[j] = [0]
+
+        # Map each leaf node to its list of training indices.
+        if max_samples_leaf == 1:  # optimize for single-sample-per-leaf performance
+            y_indices = bootstrap_indices[leaf_values_list].reshape(-1, 1, n_outputs)
+            for j in range(n_outputs):
+                y_train_leaves_slice[leaf_indices, j, 0] = y_indices[:, 0, j]
+
+        else:  # get mapping for arbitrary leaf sizes
+            y_train_leaves_slice = map_indices_to_leaves(
+                y_train_leaves_slice=y_train_leaves_slice,
+                bootstrap_indices=bootstrap_indices,
+                leaf_indices=leaf_indices,
+                leaf_values_list=leaf_values_list,
+            )
+
+        return y_train_leaves_slice
+
     def _get_y_train_leaves(self, X, y, sorter=None, sample_weight=None):
         """Return a mapping of each leaf node to its list of training indices.
 
@@ -280,7 +371,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
             else:
                 bootstrap_indices[:, i] = np.arange(n_samples)
 
-            # Get predictions on bootstrap indices.
+            # Get leaf node indices of bootstrap training samples.
             X_leaves_bootstrap[:, i] = X_leaves[bootstrap_indices[:, i], i]
 
         if sorter is not None:
@@ -306,45 +397,24 @@ class BaseForestQuantileRegressor(ForestRegressor):
         if sample_weight is not None:
             sample_weight = np.squeeze(sample_weight)
 
-        # Initialize NumPy array (more efficient serialization than dict/list).
-        shape = (self.n_estimators, max_node_count, n_outputs, max_samples_leaf)
-        y_train_leaves = np.zeros(shape, dtype=np.int64)
+        y_train_leaves = Parallel(
+            n_jobs=self.n_jobs,
+            verbose=self.verbose,
+            prefer="threads",
+        )(
+            delayed(self._map_indices_to_leaves)(
+                bootstrap_indices[:, i],
+                X_leaves_bootstrap[:, i],
+                sample_weight,
+                leaf_subsample,
+                max_node_count,
+                max_samples_leaf,
+                estimator.random_state,
+            )
+            for i, estimator in enumerate(self.estimators_)
+        )
 
-        for i, estimator in enumerate(self.estimators_):
-            # Group training indices by leaf node.
-            leaf_indices, leaf_values_list = group_indices_by_value(X_leaves_bootstrap[:, i])
-
-            if leaf_subsample:
-                random.seed(estimator.random_state)
-
-            if sample_weight is not None or leaf_subsample:
-                for j in range(len(leaf_values_list)):
-                    if sample_weight is not None:
-                        # Filter leaf samples with zero weight.
-                        weight_mask = sample_weight[leaf_values_list[j] - 1] > 0
-                        leaf_values_list[j] = leaf_values_list[j][weight_mask]
-                    if leaf_subsample:
-                        # Sample leaf to length `max_samples_leaf`.
-                        if len(leaf_values_list[j]) > max_samples_leaf:
-                            random.shuffle(leaf_values_list[j])  # to ensure random sampling
-                            leaf_values_list[j] = leaf_values_list[j][:max_samples_leaf]
-                    if len(leaf_values_list[j]) == 0:
-                        leaf_values_list[j] = [0]
-
-            # Map each leaf node to its list of training indices.
-            if max_samples_leaf == 1:  # optimize for single-sample-per-leaf performance
-                y_indices = bootstrap_indices[:, i][leaf_values_list].reshape(-1, 1, n_outputs)
-                for j in range(n_outputs):
-                    y_train_leaves[i, leaf_indices, j, 0] = y_indices[:, 0, j]
-            else:  # get mapping for arbitrary leaf sizes
-                y_train_leaves[i] = map_indices_to_leaves(
-                    y_train_leaves=y_train_leaves[i],
-                    bootstrap_indices=bootstrap_indices[:, i],
-                    leaf_indices=leaf_indices,
-                    leaf_values_list=leaf_values_list,
-                )
-
-        return y_train_leaves
+        return np.array(y_train_leaves)
 
     def _get_y_bound_leaves(self, y, y_train_leaves):
         """Return the bounds for target values for each leaf node.
