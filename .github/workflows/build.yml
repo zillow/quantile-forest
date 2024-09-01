@@ -29,21 +29,21 @@ jobs:
 
       - name: Check Python formatting with black
         run: |
-          black --line-length 99 --diff --color .
-          black --line-length=99 --check .
+          black --diff --color .
+          black --check .
 
       - name: Check Cython formatting with cython-lint
         run: |
-          cython-lint --max-line-length=99 --ignore=E741 .
+          cython-lint .
 
       - name: Check import order with isort
         run: |
-          isort --profile=black --line-length=99 --check .
+          isort --profile=black --check .
 
       - name: Lint with flake8
         run: |
           flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics || exit 1
-          flake8 . --count --exit-zero --max-line-length=99 --statistics
+          flake8 . --count --exit-zero --statistics
 
       - name: Test with pytest
         run: |
