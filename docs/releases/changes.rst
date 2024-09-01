@@ -5,6 +5,15 @@
 Release Notes
 =============
 
+Version 1.3.10 (released Aug 31, 2024)
+-------------------------------------
+
+* Optimize leaf node mapping by `@reidjohnson <https://github.com/reidjohnson>`_ in `#78 <https://github.com/zillow/quantile-forest/pull/78>`_
+* Refactor helper functions by `@reidjohnson <https://github.com/reidjohnson>`_ in `#79 <https://github.com/zillow/quantile-forest/pull/79>`_
+* Update examples, documentation, and build.
+
+**Full Changelog**: https://github.com/zillow/quantile-forest/compare/v1.3.9...v1.3.10
+
 Version 1.3.9 (released Aug 23, 2024)
 -------------------------------------
 
