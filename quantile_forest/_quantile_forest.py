@@ -353,13 +353,6 @@ class BaseForestQuantileRegressor(ForestRegressor):
                 f"got {type(self.max_samples_leaf)}."
             )
 
-        if self.monotonic_cst is not None:
-            if max_samples_leaf != 1:
-                raise ValueError(
-                    "Monotonicity constraints are not supported with multiple values per leaf. "
-                    "To apply monotonicity constraints, set `max_samples_leaf=1`."
-                )
-
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", UserWarning)
             X_leaves = self.apply(X)
