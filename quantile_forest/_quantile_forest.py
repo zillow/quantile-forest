@@ -280,7 +280,6 @@ class BaseForestQuantileRegressor(ForestRegressor):
             y_indices = bootstrap_indices[leaf_values_list].reshape(-1, 1, n_outputs)
             for j in range(n_outputs):
                 y_train_leaves_slice[leaf_indices, j, 0] = y_indices[:, 0, j]
-
         else:  # get mapping for arbitrary leaf sizes
             y_train_leaves_slice = map_indices_to_leaves(
                 y_train_leaves_slice=y_train_leaves_slice,
