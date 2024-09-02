@@ -160,6 +160,16 @@ class BaseForestQuantileRegressor(ForestRegressor):
                     "max_samples_leaf must be of integer, float, or None type, got "
                     f"{self.max_samples_leaf}."
                 )
+        if self.monotonic_cst is not None:
+            if (
+                not isinstance(self.max_samples_leaf, (Integral, np.integer))
+                or self.max_samples_leaf != 1
+            ):
+                raise ValueError(
+                    "Monotonicity constraints are not supported with multiple values per leaf. "
+                    "To apply monotonicity constraints, set `max_samples_leaf=1`."
+                )
+
         super(BaseForestQuantileRegressor, self).fit(X, y, sample_weight=sample_weight)
         X, y = self._validate_data(
             X, y, multi_output=True, accept_sparse="csc", dtype=DTYPE, force_all_finite=False
