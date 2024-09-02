@@ -49,7 +49,6 @@ try:
     from sklearn.utils._param_validation import Interval, RealNotInt
 except ImportError:
     param_validation = False
-from sklearn.utils.parallel import Parallel, delayed
 from sklearn.utils.validation import check_is_fitted
 
 from ._quantile_forest_fast import QuantileForest
@@ -203,7 +202,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
         return self
 
     @staticmethod
-    def _map_indices_to_leaves(
+    def _get_y_train_leaves_slice(
         bootstrap_indices,
         X_leaves_bootstrap,
         sample_weight,
@@ -397,12 +396,8 @@ class BaseForestQuantileRegressor(ForestRegressor):
         if sample_weight is not None:
             sample_weight = np.squeeze(sample_weight)
 
-        y_train_leaves = Parallel(
-            n_jobs=self.n_jobs,
-            verbose=self.verbose,
-            prefer="threads",
-        )(
-            delayed(self._map_indices_to_leaves)(
+        y_train_leaves = [
+            self._get_y_train_leaves_slice(
                 bootstrap_indices[:, i],
                 X_leaves_bootstrap[:, i],
                 sample_weight,
@@ -412,7 +407,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
                 estimator.random_state,
             )
             for i, estimator in enumerate(self.estimators_)
-        )
+        ]
 
         return np.array(y_train_leaves)
 
