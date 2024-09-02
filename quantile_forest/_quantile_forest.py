@@ -202,8 +202,8 @@ class BaseForestQuantileRegressor(ForestRegressor):
 
         return self
 
+    @staticmethod
     def _map_indices_to_leaves(
-        self,
         bootstrap_indices,
         X_leaves_bootstrap,
         sample_weight,
