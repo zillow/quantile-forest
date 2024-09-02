@@ -198,9 +198,9 @@ cpdef map_indices_to_leaves(
     -------
     y_train_leaves_slice : array-like of shape (n_leaves, n_outputs, n_samples)
         Populated mapping of training sample indices to leaf nodes. Nodes with
-            no samples (e.g., internal nodes) are empty. Internal nodes are
-            included so that leaf node indices match their ``est.apply``
-            outputs. Each node list is padded to equal length with 0s.
+        no samples (e.g., internal nodes) are empty. Internal nodes are
+        included so that leaf node indices match their ``est.apply`` outputs.
+        Each node list is padded to equal length with 0s.
     """
     cdef intp_t n_samples, n_outputs, n_leaves
     cdef intp_t i, j, k
