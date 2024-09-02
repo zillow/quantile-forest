@@ -258,10 +258,10 @@ class BaseForestQuantileRegressor(ForestRegressor):
         # Group training indices by leaf node.
         leaf_indices, leaf_values_list = group_indices_by_value(X_leaves_bootstrap)
 
-        if leaf_subsample:
-            random.seed(random_state)
-
         if leaf_subsample or sample_weight is not None:
+            if leaf_subsample:
+                random.seed(random_state)
+
             for j in range(len(leaf_values_list)):
                 if sample_weight is not None:
                     # Filter leaf samples with zero weight.
