@@ -228,7 +228,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
         bootstrap_indices : array-like of shape (n_samples, n_outputs)
             Bootstrap indices of training samples.
 
-        X_leaves_bootstrap : array-like of shape (n_samples, n_outputs)
+        X_leaves_bootstrap : array-like of shape (n_samples,)
             Leaf node indices of the bootstrap training samples.
 
         sample_weight : array-like of shape (n_samples,), default=None
