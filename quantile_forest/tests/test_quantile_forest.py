@@ -682,6 +682,10 @@ def check_quantile_ranks(name):
     assert np.all(y_ranks <= 1)
     assert np.all(y_ranks[:, 0] < y_ranks[:, 1])
 
+    # Check error if training and test number of targets are not equal.
+    est.fit(X_train, y_train[:, 0])  # training target size = 1
+    assert_raises(ValueError, est.quantile_ranks, X_test, y_test[:, :2])  # test target size = 2
+
 
 @pytest.mark.parametrize("name", FOREST_REGRESSORS)
 def test_quantile_ranks(name):
