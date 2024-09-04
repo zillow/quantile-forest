@@ -879,7 +879,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
             y = np.expand_dims(y, axis=1)
 
         y_ranks = self.forest_.quantile_ranks(
-            y.astype(np.float64).T,
+            y.astype(np.float64),
             X_leaves,
             X_indices,
             kind,
