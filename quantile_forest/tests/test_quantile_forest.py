@@ -680,6 +680,7 @@ def check_quantile_ranks(name):
     assert y_ranks.shape == (X_test.shape[0], 2)
     assert np.all(y_ranks >= 0)
     assert np.all(y_ranks <= 1)
+    assert np.all(y_ranks[:, 0] < y_ranks[:, 1])
 
 
 @pytest.mark.parametrize("name", FOREST_REGRESSORS)

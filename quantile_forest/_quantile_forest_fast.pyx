@@ -885,6 +885,7 @@ cdef class QuantileForest:
                         if train_indices[k].size() == 0:
                             continue
 
+                        # Clear list of training target values.
                         leaf_samples.clear()
 
                         # Get training target values associated with indices.
