@@ -622,7 +622,7 @@ def check_quantile_ranks_toy(name):
 
     kwargs = {"aggregate_leaves_first": False}
 
-    expected = [0.6875, 0.6875, 0.4375, 0.9375, 0.875, 0.875]
+    expected = [0.75, 0.75, 0.5, 1.0, 1.0, 1.0]
     y_ranks = est.quantile_ranks(X, y, kind="rank", **kwargs)
     assert_allclose(y_ranks, expected)
 
@@ -656,13 +656,10 @@ def check_quantile_ranks(name):
     X_train = x1.reshape(-1, 1)
     y_train = np.squeeze(x1 * 2 + e1)
 
-    x2 = np.random.choice(np.arange(0, 101), size=4)
+    x2 = np.random.choice(np.arange(0, 101), size=10)
 
     X_test = x2.reshape(-1, 1)
-    y_test = np.squeeze(X_test * 2)
-
-    y_train = y_train.astype(np.float64)
-    y_test = y_test.astype(np.float64)
+    y_test = np.squeeze(X_test * 2 + e1)
 
     est = ForestRegressor(n_estimators=10, random_state=0)
 
@@ -670,6 +667,17 @@ def check_quantile_ranks(name):
     y_ranks = est.quantile_ranks(X_test, y_test)
 
     assert y_ranks.shape == (X_test.shape[0],)
+    assert np.all(y_ranks >= 0)
+    assert np.all(y_ranks <= 1)
+
+    # Check predicted ranks on multi-target data.
+    y_train = np.stack([np.squeeze(x1), np.squeeze(x1 * 2)], axis=1)
+    y_test = np.stack([np.squeeze(X_test - e1), np.squeeze(X_test * 2 + e1)], axis=1)
+
+    est.fit(X_train, y_train)
+    y_ranks = est.quantile_ranks(X_test, y_test)
+
+    assert y_ranks.shape == (X_test.shape[0], 2)
     assert np.all(y_ranks >= 0)
     assert np.all(y_ranks <= 1)
 

@@ -481,8 +481,10 @@ cdef class QuantileForest:
 
     Attributes
     ----------
-    y_train : array-like of shape (n_samples, n_outputs)
-        Training target values. Assumes values are sorted in ascending order.
+    y_train : array-like of shape (n_outputs, n_samples)
+        Training target values. Assumes that the values are sorted in
+        ascending order for each output. The outputs are assigned to the first
+        dimension (n_outputs) of the array for ease of indexing.
 
     y_train_leaves : array-like of shape \
             (n_estimators, n_leaves, n_outputs, n_indices)
@@ -600,9 +602,11 @@ cdef class QuantileForest:
         preds : array-like of shape (n_samples, n_outputs, n_quantiles)
             Quantiles or means for samples as floats.
         """
-        cdef intp_t n_quantiles, n_samples, n_trees, n_outputs, n_train
+        cdef intp_t n_samples, n_outputs, n_quantiles
+        cdef intp_t n_trees, n_train, max_idx
         cdef intp_t i, j, k, l
         cdef bint use_mean
+        cdef list[char*] interpolations
         cdef vector[double] leaf_samples
         cdef vector[double] leaf_weights
         cdef vector[vector[intp_t]] train_indices
@@ -617,11 +621,11 @@ cdef class QuantileForest:
         cdef cnp.ndarray[float64_t, ndim=3] preds
         cdef double[:, :, :] preds_view
 
-        n_quantiles = len(quantiles)
         n_samples = X_leaves.shape[0]
-        n_trees = X_leaves.shape[1]
-
         n_outputs = self.y_train.size()
+        n_quantiles = len(quantiles)
+
+        n_trees = X_leaves.shape[1]
         n_train = self.y_train[0].size()
         max_idx = self.y_train_leaves.shape[3]
 
@@ -641,8 +645,8 @@ cdef class QuantileForest:
                     "must be None."
                 )
 
-        interps = [b"linear", b"lower", b"higher", b"midpoint", b"nearest"]
-        if interpolation not in interps:
+        interpolations = [b"linear", b"lower", b"higher", b"midpoint", b"nearest"]
+        if interpolation not in interpolations:
             raise ValueError(f"Invalid interpolation method {interpolation}.")
 
         # Initialize NumPy array with NaN values and get view for nogil.
@@ -815,8 +819,10 @@ cdef class QuantileForest:
         ranks : array-like of shape (n_samples, n_outputs)
             Quantiles ranks in range [0, 1] for samples as floats.
         """
-        cdef intp_t n_samples, n_trees, n_outputs
+        cdef intp_t n_samples, n_outputs
+        cdef intp_t n_trees, max_idx
         cdef intp_t i, j
+        cdef list[char*] kinds
         cdef vector[double] leaf_samples
         cdef vector[vector[intp_t]] train_indices
         cdef intp_t idx, train_idx
@@ -825,11 +831,16 @@ cdef class QuantileForest:
         cdef cnp.ndarray[float64_t, ndim=2] ranks
         cdef double[:, :] ranks_view
 
-        n_outputs = y_scores.shape[0]
+        n_samples = y_scores.shape[0]
+        n_outputs = y_scores.shape[1]
 
-        n_samples = X_leaves.shape[0]
+        if n_outputs != <intp_t>self.y_train.size():
+            raise ValueError(
+                f"Number of target outputs in training data ({self.y_train.size()}) does not "
+                f"match the number of outputs in test data being scored ({n_outputs})."
+            )
+
         n_trees = X_leaves.shape[1]
-
         max_idx = self.y_train_leaves.shape[3]
 
         if X_indices is not None:
@@ -856,7 +867,6 @@ cdef class QuantileForest:
                 for j in range(n_outputs):
                     for k in range(<intp_t>(train_indices.size())):
                         train_indices[k].clear()
-                    leaf_samples.clear()
                     leaf_preds.clear()
 
                     # Accumulate training indices across leaves for each tree.
@@ -875,13 +885,15 @@ cdef class QuantileForest:
                         if train_indices[k].size() == 0:
                             continue
 
+                        leaf_samples.clear()
+
                         # Get training target values associated with indices.
                         for train_idx in train_indices[k]:
                             if train_idx != 0:
                                 leaf_samples.push_back(self.y_train[j][train_idx - 1])
 
                         # Calculate rank.
-                        pred = calc_quantile_rank(leaf_samples, y_scores[j, i], kind=kind)
+                        pred = calc_quantile_rank(leaf_samples, y_scores[i, j], kind=kind)
                         if pred != -1:
                             leaf_preds.push_back(pred)
 
@@ -931,8 +943,8 @@ cdef class QuantileForest:
         proximities : list of dicts
             Dicts mapping sample indices to proximity counts.
         """
-        cdef vector[map[intp_t, intp_t]] proximities
-        cdef intp_t n_samples, n_trees, n_train
+        cdef intp_t n_samples
+        cdef intp_t n_trees, n_train, max_idx
         cdef intp_t i, j
         cdef vector[intp_t] train_indices
         cdef vector[int] leaf_weights
@@ -940,10 +952,11 @@ cdef class QuantileForest:
         cdef int cutoff, train_wgt
         cdef priority_queue[pair[int, intp_t]] queue
         cdef pair[int, intp_t] entry
+        cdef vector[map[intp_t, intp_t]] proximities
 
         n_samples = X_leaves.shape[0]
-        n_trees = X_leaves.shape[1]
 
+        n_trees = X_leaves.shape[1]
         n_train = self.y_train[0].size()
         max_idx = self.y_train_leaves.shape[3]
 
