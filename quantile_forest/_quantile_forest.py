@@ -652,7 +652,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
             .. note::
                 When `max_samples_leaf=1`, the specific interpolation
                 options will depend on those available in the NumPy
-                `percentile` and `nanpercentile` methods.
+                `quantile` and `nanquantile` methods.
 
         weighted_quantile : bool, default=True
             Calculate a weighted quantile. Weighted quantiles are computed by
