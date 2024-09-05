@@ -24,7 +24,7 @@ from sklearn.utils.validation import check_random_state
 from quantile_forest import RandomForestQuantileRegressor
 
 random_state = np.random.RandomState(0)
-n_test_samples = 25
+n_test_samples = 50
 noise_std = 0.1
 
 pixel_dim = (8, 8)  # pixel dimensions (width and height)
@@ -76,7 +76,12 @@ X_test_noisy = X_test.pipe(add_gaussian_noise, std=noise_std, random_state=rando
 # We set `max_samples_leaf=None` to ensure that every sample in the training
 # data is stored in the leaf nodes. By doing this, we allow the model to
 # consider all samples as potential candidates for proximity calculations.
-qrf = RandomForestQuantileRegressor(max_samples_leaf=None, random_state=random_state)
+qrf = RandomForestQuantileRegressor(
+    n_estimators=500,
+    max_features=1 / 3,
+    max_samples_leaf=None,
+    random_state=random_state,
+)
 
 # Fit the model to predict the non-noisy pixels from noisy pixels (i.e., to denoise).
 # We fit a single multi-target model, with each pixel treated as a distinct target.
@@ -126,6 +131,8 @@ def plot_digits_proximities(
     width=225,
 ):
     """Plot Digits dataset proximities for test samples."""
+    df = df[df["prox_idx"] < n_prox].copy()
+
     dim_x, dim_y = pixel_dim[0], pixel_dim[1]
     dgt_x, dgt_y = len(str(dim_x)), len(str(dim_y))
 

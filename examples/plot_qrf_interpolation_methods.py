@@ -84,7 +84,7 @@ def plot_interpolation_predictions(df, legend):
     """Plot predictions by quantile interpolation methods."""
     # Slider for varying the prediction interval that determines the quantiles being interpolated.
     slider = alt.binding_range(name="Prediction Interval: ", min=0, max=1, step=0.01)
-    interval_val = alt.param(name="interval", value=0.9, bind=slider)
+    interval_val = alt.param(name="interval", value=0.8, bind=slider)
 
     click = alt.selection_point(bind="legend", fields=["method"], on="click")
 
