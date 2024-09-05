@@ -144,4 +144,4 @@ The predictions of a standard random forest can also be recovered from a quantil
 User-Specified Functions
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-While a QRF is designed to estimate quantiles from the empirical distribution calculated for each sample, in many cases it may be useful to use the empirical distribution to calculate other quantities of interest. For more details, see :ref:`gallery_plot_custom_functions`.
+While a QRF is designed to estimate quantiles from the empirical distribution calculated for each sample, in many cases it may be useful to use the empirical distribution to calculate other quantities of interest. For more details, see :ref:`gallery_plot_qrf_custom_functions`.
