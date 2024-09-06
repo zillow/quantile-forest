@@ -686,8 +686,8 @@ class BaseForestQuantileRegressor(ForestRegressor):
 
         Returns
         -------
-        y_pred : array of shape (n_train, n_quantiles) or \
-                (n_train, n_outputs, n_quantiles)
+        y_pred : array of shape (n_samples, n_quantiles) or \
+                (n_samples, n_outputs, n_quantiles)
             If quantiles is set to 'mean', then return ``E(Y | X)``. Else, for
             all quantiles, return ``y`` at ``q`` for which ``F(Y=y|x) = q``,
             where ``q`` is the quantile.
@@ -848,7 +848,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
 
         Returns
         -------
-        y_ranks : array of shape (n_train) or (n_train, n_outputs)
+        y_ranks : array of shape (n_samples) or (n_samples, n_outputs)
             Quantile ranks in range [0, 1].
         """
         check_is_fitted(self)
