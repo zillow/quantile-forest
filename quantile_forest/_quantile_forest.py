@@ -934,8 +934,8 @@ class BaseForestQuantileRegressor(ForestRegressor):
 
         Returns
         -------
-        proximities : list of tuples
-            List of tuples mapping sample indices to proximity counts.
+        proximities : list of tuples, length = n_samples
+            List of tuples mapping training sample indices to proximity counts.
 
         Notes
         -----
