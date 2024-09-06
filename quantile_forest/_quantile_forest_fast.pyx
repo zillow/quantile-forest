@@ -941,8 +941,8 @@ cdef class QuantileForest:
 
         Returns
         -------
-        proximities : list of dicts
-            Dicts mapping sample indices to proximity counts.
+        proximities : list of dicts, length = n_samples
+            List of dicts mapping training sample indices to proximity counts.
         """
         cdef intp_t n_samples
         cdef intp_t n_trees, n_train, max_idx

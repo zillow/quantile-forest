@@ -242,10 +242,10 @@ class BaseForestQuantileRegressor(ForestRegressor):
             Subsample leaf nodes. If True, leaves are randomly sampled to size
             `max_samples_leaf`.
 
-        max_node_count: int
+        max_node_count : int
             Maximum number of leaf nodes across all trees.
 
-        max_samples_leaf: int
+        max_samples_leaf : int
             Maximum number of samples per leaf node.
 
         random_state : int, RandomState instance

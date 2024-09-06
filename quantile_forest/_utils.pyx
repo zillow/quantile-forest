@@ -14,7 +14,24 @@ cdef inline void parallel_qsort_asc(
     int left,
     int right,
 ) noexcept nogil:
-    """Sort lists `a` and `b` in ascending order by `a`."""
+    """Sort two lists `a` and `b` in parallel in ascending order by `a`.
+
+    The sorting is performed in-place on `a`, and the elements of `b` are
+    rearranged to maintain the same index correspondence with `a`.
+
+    The sorting is performed using quicksort.
+
+    Parameters
+    ----------
+    a : list of floats
+        Primary list to be sorted in ascending order.
+    b : list of floats
+        Secondary list, whose elements are rearranged in parallel with `a`.
+    left : int
+        Starting index of the current subarray to sort.
+    right : int
+        Ending index of the current subarray to sort.
+    """
     cdef int i, j
     cdef double pivot
 
