@@ -58,8 +58,7 @@ sklearn_version = parse_version(sklearn.__version__)
 
 
 class BaseForestQuantileRegressor(ForestRegressor):
-    """
-    Base class for quantile regression forests.
+    """Base class for quantile regression forests.
 
     Warning: This class should not be used directly. Use derived classes
     instead.
@@ -1105,7 +1104,7 @@ class RandomForestQuantileRegressor(BaseForestQuantileRegressor):
         - If float, then `max_samples_leaf` is a fraction and
           `ceil(max_samples_leaf * n_samples)` are the maximum
           number of samples for each node.
-        - If None then unlimited number of leaf samples.
+        - If None, then unlimited number of leaf samples.
 
     min_weight_fraction_leaf : float, default=0.0
         The minimum weighted fraction of the sum total of weights (of all
@@ -1137,7 +1136,7 @@ class RandomForestQuantileRegressor(BaseForestQuantileRegressor):
     max_leaf_nodes : int, default=None
         Grow trees with ``max_leaf_nodes`` in best-first fashion.
         Best nodes are defined as relative reduction in impurity.
-        If None then unlimited number of leaf nodes.
+        If None, then unlimited number of leaf nodes.
 
     min_impurity_decrease : float, default=0.0
         A node will be split if this split induces a decrease of the impurity
@@ -1234,7 +1233,8 @@ class RandomForestQuantileRegressor(BaseForestQuantileRegressor):
         known as the Gini importance.
 
         Warning: impurity-based feature importances can be misleading for
-        high cardinality features (many unique values).
+        high cardinality features (many unique values). See
+        :func:`sklearn.inspection.permutation_importance` as an alternative.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
@@ -1448,7 +1448,7 @@ class ExtraTreesQuantileRegressor(BaseForestQuantileRegressor):
         - If float, then `max_samples_leaf` is a fraction and
           `ceil(max_samples_leaf * n_samples)` are the maximum
           number of samples for each node.
-        - If None then unlimited number of leaf samples.
+        - If None, then unlimited number of leaf samples.
 
     min_weight_fraction_leaf : float, default=0.0
         The minimum weighted fraction of the sum total of weights (of all
@@ -1480,7 +1480,7 @@ class ExtraTreesQuantileRegressor(BaseForestQuantileRegressor):
     max_leaf_nodes : int, default=None
         Grow trees with ``max_leaf_nodes`` in best-first fashion.
         Best nodes are defined as relative reduction in impurity.
-        If None then unlimited number of leaf nodes.
+        If None, then unlimited number of leaf nodes.
 
     min_impurity_decrease : float, default=0.0
         A node will be split if this split induces a decrease of the impurity
@@ -1580,7 +1580,8 @@ class ExtraTreesQuantileRegressor(BaseForestQuantileRegressor):
         known as the Gini importance.
 
         Warning: impurity-based feature importances can be misleading for
-        high cardinality features (many unique values).
+        high cardinality features (many unique values). See
+        :func:`sklearn.inspection.permutation_importance` as an alternative.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
