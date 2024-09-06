@@ -492,7 +492,7 @@ number of samples for each node.</p></li>
 <li><p>If float, then <code class="docutils literal notranslate"><span class="pre">max_samples_leaf</span></code> is a fraction and
 <code class="docutils literal notranslate"><span class="pre">ceil(max_samples_leaf</span> <span class="pre">*</span> <span class="pre">n_samples)</span></code> are the maximum
 number of samples for each node.</p></li>
-<li><p>If None then unlimited number of leaf samples.</p></li>
+<li><p>If None, then unlimited number of leaf samples.</p></li>
 </ul>
 </dd>
 <dt><strong>min_weight_fraction_leaf</strong><span class="classifier">float, default=0.0</span></dt><dd><p>The minimum weighted fraction of the sum total of weights (of all
@@ -523,7 +523,7 @@ effectively inspect more than <code class="docutils literal notranslate"><span c
 </dd>
 <dt><strong>max_leaf_nodes</strong><span class="classifier">int, default=None</span></dt><dd><p>Grow trees with <code class="docutils literal notranslate"><span class="pre">max_leaf_nodes</span></code> in best-first fashion.
 Best nodes are defined as relative reduction in impurity.
-If None then unlimited number of leaf nodes.</p>
+If None, then unlimited number of leaf nodes.</p>
 </dd>
 <dt><strong>min_impurity_decrease</strong><span class="classifier">float, default=0.0</span></dt><dd><p>A node will be split if this split induces a decrease of the impurity
 greater than or equal to this value.</p>
@@ -935,7 +935,7 @@ If False, a prediction is calculated for each leaf and aggregated.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
-<dt><strong>y_pred</strong><span class="classifier">array of shape (n_samples, n_outputs, n_quantiles)</span></dt><dd><p>If quantiles is set to ‘mean’, then return <code class="docutils literal notranslate"><span class="pre">E(Y</span> <span class="pre">|</span> <span class="pre">X)</span></code>. Else, for
+<dt><strong>y_pred</strong><span class="classifier">array of shape (n_train, n_quantiles) or                 (n_train, n_outputs, n_quantiles)</span></dt><dd><p>If quantiles is set to ‘mean’, then return <code class="docutils literal notranslate"><span class="pre">E(Y</span> <span class="pre">|</span> <span class="pre">X)</span></code>. Else, for
 all quantiles, return <code class="docutils literal notranslate"><span class="pre">y</span></code> at <code class="docutils literal notranslate"><span class="pre">q</span></code> for which <code class="docutils literal notranslate"><span class="pre">F(Y=y|x)</span> <span class="pre">=</span> <span class="pre">q</span></code>,
 where <code class="docutils literal notranslate"><span class="pre">q</span></code> is the quantile.</p>
 </dd>
@@ -980,7 +980,7 @@ If False, the proximities will be returned in arbitrary order.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
-<dt><strong>proximities</strong><span class="classifier">list of tuples</span></dt><dd><p>List of tuples mapping sample indices to proximity counts.</p>
+<dt><strong>proximities</strong><span class="classifier">list of tuples, length = n_samples</span></dt><dd><p>List of tuples mapping training sample indices to proximity counts.</p>
 </dd>
 </dl>
 </dd>
