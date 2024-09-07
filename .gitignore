@@ -7,67 +7,39 @@ __pycache__/
 *.so
 *.cpp
 
-# scikit-learn specific
-doc/_build/
-doc/auto_examples/
-doc/modules/generated/
-doc/datasets/generated/
-
 # Distribution / packaging
-
 .Python
 env/
+.installed.cfg
 build/
 develop-eggs/
 dist/
 downloads/
 eggs/
 .eggs/
+sdist/
+parts/
+var/
 lib/
 lib64/
-parts/
-sdist/
-var/
 *.egg-info/
-.installed.cfg
 *.egg
 */version.py
-
-# PyInstaller
-#  Usually these files are written by a python script from a template
-#  before PyInstaller builds the exe, so as to inject date/other infos into it.
-*.manifest
-*.spec
 
 # Installer logs
 pip-log.txt
 pip-delete-this-directory.txt
 
 # Unit test / coverage reports
-htmlcov/
-.tox/
 .coverage
 .coverage.*
-.cache
-nosetests.xml
 coverage.xml
+htmlcov/
+.tox/
+nosetests.xml
+.cache
 *,cover
 .hypothesis/
-
-# Translations
-*.mo
-*.pot
-
-# Django stuff:
-*.log
-
-# Sphinx documentation
-docs/_build/
-docs/generated/
-docs/references/
-
-# PyBuilder
-target/
 
 # OS generated files
 .DS_Store
@@ -76,7 +48,8 @@ target/
 paper/paper.pdf
 paper/paper.jats
 
-# Sphinx documentation
+# Documentation
 docs/_build/
 docs/_images/
+docs/generated/
 docs/gallery/*.rst
