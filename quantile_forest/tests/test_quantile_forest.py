@@ -567,7 +567,12 @@ def test_predict_quantiles(
     aggregate_leaves_first,
 ):
     check_predict_quantiles(
-        name, max_samples, max_samples_leaf, quantiles, weighted_quantile, aggregate_leaves_first
+        name,
+        max_samples,
+        max_samples_leaf,
+        quantiles,
+        weighted_quantile,
+        aggregate_leaves_first,
     )
 
 
@@ -1539,14 +1544,7 @@ def test_calc_weighted_quantile():
 
     # Check error if invalid parameters.
     assert_raises(TypeError, calc_weighted_quantile, [1, 2], [1, 1], 0.5)
-    assert_raises(
-        TypeError,
-        calc_weighted_quantile,
-        [1, 2],
-        [1, 1],
-        [0.5],
-        interpolation=None,
-    )
+    assert_raises(TypeError, calc_weighted_quantile, [1, 2], [1, 1], [0.5], interpolation=None)
 
 
 def test_calc_quantile_rank():
@@ -1596,10 +1594,4 @@ def test_calc_quantile_rank():
 
     # Check error if invalid parameters.
     assert_raises(TypeError, calc_quantile_rank, [1, 2], [1])
-    assert_raises(
-        TypeError,
-        calc_quantile_rank,
-        [1, 2],
-        float(1),
-        kind=None,
-    )
+    assert_raises(TypeError, calc_quantile_rank, [1, 2], float(1), kind=None)
