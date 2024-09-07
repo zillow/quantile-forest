@@ -127,9 +127,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights. If None, then samples are equally weighted. Splits
             that would create child nodes with net zero or negative weight are
-            ignored while searching for a split in each node. In the case of
-            classification, splits are also ignored if they would result in any
-            single class carrying a negative weight in either child node.
+            ignored while searching for a split in each node.
 
         sparse_pickle : bool, default=False
             Pickle the underlying data structure using a SciPy sparse matrix.
@@ -230,12 +228,12 @@ class BaseForestQuantileRegressor(ForestRegressor):
         X_leaves_bootstrap : array-like of shape (n_samples,)
             Leaf node indices of the bootstrap training samples.
 
-        sample_weight : array-like of shape (n_samples,), default=None
+        sample_weight : array-like of shape (n_samples, n_outputs), \
+                default=None
             Sample weights. If None, then samples are equally weighted. Splits
             that would create child nodes with net zero or negative weight are
-            ignored while searching for a split in each node. In the case of
-            classification, splits are also ignored if they would result in any
-            single class carrying a negative weight in either child node.
+            ignored while searching for a split in each node. For each output,
+            the ordering of the weights correspond to the sorted samples.
 
         leaf_subsample : bool
             Subsample leaf nodes. If True, leaves are randomly sampled to size
@@ -260,6 +258,9 @@ class BaseForestQuantileRegressor(ForestRegressor):
             outputs. Each node list is padded to equal length with 0s.
         """
         n_outputs = bootstrap_indices.shape[1]
+
+        if sample_weight is not None:
+            sample_weight = np.squeeze(sample_weight)
 
         shape = (max_node_count, n_outputs, max_samples_leaf)
         y_train_leaves_slice = np.zeros(shape, dtype=np.int64)
@@ -319,10 +320,12 @@ class BaseForestQuantileRegressor(ForestRegressor):
             The indices that would sort the target values in ascending order.
             Used to associate ``est.apply`` outputs with sorted target values.
 
-        sample_weight : array-like of shape (n_samples,), default=None
+        sample_weight : array-like of shape (n_samples, n_outputs), \
+                default=None
             Sample weights. If None, then samples are equally weighted. Splits
             that would create child nodes with net zero or negative weight are
-            ignored while searching for a split in each node.
+            ignored while searching for a split in each node. For each output,
+            the ordering of the weights correspond to the sorted samples.
 
         Returns
         -------
@@ -393,9 +396,6 @@ class BaseForestQuantileRegressor(ForestRegressor):
                 sample_count = np.max(np.bincount(X_leaves_bootstrap[:, i]))
                 if sample_count > max_samples_leaf:
                     max_samples_leaf = sample_count
-
-        if sample_weight is not None:
-            sample_weight = np.squeeze(sample_weight)
 
         y_train_leaves = [
             self._get_y_train_leaves_slice(
