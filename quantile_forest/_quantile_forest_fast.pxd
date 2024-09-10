@@ -39,7 +39,7 @@ cdef class QuantileForest:
         bint aggregate_leaves_first=*,
     )
 
-    cpdef vector[map[intp_t, intp_t]] proximity_counts(
+    cpdef vector[map[intp_t, int]] proximity_counts(
         self,
         intp_t[:, :] X_leaves,
         uint8_t[:, :] X_indices=*,

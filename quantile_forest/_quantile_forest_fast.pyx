@@ -155,7 +155,7 @@ cpdef vector[double] calc_quantile(
     if not issorted:
         sort_cpp(inputs.begin(), inputs.end())
 
-    f = n_inputs + 1 - (2 * C)
+    f = <int>n_inputs + 1 - (2 * C)
 
     out = vector[double](n_quantiles)
 
@@ -166,15 +166,15 @@ cpdef vector[double] calc_quantile(
         idx = quantile * f + C - 1
 
         # Check if the quantile is the first or last value.
-        if idx >= n_inputs - 1:
+        if idx >= <int>n_inputs - 1:
             out[i] = inputs[n_inputs - 1]
             continue
         if idx <= 0:
             out[i] = inputs[0]
             continue
 
-        v_floor = inputs[<int>floor(idx)]
-        v_ceil = inputs[<int>ceil(idx)]
+        v_floor = inputs[<intp_t>floor(idx)]
+        v_ceil = inputs[<intp_t>ceil(idx)]
 
         # Check if the quantile does not lie between two values.
         if v_floor == v_ceil:
@@ -193,7 +193,7 @@ cpdef vector[double] calc_quantile(
             out[i] = 0.5 * (v_floor + v_ceil)
         elif s_interpolation == <char*>b"nearest":
             if fabs(frac - 0.5) < 1e-16:
-                out[i] = inputs[<int>(round(idx / 2) * 2)]
+                out[i] = inputs[<intp_t>(round(idx / 2) * 2)]
             else:
                 out[i] = v_floor if frac < 0.5 else v_ceil
         elif s_interpolation == <char*>b"linear":
@@ -266,7 +266,7 @@ cpdef vector[double] calc_weighted_quantile(
     cdef double f
     cdef double quantile
     cdef vector[double] cum_weights, sorted_quantile_indices
-    cdef int idx_floor, idx_ceil
+    cdef intp_t idx_floor, idx_ceil
     cdef double p, p_floor, p_ceil
     cdef double v_floor, v_ceil, frac
     cdef vector[double] out
@@ -458,9 +458,9 @@ cpdef double calc_quantile_rank(
     right = 0
     for i in range(n_inputs):
         if inputs[i] < score:
-            left = right = i + 1
+            left = right = <int>i + 1
         elif inputs[i] == score:
-            right = i + 1
+            right = <int>i + 1
         else:
             break
 
@@ -667,9 +667,10 @@ cdef class QuantileForest:
                 leaf_weights = vector[double](n_train)
 
             for i in range(n_samples):
+                n_total_samples = 0
+                n_total_trees = 0
+
                 if weighted_leaves:
-                    n_total_samples = 0
-                    n_total_trees = 0
                     for j in range(n_trees):
                         if X_indices is None or X_indices[i, j] is True:
                             n_leaf_samples[j] = 0
@@ -821,7 +822,7 @@ cdef class QuantileForest:
         """
         cdef intp_t n_samples, n_outputs
         cdef intp_t n_trees, max_idx
-        cdef intp_t i, j
+        cdef intp_t i, j, k
         cdef list[char*] kinds
         cdef vector[double] leaf_samples
         cdef vector[vector[intp_t]] train_indices
@@ -906,7 +907,7 @@ cdef class QuantileForest:
 
         return np.asarray(ranks_view)
 
-    cpdef vector[map[intp_t, intp_t]] proximity_counts(
+    cpdef vector[map[intp_t, int]] proximity_counts(
         self,
         intp_t[:, :] X_leaves,
         uint8_t[:, :] X_indices=None,
@@ -953,7 +954,7 @@ cdef class QuantileForest:
         cdef int cutoff, train_wgt
         cdef priority_queue[pair[int, intp_t]] queue
         cdef pair[int, intp_t] entry
-        cdef vector[map[intp_t, intp_t]] proximities
+        cdef vector[map[intp_t, int]] proximities
 
         n_samples = X_leaves.shape[0]
 
@@ -970,10 +971,10 @@ cdef class QuantileForest:
                 )
 
         if max_proximities < 1 or n_train < max_proximities:
-            max_proximities = n_train
+            max_proximities = <uint32_t>n_train
 
         # Initialize map of proximity counts for every target leaf node.
-        proximities = vector[map[intp_t, intp_t]](n_samples)
+        proximities = vector[map[intp_t, int]](n_samples)
 
         with nogil:
             leaf_weights = vector[int](n_train)
