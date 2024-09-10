@@ -11,8 +11,8 @@ cnp.import_array()
 cdef inline void parallel_qsort_asc(
     vector[double]& a,
     vector[double]& b,
-    int left,
-    int right,
+    intp_t left,
+    intp_t right,
 ) noexcept nogil:
     """Sort two lists `a` and `b` in parallel in ascending order by `a`.
 
@@ -32,7 +32,7 @@ cdef inline void parallel_qsort_asc(
     right : int
         Ending index of the current subarray to sort.
     """
-    cdef int i, j
+    cdef intp_t i, j
     cdef double pivot
 
     i = left
