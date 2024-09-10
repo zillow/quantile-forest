@@ -540,7 +540,7 @@ cdef class QuantileForest:
         d = {}
         if self.sparse_pickle:
             matrix1 = kwargs["y_train_leaves"]
-            reshape1 = (matrix1.shape[2], matrix1.shape[0] * matrix1.shape[1] * matrix1.shape[2])
+            reshape1 = (matrix1.shape[3], matrix1.shape[0] * matrix1.shape[1] * matrix1.shape[2])
             d["shape1"] = matrix1.shape
             d["matrix1"] = sparse.csc_matrix(matrix1.reshape(reshape1))
 

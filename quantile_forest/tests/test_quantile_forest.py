@@ -1334,15 +1334,24 @@ def test_monotonic_constraints(name, max_samples_leaf):
     check_monotonic_constraints(name, max_samples_leaf)
 
 
-def check_serialization(name, sparse_pickle):
+def check_serialization(name, sparse_pickle, monotonic_cst, multi_target):
     # Check model serialization/deserialization.
 
     X = X_california
-    y = y_california
+
+    if multi_target:
+        y = np.vstack([y_california, y_california]).T
+    else:
+        y = y_california
+
+    if monotonic_cst and not multi_target:
+        monotonic_cst = [1] * X.shape[1]
+    else:
+        monotonic_cst = None
 
     ForestRegressor = FOREST_REGRESSORS[name]
 
-    est = ForestRegressor(n_estimators=10, random_state=0)
+    est = ForestRegressor(n_estimators=10, monotonic_cst=monotonic_cst, random_state=0)
     est.fit(X, y, sparse_pickle=sparse_pickle)
 
     dumped = pickle.dumps(est)
@@ -1354,8 +1363,10 @@ def check_serialization(name, sparse_pickle):
 
 @pytest.mark.parametrize("name", FOREST_REGRESSORS)
 @pytest.mark.parametrize("sparse_pickle", [False, True])
-def test_serialization(name, sparse_pickle):
-    check_serialization(name, sparse_pickle)
+@pytest.mark.parametrize("monotonic_cst", [False, True])
+@pytest.mark.parametrize("multi_target", [False, True])
+def test_serialization(name, sparse_pickle, monotonic_cst, multi_target):
+    check_serialization(name, sparse_pickle, monotonic_cst, multi_target)
 
 
 def test_calc_quantile():
