@@ -3,7 +3,7 @@
 import math
 import pickle
 import warnings
-from typing import Any, Dict
+from typing import Any
 
 import numpy as np
 import pytest
@@ -41,7 +41,7 @@ perm = rng.permutation(min(california.target.size, 500))
 X_california = california.data[perm]
 y_california = california.target[perm]
 
-FOREST_REGRESSORS: Dict[str, Any] = {
+FOREST_REGRESSORS: dict[str, Any] = {
     "ExtraTreesQuantileRegressor": ExtraTreesQuantileRegressor,
     "RandomForestQuantileRegressor": RandomForestQuantileRegressor,
 }
