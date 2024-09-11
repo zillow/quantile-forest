@@ -5,6 +5,21 @@
 Release Notes
 =============
 
+Version 1.3.11 (released Sep 10, 2024)
+--------------------------------------
+
+* Refactor leaf mapping by `@reidjohnson <https://github.com/reidjohnson>`_ in `#80 <https://github.com/zillow/quantile-forest/pull/80>`_
+* Update build linting by `@reidjohnson <https://github.com/reidjohnson>`_ in `#81 <https://github.com/zillow/quantile-forest/pull/81>`_
+* Check `monotonic_cst` before fit by `@reidjohnson <https://github.com/reidjohnson>`_ in `#82 <https://github.com/zillow/quantile-forest/pull/82>`_
+* Bump pypa/gh-action-pypi-publish from 1.9.0 to 1.10.0 by `@dependabot <https://github.com/dependabot>`_ in `#83 <https://github.com/zillow/quantile-forest/pull/83>`_
+* Fix unaggregated quantile ranks by `@reidjohnson <https://github.com/reidjohnson>`_ in `#84 <https://github.com/zillow/quantile-forest/pull/84>`_
+* Fix Cython build warnings by `@reidjohnson <https://github.com/reidjohnson>`_ in `#86 <https://github.com/zillow/quantile-forest/pull/86>`_
+* Bump pypa/gh-action-pypi-publish from 1.10.0 to 1.10.1 by `@dependabot <https://github.com/dependabot>`_ in `#85 <https://github.com/zillow/quantile-forest/pull/85>`_
+* Fix multi-target serialization by `@reidjohnson <https://github.com/reidjohnson>`_ in `#88 <https://github.com/zillow/quantile-forest/pull/88>`_
+* Fix doc tests by `@reidjohnson <https://github.com/reidjohnson>`_ in `#89 <https://github.com/zillow/quantile-forest/pull/89>`_
+
+**Full Changelog**: https://github.com/zillow/quantile-forest/compare/v1.3.10...v1.3.11
+
 Version 1.3.10 (released Aug 31, 2024)
 --------------------------------------
 

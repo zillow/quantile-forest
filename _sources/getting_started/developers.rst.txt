@@ -50,7 +50,7 @@ To test the code and produce a coverage report::
 
 To test the documentation::
 
-  $ python -m pytest docs/user_guide/*rst
+  $ python -m pytest --doctest-glob="*.rst" --doctest-modules docs
 
 Documentation
 ~~~~~~~~~~~~~
