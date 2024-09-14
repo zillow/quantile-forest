@@ -11,7 +11,7 @@ from quantile_forest._utils import (
 
 
 def test_generate_unsampled_indices():
-    # Check unsampled indices generation.
+    """Check unsampled indices generation."""
     max_index = 20
     duplicates = [[1, 4], [19, 10], [2, 3, 5], [6, 13]]
 
@@ -40,7 +40,7 @@ def test_generate_unsampled_indices():
 
 
 def test_group_indices_by_value():
-    # Check grouping indices by value.
+    """Check grouping indices by value."""
     inputs = np.array([1, 3, 2, 2, 5, 4, 5, 5], dtype=np.int64)
 
     actual_indices, actual_values = group_indices_by_value(inputs)
@@ -58,7 +58,7 @@ def test_group_indices_by_value():
 
 
 def test_map_indices_to_leaves():
-    # Check mapping of indices to leaf nodes.
+    """Check mapping of indices to leaf nodes."""
     y_train_leaves = np.zeros((3, 1, 3), dtype=np.int64)
     bootstrap_indices = np.array([[1], [2], [3], [4], [5]], dtype=np.int64)
     leaf_indices = np.array([1, 2])
