@@ -23,7 +23,7 @@ bounds = [0, 100]
 quantiles = np.linspace(0, 1, num=41, endpoint=True).round(3).tolist()
 
 # Define functions that generate targets; each function maps to one target.
-funcs = [
+target_funcs = [
     {
         "signal": lambda x: np.log1p(x + 1),
         "noise": lambda x: np.log1p(x) * random_state.uniform(size=len(x)),
@@ -36,17 +36,18 @@ funcs = [
     },
 ]
 
-legend = {k: v for f in funcs for k, v in f["legend"].items()}
-
 
 def make_funcs_Xy(funcs, n_samples, bounds):
-    """Make a dataset from specified function(s) with signal and noise."""
+    """Make a dataset from specified function(s)."""
     x = np.linspace(*bounds, n_samples)
     y = np.empty((len(x), len(funcs)))
     for i, func in enumerate(funcs):
-        y[:, i] = func["signal"](x) + func["noise"](x)
+        y[:, i] = func(x)
     return np.atleast_2d(x).T, y
 
+
+funcs = [lambda x, f=f: f["signal"](x) + f["noise"](x) for f in target_funcs]
+legend = {k: v for f in target_funcs for k, v in f["legend"].items()}
 
 # Create a dataset with multiple target variables.
 X, y = make_funcs_Xy(funcs, n_samples, bounds)
@@ -63,7 +64,6 @@ df = pd.DataFrame(
     {
         "x": np.tile(X.squeeze(), len(funcs)),
         "y": y.reshape(-1, order="F"),
-        "y_true": np.concatenate([f["signal"](X.squeeze()) for f in funcs]),
         "y_pred": np.concatenate([y_pred[:, i, len(quantiles) // 2] for i in range(len(funcs))]),
         "target": np.concatenate([[str(i)] * len(X) for i in range(len(funcs))]),
         **{f"q_{q_i:.3g}": y_i.ravel() for q_i, y_i in zip(quantiles, y_pred.T)},
@@ -95,7 +95,6 @@ def plot_multitargets(df, legend):
         alt.Tooltip("target:N", title="Target"),
         alt.Tooltip("x:Q", format=",.3f", title="X"),
         alt.Tooltip("y:Q", format=",.3f", title="Y"),
-        alt.Tooltip("y_true:Q", format=",.3f", title="Y"),
         alt.Tooltip("y_pred:Q", format=",.3f", title="Predicted Y"),
         alt.Tooltip("y_pred_low:Q", format=",.3f", title="Predicted Lower Y"),
         alt.Tooltip("y_pred_upp:Q", format=",.3f", title="Predicted Upper Y"),

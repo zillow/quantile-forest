@@ -53,8 +53,8 @@ for idx, interval in enumerate(intervals):
         "method": ["Actual"] * len(y),
         "X": [f"Sample {idx + 1} ({x})" for idx, x in enumerate(X.tolist())],
         "y_pred": y.tolist(),
-        "y_pred_low": y.tolist(),
-        "y_pred_upp": y.tolist(),
+        "y_pred_low": [None] * len(y),
+        "y_pred_upp": [None] * len(y),
         "quantile_low": [None] * len(y),
         "quantile_upp": [None] * len(y),
     }

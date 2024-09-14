@@ -18,10 +18,12 @@ import shutil
 import tempfile
 
 import altair as alt
+import geopandas as gpd
 import numpy as np
 import pandas as pd
 from sklearn import datasets
 from skops import hub_utils
+from vega_datasets import data
 
 import quantile_forest
 from quantile_forest import RandomForestQuantileRegressor
@@ -166,16 +168,17 @@ with tempfile.TemporaryDirectory() as local_dir:
 X, y = datasets.fetch_california_housing(as_frame=True, return_X_y=True)
 y_pred = qrf.predict(X, quantiles=quantiles) * 100_000  # predict in dollars
 
+
 df = (
     pd.DataFrame(y_pred, columns=quantiles)
     .reset_index()
     .sample(frac=sample_frac, random_state=random_state)
-    .melt(id_vars=["index"], var_name="quantile", value_name="value")
+    .rename(columns={q: f"q_{q:.3g}" for q in quantiles})
     .merge(X[["Latitude", "Longitude", "Population"]].reset_index(), on="index", how="right")
 )
 
 
-def plot_quantiles_by_latlon(df, quantiles, color_scheme="cividis"):
+def plot_quantiles_by_latlon(df, quantiles, color_scheme="lightgreyred"):
     """Plot quantile predictions on California Housing dataset by lat/lon."""
     # Slider for varying the displayed quantile estimates.
     slider = alt.binding_range(
@@ -187,33 +190,67 @@ def plot_quantiles_by_latlon(df, quantiles, color_scheme="cividis"):
 
     quantile_val = alt.param(name="quantile", value=0.5, bind=slider)
 
+    # Load the US counties data and filter to California counties.
+    ca_counties = (
+        gpd.read_file(data.us_10m.url, layer="counties")
+        .set_crs("EPSG:4326")
+        .assign(**{"county_fips": lambda x: x["id"].astype(int)})
+        .drop(columns=["id"])
+        .query("(county_fips >= 6000) & (county_fips < 7000)")
+    )
+
+    x_min = df[[f"q_{q:.3g}" for q in quantiles]].min().min()
+    x_max = df[[f"q_{q:.3g}" for q in quantiles]].max().max()
+
+    df = (
+        gpd.GeoDataFrame(
+            df, geometry=gpd.points_from_xy(df["Longitude"], df["Latitude"]), crs="4326"
+        )
+        .sjoin(ca_counties, how="right")
+        .drop(columns=["index_left0"])
+        .assign(
+            **{f"w_q_{q:.3g}": lambda x, q=q: x[f"q_{q:.3g}"] * x["Population"] for q in quantiles}
+        )
+    )
+
+    grouped = (
+        df.groupby("county_fips")
+        .agg({**{f"w_q_{q:.3g}": "sum" for q in quantiles}, **{"Population": "sum"}})
+        .reset_index()
+        .assign(
+            **{f"q_{q:.3g}": lambda x, q=q: x[f"w_q_{q:.3g}"] / x["Population"] for q in quantiles}
+        )
+    )
+
+    df = (
+        df[["county_fips", "Latitude", "Longitude", "geometry"]]
+        .drop_duplicates(subset=["county_fips"])
+        .merge(
+            grouped[["county_fips", "Population"] + [f"q_{q:.3g}" for q in quantiles]],
+            on="county_fips",
+            how="left",
+        )
+    )
+
     chart = (
         alt.Chart(df)
         .add_params(quantile_val)
-        .transform_filter("datum.quantile == quantile")
-        .mark_circle()
+        .transform_calculate(quantile_col="'q_' + quantile")
+        .transform_calculate(value=f"datum[datum.quantile_col]")
+        .mark_geoshape(stroke="black", strokeWidth=0)
         .encode(
-            x=alt.X(
-                "Longitude:Q",
-                axis=alt.Axis(tickMinStep=1, format=".1f"),
-                scale=alt.Scale(zero=False),
-                title="Longitude",
+            color=alt.Color(
+                "value:Q",
+                scale=alt.Scale(domain=[x_min, x_max], scheme=color_scheme),
+                title="Prediction",
             ),
-            y=alt.Y(
-                "Latitude:Q",
-                axis=alt.Axis(tickMinStep=1, format=".1f"),
-                scale=alt.Scale(zero=False),
-                title="Latitude",
-            ),
-            color=alt.Color("value:Q", scale=alt.Scale(scheme=color_scheme), title="Prediction"),
-            size=alt.Size("Population:Q"),
             tooltip=[
-                alt.Tooltip("index:N", title="Row ID"),
-                alt.Tooltip("Latitude:Q", format=".2f", title="Latitude"),
-                alt.Tooltip("Longitude:Q", format=".2f", title="Longitude"),
+                alt.Tooltip("county_fips:N", title="County FIPS"),
+                alt.Tooltip("Population:N", format=",.0f", title="Population"),
                 alt.Tooltip("value:Q", format="$,.0f", title="Predicted Value"),
             ],
         )
+        .project(type="mercator")
         .properties(
             title="Quantile Predictions on the California Housing Dataset",
             height=650,
