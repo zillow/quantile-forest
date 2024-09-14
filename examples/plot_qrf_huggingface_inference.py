@@ -28,8 +28,6 @@ from sklearn.model_selection import KFold
 from skops import hub_utils
 from vega_datasets import data
 
-alt.data_transformers.disable_max_rows()
-
 token = "<Hugging Face Access Token>"
 repo_id = "quantile-forest/california-housing-example"
 load_existing = True
