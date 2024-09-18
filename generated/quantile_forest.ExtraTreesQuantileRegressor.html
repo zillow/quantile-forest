@@ -922,7 +922,7 @@ If False, a prediction is calculated for each leaf and aggregated.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
-<dt><strong>y_pred</strong><span class="classifier">array of shape (n_samples, n_quantiles) or                 (n_samples, n_outputs, n_quantiles)</span></dt><dd><p>If quantiles is set to ‘mean’, then return <code class="docutils literal notranslate"><span class="pre">E(Y</span> <span class="pre">|</span> <span class="pre">X)</span></code>. Else, for
+<dt><strong>y_pred</strong><span class="classifier">array of shape (n_samples,) or (n_samples, n_quantiles) or                 (n_samples, n_outputs, n_quantiles)</span></dt><dd><p>If quantiles is set to ‘mean’, then return <code class="docutils literal notranslate"><span class="pre">E(Y</span> <span class="pre">|</span> <span class="pre">X)</span></code>. Else, for
 all quantiles, return <code class="docutils literal notranslate"><span class="pre">y</span></code> at <code class="docutils literal notranslate"><span class="pre">q</span></code> for which <code class="docutils literal notranslate"><span class="pre">F(Y=y|x)</span> <span class="pre">=</span> <span class="pre">q</span></code>,
 where <code class="docutils literal notranslate"><span class="pre">q</span></code> is the quantile.</p>
 </dd>
@@ -1008,7 +1008,7 @@ optional keyword <code class="docutils literal notranslate"><span class="pre">ki
 <code class="docutils literal notranslate"><span class="pre">dtype=np.float32</span></code>. If a sparse matrix is provided, it will be
 converted into a sparse <code class="docutils literal notranslate"><span class="pre">csr_matrix</span></code>.</p>
 </dd>
-<dt><strong>y</strong><span class="classifier">array-like of shape (n_samples) or (n_samples, n_outputs)</span></dt><dd><p>The target values for which to calculate ranks.</p>
+<dt><strong>y</strong><span class="classifier">array-like of shape (n_samples,) or (n_samples, n_outputs)</span></dt><dd><p>The target values for which to calculate ranks.</p>
 </dd>
 <dt><strong>kind</strong><span class="classifier">{“rank”, “weak”, “strict”, “mean”}, default=”rank”</span></dt><dd><p>Specifies the interpretation of the resulting score:</p>
 <ul class="simple">
@@ -1032,7 +1032,7 @@ False, a rank is calculated for each leaf and aggregated.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
-<dt><strong>y_ranks</strong><span class="classifier">array of shape (n_samples) or (n_samples, n_outputs)</span></dt><dd><p>Quantile ranks in range [0, 1].</p>
+<dt><strong>y_ranks</strong><span class="classifier">array of shape (n_samples,) or (n_samples, n_outputs)</span></dt><dd><p>Quantile ranks in range [0, 1].</p>
 </dd>
 </dl>
 </dd>
