@@ -58,7 +58,7 @@ The default quantiles can be overwritten at prediction time by specifying a valu
     >>> y_pred.ndim == 1
     True
 
-The output of the `predict` method is an array with one column for each specified quantile or a single column if no quantiles are specified. The order of the output columns corresponds to the order of the quantiles, which can be specified in any order (i.e., they do not need to be monotonically ordered)::
+The output of the `predict` method is an array with one column for each specified quantile or a single column if an individual quantile is specified. The order of the output columns corresponds to the order of the quantiles, which can be specified in any order (i.e., they do not need to be monotonically ordered)::
 
     >>> y_pred = qrf.predict(X_test, quantiles=[0.5, 0.25, 0.75])
     >>> bool((y_pred[:, 0] >= y_pred[:, 1]).all())

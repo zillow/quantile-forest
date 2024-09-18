@@ -67,7 +67,7 @@ cpdef vector[intp_t] generate_unsampled_indices(
 
     Parameters
     ----------
-    sample_indices : array-like of shape (n_samples)
+    sample_indices : array-like of shape (n_samples,)
         Sampled indices.
 
     n_total_samples : int
@@ -112,7 +112,7 @@ cpdef group_indices_by_value(cnp.ndarray[intp_t, ndim=1] a):
 
     Parameters
     ----------
-    a : array-like of shape (n_samples)
+    a : array-like of shape (n_samples,)
         Input array. The array is expected to contain integers, and the
         function will group the indices of elements with the same value.
 
@@ -198,7 +198,7 @@ cpdef map_indices_to_leaves(
 
     Parameters
     ----------
-    y_train_leaves_slice : array-like of shape (n_leaves, n_outputs, n_samples)
+    y_train_leaves_slice : array-like of shape (n_leaves, n_outputs, n_indices)
         Unpopulated mapping representing a list of nodes, each with a list of
         indices of the training samples residing at that node.
 
@@ -213,7 +213,7 @@ cpdef map_indices_to_leaves(
 
     Returns
     -------
-    y_train_leaves_slice : array-like of shape (n_leaves, n_outputs, n_samples)
+    y_train_leaves_slice : array-like of shape (n_leaves, n_outputs, n_indices)
         Populated mapping of training sample indices to leaf nodes. Nodes with
         no samples (e.g., internal nodes) are empty. Internal nodes are
         included so that leaf node indices match their ``est.apply`` outputs.

@@ -251,7 +251,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
         Returns
         -------
         y_train_leaves_slice : array-like of shape \
-                (n_leaves, n_outputs, n_samples)
+                (n_leaves, n_outputs, n_indices)
             Mapping of training sample indices to tree's leaf nodes. Nodes with
             no samples (e.g., internal nodes) are empty. Internal nodes are
             included so that leaf node indices match their ``est.apply``
@@ -590,7 +590,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
 
         Returns
         -------
-        unsampled_indices : array of shape (n_unsampled)
+        unsampled_indices : array of shape (n_unsampled,)
             Unsampled indices.
         """
         if not self.bootstrap:
@@ -686,7 +686,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
 
         Returns
         -------
-        y_pred : array of shape (n_samples, n_quantiles) or \
+        y_pred : array of shape (n_samples,) or (n_samples, n_quantiles) or \
                 (n_samples, n_outputs, n_quantiles)
             If quantiles is set to 'mean', then return ``E(Y | X)``. Else, for
             all quantiles, return ``y`` at ``q`` for which ``F(Y=y|x) = q``,
@@ -811,7 +811,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
             ``dtype=np.float32``. If a sparse matrix is provided, it will be
             converted into a sparse ``csr_matrix``.
 
-        y : array-like of shape (n_samples) or (n_samples, n_outputs)
+        y : array-like of shape (n_samples,) or (n_samples, n_outputs)
             The target values for which to calculate ranks.
 
         kind : {"rank", "weak", "strict", "mean"}, default="rank"
@@ -848,7 +848,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
 
         Returns
         -------
-        y_ranks : array of shape (n_samples) or (n_samples, n_outputs)
+        y_ranks : array of shape (n_samples,) or (n_samples, n_outputs)
             Quantile ranks in range [0, 1].
         """
         check_is_fitted(self)
