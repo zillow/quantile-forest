@@ -94,9 +94,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
     ):
         """Initialize base quantile forest regressor."""
         init_dict = {
-            (
-                "base_estimator" if sklearn_version < parse_version("1.2.0") else "estimator"
-            ): estimator,
+            "estimator": estimator,
             "n_estimators": n_estimators,
             "estimator_params": estimator_params,
             "bootstrap": bootstrap,
@@ -1347,6 +1345,7 @@ class RandomForestQuantileRegressor(BaseForestQuantileRegressor):
                 "min_impurity_decrease",
                 "random_state",
                 "ccp_alpha",
+                "monotonic_cst",
             ),
             "bootstrap": bootstrap,
             "oob_score": oob_score,
@@ -1357,8 +1356,6 @@ class RandomForestQuantileRegressor(BaseForestQuantileRegressor):
             "max_samples": max_samples,
             "max_samples_leaf": max_samples_leaf,
         }
-        if sklearn_version >= parse_version("1.4.0"):
-            init_dict["estimator_params"] += ("monotonic_cst",)
         super(RandomForestQuantileRegressor, self).__init__(**init_dict)
 
         self.default_quantiles = default_quantiles
@@ -1680,6 +1677,7 @@ class ExtraTreesQuantileRegressor(BaseForestQuantileRegressor):
                 "min_impurity_decrease",
                 "random_state",
                 "ccp_alpha",
+                "monotonic_cst",
             ),
             "bootstrap": bootstrap,
             "oob_score": oob_score,
@@ -1690,8 +1688,6 @@ class ExtraTreesQuantileRegressor(BaseForestQuantileRegressor):
             "max_samples": max_samples,
             "max_samples_leaf": max_samples_leaf,
         }
-        if sklearn_version >= parse_version("1.4.0"):
-            init_dict["estimator_params"] += ("monotonic_cst",)
         super(ExtraTreesQuantileRegressor, self).__init__(**init_dict)
 
         self.default_quantiles = default_quantiles

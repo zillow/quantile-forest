@@ -6,7 +6,7 @@ from collections import defaultdict
 CYTHON_MIN_VERSION = "3.0a4"
 NUMPY_MIN_VERSION = "1.23"
 SCIPY_MIN_VERSION = "1.4"
-SKLEARN_MIN_VERSION = "1.0"
+SKLEARN_MIN_VERSION = "1.5"
 
 # 'build' and 'install' is included to have structured metadata for CI.
 # The values are (version_spec, comma separated tags).
