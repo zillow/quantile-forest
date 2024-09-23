@@ -1345,7 +1345,7 @@ class RandomForestQuantileRegressor(BaseForestQuantileRegressor):
                 "min_impurity_decrease",
                 "random_state",
                 "ccp_alpha",
-                "monotonic_cst"
+                "monotonic_cst",
             ),
             "bootstrap": bootstrap,
             "oob_score": oob_score,
@@ -1677,7 +1677,7 @@ class ExtraTreesQuantileRegressor(BaseForestQuantileRegressor):
                 "min_impurity_decrease",
                 "random_state",
                 "ccp_alpha",
-                "monotonic_cst"
+                "monotonic_cst",
             ),
             "bootstrap": bootstrap,
             "oob_score": oob_score,
