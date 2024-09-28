@@ -30,7 +30,6 @@ from warnings import warn
 
 import joblib
 import numpy as np
-import sklearn
 from sklearn.ensemble._forest import (
     ForestRegressor,
     _generate_sample_indices,
@@ -38,23 +37,11 @@ from sklearn.ensemble._forest import (
 )
 from sklearn.tree import DecisionTreeRegressor, ExtraTreeRegressor
 from sklearn.tree._tree import DTYPE
-
-try:
-    from sklearn.utils.fixes import parse_version
-except ImportError:
-    from sklearn.utils import parse_version
-
-param_validation = True
-try:
-    from sklearn.utils._param_validation import Interval, RealNotInt
-except ImportError:
-    param_validation = False
+from sklearn.utils._param_validation import Interval, RealNotInt
 from sklearn.utils.validation import check_is_fitted
 
 from ._quantile_forest_fast import QuantileForest
 from ._utils import generate_unsampled_indices, group_indices_by_value, map_indices_to_leaves
-
-sklearn_version = parse_version(sklearn.__version__)
 
 
 class BaseForestQuantileRegressor(ForestRegressor):
@@ -64,17 +51,16 @@ class BaseForestQuantileRegressor(ForestRegressor):
     instead.
     """
 
-    if param_validation:
-        _parameter_constraints: dict = {
-            **ForestRegressor._parameter_constraints,
-            **DecisionTreeRegressor._parameter_constraints,
-            "max_samples_leaf": [
-                None,
-                Interval(RealNotInt, 0, 1, closed="right"),
-                Interval(Integral, 1, None, closed="left"),
-            ],
-        }
-        _parameter_constraints.pop("splitter")
+    _parameter_constraints: dict = {
+        **ForestRegressor._parameter_constraints,
+        **DecisionTreeRegressor._parameter_constraints,
+        "max_samples_leaf": [
+            None,
+            Interval(RealNotInt, 0, 1, closed="right"),
+            Interval(Integral, 1, None, closed="left"),
+        ],
+    }
+    _parameter_constraints.pop("splitter")
 
     @abstractmethod
     def __init__(
@@ -135,26 +121,8 @@ class BaseForestQuantileRegressor(ForestRegressor):
         self : object
             Fitted estimator.
         """
-        if self.param_validation:
-            self._validate_params()
-        else:
-            if isinstance(self.max_samples_leaf, (Integral, np.integer)):
-                if self.max_samples_leaf < 1:
-                    raise ValueError(
-                        "If max_samples_leaf is an integer, it must be be >= 1, "
-                        f"got {self.max_samples_leaf}."
-                    )
-            elif isinstance(self.max_samples_leaf, Real):
-                if not 0.0 < self.max_samples_leaf <= 1.0:
-                    raise ValueError(
-                        "If max_samples_leaf is a float, it must be in range (0, 1], "
-                        f"got {self.max_samples_leaf}."
-                    )
-            elif self.max_samples_leaf is not None:
-                raise ValueError(
-                    "max_samples_leaf must be of integer, float, or None type, got "
-                    f"{self.max_samples_leaf}."
-                )
+        self._validate_params()
+
         if self.monotonic_cst is not None:
             if (
                 not isinstance(self.max_samples_leaf, (Integral, np.integer))
@@ -1210,16 +1178,11 @@ class RandomForestQuantileRegressor(BaseForestQuantileRegressor):
           - regressions trained on data with missing values,
           - trees with multi-sample leaves (i.e. when `max_samples_leaf > 1`).
 
-        .. sklearn-versionadded:: 1.4
-
     Attributes
     ----------
     estimator_ : :class:`~sklearn.tree.DecisionTreeRegressor`
         The child estimator template used to create the collection of fitted
         sub-estimators.
-
-        .. sklearn-versionadded:: 1.2
-           `base_estimator_` was renamed to `estimator_`.
 
     estimators_ : list of DecisionTreeRegressor
         The collection of fitted sub-estimators.
@@ -1256,8 +1219,6 @@ class RandomForestQuantileRegressor(BaseForestQuantileRegressor):
     estimators_samples_ : list of arrays
         The subset of drawn samples (i.e., the in-bag samples) for each base
         estimator. Each subset is defined by an array of the indices selected.
-
-        .. sklearn-versionadded:: 1.4
 
     See Also
     --------
@@ -1556,16 +1517,11 @@ class ExtraTreesQuantileRegressor(BaseForestQuantileRegressor):
           - regressions trained on data with missing values,
           - trees with multi-sample leaves (i.e. when `max_samples_leaf > 1`).
 
-        .. sklearn-versionadded:: 1.4
-
     Attributes
     ----------
     estimator_ : :class:`~sklearn.tree.ExtraTreeRegressor`
         The child estimator template used to create the collection of fitted
         sub-estimators.
-
-        .. sklearn-versionadded:: 1.2
-           `base_estimator_` was renamed to `estimator_`.
 
     estimators_ : list of DecisionTreeRegressor
         The collection of fitted sub-estimators.
@@ -1602,8 +1558,6 @@ class ExtraTreesQuantileRegressor(BaseForestQuantileRegressor):
     estimators_samples_ : list of arrays
         The subset of drawn samples (i.e., the in-bag samples) for each base
         estimator. Each subset is defined by an array of the indices selected.
-
-        .. sklearn-versionadded:: 1.4
 
     See Also
     --------
