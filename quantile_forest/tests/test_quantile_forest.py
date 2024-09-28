@@ -95,6 +95,35 @@ def test_regression_toy(name, weighted_quantile):
     check_regression_toy(name, weighted_quantile)
 
 
+def check_regression_params(name):
+    params = {
+        "criterion": "squared_error",
+        "max_depth": 2,
+        "min_samples_split": 2,
+        "min_samples_leaf": 1,
+        "min_weight_fraction_leaf": 0.0,
+        "max_features": 1.0,
+        "max_leaf_nodes": 16,
+        "min_impurity_decrease": 0.0,
+        "ccp_alpha": 0.0,
+        "monotonic_cst": [0, 1, -1, 0],
+    }
+
+    ForestRegressor = FOREST_REGRESSORS[name]
+
+    X, y = datasets.make_regression(n_features=4, n_informative=2, shuffle=True, random_state=0)
+
+    est = ForestRegressor(**params, random_state=0).fit(X, y)
+
+    for param in params:
+        assert getattr(est, param) == getattr(est.estimators_[0], param)
+
+
+@pytest.mark.parametrize("name", FOREST_REGRESSORS)
+def test_regression_params(name):
+    check_regression_params(name)
+
+
 def check_california_criterion(name, criterion):
     """Check for consistency on the California Housing dataset."""
     ForestRegressor = FOREST_REGRESSORS[name]
