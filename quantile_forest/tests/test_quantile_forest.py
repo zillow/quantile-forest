@@ -96,6 +96,7 @@ def test_regression_toy(name, weighted_quantile):
 
 
 def check_regression_params(name):
+    """Check quantile regression model parameters."""
     params = {
         "criterion": "squared_error",
         "max_depth": 2,

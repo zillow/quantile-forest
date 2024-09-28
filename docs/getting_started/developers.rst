@@ -15,7 +15,7 @@ We also use pre-commit hooks to identify simple issues before submission.
 Setting Up Your Environment
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-To contribute to the `quantile-forest` source code, start by forking and then cloning the repository (i.e. `git clone git@github.com:YourUsername/quantile-forest.git`)
+To contribute to the `quantile-forest` source code, start by forking and then cloning the repository (i.e. `git clone git@github.com:YourUsername/quantile-forest.git`).
 
 Once inside the repository, you can prepare a development environment. Using conda::
 
