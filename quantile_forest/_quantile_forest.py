@@ -93,8 +93,6 @@ class BaseForestQuantileRegressor(ForestRegressor):
         }
         super().__init__(**init_dict)
 
-        self.param_validation = hasattr(self, "_parameter_constraints")
-
     def fit(self, X, y, sample_weight=None, sparse_pickle=False):
         """Build a forest from the training set (X, y).
 
