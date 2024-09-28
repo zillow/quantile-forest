@@ -435,8 +435,15 @@ document.write(`
 <li><p>cython (&gt;=3.0a4)</p></li>
 </ul>
 <p>We also use pre-commit hooks to identify simple issues before submission.</p>
-<p>To install these dependencies, run:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">cython</span> <span class="n">pre</span><span class="o">-</span><span class="n">commit</span>
+</section>
+<section id="setting-up-your-environment">
+<h2>Setting Up Your Environment<a class="headerlink" href="#setting-up-your-environment" title="Link to this heading">#</a></h2>
+<p>To contribute to the <code class="docutils literal notranslate"><span class="pre">quantile-forest</span></code> source code, start by forking and then cloning the repository (i.e. <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">clone</span> <span class="pre">git&#64;github.com:YourUsername/quantile-forest.git</span></code>).</p>
+<p>Once inside the repository, you can prepare a development environment. Using conda:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">conda</span> <span class="n">create</span> <span class="o">-</span><span class="n">n</span> <span class="n">qf</span> <span class="n">python</span><span class="o">=</span><span class="mf">3.12</span>
+<span class="n">conda</span> <span class="n">activate</span> <span class="n">qf</span>
+<span class="n">conda</span> <span class="n">install</span> <span class="n">pre</span><span class="o">-</span><span class="n">commit</span>
+<span class="n">pre</span><span class="o">-</span><span class="n">commit</span> <span class="n">install</span>
 </pre></div>
 </div>
 </section>
@@ -460,28 +467,28 @@ document.write(`
 <section id="test-and-coverage">
 <h2>Test and Coverage<a class="headerlink" href="#test-and-coverage" title="Link to this heading">#</a></h2>
 <p>Ensure that <code class="docutils literal notranslate"><span class="pre">pytest</span></code> and <code class="docutils literal notranslate"><span class="pre">pytest-cov</span></code> are installed:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ pip install pytest pytest-cov
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">pytest</span> <span class="n">pytest</span><span class="o">-</span><span class="n">cov</span>
 </pre></div>
 </div>
 <p>To test the code:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ python -m pytest quantile_forest -v
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="o">-</span><span class="n">m</span> <span class="n">pytest</span> <span class="n">quantile_forest</span> <span class="o">-</span><span class="n">v</span>
 </pre></div>
 </div>
 <p>To test the code and produce a coverage report:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ python -m pytest quantile_forest --cov-report html --cov=quantile_forest
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="o">-</span><span class="n">m</span> <span class="n">pytest</span> <span class="n">quantile_forest</span> <span class="o">--</span><span class="n">cov</span><span class="o">-</span><span class="n">report</span> <span class="n">html</span> <span class="o">--</span><span class="n">cov</span><span class="o">=</span><span class="n">quantile_forest</span>
 </pre></div>
 </div>
 <p>To test the documentation:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ python -m pytest --doctest-glob=&quot;*.rst&quot; --doctest-modules docs
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="o">-</span><span class="n">m</span> <span class="n">pytest</span> <span class="o">--</span><span class="n">doctest</span><span class="o">-</span><span class="n">glob</span><span class="o">=</span><span class="s2">&quot;*.rst&quot;</span> <span class="o">--</span><span class="n">doctest</span><span class="o">-</span><span class="n">modules</span> <span class="n">docs</span>
 </pre></div>
 </div>
 </section>
 <section id="documentation">
 <h2>Documentation<a class="headerlink" href="#documentation" title="Link to this heading">#</a></h2>
 <p>To build the documentation, run:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ pip install -r ./docs/sphinx_requirements.txt
-$ mkdir -p ./docs/_images
-$ sphinx-build -b html ./docs ./docs/_build
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">r</span> <span class="o">./</span><span class="n">docs</span><span class="o">/</span><span class="n">sphinx_requirements</span><span class="o">.</span><span class="n">txt</span>
+<span class="n">mkdir</span> <span class="o">-</span><span class="n">p</span> <span class="o">./</span><span class="n">docs</span><span class="o">/</span><span class="n">_images</span>
+<span class="n">sphinx</span><span class="o">-</span><span class="n">build</span> <span class="o">-</span><span class="n">b</span> <span class="n">html</span> <span class="o">./</span><span class="n">docs</span> <span class="o">./</span><span class="n">docs</span><span class="o">/</span><span class="n">_build</span>
 </pre></div>
 </div>
 </section>
@@ -534,6 +541,7 @@ $ sphinx-build -b html ./docs ./docs/_build
   <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#development-dependencies">Development Dependencies</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#setting-up-your-environment">Setting Up Your Environment</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#development-installation">Development Installation</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#troubleshooting">Troubleshooting</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#test-and-coverage">Test and Coverage</a></li>
