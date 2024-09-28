@@ -109,8 +109,11 @@ def check_regression_params(name):
         "monotonic_cst": [0, 1, -1, 0],
     }
 
+    ForestRegressor = FOREST_REGRESSORS[name]
+
     X, y = datasets.make_regression(n_features=4, n_informative=2, shuffle=True, random_state=0)
-    est = RandomForestQuantileRegressor(**params, random_state=0).fit(X, y)
+
+    est = ForestRegressor(**params, random_state=0).fit(X, y)
 
     for param in params:
         assert getattr(est, param) == getattr(est.estimators_[0], param)
