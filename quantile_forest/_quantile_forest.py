@@ -30,7 +30,6 @@ from warnings import warn
 
 import joblib
 import numpy as np
-import sklearn
 from sklearn.ensemble._forest import (
     ForestRegressor,
     _generate_sample_indices,
@@ -38,23 +37,11 @@ from sklearn.ensemble._forest import (
 )
 from sklearn.tree import DecisionTreeRegressor, ExtraTreeRegressor
 from sklearn.tree._tree import DTYPE
-
-try:
-    from sklearn.utils.fixes import parse_version
-except ImportError:
-    from sklearn.utils import parse_version
-
-param_validation = True
-try:
-    from sklearn.utils._param_validation import Interval, RealNotInt
-except ImportError:
-    param_validation = False
+from sklearn.utils._param_validation import Interval, RealNotInt
 from sklearn.utils.validation import check_is_fitted
 
 from ._quantile_forest_fast import QuantileForest
 from ._utils import generate_unsampled_indices, group_indices_by_value, map_indices_to_leaves
-
-sklearn_version = parse_version(sklearn.__version__)
 
 
 class BaseForestQuantileRegressor(ForestRegressor):
@@ -64,17 +51,16 @@ class BaseForestQuantileRegressor(ForestRegressor):
     instead.
     """
 
-    if param_validation:
-        _parameter_constraints: dict = {
-            **ForestRegressor._parameter_constraints,
-            **DecisionTreeRegressor._parameter_constraints,
-            "max_samples_leaf": [
-                None,
-                Interval(RealNotInt, 0, 1, closed="right"),
-                Interval(Integral, 1, None, closed="left"),
-            ],
-        }
-        _parameter_constraints.pop("splitter")
+    _parameter_constraints: dict = {
+        **ForestRegressor._parameter_constraints,
+        **DecisionTreeRegressor._parameter_constraints,
+        "max_samples_leaf": [
+            None,
+            Interval(RealNotInt, 0, 1, closed="right"),
+            Interval(Integral, 1, None, closed="left"),
+        ],
+    }
+    _parameter_constraints.pop("splitter")
 
     @abstractmethod
     def __init__(
@@ -94,9 +80,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
     ):
         """Initialize base quantile forest regressor."""
         init_dict = {
-            (
-                "base_estimator" if sklearn_version < parse_version("1.2.0") else "estimator"
-            ): estimator,
+            "estimator": estimator,
             "n_estimators": n_estimators,
             "estimator_params": estimator_params,
             "bootstrap": bootstrap,
@@ -108,8 +92,6 @@ class BaseForestQuantileRegressor(ForestRegressor):
             "max_samples": max_samples,
         }
         super().__init__(**init_dict)
-
-        self.param_validation = hasattr(self, "_parameter_constraints")
 
     def fit(self, X, y, sample_weight=None, sparse_pickle=False):
         """Build a forest from the training set (X, y).
@@ -137,26 +119,8 @@ class BaseForestQuantileRegressor(ForestRegressor):
         self : object
             Fitted estimator.
         """
-        if self.param_validation:
-            self._validate_params()
-        else:
-            if isinstance(self.max_samples_leaf, (Integral, np.integer)):
-                if self.max_samples_leaf < 1:
-                    raise ValueError(
-                        "If max_samples_leaf is an integer, it must be be >= 1, "
-                        f"got {self.max_samples_leaf}."
-                    )
-            elif isinstance(self.max_samples_leaf, Real):
-                if not 0.0 < self.max_samples_leaf <= 1.0:
-                    raise ValueError(
-                        "If max_samples_leaf is a float, it must be in range (0, 1], "
-                        f"got {self.max_samples_leaf}."
-                    )
-            elif self.max_samples_leaf is not None:
-                raise ValueError(
-                    "max_samples_leaf must be of integer, float, or None type, got "
-                    f"{self.max_samples_leaf}."
-                )
+        self._validate_params()
+
         if self.monotonic_cst is not None:
             if (
                 not isinstance(self.max_samples_leaf, (Integral, np.integer))
@@ -251,7 +215,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
         Returns
         -------
         y_train_leaves_slice : array-like of shape \
-                (n_leaves, n_outputs, n_samples)
+                (n_leaves, n_outputs, n_indices)
             Mapping of training sample indices to tree's leaf nodes. Nodes with
             no samples (e.g., internal nodes) are empty. Internal nodes are
             included so that leaf node indices match their ``est.apply``
@@ -590,7 +554,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
 
         Returns
         -------
-        unsampled_indices : array of shape (n_unsampled)
+        unsampled_indices : array of shape (n_unsampled,)
             Unsampled indices.
         """
         if not self.bootstrap:
@@ -686,7 +650,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
 
         Returns
         -------
-        y_pred : array of shape (n_samples, n_quantiles) or \
+        y_pred : array of shape (n_samples,) or (n_samples, n_quantiles) or \
                 (n_samples, n_outputs, n_quantiles)
             If quantiles is set to 'mean', then return ``E(Y | X)``. Else, for
             all quantiles, return ``y`` at ``q`` for which ``F(Y=y|x) = q``,
@@ -811,7 +775,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
             ``dtype=np.float32``. If a sparse matrix is provided, it will be
             converted into a sparse ``csr_matrix``.
 
-        y : array-like of shape (n_samples) or (n_samples, n_outputs)
+        y : array-like of shape (n_samples,) or (n_samples, n_outputs)
             The target values for which to calculate ranks.
 
         kind : {"rank", "weak", "strict", "mean"}, default="rank"
@@ -848,7 +812,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
 
         Returns
         -------
-        y_ranks : array of shape (n_samples) or (n_samples, n_outputs)
+        y_ranks : array of shape (n_samples,) or (n_samples, n_outputs)
             Quantile ranks in range [0, 1].
         """
         check_is_fitted(self)
@@ -1212,16 +1176,11 @@ class RandomForestQuantileRegressor(BaseForestQuantileRegressor):
           - regressions trained on data with missing values,
           - trees with multi-sample leaves (i.e. when `max_samples_leaf > 1`).
 
-        .. sklearn-versionadded:: 1.4
-
     Attributes
     ----------
     estimator_ : :class:`~sklearn.tree.DecisionTreeRegressor`
         The child estimator template used to create the collection of fitted
         sub-estimators.
-
-        .. sklearn-versionadded:: 1.2
-           `base_estimator_` was renamed to `estimator_`.
 
     estimators_ : list of DecisionTreeRegressor
         The collection of fitted sub-estimators.
@@ -1258,8 +1217,6 @@ class RandomForestQuantileRegressor(BaseForestQuantileRegressor):
     estimators_samples_ : list of arrays
         The subset of drawn samples (i.e., the in-bag samples) for each base
         estimator. Each subset is defined by an array of the indices selected.
-
-        .. sklearn-versionadded:: 1.4
 
     See Also
     --------
@@ -1347,6 +1304,7 @@ class RandomForestQuantileRegressor(BaseForestQuantileRegressor):
                 "min_impurity_decrease",
                 "random_state",
                 "ccp_alpha",
+                "monotonic_cst",
             ),
             "bootstrap": bootstrap,
             "oob_score": oob_score,
@@ -1357,8 +1315,6 @@ class RandomForestQuantileRegressor(BaseForestQuantileRegressor):
             "max_samples": max_samples,
             "max_samples_leaf": max_samples_leaf,
         }
-        if sklearn_version >= parse_version("1.4.0"):
-            init_dict["estimator_params"] += ("monotonic_cst",)
         super(RandomForestQuantileRegressor, self).__init__(**init_dict)
 
         self.default_quantiles = default_quantiles
@@ -1559,16 +1515,11 @@ class ExtraTreesQuantileRegressor(BaseForestQuantileRegressor):
           - regressions trained on data with missing values,
           - trees with multi-sample leaves (i.e. when `max_samples_leaf > 1`).
 
-        .. sklearn-versionadded:: 1.4
-
     Attributes
     ----------
     estimator_ : :class:`~sklearn.tree.ExtraTreeRegressor`
         The child estimator template used to create the collection of fitted
         sub-estimators.
-
-        .. sklearn-versionadded:: 1.2
-           `base_estimator_` was renamed to `estimator_`.
 
     estimators_ : list of DecisionTreeRegressor
         The collection of fitted sub-estimators.
@@ -1605,8 +1556,6 @@ class ExtraTreesQuantileRegressor(BaseForestQuantileRegressor):
     estimators_samples_ : list of arrays
         The subset of drawn samples (i.e., the in-bag samples) for each base
         estimator. Each subset is defined by an array of the indices selected.
-
-        .. sklearn-versionadded:: 1.4
 
     See Also
     --------
@@ -1680,6 +1629,7 @@ class ExtraTreesQuantileRegressor(BaseForestQuantileRegressor):
                 "min_impurity_decrease",
                 "random_state",
                 "ccp_alpha",
+                "monotonic_cst",
             ),
             "bootstrap": bootstrap,
             "oob_score": oob_score,
@@ -1690,8 +1640,6 @@ class ExtraTreesQuantileRegressor(BaseForestQuantileRegressor):
             "max_samples": max_samples,
             "max_samples_leaf": max_samples_leaf,
         }
-        if sklearn_version >= parse_version("1.4.0"):
-            init_dict["estimator_params"] += ("monotonic_cst",)
         super(ExtraTreesQuantileRegressor, self).__init__(**init_dict)
 
         self.default_quantiles = default_quantiles

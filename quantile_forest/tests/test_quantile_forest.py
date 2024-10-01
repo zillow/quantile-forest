@@ -58,17 +58,17 @@ def check_regression_toy(name, weighted_quantile):
 
     ForestRegressor = FOREST_REGRESSORS[name]
 
-    regr = ForestRegressor(n_estimators=10, max_samples_leaf=None, bootstrap=False, random_state=0)
-    regr.fit(X, y)
+    est = ForestRegressor(n_estimators=10, max_samples_leaf=None, bootstrap=False, random_state=0)
+    est.fit(X, y)
 
     # Check model and apply outputs shape.
-    leaf_indices = regr.apply(X)
-    assert leaf_indices.shape == (len(X), regr.n_estimators)
-    assert 10 == len(regr)
+    leaf_indices = est.apply(X)
+    assert leaf_indices.shape == (len(X), est.n_estimators)
+    assert 10 == len(est)
 
     # Check aggregated quantile predictions.
     y_true = [[0.0, 0.5, 1.0], [2.0, 2.0, 2.0], [2.0, 2.0, 2.0]]
-    y_pred = regr.predict(
+    y_pred = est.predict(
         y_test,
         quantiles=quantiles,
         weighted_quantile=weighted_quantile,
@@ -78,7 +78,7 @@ def check_regression_toy(name, weighted_quantile):
 
     # Check unaggregated quantile predictions.
     y_true = [[0.25, 0.5, 0.75], [2.0, 2.0, 2.0], [2.0, 2.0, 2.0]]
-    y_pred = regr.predict(
+    y_pred = est.predict(
         y_test,
         quantiles=quantiles,
         weighted_quantile=weighted_quantile,
@@ -86,7 +86,7 @@ def check_regression_toy(name, weighted_quantile):
     )
     assert_allclose(y_pred, y_true)
 
-    assert regr._more_tags()
+    assert est._more_tags()
 
 
 @pytest.mark.parametrize("name", FOREST_REGRESSORS)
@@ -95,26 +95,56 @@ def test_regression_toy(name, weighted_quantile):
     check_regression_toy(name, weighted_quantile)
 
 
-def check_california_criterion(name, criterion):
-    # Check for consistency on the California Housing Prices dataset.
+def check_regression_params(name):
+    """Check quantile regression model parameters."""
+    params = {
+        "criterion": "squared_error",
+        "max_depth": 2,
+        "min_samples_split": 2,
+        "min_samples_leaf": 1,
+        "min_weight_fraction_leaf": 0.0,
+        "max_features": 1.0,
+        "max_leaf_nodes": 16,
+        "min_impurity_decrease": 0.0,
+        "ccp_alpha": 0.0,
+        "monotonic_cst": [0, 1, -1, 0],
+    }
+
     ForestRegressor = FOREST_REGRESSORS[name]
 
-    regr = ForestRegressor(n_estimators=5, criterion=criterion, max_features=None, random_state=0)
-    regr.fit(X_california, y_california)
-    score = regr.score(X_california, y_california, quantiles=0.5)
+    X, y = datasets.make_regression(n_features=4, n_informative=2, shuffle=True, random_state=0)
+
+    est = ForestRegressor(**params, random_state=0).fit(X, y)
+
+    for param in params:
+        assert getattr(est, param) == getattr(est.estimators_[0], param)
+
+
+@pytest.mark.parametrize("name", FOREST_REGRESSORS)
+def test_regression_params(name):
+    check_regression_params(name)
+
+
+def check_california_criterion(name, criterion):
+    """Check for consistency on the California Housing dataset."""
+    ForestRegressor = FOREST_REGRESSORS[name]
+
+    est = ForestRegressor(n_estimators=5, criterion=criterion, max_features=None, random_state=0)
+    est.fit(X_california, y_california)
+    score = est.score(X_california, y_california, quantiles=0.5)
     assert score > 0.9, f"Failed with max_features=None, criterion {criterion} and score={score}."
 
     # Test maximum features.
-    regr = ForestRegressor(n_estimators=5, criterion=criterion, max_features=6, random_state=0)
-    regr.fit(X_california, y_california)
-    score = regr.score(X_california, y_california, quantiles=0.5)
+    est = ForestRegressor(n_estimators=5, criterion=criterion, max_features=6, random_state=0)
+    est.fit(X_california, y_california)
+    score = est.score(X_california, y_california, quantiles=0.5)
     assert score > 0.9, f"Failed with max_features=6, criterion {criterion} and score={score}."
 
     # Test sample weights.
-    regr = ForestRegressor(n_estimators=5, criterion=criterion, random_state=0)
+    est = ForestRegressor(n_estimators=5, criterion=criterion, random_state=0)
     sample_weight = np.concatenate([np.zeros(1), np.ones(len(y_california) - 1)])
-    regr.fit(X_california, y_california, sample_weight=sample_weight)
-    score = regr.score(X_california, y_california, quantiles=0.5)
+    est.fit(X_california, y_california, sample_weight=sample_weight)
+    score = est.score(X_california, y_california, quantiles=0.5)
     assert score > 0.9, f"Failed with criterion {criterion}, sample weight and score={score}."
 
 
@@ -125,7 +155,7 @@ def test_california(name, criterion):
 
 
 def check_predict_quantiles_toy(name):
-    # Check quantile predictions on toy data.
+    """Check quantile predictions on toy data."""
     quantiles = [0.25, 0.5, 0.75]
 
     ForestRegressor = FOREST_REGRESSORS[name]
@@ -267,6 +297,7 @@ def check_predict_quantiles(
     weighted_quantile,
     aggregate_leaves_first,
 ):
+    """Check quantile predictions."""
     ForestRegressor = FOREST_REGRESSORS[name]
 
     # Check predicted quantiles on (semi-)random data.
@@ -577,7 +608,7 @@ def test_predict_quantiles(
 
 
 def check_quantile_ranks_toy(name):
-    # Check rank predictions on toy data.
+    """Check quantile ranks on toy data."""
     ForestRegressor = FOREST_REGRESSORS[name]
 
     # Check predicted ranks on toy sample.
@@ -650,7 +681,7 @@ def test_quantile_ranks_toy(name):
 
 
 def check_quantile_ranks(name):
-    # Check rank predictions.
+    """Check quantile ranks."""
     ForestRegressor = FOREST_REGRESSORS[name]
 
     # Check predicted ranks on (semi-)random data.
@@ -698,7 +729,7 @@ def test_quantile_ranks(name):
 
 
 def check_proximity_counts(name):
-    # Check proximity counts.
+    """Check proximity counts."""
     ForestRegressor = FOREST_REGRESSORS[name]
 
     # Check proximity counts on toy sample.
@@ -795,7 +826,7 @@ def test_proximity_counts(name):
 
 
 def check_max_samples_leaf(name):
-    # Check that the `max_samples_leaf` parameter correctly samples leaves.
+    """Check that the `max_samples_leaf` parameter correctly samples leaves."""
     X = X_california
     y = y_california
 
@@ -849,7 +880,7 @@ def test_max_samples_leaf(name):
 
 
 def check_oob_samples(name):
-    # Check OOB sample generation.
+    """Check OOB sample generation."""
     X = X_california
     y = y_california
 
@@ -874,7 +905,7 @@ def test_oob_samples(name):
 
 
 def check_oob_samples_duplicates(name):
-    # Check OOB sampling with duplicates.
+    """Check OOB sampling with duplicates."""
     X = np.array(
         [
             [1, 2, 3],
@@ -915,7 +946,7 @@ def check_predict_oob(
     weighted_quantile,
     aggregate_leaves_first,
 ):
-    # Check OOB predictions.
+    """Check OOB predictions."""
     X = X_california
     y = y_california
 
@@ -1126,7 +1157,7 @@ def test_predict_oob(
 
 
 def check_quantile_ranks_oob(name):
-    # Check OOB quantile rank predictions.
+    """Check OOB quantile ranks."""
     X = X_california
     y = y_california
 
@@ -1183,7 +1214,7 @@ def test_quantile_ranks_oob(name):
 
 
 def check_proximity_counts_oob(name):
-    # Check OOB proximity counts.
+    """Check OOB proximity counts."""
     X = X_california
     y = y_california
 
@@ -1262,6 +1293,7 @@ def test_proximity_counts_oob(name):
 
 
 def check_monotonic_constraints(name, max_samples_leaf):
+    """Check monotonic constraints."""
     ForestRegressor = FOREST_REGRESSORS[name]
 
     n_samples = 1000
@@ -1335,8 +1367,7 @@ def test_monotonic_constraints(name, max_samples_leaf):
 
 
 def check_serialization(name, sparse_pickle, monotonic_cst, multi_target):
-    # Check model serialization/deserialization.
-
+    """Check model serialization/deserialization."""
     X = X_california
 
     if multi_target:
@@ -1370,7 +1401,7 @@ def test_serialization(name, sparse_pickle, monotonic_cst, multi_target):
 
 
 def test_calc_quantile():
-    # Check quantile calculations.
+    """Check quantile calculations."""
     quantiles = [0.0, 0.25, 0.5, 0.75, 1.0]
     interpolations = [b"linear", b"lower", b"higher", b"midpoint", b"nearest"]
 
@@ -1440,7 +1471,7 @@ def test_calc_quantile():
 
 
 def test_calc_weighted_quantile():
-    # Check weighted quantile calculations.
+    """Check weighted quantile calculations."""
     quantiles = [0.0, 0.25, 0.5, 0.75, 1.0]
     interpolations = [b"linear", b"lower", b"higher", b"midpoint", b"nearest"]
 
@@ -1559,7 +1590,7 @@ def test_calc_weighted_quantile():
 
 
 def test_calc_quantile_rank():
-    # Check quantile rank calculations.
+    """Check quantile rank calculations."""
     kinds = [b"rank", b"weak", b"strict", b"mean"]
 
     inputs = [

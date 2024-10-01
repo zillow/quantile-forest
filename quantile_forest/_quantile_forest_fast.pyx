@@ -126,7 +126,7 @@ cpdef vector[double] calc_quantile(
 
     Returns
     -------
-    out : array-like of shape (n_quantiles)
+    out : array-like of shape (n_quantiles,)
         Quantiles for `inputs` as floats. Empty list if empty inputs.
     """
     cdef double C = 1
@@ -255,7 +255,7 @@ cpdef vector[double] calc_weighted_quantile(
 
     Returns
     -------
-    out : array-like of shape (n_quantiles)
+    out : array-like of shape (n_quantiles,)
         Quantiles for `inputs` as floats. Empty list if empty inputs.
     """
     cdef double C = 1
@@ -572,7 +572,7 @@ cdef class QuantileForest:
         Parameters
         ----------
         quantiles : list of floats
-            Quantiles the in range [0, 1] to compute. -1 to compute mean.
+            Quantiles in the range [0, 1] to compute. -1 to compute mean.
 
         X_leaves : array-like of shape (n_samples, n_estimators)
             Target leaf node indices along samples and trees.

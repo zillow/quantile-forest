@@ -6,7 +6,7 @@ requires = [
     "Cython>=3.0a4",
     "numpy>=1.23",
     "scipy>=1.4",
-    "scikit-learn>=1.0",
+    "scikit-learn>=1.5",
 ]
 
 [tool.black]
