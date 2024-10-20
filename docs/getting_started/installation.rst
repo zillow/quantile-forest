@@ -16,9 +16,15 @@ The quantile-forest package requires the following dependencies:
 Installation
 ~~~~~~~~~~~~
 
-quantile-forest can be installed using `pip`::
+quantile-forest can be installed using `pip` or `conda`.
+
+Using `pip`::
 
   pip install quantile-forest
+
+Using `conda`::
+
+  conda install quantile-forest -c conda-forge
 
 .. toctree::
    :maxdepth: 1

@@ -17,10 +17,16 @@ Quantile regression forests (QRF) are a non-parametric, tree-based ensemble meth
 Quick Start
 -----------
 
-Install quantile-forest from [PyPI](https://pypi.org/project/quantile-forest) using `pip`:
+To install quantile-forest from [PyPI](https://pypi.org/project/quantile-forest) using `pip`:
 
 ```bash
 pip install quantile-forest
+```
+
+To install quantile-forest from [conda-forge](https://anaconda.org/conda-forge/quantile-forest) using `conda`:
+
+```bash
+conda install quantile-forest -c conda-forge
 ```
 
 Usage
