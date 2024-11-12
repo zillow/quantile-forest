@@ -840,8 +840,6 @@ class BaseForestQuantileRegressor(ForestRegressor):
         """
         check_is_fitted(self)
 
-        if validate_data is None:
-            validate_data = self._validate_data
         validation_params = {
             "X": X,
             "y": y,
