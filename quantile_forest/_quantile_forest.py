@@ -30,6 +30,7 @@ from warnings import warn
 
 import joblib
 import numpy as np
+import sklearn
 from sklearn.ensemble._forest import (
     ForestRegressor,
     _generate_sample_indices,
@@ -38,10 +39,18 @@ from sklearn.ensemble._forest import (
 from sklearn.tree import DecisionTreeRegressor, ExtraTreeRegressor
 from sklearn.tree._tree import DTYPE
 from sklearn.utils._param_validation import Interval, RealNotInt
+from sklearn.utils.fixes import parse_version
 from sklearn.utils.validation import check_is_fitted
+
+try:
+    from sklearn.utils.validation import validate_data
+except ImportError:
+    validate_data = None
 
 from ._quantile_forest_fast import QuantileForest
 from ._utils import generate_unsampled_indices, group_indices_by_value, map_indices_to_leaves
+
+sklearn_version = parse_version(sklearn.__version__)
 
 
 class BaseForestQuantileRegressor(ForestRegressor):
@@ -132,9 +141,23 @@ class BaseForestQuantileRegressor(ForestRegressor):
                 )
 
         super(BaseForestQuantileRegressor, self).fit(X, y, sample_weight=sample_weight)
-        X, y = self._validate_data(
-            X, y, multi_output=True, accept_sparse="csc", dtype=DTYPE, force_all_finite=False
-        )
+
+        validation_params = {
+            "X": X,
+            "y": y,
+            "multi_output": True,
+            "accept_sparse": "csc",
+            "dtype": DTYPE,
+            (
+                "force_all_finite"
+                if sklearn_version < parse_version("1.6.dev0")
+                else "ensure_all_finite"
+            ): False,
+        }
+        if validate_data is None:
+            X, y = self._validate_data(**validation_params)
+        else:
+            X, y = validate_data(self, **validation_params)
 
         if y.ndim == 1:
             y = np.expand_dims(y, axis=1)
@@ -816,7 +839,23 @@ class BaseForestQuantileRegressor(ForestRegressor):
             Quantile ranks in range [0, 1].
         """
         check_is_fitted(self)
-        X, y = self._validate_data(X, y, multi_output=True, accept_sparse="csc", dtype=DTYPE)
+
+        validation_params = {
+            "X": X,
+            "y": y,
+            "multi_output": True,
+            "accept_sparse": "csc",
+            "dtype": DTYPE,
+            (
+                "force_all_finite"
+                if sklearn_version < parse_version("1.6.dev0")
+                else "ensure_all_finite"
+            ): False,
+        }
+        if validate_data is None:
+            X, y = self._validate_data(**validation_params)
+        else:
+            X, y = validate_data(self, **validation_params)
 
         if not isinstance(kind, (bytes, bytearray)):
             kind = kind.encode()
