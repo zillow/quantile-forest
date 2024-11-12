@@ -884,15 +884,6 @@ def check_max_samples_leaf(name):
 @pytest.mark.parametrize("name", FOREST_REGRESSORS)
 def test_max_samples_leaf(name):
     check_max_samples_leaf(name)
-    """
-    Test that `max_samples_leaf` is correctly passed to the `fit` method,
-    and that it results in the correct maximum leaf size.
-
-    Parameters
-    ----------
-    name : str
-        The name of the forest regressor to test.
-    """
 
 
 def check_oob_samples(name):
