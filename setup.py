@@ -28,7 +28,7 @@ def write_version_py():
 __version__ = write_version_py()
 
 DISTNAME = "quantile-forest"
-DESCRIPTION = "scikit-learn compatible quantile forests."
+DESCRIPTION = "Quantile regression forests compatible with scikit-learn."
 with codecs.open("README.md", encoding="utf-8-sig") as f:
     LONG_DESCRIPTION = f.read()
 MAINTAINER = "Zillow Group AI Team"

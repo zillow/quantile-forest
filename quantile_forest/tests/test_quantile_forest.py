@@ -18,7 +18,6 @@ from sklearn.utils._testing import (
     assert_almost_equal,
     assert_array_almost_equal,
     assert_array_equal,
-    assert_raises,
 )
 from sklearn.utils.validation import check_is_fitted, check_random_state
 
@@ -264,7 +263,8 @@ def check_predict_quantiles_toy(name):
             weighted_leaves=False,
             oob_score=oob_score,
         )
-        assert_raises(AssertionError, assert_allclose, y_pred1, y_pred2)
+        with pytest.raises(AssertionError):
+            assert_allclose(y_pred1, y_pred2)
 
         # Check that leaf weighting without weighted quantiles does nothing.
         y_pred1 = est.predict(
@@ -579,8 +579,10 @@ def check_predict_quantiles(
     assert np.any(y_pred_1 != y_pred_2)
 
     # Check error if invalid quantiles.
-    assert_raises(ValueError, est.predict, X_test, -0.01)
-    assert_raises(ValueError, est.predict, X_test, 1.01)
+    with pytest.raises(ValueError):
+        est.predict(X_test, -0.01)
+    with pytest.raises(ValueError):
+        est.predict(X_test, 1.01)
 
 
 @pytest.mark.parametrize("name", FOREST_REGRESSORS)
@@ -720,7 +722,8 @@ def check_quantile_ranks(name):
 
     # Check error if training and test number of targets are not equal.
     est.fit(X_train, y_train[:, 0])  # training target size = 1
-    assert_raises(ValueError, est.quantile_ranks, X_test, y_test[:, :2])  # test target size = 2
+    with pytest.raises(ValueError):
+        est.quantile_ranks(X_test, y_test[:, :2])  # test target size = 2
 
 
 @pytest.mark.parametrize("name", FOREST_REGRESSORS)
@@ -773,10 +776,12 @@ def check_proximity_counts(name):
     assert_array_equal([len(p) for p in proximities], [len(e) for e in expected])
 
     # Check error if `max_proximities` < 1.
-    assert_raises(ValueError, est.proximity_counts, X, max_proximities=0)
+    with pytest.raises(ValueError):
+        est.proximity_counts(X, max_proximities=0)
 
     # Check error if `max_proximities` is a float.
-    assert_raises(ValueError, est.proximity_counts, X, max_proximities=1.5)
+    with pytest.raises(ValueError):
+        est.proximity_counts(X, max_proximities=1.5)
 
     # Check that proximity counts match expected counts without splits.
     est = ForestRegressor(
@@ -869,9 +874,11 @@ def check_max_samples_leaf(name):
         for param_validation in [True, False]:
             est = ForestRegressor(n_estimators=1, max_samples_leaf=max_samples_leaf)
             est.param_validation = param_validation
-            assert_raises(ValueError, est.fit, X, y)
+            with pytest.raises(ValueError):
+                est.fit(X, y)
             est.max_samples_leaf = max_samples_leaf
-            assert_raises(ValueError, est._get_y_train_leaves, X, y)
+            with pytest.raises(ValueError):
+                est._get_y_train_leaves(X, y)
 
 
 @pytest.mark.parametrize("name", FOREST_REGRESSORS)
@@ -1065,16 +1072,16 @@ def check_predict_oob(
     assert_allclose(y_pred_oob1, y_pred_oob2)
 
     # Check error if OOB score without `indices` do not match training count.
-    assert_raises(ValueError, est.predict, X[:1], oob_score=True)
+    with pytest.raises(ValueError):
+        est.predict(X[:1], oob_score=True)
 
     # Check error if OOB score with `indices` do not match samples count.
-    assert_raises(
-        ValueError,
-        est.predict,
-        X,
-        oob_score=True,
-        indices=-np.ones(len(X) - 1),
-    )
+    with pytest.raises(ValueError):
+        est.predict(
+            X,
+            oob_score=True,
+            indices=-np.ones(len(X) - 1),
+        )
 
     # Check warning if not enough estimators.
     with np.errstate(divide="ignore", invalid="ignore"):
@@ -1106,14 +1113,13 @@ def check_predict_oob(
     # Check error if no bootstrapping.
     est = ForestRegressor(n_estimators=1, bootstrap=False)
     est.fit(X, y)
-    assert_raises(
-        ValueError,
-        est.predict,
-        X,
-        weighted_quantile=weighted_quantile,
-        aggregate_leaves_first=aggregate_leaves_first,
-        oob_score=True,
-    )
+    with pytest.raises(ValueError):
+        est.predict(
+            X,
+            weighted_quantile=weighted_quantile,
+            aggregate_leaves_first=aggregate_leaves_first,
+            oob_score=True,
+        )
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", UserWarning)
         assert np.all(est._get_unsampled_indices(est.estimators_[0]) == np.array([]))
@@ -1121,15 +1127,14 @@ def check_predict_oob(
     # Check error if number of scoring and training samples are different.
     est = ForestRegressor(n_estimators=1, bootstrap=True)
     est.fit(X, y)
-    assert_raises(
-        ValueError,
-        est.predict,
-        X[:1],
-        y[:1],
-        weighted_quantile=weighted_quantile,
-        aggregate_leaves_first=aggregate_leaves_first,
-        oob_score=True,
-    )
+    with pytest.raises(ValueError):
+        est.predict(
+            X[:1],
+            y[:1],
+            weighted_quantile=weighted_quantile,
+            aggregate_leaves_first=aggregate_leaves_first,
+            oob_score=True,
+        )
 
 
 @pytest.mark.parametrize("name", FOREST_REGRESSORS)
@@ -1200,12 +1205,14 @@ def check_quantile_ranks_oob(name):
     # Check error if no bootstrapping.
     est = ForestRegressor(n_estimators=1, bootstrap=False)
     est.fit(X, y)
-    assert_raises(ValueError, est.quantile_ranks, X, y, oob_score=True)
+    with pytest.raises(ValueError):
+        est.quantile_ranks(X, y, oob_score=True)
 
     # Check error if number of scoring and training samples are different.
     est = ForestRegressor(n_estimators=1, bootstrap=True)
     est.fit(X, y)
-    assert_raises(ValueError, est.quantile_ranks, X[:1], y[:1], oob_score=True)
+    with pytest.raises(ValueError):
+        est.quantile_ranks(X[:1], y[:1], oob_score=True)
 
 
 @pytest.mark.parametrize("name", FOREST_REGRESSORS)
@@ -1284,7 +1291,8 @@ def check_proximity_counts_oob(name):
     # Check error if no bootstrapping.
     est = ForestRegressor(n_estimators=1, max_samples_leaf=None, bootstrap=False)
     est.fit(X, y)
-    assert_raises(ValueError, est.proximity_counts, X, oob_score=True)
+    with pytest.raises(ValueError):
+        est.proximity_counts(X, oob_score=True)
 
 
 @pytest.mark.parametrize("name", FOREST_REGRESSORS)
@@ -1357,7 +1365,8 @@ def check_monotonic_constraints(name, max_samples_leaf):
         max_leaf_nodes=n_samples_train,
         bootstrap=True,
     )
-    assert_raises(ValueError, est.fit, X_train, y_train)
+    with pytest.raises(ValueError):
+        est.fit(X_train, y_train)
 
 
 @pytest.mark.parametrize("name", FOREST_REGRESSORS)
@@ -1466,8 +1475,10 @@ def test_calc_quantile():
     assert actual1 != actual2
 
     # Check error if invalid parameters.
-    assert_raises(TypeError, calc_quantile, [1, 2], 0.5)
-    assert_raises(TypeError, calc_quantile, [1, 2], [0.5], interpolation=None)
+    with pytest.raises(TypeError):
+        calc_quantile([1, 2], 0.5)
+    with pytest.raises(TypeError):
+        calc_quantile([1, 2], [0.5], interpolation=None)
 
 
 def test_calc_weighted_quantile():
@@ -1585,8 +1596,10 @@ def test_calc_weighted_quantile():
     assert actual1 != actual2
 
     # Check error if invalid parameters.
-    assert_raises(TypeError, calc_weighted_quantile, [1, 2], [1, 1], 0.5)
-    assert_raises(TypeError, calc_weighted_quantile, [1, 2], [1, 1], [0.5], interpolation=None)
+    with pytest.raises(TypeError):
+        calc_weighted_quantile([1, 2], [1, 1], 0.5)
+    with pytest.raises(TypeError):
+        calc_weighted_quantile([1, 2], [1, 1], [0.5], interpolation=None)
 
 
 def test_calc_quantile_rank():
@@ -1635,5 +1648,7 @@ def test_calc_quantile_rank():
     assert actual1 != actual2
 
     # Check error if invalid parameters.
-    assert_raises(TypeError, calc_quantile_rank, [1, 2], [1])
-    assert_raises(TypeError, calc_quantile_rank, [1, 2], float(1), kind=None)
+    with pytest.raises(TypeError):
+        calc_quantile_rank([1, 2], [1])
+    with pytest.raises(TypeError):
+        calc_quantile_rank([1, 2], float(1), kind=None)
