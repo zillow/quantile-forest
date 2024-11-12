@@ -155,7 +155,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
             ): False,
         }
         if validate_data is None:
-            self._validate_data(**validation_params)
+            X, y = self._validate_data(**validation_params)
         else:
             X, y = validate_data(self, **validation_params)
 
@@ -853,7 +853,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
             ): False,
         }
         if validate_data is None:
-            self._validate_data(**validation_params)
+            X, y = self._validate_data(**validation_params)
         else:
             X, y = validate_data(self, **validation_params)
 
