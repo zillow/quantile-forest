@@ -281,7 +281,7 @@ def plot_quantiles_by_latlon(df, quantiles, color_scheme="lightgreyred"):
         alt.Chart(df)
         .add_params(quantile_val)
         .transform_calculate(quantile_col="'q_' + quantile")
-        .transform_calculate(value=f"datum[datum.quantile_col]")
+        .transform_calculate(value="datum[datum.quantile_col]")
         .mark_geoshape(stroke="black", strokeWidth=0.5)
         .encode(
             color=alt.Color(
