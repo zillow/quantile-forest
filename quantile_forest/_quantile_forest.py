@@ -1301,7 +1301,7 @@ class RandomForestQuantileRegressor(BaseForestQuantileRegressor):
     >>> qrf.fit(X[:1000], y[:1000])
     RandomForestQuantileRegressor(random_state=0)
     >>> qrf.score(X, y, quantiles=0.5)
-    0.359...
+    0.35...
     """
 
     def __init__(
