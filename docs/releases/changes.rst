@@ -14,7 +14,7 @@ Version 1.4.0 (released Jan 21, 2025)
 * Bump pypa/gh-action-pypi-publish from 1.10.1 to 1.10.2 by `@dependabot <https://github.com/dependabot>`_ in `#93 <https://github.com/zillow/quantile-forest/pull/93>`_
 * Bump pypa/cibuildwheel from 2.20.0 to 2.21.1 by `@dependabot <https://github.com/dependabot>`_ in `#94 <https://github.com/zillow/quantile-forest/pull/94>`_
 * Update Typing for Python 3.9+ by `@reidjohnson <https://github.com/reidjohnson>`_ in `#97 <https://github.com/zillow/quantile-forest/pull/97>`_
-* Bump pypa/cibuildwheel from 2.21.1 to 2.21.2 by @dependabot in `#98 <https://github.com/zillow/quantile-forest/pull/98>`_
+* Bump pypa/cibuildwheel from 2.21.1 to 2.21.2 by `@dependabot <https://github.com/dependabot>`_ in `#98 <https://github.com/zillow/quantile-forest/pull/98>`_
 * Bump pypa/gh-action-pypi-publish from 1.10.2 to 1.10.3 by `@dependabot <https://github.com/dependabot>`_ in `#99 <https://github.com/zillow/quantile-forest/pull/99>`_
 * Bump pypa/cibuildwheel from 2.21.2 to 2.21.3 by `@dependabot <https://github.com/dependabot>`_ in `#100 <https://github.com/zillow/quantile-forest/pull/100>`_
 * Add Conda Instructions to Docs by `@reidjohnson <https://github.com/reidjohnson>`_ in `#101 <https://github.com/zillow/quantile-forest/pull/101>`_
