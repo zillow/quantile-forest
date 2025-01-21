@@ -1369,14 +1369,6 @@ class RandomForestQuantileRegressor(BaseForestQuantileRegressor):
         self.ccp_alpha = ccp_alpha
         self.monotonic_cst = monotonic_cst
 
-    def _more_tags(self):
-        return {
-            "multioutput": True,
-            "_xfail_checks": {
-                "check_dataframe_column_names_consistency": "Internal calls.",
-            },
-        }
-
 
 class ExtraTreesQuantileRegressor(BaseForestQuantileRegressor):
     """An extra-trees regressor that provides quantile estimates.
@@ -1693,11 +1685,3 @@ class ExtraTreesQuantileRegressor(BaseForestQuantileRegressor):
         self.min_impurity_decrease = min_impurity_decrease
         self.ccp_alpha = ccp_alpha
         self.monotonic_cst = monotonic_cst
-
-    def _more_tags(self):
-        return {
-            "multioutput": True,
-            "_xfail_checks": {
-                "check_dataframe_column_names_consistency": "Internal calls.",
-            },
-        }

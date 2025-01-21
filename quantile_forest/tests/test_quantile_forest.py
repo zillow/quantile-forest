@@ -85,8 +85,6 @@ def check_regression_toy(name, weighted_quantile):
     )
     assert_allclose(y_pred, y_true)
 
-    assert est._more_tags()
-
 
 @pytest.mark.parametrize("name", FOREST_REGRESSORS)
 @pytest.mark.parametrize("weighted_quantile", [True, False])
