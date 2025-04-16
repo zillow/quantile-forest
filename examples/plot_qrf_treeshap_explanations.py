@@ -144,18 +144,27 @@ def plot_shap_waterfall_with_quantiles(df, height=300):
         .reset_index(drop=True)
         .assign(
             **{
-                "start": lambda df: df.groupby("quantile", group_keys=False).apply(
-                    lambda g: g["shap_value"].shift(1, fill_value=0).cumsum() + g["base_value"],
-                    include_groups=False,
+                "start": (
+                    lambda df: df.groupby("quantile", group_keys=False).apply(
+                        lambda g: g["shap_value"].shift(1, fill_value=0).cumsum()
+                        + g["base_value"],
+                        include_groups=False,
+                    )
                 ),
-                "end": lambda df: df.groupby("quantile", group_keys=False).apply(
-                    lambda g: g["shap_value"].cumsum() + g["base_value"], include_groups=False
+                "end": (
+                    lambda df: df.groupby("quantile", group_keys=False).apply(
+                        lambda g: g["shap_value"].cumsum() + g["base_value"], include_groups=False
+                    )
                 ),
-                "value_label": lambda df: df["shap_value"].apply(
-                    lambda x: ("+" if x >= 0 else "-") + "{0:,.2f}".format(abs(x))
+                "value_label": (
+                    lambda df: df["shap_value"].apply(
+                        lambda x: ("+" if x >= 0 else "-") + "{0:,.2f}".format(abs(x))
+                    )
                 ),
-                "feature2": lambda df: df.groupby("quantile", group_keys=False).apply(
-                    lambda g: g["feature"].shift(-1), include_groups=False
+                "feature2": (
+                    lambda df: df.groupby("quantile", group_keys=False).apply(
+                        lambda g: g["feature"].shift(-1), include_groups=False
+                    )
                 ),
             }
         )
