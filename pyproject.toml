@@ -1,5 +1,20 @@
+[project]
+name = "quantile-forest"
+dynamic = ["version"]
+description = "Quantile regression forests compatible with scikit-learn."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "Apache-2.0" }
+authors = [
+    { name = "Zillow Group AI Team" }
+]
+dependencies = [
+    "numpy>=1.23",
+    "scipy>=1.4",
+    "scikit-learn>=1.5",
+]
+
 [build-system]
-# Minimum requirements for the build system to execute.
 requires = [
     "setuptools",
     "wheel",
@@ -8,6 +23,9 @@ requires = [
     "scipy>=1.4",
     "scikit-learn>=1.5",
 ]
+
+[tool.setuptools.dynamic]
+version = { file = "quantile_forest/version.txt" }
 
 [tool.black]
 line-length = 99

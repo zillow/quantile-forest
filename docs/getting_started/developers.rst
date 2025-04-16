@@ -12,24 +12,35 @@ Building the package from source additionally requires the following dependencie
 
 We also use pre-commit hooks to identify simple issues before submission.
 
-Setting Up Your Environment
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-To contribute to the `quantile-forest` source code, start by forking and then cloning the repository (i.e. `git clone git@github.com:YourUsername/quantile-forest.git`).
-
-Once inside the repository, you can prepare a development environment. Using conda::
-
-  conda create -n qf python=3.12
-  conda activate qf
-  conda install pre-commit
-  pre-commit install
-
 Development Installation
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-To manually build and install the package, run::
+For development installation, we recommend using `uv <https://github.com/astral-sh/uv>`_:
 
-  pip install --verbose --editable .
+1. Clone the repository:
+
+   .. code-block:: bash
+
+      git clone https://github.com/zillow/quantile-forest.git
+      cd quantile-forest
+
+2. Create a virtual environment:
+
+   .. code-block:: bash
+
+      uv venv
+
+3. Build the package:
+
+   .. code-block:: bash
+
+      uv pip install --editable . --verbose
+
+4. Run the test suite to verify the installation:
+
+   .. code-block:: bash
+
+      uv run pytest
 
 Troubleshooting
 ~~~~~~~~~~~~~~~
@@ -47,25 +58,25 @@ Test and Coverage
 
 Ensure that `pytest` and `pytest-cov` are installed::
 
-  pip install pytest pytest-cov
+  uv pip install pytest pytest-cov
 
 To test the code::
 
-  python -m pytest quantile_forest -v
+  uv run pytest quantile_forest -v
 
 To test the code and produce a coverage report::
 
-  python -m pytest quantile_forest --cov-report html --cov=quantile_forest
+  uv run pytest quantile_forest --cov-report html --cov=quantile_forest
 
 To test the documentation::
 
-  python -m pytest --doctest-glob="*.rst" --doctest-modules docs
+  uv run pytest --doctest-glob="*.rst" --doctest-modules docs
 
 Documentation
 ~~~~~~~~~~~~~
 
 To build the documentation, run::
 
-  pip install -r ./docs/sphinx_requirements.txt
+  uv pip install -r ./docs/sphinx_requirements.txt
   mkdir -p ./docs/_images
-  sphinx-build -b html ./docs ./docs/_build
+  uv run sphinx-build -b html ./docs ./docs/_build
