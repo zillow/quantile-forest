@@ -45,10 +45,18 @@ jobs:
           with:
             python-version: '3.13'
 
-        - run: pip install build
+        - name: Install uv
+          run: pip install uv
+
+        - name: Create virtual environment
+          run: uv venv
+          shell: bash
+
+        - name: Install build
+          run: uv pip install build
 
         - name: Build sdist
-          run: python -m build --sdist
+          run: uv run python -m build --sdist
 
         - uses: actions/upload-artifact@v4
           with:
