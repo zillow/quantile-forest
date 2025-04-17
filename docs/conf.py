@@ -111,7 +111,7 @@ html_theme_options = {
     "navbar_center": ["navbar-nav"],
     "navbar_end": ["theme-switcher", "navbar-icon-links"],
     "primary_sidebar_end": [],
-    "logo": {"image_dark": "_static/quantile-forest-logo-white.png"},
+    "logo": {"image_dark": "_static/quantile-forest-logo-white.svg"},
     "icon_links": [
         {
             "name": "GitHub",
@@ -134,7 +134,7 @@ html_short_title = "quantile-forest"
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
-html_logo = "_static/quantile-forest-logo.png"
+html_logo = "_static/quantile-forest-logo.svg"
 
 # The name of an image file (relative to this directory) to use as a favicon of
 # the docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
