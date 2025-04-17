@@ -22,7 +22,7 @@ sys.path.insert(0, os.path.abspath(".."))
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 
-# -- General configuration ------------------------------------------------
+# -- General configuration ----------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
 # needs_sphinx = '1.0'
@@ -37,6 +37,7 @@ extensions = [
     "sphinx.ext.githubpages",
     "sphinx.ext.intersphinx",
     "numpydoc",
+    "sphinx_copybutton",
     "sphinx_design",
     "sphinxcontrib.bibtex",
     "sphinxext_altair.altairplot",
@@ -94,11 +95,11 @@ else:
     extensions.append("sphinx.ext.mathjax")
     mathjax_path = "https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"
 
-# -- Options for bibtex ------------------------------------------------------
+# -- Options for bibtex -------------------------------------------------------
 
 bibtex_bibfiles = ["refs.bib"]
 
-# -- Options for HTML output ----------------------------------------------
+# -- Options for HTML output --------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
@@ -183,7 +184,7 @@ intersphinx_mapping = {
     "sklearn": ("https://scikit-learn.org/stable", None),
 }
 
-# -- Options for LaTeX output ---------------------------------------------
+# -- Options for LaTeX output -------------------------------------------------
 
 latex_elements = {
     # The paper size ('letterpaper' or 'a4paper').
@@ -207,7 +208,7 @@ latex_documents = [
     ),
 ]
 
-# -- Options for manual page output ---------------------------------------
+# -- Options for manual page output -------------------------------------------
 
 # If false, no module index is generated.
 # latex_domain_indices = True
@@ -226,3 +227,7 @@ man_pages = [
 
 # If true, show URL addresses after external links.
 # man_show_urls = False
+
+# -- Options for copybutton ---------------------------------------------------
+copybutton_prompt_text = r">>> |\.\.\. "
+copybutton_prompt_is_regexp = True
