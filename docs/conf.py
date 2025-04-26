@@ -127,7 +127,7 @@ html_context = {"default_mode": "light"}
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ["_static", "_images"]
+html_static_path = ["_images", "_static", "_static/css"]
 
 # Output file base name for HTML help builder.
 html_short_title = "quantile-forest"
@@ -142,17 +142,6 @@ html_logo = "_static/quantile-forest-logo.svg"
 html_favicon = "_static/favicon.ico"
 
 htmlhelp_basename = "quantile-forestdoc"
-
-
-# Adapted from: http://rackerlabs.github.io/docs-rackspace/tools/rtd-tables.html
-# and https://github.com/rtfd/sphinx_rtd_theme/issues/117
-def setup(app):
-    app.add_css_file("theme_overrides.css")
-
-
-html_css_files = [
-    "css/gallery.css",
-]
 
 # Custom sidebar templates, maps document names to template names.
 html_sidebars = {
