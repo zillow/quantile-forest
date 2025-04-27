@@ -234,7 +234,7 @@ def plot_prediction_intervals_by_strategy(df):
 
         diagonal = (
             alt.Chart(pd.DataFrame({"var1": domain, "var2": domain}))
-            .mark_line(color="black", opacity=0.4, strokeDash=[2, 2])
+            .mark_line(color="gray", opacity=0.4, strokeDash=[2, 2])
             .encode(
                 x=alt.X("var1:Q"),
                 y=alt.Y("var2:Q"),
@@ -251,7 +251,7 @@ def plot_prediction_intervals_by_strategy(df):
                     " + ' (target = ' + format((1 - datum.alpha) * 100, '.1f') + '%)'"
                 )
             )
-            .mark_text(align="left", baseline="top")
+            .mark_text(align="left", baseline="top", color="gray")
             .encode(
                 x=alt.value(5),
                 y=alt.value(5),
@@ -261,7 +261,7 @@ def plot_prediction_intervals_by_strategy(df):
         text_with = (
             base.transform_aggregate(width="mean(width)", groupby=["strategy"])
             .transform_calculate(width_text="'Interval Width: ' + format(datum.width, '$,d')")
-            .mark_text(align="left", baseline="top")
+            .mark_text(align="left", baseline="top", color="gray")
             .encode(
                 x=alt.value(5),
                 y=alt.value(20),

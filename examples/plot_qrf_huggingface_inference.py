@@ -22,6 +22,7 @@ import geopandas as gpd
 import joblib
 import numpy as np
 import pandas as pd
+import requests
 from sklearn import datasets
 from sklearn.base import BaseEstimator, RegressorMixin, clone
 from sklearn.model_selection import KFold
@@ -235,9 +236,14 @@ def plot_quantiles_by_latlon(df, quantiles, color_scheme="lightgreyred"):
 
     quantile_val = alt.param(name="quantile", value=0.5, bind=slider)
 
+    # Download the us-10m.json file temporarily.
+    with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as tmpfile:
+        tmpfile.write(requests.get(data.us_10m.url).content)
+        tmp_path = tmpfile.name
+
     # Load the US counties data and filter to California counties.
     ca_counties = (
-        gpd.read_file(data.us_10m.url, layer="counties")
+        gpd.read_file(tmp_path, layer="counties")
         .set_crs("EPSG:4326")
         .assign(**{"county_fips": lambda x: x["id"].astype(int)})
         .drop(columns=["id"])

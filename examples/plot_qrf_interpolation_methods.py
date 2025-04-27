@@ -43,7 +43,7 @@ interpolations = {
     "Nearest": "#a6e5ff",
 }
 
-legend = {"Actual": "#000000"}
+legend = {"Actual": "#808080"}
 legend.update(interpolations)
 
 dfs = []

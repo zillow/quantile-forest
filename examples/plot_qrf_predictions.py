@@ -98,11 +98,11 @@ def plot_predictions_and_intervals(df):
     line_true = (
         alt.Chart(df.assign(**{"y_true_label": "f(x) = x sin(x)"}))
         .transform_filter(~alt.datum["test"])  # filter to non-test data
-        .mark_line(color="black", size=3)
+        .mark_line(color="gray", size=3)
         .encode(
             x=alt.X("x:Q", scale=alt.Scale(nice=False)),
             y=alt.Y("y:Q", title="Y"),
-            color=alt.Color("y_true_label:N", scale=alt.Scale(range=["black"]), title=None),
+            color=alt.Color("y_true_label:N", scale=alt.Scale(range=["gray"]), title=None),
             tooltip=[
                 alt.Tooltip("x:Q", format=",.3f", title="X"),
                 alt.Tooltip("y:Q", format=",.3f", title="Y"),

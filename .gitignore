@@ -50,6 +50,6 @@ paper/paper.jats
 
 # Documentation
 docs/_build/
-docs/_images/
-docs/generated/
-docs/gallery/*.rst
+docs/source/_images/
+docs/source/generated/
+docs/source/gallery/*.rst

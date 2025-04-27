@@ -1,6 +1,9 @@
+import uuid
+
 from docutils import nodes
 from docutils.parsers.rst import Directive
 from sphinx.locale import _
+from sphinx.util.docutils import SphinxDirective
 
 
 def process_text(text):
@@ -100,8 +103,86 @@ class SklearnVersionChangedDirective(Directive):
         return [container]
 
 
+class DynamicThemeAltairPlot(SphinxDirective):
+    has_content = True
+
+    def run(self):
+        import altair as alt
+
+        # Filter out directive options (lines starting with ":").
+        code_lines = [line for line in self.content if not line.strip().startswith(":")]
+        code = "\n".join(code_lines)
+        ns = {}
+        exec(code, ns)
+
+        chart = ns.get("chart")
+        if not isinstance(chart, alt.TopLevelMixin):
+            raise ValueError("Expected a variable named 'chart' with an Altair chart object.")
+
+        chart_id = f"vega-spec-{uuid.uuid4().hex}"
+        spec = chart.to_json(indent=None)
+
+        html = f"""
+        <div class="altair-plot" id="container-{chart_id}">
+            <script type="application/json" id="{chart_id}">
+                {spec}
+            </script>
+            <script>
+            (function() {{
+                const container = document.getElementById("container-{chart_id}");
+                const specScript = document.getElementById("{chart_id}");
+                if (!container || !specScript) {{
+                    console.error("No container or spec script found!");
+                    return;
+                }}
+
+                function reRenderAltairPlot() {{
+                    const dt = document.documentElement.getAttribute("data-theme")
+                    const theme = dt === "dark" ? "dark" : "light";
+                    const spec = JSON.parse(specScript.textContent);
+
+                    const existingChartDiv = container.querySelector(".vega-embed");
+                    if (existingChartDiv) {{
+                        existingChartDiv.remove();
+                    }}
+
+                    const newDiv = document.createElement("div");
+                    container.appendChild(newDiv);
+
+                    vegaEmbed(newDiv, spec, {{
+                        theme: theme,
+                        actions: {{
+                            export: true,
+                            source: true,
+                            editor: true,
+                            compiled: false
+                        }},
+                        defaultStyle: true
+                    }}).catch(console.error);
+                }}
+
+                document.addEventListener("DOMContentLoaded", reRenderAltairPlot);
+
+                const observer = new MutationObserver(function(mutations) {{
+                    if (mutations.some(m => m.attributeName === "data-theme")) {{
+                        reRenderAltairPlot();
+                    }}
+                }});
+                observer.observe(document.documentElement, {{
+                    attributes: true,
+                    attributeFilter: ["data-theme"]
+                }});
+            }})();
+            </script>
+        </div>
+        """
+
+        return [nodes.raw("", html, format="html")]
+
+
 def setup(app):
     app.add_node(div, html=(div.visit_div, div.depart_div))
     app.add_node(span, html=(span.visit_span, span.depart_span))
     app.add_directive("sklearn-versionadded", SklearnVersionAddedDirective)
     app.add_directive("sklearn-versionchanged", SklearnVersionChangedDirective)
+    app.add_directive("dynamic-altair-plot", DynamicThemeAltairPlot)
