@@ -91,5 +91,5 @@ Documentation
 To build the documentation, run::
 
   uv pip install -r ./docs/sphinx_requirements.txt
-  mkdir -p ./docs/_images
-  uv run sphinx-build -b html ./docs ./docs/_build
+  mkdir -p ./docs/source/_images
+  uv run sphinx-build -b html ./docs/source ./docs/_build

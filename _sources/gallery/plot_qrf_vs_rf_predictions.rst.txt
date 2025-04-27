@@ -19,7 +19,7 @@ the mean predicted by a standard random forest when dealing with skewed
 distributions.
 
 
-.. altair-plot::
+.. dynamic-altair-plot::
     :remove-code:
     
 

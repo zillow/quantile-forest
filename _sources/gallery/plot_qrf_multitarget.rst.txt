@@ -18,7 +18,7 @@ quantiles simultaneously. Three of these quantiles are visualized concurrently
 for each target: the median line and the area defined by the interval points.
 
 
-.. altair-plot::
+.. dynamic-altair-plot::
     :remove-code:
     
 

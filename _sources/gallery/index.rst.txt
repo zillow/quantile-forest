@@ -16,6 +16,8 @@ General-purpose, introductory and illustrative examples.
     <span
         class="image" alt="Comparing Quantile Interpolation Methods"
     
+        data-light-src="url(../_static/plot_qrf_interpolation_methods-thumb.png)"
+        data-dark-src="url(../_static/plot_qrf_interpolation_methods-thumb-dark.png)"
         style="background-image: url(../_static/plot_qrf_interpolation_methods-thumb.png);"
     
     ></span>
@@ -27,6 +29,8 @@ General-purpose, introductory and illustrative examples.
     <span
         class="image" alt="Computing User-Specified Functions with QRFs"
     
+        data-light-src="url(../_static/plot_qrf_custom_functions-thumb.png)"
+        data-dark-src="url(../_static/plot_qrf_custom_functions-thumb-dark.png)"
         style="background-image: url(../_static/plot_qrf_custom_functions-thumb.png);"
     
     ></span>
@@ -38,6 +42,8 @@ General-purpose, introductory and illustrative examples.
     <span
         class="image" alt="Extrapolation with Quantile Regression Forests"
     
+        data-light-src="url(../_static/plot_qrf_extrapolation-thumb.png)"
+        data-dark-src="url(../_static/plot_qrf_extrapolation-thumb-dark.png)"
         style="background-image: url(../_static/plot_qrf_extrapolation-thumb.png);"
     
     ></span>
@@ -49,6 +55,8 @@ General-purpose, introductory and illustrative examples.
     <span
         class="image" alt="Multi-target Quantile Regression with QRFs"
     
+        data-light-src="url(../_static/plot_qrf_multitarget-thumb.png)"
+        data-dark-src="url(../_static/plot_qrf_multitarget-thumb-dark.png)"
         style="background-image: url(../_static/plot_qrf_multitarget-thumb.png);"
     
     ></span>
@@ -60,6 +68,8 @@ General-purpose, introductory and illustrative examples.
     <span
         class="image" alt="Predicting with Quantile Regression Forests"
     
+        data-light-src="url(../_static/plot_qrf_predictions-thumb.png)"
+        data-dark-src="url(../_static/plot_qrf_predictions-thumb-dark.png)"
         style="background-image: url(../_static/plot_qrf_predictions-thumb.png);"
     
     ></span>
@@ -71,6 +81,8 @@ General-purpose, introductory and illustrative examples.
     <span
         class="image" alt="QRFs for Conformalized Quantile Regression"
     
+        data-light-src="url(../_static/plot_qrf_conformalized_intervals-thumb.png)"
+        data-dark-src="url(../_static/plot_qrf_conformalized_intervals-thumb-dark.png)"
         style="background-image: url(../_static/plot_qrf_conformalized_intervals-thumb.png);"
     
     ></span>
@@ -82,6 +94,8 @@ General-purpose, introductory and illustrative examples.
     <span
         class="image" alt="Quantile Regression Forests Prediction Intervals"
     
+        data-light-src="url(../_static/plot_qrf_prediction_intervals-thumb.png)"
+        data-dark-src="url(../_static/plot_qrf_prediction_intervals-thumb-dark.png)"
         style="background-image: url(../_static/plot_qrf_prediction_intervals-thumb.png);"
     
     ></span>
@@ -93,6 +107,8 @@ General-purpose, introductory and illustrative examples.
     <span
         class="image" alt="Quantile Regression Forests vs. Random Forests"
     
+        data-light-src="url(../_static/plot_qrf_vs_rf_predictions-thumb.png)"
+        data-dark-src="url(../_static/plot_qrf_vs_rf_predictions-thumb-dark.png)"
         style="background-image: url(../_static/plot_qrf_vs_rf_predictions-thumb.png);"
     
     ></span>
@@ -104,6 +120,8 @@ General-purpose, introductory and illustrative examples.
     <span
         class="image" alt="Tree SHAP with Quantile Regression Forests"
     
+        data-light-src="url(../_static/plot_qrf_treeshap_explanations-thumb.png)"
+        data-dark-src="url(../_static/plot_qrf_treeshap_explanations-thumb-dark.png)"
         style="background-image: url(../_static/plot_qrf_treeshap_explanations-thumb.png);"
     
     ></span>
@@ -115,6 +133,8 @@ General-purpose, introductory and illustrative examples.
     <span
         class="image" alt="Using Proximity Counts to Identify Similar Samples"
     
+        data-light-src="url(../_static/plot_qrf_proximity_counts-thumb.png)"
+        data-dark-src="url(../_static/plot_qrf_proximity_counts-thumb-dark.png)"
         style="background-image: url(../_static/plot_qrf_proximity_counts-thumb.png);"
     
     ></span>
@@ -126,6 +146,8 @@ General-purpose, introductory and illustrative examples.
     <span
         class="image" alt="Using Quantile Ranks to Identify Potential Outliers"
     
+        data-light-src="url(../_static/plot_qrf_quantile_ranks-thumb.png)"
+        data-dark-src="url(../_static/plot_qrf_quantile_ranks-thumb-dark.png)"
         style="background-image: url(../_static/plot_qrf_quantile_ranks-thumb.png);"
     
     ></span>
@@ -137,6 +159,8 @@ General-purpose, introductory and illustrative examples.
     <span
         class="image" alt="Using a Trained QRF Model via Hugging Face Hub"
     
+        data-light-src="url(../_static/plot_qrf_huggingface_inference-thumb.png)"
+        data-dark-src="url(../_static/plot_qrf_huggingface_inference-thumb-dark.png)"
         style="background-image: url(../_static/plot_qrf_huggingface_inference-thumb.png);"
     
     ></span>
@@ -146,7 +170,7 @@ General-purpose, introductory and illustrative examples.
     
     </span>
 
-   <div style='clear:both;'></div>
+    <div style='clear:both;'></div>
 
 .. toctree::
    :maxdepth: 2

@@ -20,7 +20,7 @@ handled when a quantile does not exactly match a data point.
 
 
 
-.. altair-plot::
+.. dynamic-altair-plot::
     :remove-code:
     
 
@@ -56,7 +56,7 @@ handled when a quantile does not exactly match a data point.
         "Nearest": "#a6e5ff",
     }
 
-    legend = {"Actual": "#000000"}
+    legend = {"Actual": "#808080"}
     legend.update(interpolations)
 
     dfs = []
@@ -215,7 +215,7 @@ handled when a quantile does not exactly match a data point.
                 "Nearest": "#a6e5ff",
             }
 
-            legend = {"Actual": "#000000"}
+            legend = {"Actual": "#808080"}
             legend.update(interpolations)
 
             dfs = []

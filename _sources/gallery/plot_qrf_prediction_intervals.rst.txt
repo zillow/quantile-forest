@@ -16,7 +16,7 @@ visualization is inspired by Figure 3 of `"Quantile Regression Forests"
 <https://jmlr.org/papers/v7/meinshausen06a.html>`_ by Meinshausen.
 
 
-.. altair-plot::
+.. dynamic-altair-plot::
     :remove-code:
     
 
@@ -116,7 +116,7 @@ visualization is inspired by Figure 3 of `"Quantile Regression Forests"
                 alt.Chart(
                     pd.DataFrame({"var1": [domain[0], domain[1]], "var2": [domain[0], domain[1]]})
                 )
-                .mark_line(color="black", opacity=0.4, strokeDash=[2, 2])
+                .mark_line(color="gray", opacity=0.4, strokeDash=[2, 2])
                 .encode(
                     x=alt.X("var1:Q"),
                     y=alt.Y("var2:Q"),
@@ -299,7 +299,7 @@ visualization is inspired by Figure 3 of `"Quantile Regression Forests"
                         alt.Chart(
                             pd.DataFrame({"var1": [domain[0], domain[1]], "var2": [domain[0], domain[1]]})
                         )
-                        .mark_line(color="black", opacity=0.4, strokeDash=[2, 2])
+                        .mark_line(color="gray", opacity=0.4, strokeDash=[2, 2])
                         .encode(
                             x=alt.X("var1:Q"),
                             y=alt.Y("var2:Q"),

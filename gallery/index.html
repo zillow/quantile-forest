@@ -47,6 +47,35 @@
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
     <script src="../_static/copybutton.js?v=ccdb6887"></script>
+    <script>
+        (function() {
+            function switchGalleryThumbnails() {
+                const theme = document.documentElement.getAttribute("data-theme");
+                const darkMode = (theme === "dark");
+
+                document.querySelectorAll(".image, .preview").forEach(function(plot) {
+                    const attr = darkMode ? "data-dark-src" : "data-light-src";
+                    const src = plot.getAttribute(attr);
+                    if (src) {
+                        plot.style.backgroundImage = src;
+                    }
+                });
+            }
+
+            document.addEventListener("DOMContentLoaded", switchGalleryThumbnails);
+
+            const observer = new MutationObserver(function(mutations) {
+                if (mutations.some(m => m.attributeName === "data-theme")) {
+                    switchGalleryThumbnails();
+                }
+            });
+
+            observer.observe(document.documentElement, {
+                attributes: true,
+                attributeFilter: ["data-theme"]
+            });
+        })();
+        </script>
     <script src="../_static/design-tabs.js?v=f930bc37"></script>
     <script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
     <script src="https://cdn.jsdelivr.net/npm/vega-lite@5.20.1"></script>
@@ -399,141 +428,165 @@
   <section id="general-examples">
 <span id="example-gallery"></span><h1>General Examples<a class="headerlink" href="#general-examples" title="Link to this heading">#</a></h1>
 <p>General-purpose, introductory and illustrative examples.</p>
- <span class="gallery">
+<span class="gallery">
 
- <a class="imagegroup" href="plot_qrf_interpolation_methods.html">
- <span
-     class="image" alt="Comparing Quantile Interpolation Methods"
+<a class="imagegroup" href="plot_qrf_interpolation_methods.html">
+<span
+    class="image" alt="Comparing Quantile Interpolation Methods"
 
-     style="background-image: url(../_static/plot_qrf_interpolation_methods-thumb.png);"
+    data-light-src="url(../_static/plot_qrf_interpolation_methods-thumb.png)"
+    data-dark-src="url(../_static/plot_qrf_interpolation_methods-thumb-dark.png)"
+    style="background-image: url(../_static/plot_qrf_interpolation_methods-thumb.png);"
 
- ></span>
+></span>
 
- <span class="image-title">Comparing Quantile Interpolation Methods</span>
- </a>
+<span class="image-title">Comparing Quantile Interpolation Methods</span>
+</a>
 
- <a class="imagegroup" href="plot_qrf_custom_functions.html">
- <span
-     class="image" alt="Computing User-Specified Functions with QRFs"
+<a class="imagegroup" href="plot_qrf_custom_functions.html">
+<span
+    class="image" alt="Computing User-Specified Functions with QRFs"
 
-     style="background-image: url(../_static/plot_qrf_custom_functions-thumb.png);"
+    data-light-src="url(../_static/plot_qrf_custom_functions-thumb.png)"
+    data-dark-src="url(../_static/plot_qrf_custom_functions-thumb-dark.png)"
+    style="background-image: url(../_static/plot_qrf_custom_functions-thumb.png);"
 
- ></span>
+></span>
 
- <span class="image-title">Computing User-Specified Functions with QRFs</span>
- </a>
+<span class="image-title">Computing User-Specified Functions with QRFs</span>
+</a>
 
- <a class="imagegroup" href="plot_qrf_extrapolation.html">
- <span
-     class="image" alt="Extrapolation with Quantile Regression Forests"
+<a class="imagegroup" href="plot_qrf_extrapolation.html">
+<span
+    class="image" alt="Extrapolation with Quantile Regression Forests"
 
-     style="background-image: url(../_static/plot_qrf_extrapolation-thumb.png);"
+    data-light-src="url(../_static/plot_qrf_extrapolation-thumb.png)"
+    data-dark-src="url(../_static/plot_qrf_extrapolation-thumb-dark.png)"
+    style="background-image: url(../_static/plot_qrf_extrapolation-thumb.png);"
 
- ></span>
+></span>
 
- <span class="image-title">Extrapolation with Quantile Regression Forests</span>
- </a>
+<span class="image-title">Extrapolation with Quantile Regression Forests</span>
+</a>
 
- <a class="imagegroup" href="plot_qrf_multitarget.html">
- <span
-     class="image" alt="Multi-target Quantile Regression with QRFs"
+<a class="imagegroup" href="plot_qrf_multitarget.html">
+<span
+    class="image" alt="Multi-target Quantile Regression with QRFs"
 
-     style="background-image: url(../_static/plot_qrf_multitarget-thumb.png);"
+    data-light-src="url(../_static/plot_qrf_multitarget-thumb.png)"
+    data-dark-src="url(../_static/plot_qrf_multitarget-thumb-dark.png)"
+    style="background-image: url(../_static/plot_qrf_multitarget-thumb.png);"
 
- ></span>
+></span>
 
- <span class="image-title">Multi-target Quantile Regression with QRFs</span>
- </a>
+<span class="image-title">Multi-target Quantile Regression with QRFs</span>
+</a>
 
- <a class="imagegroup" href="plot_qrf_predictions.html">
- <span
-     class="image" alt="Predicting with Quantile Regression Forests"
+<a class="imagegroup" href="plot_qrf_predictions.html">
+<span
+    class="image" alt="Predicting with Quantile Regression Forests"
 
-     style="background-image: url(../_static/plot_qrf_predictions-thumb.png);"
+    data-light-src="url(../_static/plot_qrf_predictions-thumb.png)"
+    data-dark-src="url(../_static/plot_qrf_predictions-thumb-dark.png)"
+    style="background-image: url(../_static/plot_qrf_predictions-thumb.png);"
 
- ></span>
+></span>
 
- <span class="image-title">Predicting with Quantile Regression Forests</span>
- </a>
+<span class="image-title">Predicting with Quantile Regression Forests</span>
+</a>
 
- <a class="imagegroup" href="plot_qrf_conformalized_intervals.html">
- <span
-     class="image" alt="QRFs for Conformalized Quantile Regression"
+<a class="imagegroup" href="plot_qrf_conformalized_intervals.html">
+<span
+    class="image" alt="QRFs for Conformalized Quantile Regression"
 
-     style="background-image: url(../_static/plot_qrf_conformalized_intervals-thumb.png);"
+    data-light-src="url(../_static/plot_qrf_conformalized_intervals-thumb.png)"
+    data-dark-src="url(../_static/plot_qrf_conformalized_intervals-thumb-dark.png)"
+    style="background-image: url(../_static/plot_qrf_conformalized_intervals-thumb.png);"
 
- ></span>
+></span>
 
- <span class="image-title">QRFs for Conformalized Quantile Regression</span>
- </a>
+<span class="image-title">QRFs for Conformalized Quantile Regression</span>
+</a>
 
- <a class="imagegroup" href="plot_qrf_prediction_intervals.html">
- <span
-     class="image" alt="Quantile Regression Forests Prediction Intervals"
+<a class="imagegroup" href="plot_qrf_prediction_intervals.html">
+<span
+    class="image" alt="Quantile Regression Forests Prediction Intervals"
 
-     style="background-image: url(../_static/plot_qrf_prediction_intervals-thumb.png);"
+    data-light-src="url(../_static/plot_qrf_prediction_intervals-thumb.png)"
+    data-dark-src="url(../_static/plot_qrf_prediction_intervals-thumb-dark.png)"
+    style="background-image: url(../_static/plot_qrf_prediction_intervals-thumb.png);"
 
- ></span>
+></span>
 
- <span class="image-title">Quantile Regression Forests Prediction Intervals</span>
- </a>
+<span class="image-title">Quantile Regression Forests Prediction Intervals</span>
+</a>
 
- <a class="imagegroup" href="plot_qrf_vs_rf_predictions.html">
- <span
-     class="image" alt="Quantile Regression Forests vs. Random Forests"
+<a class="imagegroup" href="plot_qrf_vs_rf_predictions.html">
+<span
+    class="image" alt="Quantile Regression Forests vs. Random Forests"
 
-     style="background-image: url(../_static/plot_qrf_vs_rf_predictions-thumb.png);"
+    data-light-src="url(../_static/plot_qrf_vs_rf_predictions-thumb.png)"
+    data-dark-src="url(../_static/plot_qrf_vs_rf_predictions-thumb-dark.png)"
+    style="background-image: url(../_static/plot_qrf_vs_rf_predictions-thumb.png);"
 
- ></span>
+></span>
 
- <span class="image-title">Quantile Regression Forests vs. Random Forests</span>
- </a>
+<span class="image-title">Quantile Regression Forests vs. Random Forests</span>
+</a>
 
- <a class="imagegroup" href="plot_qrf_treeshap_explanations.html">
- <span
-     class="image" alt="Tree SHAP with Quantile Regression Forests"
+<a class="imagegroup" href="plot_qrf_treeshap_explanations.html">
+<span
+    class="image" alt="Tree SHAP with Quantile Regression Forests"
 
-     style="background-image: url(../_static/plot_qrf_treeshap_explanations-thumb.png);"
+    data-light-src="url(../_static/plot_qrf_treeshap_explanations-thumb.png)"
+    data-dark-src="url(../_static/plot_qrf_treeshap_explanations-thumb-dark.png)"
+    style="background-image: url(../_static/plot_qrf_treeshap_explanations-thumb.png);"
 
- ></span>
+></span>
 
- <span class="image-title">Tree SHAP with Quantile Regression Forests</span>
- </a>
+<span class="image-title">Tree SHAP with Quantile Regression Forests</span>
+</a>
 
- <a class="imagegroup" href="plot_qrf_proximity_counts.html">
- <span
-     class="image" alt="Using Proximity Counts to Identify Similar Samples"
+<a class="imagegroup" href="plot_qrf_proximity_counts.html">
+<span
+    class="image" alt="Using Proximity Counts to Identify Similar Samples"
 
-     style="background-image: url(../_static/plot_qrf_proximity_counts-thumb.png);"
+    data-light-src="url(../_static/plot_qrf_proximity_counts-thumb.png)"
+    data-dark-src="url(../_static/plot_qrf_proximity_counts-thumb-dark.png)"
+    style="background-image: url(../_static/plot_qrf_proximity_counts-thumb.png);"
 
- ></span>
+></span>
 
- <span class="image-title">Using Proximity Counts to Identify Similar Samples</span>
- </a>
+<span class="image-title">Using Proximity Counts to Identify Similar Samples</span>
+</a>
 
- <a class="imagegroup" href="plot_qrf_quantile_ranks.html">
- <span
-     class="image" alt="Using Quantile Ranks to Identify Potential Outliers"
+<a class="imagegroup" href="plot_qrf_quantile_ranks.html">
+<span
+    class="image" alt="Using Quantile Ranks to Identify Potential Outliers"
 
-     style="background-image: url(../_static/plot_qrf_quantile_ranks-thumb.png);"
+    data-light-src="url(../_static/plot_qrf_quantile_ranks-thumb.png)"
+    data-dark-src="url(../_static/plot_qrf_quantile_ranks-thumb-dark.png)"
+    style="background-image: url(../_static/plot_qrf_quantile_ranks-thumb.png);"
 
- ></span>
+></span>
 
- <span class="image-title">Using Quantile Ranks to Identify Potential Outliers</span>
- </a>
+<span class="image-title">Using Quantile Ranks to Identify Potential Outliers</span>
+</a>
 
- <a class="imagegroup" href="plot_qrf_huggingface_inference.html">
- <span
-     class="image" alt="Using a Trained QRF Model via Hugging Face Hub"
+<a class="imagegroup" href="plot_qrf_huggingface_inference.html">
+<span
+    class="image" alt="Using a Trained QRF Model via Hugging Face Hub"
 
-     style="background-image: url(../_static/plot_qrf_huggingface_inference-thumb.png);"
+    data-light-src="url(../_static/plot_qrf_huggingface_inference-thumb.png)"
+    data-dark-src="url(../_static/plot_qrf_huggingface_inference-thumb-dark.png)"
+    style="background-image: url(../_static/plot_qrf_huggingface_inference-thumb.png);"
 
- ></span>
+></span>
 
- <span class="image-title">Using a Trained QRF Model via Hugging Face Hub</span>
- </a>
+<span class="image-title">Using a Trained QRF Model via Hugging Face Hub</span>
+</a>
 
- </span>
+</span>
 
 <div style='clear:both;'></div><div class="toctree-wrapper compound">
 </div>

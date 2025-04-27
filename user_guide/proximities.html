@@ -47,6 +47,35 @@
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
     <script src="../_static/copybutton.js?v=ccdb6887"></script>
+    <script>
+        (function() {
+            function switchGalleryThumbnails() {
+                const theme = document.documentElement.getAttribute("data-theme");
+                const darkMode = (theme === "dark");
+
+                document.querySelectorAll(".image, .preview").forEach(function(plot) {
+                    const attr = darkMode ? "data-dark-src" : "data-light-src";
+                    const src = plot.getAttribute(attr);
+                    if (src) {
+                        plot.style.backgroundImage = src;
+                    }
+                });
+            }
+
+            document.addEventListener("DOMContentLoaded", switchGalleryThumbnails);
+
+            const observer = new MutationObserver(function(mutations) {
+                if (mutations.some(m => m.attributeName === "data-theme")) {
+                    switchGalleryThumbnails();
+                }
+            });
+
+            observer.observe(document.documentElement, {
+                attributes: true,
+                attributeFilter: ["data-theme"]
+            });
+        })();
+        </script>
     <script src="../_static/design-tabs.js?v=f930bc37"></script>
     <script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
     <script src="https://cdn.jsdelivr.net/npm/vega-lite@5.20.1"></script>

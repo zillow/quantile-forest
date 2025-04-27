@@ -18,7 +18,7 @@ this scenario, we compute the empirical cumulative distribution function
 (ECDF) for test samples.
 
 
-.. altair-plot::
+.. dynamic-altair-plot::
     :remove-code:
     
 

@@ -18,7 +18,7 @@ as points whose quantile rank falls outside the specified threshold interval
 around the median.
 
 
-.. altair-plot::
+.. dynamic-altair-plot::
     :remove-code:
     
 
