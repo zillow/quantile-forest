@@ -249,12 +249,12 @@ def plot_shap_waterfall_with_quantiles(df, height=300):
         align="left",
         baseline="middle",
         dx=5,
-        color="black",
+        color="gray",
     ).encode(
         text="value_label",
         opacity=alt.condition(alt.datum["shap_value"] > 0, alt.value(0), alt.value(1)),
     )
-    text_bar_right = bar.mark_text(align="right", baseline="middle", dx=-5, color="black").encode(
+    text_bar_right = bar.mark_text(align="right", baseline="middle", dx=-5, color="gray").encode(
         text="value_label",
         opacity=alt.condition(alt.datum["shap_value"] > 0, alt.value(1), alt.value(0)),
     )
@@ -262,14 +262,14 @@ def plot_shap_waterfall_with_quantiles(df, height=300):
         alt.Chart(df_text_labels)
         .transform_filter("datum.quantile == quantile")
         .transform_filter("datum.type == 'start'")
-        .mark_text(align="left", color="black", dx=-16, dy=y_text_offset + 30)
+        .mark_text(align="left", color="gray", dx=-16, dy=y_text_offset + 30)
         .encode(text=alt.Text("label"), x=alt.X("x:Q"))
     )
     text_label_end = (
         alt.Chart(df_text_labels)
         .transform_filter("datum.quantile == quantile")
         .transform_filter("datum.type == 'end'")
-        .mark_text(align="left", color="black", dx=-8, dy=-y_text_offset - 15)
+        .mark_text(align="left", color="gray", dx=-8, dy=-y_text_offset - 15)
         .encode(text=alt.Text("label"), x=alt.X("x:Q"))
     )
     text = text_bar_left + text_bar_right + text_label_start + text_label_end
@@ -277,7 +277,7 @@ def plot_shap_waterfall_with_quantiles(df, height=300):
     feature_bar_rule = (
         base.transform_filter("isValid(datum.feature2)")
         .mark_rule(
-            color="black",
+            color="gray",
             yOffset=y_rule_offset,
             y2Offset=-y_rule_offset,
             opacity=0.8,
@@ -296,14 +296,14 @@ def plot_shap_waterfall_with_quantiles(df, height=300):
         alt.Chart(df_text_labels)
         .transform_filter("datum.quantile == quantile")
         .transform_filter("datum.type == 'start'")
-        .mark_rule(color="black", opacity=1, y=height, y2=height + 6)
+        .mark_rule(color="gray", opacity=1, y=height, y2=height + 6)
         .encode(x=alt.X("x:Q"))
     )
     tick_end_rule = (
         alt.Chart(df_text_labels)
         .transform_filter("datum.quantile == quantile")
         .transform_filter("datum.type == 'end'")
-        .mark_rule(color="black", opacity=1, y=0, y2=-6)
+        .mark_rule(color="gray", opacity=1, y=0, y2=-6)
         .encode(x=alt.X("x:Q"))
     )
     rule = feature_bar_rule + end_bar_rule + tick_start_rule + tick_end_rule

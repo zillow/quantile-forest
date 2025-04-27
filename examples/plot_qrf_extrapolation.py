@@ -422,13 +422,13 @@ def plot_qrf_vs_xtrapolation_comparison(df, func_str):
             y_scale = alt.Scale(domain=y_domain, nice=True)
 
         points_color = alt.value("#f2a619")
-        line_true_color = alt.value("black")
+        line_true_color = alt.value("gray")
         if legend:
             points_color = alt.Color(
                 "point_label:N", scale=alt.Scale(range=["#f2a619"]), title=None
             )
             line_true_color = alt.Color(
-                "line_label:N", scale=alt.Scale(range=["black"]), title=None
+                "line_label:N", scale=alt.Scale(range=["gray"]), title=None
             )
 
         tooltip_true = [
@@ -486,7 +486,7 @@ def plot_qrf_vs_xtrapolation_comparison(df, func_str):
                         f" + ' (target = {(quantiles[1] - quantiles[0]) * 100}%)'"
                     )
                 )
-                .mark_text(align="left", baseline="top")
+                .mark_text(align="left", baseline="top", color="gray")
                 .encode(
                     x=alt.value(5),
                     y=alt.value(5),

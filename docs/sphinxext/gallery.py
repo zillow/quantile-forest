@@ -42,8 +42,12 @@ General-purpose, introductory and illustrative examples.
     <span
         class="image" alt="{{ example.title }}"
     {% if example['use_svg'] %}
+        data-light-src="url(..{{ image_dir }}/{{ example.name }}-thumb.svg)"
+        data-dark-src="url(..{{ image_dir }}/{{ example.name }}-thumb-dark.svg)"
         style="background-image: url(..{{ image_dir }}/{{ example.name }}-thumb.svg);"
     {% else %}
+        data-light-src="url(..{{ image_dir }}/{{ example.name }}-thumb.png)"
+        data-dark-src="url(..{{ image_dir }}/{{ example.name }}-thumb-dark.png)"
         style="background-image: url(..{{ image_dir }}/{{ example.name }}-thumb.png);"
     {% endif %}
     ></span>
@@ -53,7 +57,7 @@ General-purpose, introductory and illustrative examples.
     {% endfor %}
     </span>
 
-   <div style='clear:both;'></div>
+    <div style='clear:both;'></div>
 
 .. toctree::
    :maxdepth: 2
@@ -97,7 +101,7 @@ EXAMPLE_TEMPLATE = jinja2.Template(
 
 {{ docstring }}
 
-.. altair-plot::
+.. dynamic-altair-plot::
     {% if code_below %}:remove-code:{% endif %}
     {% if strict %}:strict:{% endif %}
 
@@ -115,7 +119,6 @@ def save_example_pngs(examples, image_dir, make_thumbnails=True):
     if not os.path.exists(image_dir):
         os.makedirs(image_dir)
 
-    # Store hashes so that we know whether images need to be generated.
     hash_file = os.path.join(image_dir, "_image_hashes.json")
 
     if os.path.exists(hash_file):
@@ -123,6 +126,23 @@ def save_example_pngs(examples, image_dir, make_thumbnails=True):
             hashes = json.load(f)
     else:
         hashes = {}
+
+    from contextlib import contextmanager
+
+    import altair as alt
+
+    @contextmanager
+    def temp_theme(theme_name):
+        """Temporarily enable an Altair theme inside a context."""
+        original_theme = alt.themes.active
+        alt.themes.enable(theme_name)
+        try:
+            yield
+        finally:
+            alt.themes.enable(original_theme)
+
+    if not os.path.exists(image_dir):
+        os.makedirs(image_dir)
 
     for example in examples:
         filename = example["name"] + (".svg" if example["use_svg"] else ".png")
@@ -147,17 +167,32 @@ def save_example_pngs(examples, image_dir, make_thumbnails=True):
             with open(hash_file, "w") as f:
                 json.dump(hashes, f)
 
+        chart = eval_block(example["code"])
+
         if make_thumbnails:
             params = example.get("galleryParameters", {})
             if example["use_svg"]:
-                # Thumbnail for SVG is identical to original image.
                 thumb_file = os.path.join(image_dir, example["name"] + "-thumb.svg")
                 shutil.copyfile(image_file, thumb_file)
             else:
-                thumb_file = os.path.join(image_dir, example["name"] + "-thumb.png")
-                create_thumbnail(image_file, thumb_file, **params)
+                light_image_file = os.path.join(image_dir, example["name"] + ".png")
+                dark_image_file = os.path.join(image_dir, example["name"] + "-dark.png")
 
-    # Save hashes so we know whether we need to re-generate plots.
+                # Save light-mode image.
+                with temp_theme("default"):
+                    chart.save(light_image_file)
+
+                # Save dark-mode image.
+                with temp_theme("dark"):
+                    chart.save(dark_image_file)
+
+                # Create thumbnails.
+                thumb_file_light = os.path.join(image_dir, example["name"] + "-thumb.png")
+                thumb_file_dark = os.path.join(image_dir, example["name"] + "-thumb-dark.png")
+
+                create_thumbnail(light_image_file, thumb_file_light, **params)
+                create_thumbnail(dark_image_file, thumb_file_dark, **params)
+
     with open(hash_file, "w") as f:
         json.dump(hashes, f)
 
@@ -286,6 +321,42 @@ def main(app):
             f.write(EXAMPLE_TEMPLATE.render(example))
 
 
+def inject_gallery_theme_switcher(app):
+    """Inject JavaScript to dynamically switch gallery thumbnails based on theme."""
+    app.add_js_file(
+        None,
+        body="""
+        (function() {
+            function switchGalleryThumbnails() {
+                const theme = document.documentElement.getAttribute("data-theme");
+                const darkMode = (theme === "dark");
+
+                document.querySelectorAll(".image, .preview").forEach(function(plot) {
+                    const attr = darkMode ? "data-dark-src" : "data-light-src";
+                    const src = plot.getAttribute(attr);
+                    if (src) {
+                        plot.style.backgroundImage = src;
+                    }
+                });
+            }
+
+            document.addEventListener("DOMContentLoaded", switchGalleryThumbnails);
+
+            const observer = new MutationObserver(function(mutations) {
+                if (mutations.some(m => m.attributeName === "data-theme")) {
+                    switchGalleryThumbnails();
+                }
+            });
+
+            observer.observe(document.documentElement, {
+                attributes: true,
+                attributeFilter: ["data-theme"]
+            });
+        })();
+        """,
+    )
+
+
 def setup(app):
     app.connect("builder-inited", main)
     app.add_css_file("gallery.css")
@@ -293,3 +364,6 @@ def setup(app):
     app.add_config_value("gallery_ref", "example-gallery", "env")
     app.add_config_value("gallery_title", "General Examples", "env")
     app.add_directive_to_domain("py", "minigallery", MiniGalleryDirective)
+
+    # Clean injected JS for theme switching.
+    inject_gallery_theme_switcher(app)

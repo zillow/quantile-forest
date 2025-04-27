@@ -151,7 +151,7 @@ def plot_digits_proximities(
     slider = alt.binding_range(name="Test Sample Index: ", min=0, max=n_samples - 1, step=1)
     index_selection = alt.selection_point(value=0, bind=slider, fields=["index"])
 
-    scale = alt.Scale(domain=[x_min, x_max], scheme="greys")
+    scale = alt.Scale(domain=[x_min, x_max], scheme="warmgreys")
     opacity = (alt.value(0), alt.value(0.5))
 
     base = alt.Chart(df).add_params(index_selection).transform_filter(index_selection)

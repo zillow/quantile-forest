@@ -103,7 +103,7 @@ def plot_california_calibration_and_intervals(df):
             alt.Chart(
                 pd.DataFrame({"var1": [domain[0], domain[1]], "var2": [domain[0], domain[1]]})
             )
-            .mark_line(color="black", opacity=0.4, strokeDash=[2, 2])
+            .mark_line(color="gray", opacity=0.4, strokeDash=[2, 2])
             .encode(
                 x=alt.X("var1:Q"),
                 y=alt.Y("var2:Q"),
