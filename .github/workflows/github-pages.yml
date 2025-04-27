@@ -32,7 +32,7 @@ jobs:
 
       - name: Build documents
         run: |
-          cd ./docs
+          cd ./docs/
           uv run make clean
           mkdir -p source/_images
           uv run make html
