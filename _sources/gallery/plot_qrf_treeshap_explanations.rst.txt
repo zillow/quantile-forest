@@ -233,7 +233,6 @@ how the SHAP explanations vary with different quantile choices.
                 scale=alt.Scale(domain=[x_min - 10 * x_shift, x_max + 10 * x_shift], zero=False),
                 title=None,
             ),
-            x2=alt.X2("end_shifted:Q"),
             y=alt.Y("feature:N", sort=None, title=None),
             color=alt.condition(
                 alt.datum["shap_value"] > 0, alt.value("#ff0251"), alt.value("#018bfb")
@@ -320,6 +319,8 @@ how the SHAP explanations vary with different quantile choices.
             .encode(x=alt.X("x:Q"))
         )
         rule = feature_bar_rule + end_bar_rule + tick_start_rule + tick_end_rule
+
+        bar = bar.encode(x2=alt.X2("end_shifted:Q"))
 
         chart = (
             (bar + point + text + rule)
@@ -546,7 +547,6 @@ how the SHAP explanations vary with different quantile choices.
                         scale=alt.Scale(domain=[x_min - 10 * x_shift, x_max + 10 * x_shift], zero=False),
                         title=None,
                     ),
-                    x2=alt.X2("end_shifted:Q"),
                     y=alt.Y("feature:N", sort=None, title=None),
                     color=alt.condition(
                         alt.datum["shap_value"] > 0, alt.value("#ff0251"), alt.value("#018bfb")
@@ -633,6 +633,8 @@ how the SHAP explanations vary with different quantile choices.
                     .encode(x=alt.X("x:Q"))
                 )
                 rule = feature_bar_rule + end_bar_rule + tick_start_rule + tick_end_rule
+
+                bar = bar.encode(x2=alt.X2("end_shifted:Q"))
 
                 chart = (
                     (bar + point + text + rule)
