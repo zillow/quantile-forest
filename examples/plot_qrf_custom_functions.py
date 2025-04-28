@@ -139,9 +139,9 @@ def plot_ecdf(df):
         )
     )
 
-    line = (
+    rule = (
         alt.Chart(df)
-        .mark_line(color="#006aff", size=2)
+        .mark_rule(color="#006aff", size=2)
         .encode(
             x=alt.X("y_val:Q", title="Response Value"),
             x2=alt.X2("y_val2:Q"),
@@ -153,8 +153,8 @@ def plot_ecdf(df):
     )
 
     # Ensure the selected sample index values overlay the unselected values.
-    chart_base = circle + line
-    chart_selected = (circle + line).transform_filter(index_selection)
+    chart_base = circle + rule
+    chart_selected = (circle + rule).transform_filter(index_selection)
 
     chart = (
         (chart_base + chart_selected)

@@ -365,5 +365,5 @@ def setup(app):
     app.add_config_value("gallery_title", "General Examples", "env")
     app.add_directive_to_domain("py", "minigallery", MiniGalleryDirective)
 
-    # Clean injected JS for theme switching.
+    # Injected JS for theme switching.
     inject_gallery_theme_switcher(app)

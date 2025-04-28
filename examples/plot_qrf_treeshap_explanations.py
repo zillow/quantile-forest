@@ -220,7 +220,6 @@ def plot_shap_waterfall_with_quantiles(df, height=300):
             scale=alt.Scale(domain=[x_min - 10 * x_shift, x_max + 10 * x_shift], zero=False),
             title=None,
         ),
-        x2=alt.X2("end_shifted:Q"),
         y=alt.Y("feature:N", sort=None, title=None),
         color=alt.condition(
             alt.datum["shap_value"] > 0, alt.value("#ff0251"), alt.value("#018bfb")
@@ -307,6 +306,8 @@ def plot_shap_waterfall_with_quantiles(df, height=300):
         .encode(x=alt.X("x:Q"))
     )
     rule = feature_bar_rule + end_bar_rule + tick_start_rule + tick_end_rule
+
+    bar = bar.encode(x2=alt.X2("end_shifted:Q"))
 
     chart = (
         (bar + point + text + rule)

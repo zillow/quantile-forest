@@ -79,6 +79,7 @@ def plot_multitargets(df, legend):
 
     click = alt.selection_point(bind="legend", fields=["target"], on="click")
 
+    x = alt.X("x:Q", scale=alt.Scale(nice=False), title="X")
     color = alt.condition(
         click,
         alt.Color(
@@ -117,22 +118,22 @@ def plot_multitargets(df, legend):
     )
 
     circle = base.mark_circle(color="black", opacity=0.25, size=25).encode(
-        x=alt.X("x:Q", scale=alt.Scale(nice=False)),
+        x=x,
         y=alt.Y("y:Q"),
-        color=alt.condition(click, alt.Color("target:N"), alt.value("lightgray")),
+        color=color,
         tooltip=tooltip,
     )
 
     area = base.mark_area(opacity=0.25).encode(
-        x=alt.X("x:Q", scale=alt.Scale(nice=False), title="X"),
+        x=x,
         y=alt.Y("y_pred_low:Q", title="Y"),
-        y2=alt.Y2("y_pred_upp:Q", title=None),
+        y2=alt.Y2("y_pred_upp:Q"),
         color=color,
         tooltip=tooltip,
     )
 
     line = base.mark_line(color="black", size=3).encode(
-        x=alt.X("x:Q", scale=alt.Scale(nice=False), title="X"),
+        x=x,
         y=alt.Y("y_pred:Q", title="Y"),
         color=color,
         tooltip=tooltip,
@@ -141,7 +142,6 @@ def plot_multitargets(df, legend):
     chart = (
         (circle + area + line)
         .add_params(interval_val, click)
-        .configure_range(category=alt.RangeScheme(list(legend.values())))
         .properties(
             title="Multi-target Predictions and Prediction Intervals on Toy Dataset",
             height=400,

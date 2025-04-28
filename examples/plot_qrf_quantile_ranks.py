@@ -64,7 +64,14 @@ def plot_pred_and_ranks(df):
     # For desired legend labels.
     dummy_legend = (
         base.mark_line(opacity=1)
-        .encode(opacity=alt.Opacity("model:N", scale=alt.Scale(range=[1, 1]), title="Prediction"))
+        .encode(
+            opacity=alt.Opacity(
+                "model:N",
+                scale=alt.Scale(range=[1, 1], domain=["Median"]),
+                sort=["Median"],
+                title="Prediction",
+            )
+        )
         .transform_calculate(model="'Median'")
     )
 
