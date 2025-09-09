@@ -83,6 +83,8 @@ add_function_parentheses = False
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = "sphinx"
 
+tls_verify = False
+
 # -- Options for math equations -----------------------------------------------
 
 # For maths, use mathjax by default and svg if NO_MATHJAX env variable is set
