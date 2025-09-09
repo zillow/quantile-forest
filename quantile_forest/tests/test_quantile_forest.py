@@ -884,6 +884,44 @@ def test_max_samples_leaf(name):
     check_max_samples_leaf(name)
 
 
+def check_missing_values(name):
+    X = np.array(
+        [
+            [0, 1, 1, np.nan, np.nan, 0, 0, 0, 0, 0],
+            [2, 2, 0, 1, 0, 0, 0, 0, 2, 2],
+        ]
+    ).T
+    y = [2, 4, 5, 6, 7, 1, 1, 0, 1, 2]
+
+    ForestRegressor = FOREST_REGRESSORS[name]
+
+    est = ForestRegressor(
+        n_estimators=1,
+        max_samples_leaf=None,
+        random_state=0,
+        handle_empty_leaves="leaf_value",
+    )
+    est.fit(X, y)
+    y_pred = est.predict(X)
+    assert np.isnan(y_pred).sum() == 0
+
+    if ForestRegressor == RandomForestQuantileRegressor:
+        est = ForestRegressor(
+            n_estimators=1,
+            max_samples_leaf=None,
+            random_state=0,
+            handle_empty_leaves="raise",
+        )
+        est.fit(X, y)
+        with pytest.raises(RuntimeError):
+            y_pred = est.predict(X)
+
+
+@pytest.mark.parametrize("name", FOREST_REGRESSORS)
+def test_missing_values(name):
+    check_missing_values(name)
+
+
 def check_oob_samples(name):
     """Check OOB sample generation."""
     X = X_california
