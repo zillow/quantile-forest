@@ -63,6 +63,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
     _parameter_constraints: dict = {
         **ForestRegressor._parameter_constraints,
         **DecisionTreeRegressor._parameter_constraints,
+        # Maximum number of samples to store per tree leaf.
         "max_samples_leaf": [
             None,
             Interval(RealNotInt, 0, 1, closed="right"),
@@ -377,12 +378,10 @@ class BaseForestQuantileRegressor(ForestRegressor):
         max_samples_leaf = 0 if not leaf_subsample else max_samples_leaf
         for i, estimator in enumerate(self.estimators_):
             node_count = estimator.tree_.node_count
-            if node_count > max_node_count:
-                max_node_count = node_count
+            max_node_count = max(max_node_count, node_count)
             if not leaf_subsample:
                 sample_count = np.max(np.bincount(X_leaves_bootstrap[:, i]))
-                if sample_count > max_samples_leaf:
-                    max_samples_leaf = sample_count
+                max_samples_leaf = max(max_samples_leaf, sample_count)
 
         y_train_leaves = [
             self._get_y_train_leaves_slice(
@@ -518,16 +517,13 @@ class BaseForestQuantileRegressor(ForestRegressor):
         if indices is None:
             if n_samples != self.n_train_samples_:
                 raise ValueError(
-                    "If `indices` are None, OOB samples must be "
-                    "same length as number of training samples."
+                    "If `indices` are None, OOB samples must be same length as training samples."
                 )
             elif joblib.hash(X) != self.X_train_hash_:
                 warn("OOB samples are not identical to training samples.")
 
         if indices is not None and n_samples != len(indices):
-            raise ValueError(
-                "If `indices` are not None, OOB samples and indices must be the same length."
-            )
+            raise ValueError("If `indices` are not None, X and indices must be the same length.")
 
         X_leaves = np.empty((n_samples, n_estimators), dtype=np.intp)
         X_indices = np.zeros((n_samples, n_estimators), dtype=np.uint8)
@@ -684,11 +680,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
         X = self._validate_X_predict(X)
 
         if quantiles is None:
-            if self.default_quantiles is None:
-                quantiles = ["mean"]
-            else:
-                quantiles = self.default_quantiles
-
+            quantiles = ["mean"] if self.default_quantiles is None else self.default_quantiles
         if not isinstance(quantiles, list):
             quantiles = [quantiles]
 
@@ -726,34 +718,36 @@ class BaseForestQuantileRegressor(ForestRegressor):
             y_train = np.asarray(self.forest_.y_train).T
             y_pred = np.empty((len(X), y_train.shape[1], len(quantiles)))
             for output in range(y_train.shape[1]):
-                leaf_values = np.empty((len(X), self.n_estimators))
+                leaf_vals = np.empty((len(X), self.n_estimators))
                 for tree in range(self.n_estimators):
                     if X_indices is None:  # in-bag scoring
                         leaves = X_leaves[:, tree]
                         train_indices = y_train_leaves[tree, leaves, output, 0]
+                        leaf_vals[:, tree] = y_train[train_indices - 1, output]
                         if self.monotonic_cst is not None:
                             clip_min = y_bound_leaves[tree, leaves, 0]
                             clip_max = y_bound_leaves[tree, leaves, 1]
+                            leaf_vals[:, tree] = np.clip(leaf_vals[:, tree], clip_min, clip_max)
                     else:  # out-of-bag scoring
-                        indices = X_indices[:, tree] == 1
-                        leaves = X_leaves[indices, tree]
+                        idx_mask = X_indices[:, tree] == 1
+                        leaves = X_leaves[idx_mask, tree]
                         train_indices = np.zeros(len(X), dtype=int)
-                        train_indices[indices] = y_train_leaves[tree, leaves, output, 0]
+                        train_indices[idx_mask] = y_train_leaves[tree, leaves, output, 0]
+                        leaf_vals[:, tree] = np.nan
+                        leaf_vals[idx_mask, tree] = y_train[train_indices[idx_mask] - 1, output]
                         if self.monotonic_cst is not None:
                             clip_min, clip_max = np.full(len(X), -np.inf), np.full(len(X), np.inf)
-                            clip_min[indices] = y_bound_leaves[tree, leaves, 0]
-                            clip_max[indices] = y_bound_leaves[tree, leaves, 1]
-                    leaf_values[:, tree] = y_train[train_indices - 1, output]
-                    if self.monotonic_cst is not None:
-                        leaf_values[:, tree] = np.clip(leaf_values[:, tree], clip_min, clip_max)
-                    leaf_values[train_indices == 0, tree] = np.nan
+                            clip_min[idx_mask] = y_bound_leaves[tree, leaves, 0]
+                            clip_max[idx_mask] = y_bound_leaves[tree, leaves, 1]
+                            leaf_vals[:, tree] = np.clip(leaf_vals[:, tree], clip_min, clip_max)
+
                 if len(quantiles) == 1 and quantiles[0] == -1:  # calculate mean
                     func = np.mean if X_indices is None else np.nanmean
-                    y_pred[:, output, :] = np.expand_dims(func(leaf_values, axis=1), axis=1)
+                    y_pred[:, output, :] = np.expand_dims(func(leaf_vals, axis=1), axis=1)
                 else:  # calculate quantiles
                     func = np.quantile if X_indices is None else np.nanquantile
                     method = interpolation.decode()
-                    y_pred[:, output, :] = func(leaf_values, quantiles, method=method, axis=1).T
+                    y_pred[:, output, :] = func(leaf_vals, quantiles, method=method, axis=1).T
         else:  # get predictions for arbitrary leaf sizes
             y_pred = self.forest_.predict(
                 quantiles,
@@ -829,7 +823,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
             default, assumes all X indices correspond to all training indices.
             Only used if `oob_score=True`.
 
-        duplicates : list, default=None
+        duplicates : list of lists, default=None
             List of sets of functionally identical indices.
             Only used if `oob_score=True`.
 
