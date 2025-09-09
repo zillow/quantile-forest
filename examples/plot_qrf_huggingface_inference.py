@@ -252,7 +252,7 @@ def plot_quantiles_by_latlon(df, quantiles, color_scheme="lightgreyred"):
 
     # Load the US counties data and filter to California counties.
     ca_counties = (
-        gpd.read_file(tmp_path, layer="counties")
+        gpd.read_file(f"TopoJSON:{tmp_path}", layer="counties")
         .set_crs("EPSG:4326")
         .assign(**{"county_fips": lambda x: x["id"].astype(int)})
         .drop(columns=["id"])
