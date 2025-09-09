@@ -27,39 +27,6 @@ def write_version_py():
 
 __version__ = write_version_py()
 
-DISTNAME = "quantile-forest"
-DESCRIPTION = "Quantile regression forests compatible with scikit-learn."
-with codecs.open("README.md", encoding="utf-8-sig") as f:
-    LONG_DESCRIPTION = f.read()
-MAINTAINER = "Zillow Group AI Team"
-LICENSE = "Apache License 2.0"
-URL = "https://zillow.github.io/quantile-forest"
-DOWNLOAD_URL = "https://pypi.org/project/quantile-forest/#files"
-PROJECT_URLS = {
-    "Documentation": "https://zillow.github.io/quantile-forest",
-    "Source": "https://github.com/zillow/quantile-forest",
-    "Tracker": "https://github.com/zillow/quantile-forest/issues",
-}
-VERSION = __version__
-CLASSIFIERS = [
-    "Intended Audience :: Science/Research",
-    "Intended Audience :: Developers",
-    "License :: OSI Approved",
-    "Programming Language :: Python",
-    "Topic :: Software Development",
-    "Topic :: Scientific/Engineering",
-    "Operating System :: Microsoft :: Windows",
-    "Operating System :: POSIX",
-    "Operating System :: Unix",
-    "Operating System :: MacOS",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
-    "Programming Language :: Python :: 3.13",
-    "Programming Language :: Python :: Implementation :: CPython",
-]
-
 
 def configure_extension_modules():
     # Skip cythonization as we do not want to include the generated
@@ -105,20 +72,8 @@ def configure_extension_modules():
 
 def setup_package():
     metadata = dict(
-        name=DISTNAME,
-        maintainer=MAINTAINER,
-        description=DESCRIPTION,
-        license=LICENSE,
-        url=URL,
-        download_url=DOWNLOAD_URL,
-        project_urls=PROJECT_URLS,
-        version=VERSION,
-        long_description=LONG_DESCRIPTION,
-        long_description_content_type="text/markdown",
-        zip_safe=False,  # the package can run out of an .egg file
-        classifiers=CLASSIFIERS,
         packages=find_packages(),
-        install_requires=min_deps.tag_to_packages["install"],
+        zip_safe=False,
     )
 
     commands = [arg for arg in sys.argv[1:] if not arg.startswith("-")]
