@@ -28,6 +28,7 @@ jobs:
       - name: Install dependencies
         run: |
           uv pip install -r ./docs/sphinx_requirements.txt
+          uv pip install scikit-learn==1.7.2
           uv pip install --verbose --editable .
 
       - name: Build documents
