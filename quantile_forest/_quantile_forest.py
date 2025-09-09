@@ -1296,12 +1296,12 @@ class RandomForestQuantileRegressor(BaseForestQuantileRegressor):
     --------
     >>> from quantile_forest import RandomForestQuantileRegressor
     >>> from sklearn.datasets import make_regression
-    >>> X, y = make_regression(n_samples=1000, n_features=8, random_state=0)
+    >>> X, y = make_regression(n_samples=10000, n_features=8, random_state=0)
     >>> qrf = RandomForestQuantileRegressor(random_state=0)
-    >>> qrf.fit(X[:100], y[:100])
+    >>> qrf.fit(X[:1000], y[:1000])
     RandomForestQuantileRegressor(random_state=0)
     >>> qrf.score(X, y, quantiles=0.5)
-    0.689...
+    0.859...
     """
 
     def __init__(
@@ -1613,12 +1613,12 @@ class ExtraTreesQuantileRegressor(BaseForestQuantileRegressor):
     --------
     >>> from quantile_forest import ExtraTreesQuantileRegressor
     >>> from sklearn.datasets import make_regression
-    >>> X, y = make_regression(n_samples=1000, n_features=8, random_state=0)
+    >>> X, y = make_regression(n_samples=10000, n_features=8, random_state=0)
     >>> qrf = ExtraTreesQuantileRegressor(random_state=0)
-    >>> qrf.fit(X[:100], y[:100])
+    >>> qrf.fit(X[:1000], y[:1000])
     ExtraTreesQuantileRegressor(random_state=0)
     >>> qrf.score(X, y, quantiles=0.5)
-    0.742...
+    0.894...
     """
 
     def __init__(
