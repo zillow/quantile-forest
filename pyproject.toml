@@ -11,6 +11,7 @@ authors = [
 maintainers = [
     { name = "Zillow Group AI Team" }
 ]
+dynamic = ["version"]
 
 dependencies = [
     "numpy>=1.23",
@@ -50,9 +51,6 @@ requires = [
     "scipy>=1.4",
     "scikit-learn>=1.5",
 ]
-
-[tool.setuptools.dynamic]
-version = { file = "quantile_forest/version.txt" }
 
 [tool.black]
 line-length = 99
