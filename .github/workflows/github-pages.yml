@@ -3,13 +3,11 @@ name: docs
 on:
   workflow_dispatch:
   push:
-    tags:
-      - 'v*.*.*'
+    tags: ['v*.*.*']
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v5
 
@@ -17,26 +15,54 @@ jobs:
         uses: actions/setup-python@v6
         with:
           python-version: '3.13'
+          cache: 'pip'
 
       - name: Install uv
         run: pip install uv
 
       - name: Create virtual environment
-        run: uv venv
-        shell: bash
-
-      - name: Install dependencies
         run: |
-          uv pip install -r ./docs/sphinx_requirements.txt
-          uv pip install --verbose --editable .
+          rm -rf .venv
+          uv venv
 
-      - name: Build documents
+      - name: Install dependencies (constrained)
         run: |
-          uv pip install -r ./docs/sphinx_requirements.txt
-          mkdir -p ./docs/source/_images
-          uv run sphinx-build -b html ./docs/source ./docs/_build
+          uv pip install -r ./docs/sphinx_requirements.txt --constraint constraints.txt
+          uv run python - <<'PY'
+import sys, sklearn
+print("AFTER DOCS REQS PY:", sys.executable)
+print("AFTER DOCS REQS SKLEARN:", sklearn.__version__)
+assert sklearn.__version__.startswith("1.7."), "sklearn not 1.7.x after docs reqs"
+PY
+          uv pip install --verbose --editable . --constraint constraints.txt
+          uv run python - <<'PY'
+import sys, sklearn
+print("AFTER EDITABLE PY:", sys.executable)
+print("AFTER EDITABLE SKLEARN:", sklearn.__version__)
+assert sklearn.__version__.startswith("1.7."), "sklearn not 1.7.x after editable"
+PY
+
+      - name: Build documents (low memory, forced venv)
         env:
+          PYTHONUNBUFFERED: "1"
+          PYTHONNOUSERSITE: "1"
+          MPLBACKEND: "Agg"
+          OMP_NUM_THREADS: "1"
+          OPENBLAS_NUM_THREADS: "1"
+          MKL_NUM_THREADS: "1"
+          NUMEXPR_NUM_THREADS: "1"
+          VECLIB_MAXIMUM_THREADS: "1"
+          MALLOC_ARENA_MAX: "2"
           GA_TRACKING_ID: ${{ secrets.GA_TRACKING_ID }}
+        run: |
+          mkdir -p ./docs/source/_images
+          uv run python - <<'PY'
+import sys, sklearn
+print("PRE-BUILD PY:", sys.executable)
+print("PRE-BUILD SKLEARN:", sklearn.__version__)
+assert sklearn.__version__.startswith("1.7."), "sklearn not 1.7.x pre-build"
+PY
+          uv run sphinx-build -b html -j 1 -v -T ./docs/source ./docs/_build/html
 
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v4
