@@ -311,7 +311,7 @@ def _create_config(
     dump_json(Path(dst) / "config.json", config)
 
 
-def _check_model_file(path: str | Path) -> Path:
+def _check_model_file(path: Union[str, Path]) -> Path:
     """Perform sanity checks on the model file
 
     Parameters
@@ -436,10 +436,10 @@ def push(
     *,
     repo_id: str,
     source: Union[str, Path],
-    token: str | None = None,
-    commit_message: str | None = None,
+    token: Union[str, None] = None,
+    commit_message: Union[str, None] = None,
     create_remote: bool = False,
-    private: bool | None = None,
+    private: Union[bool, None] = None,
 ) -> None:
     """Pushes the contents of a model repo to Hugging Face Hub.
 
@@ -511,8 +511,8 @@ def download(
     *,
     repo_id: str,
     dst: Union[str, Path],
-    revision: str | None = None,
-    token: str | None = None,
+    revision: Union[str, None] = None,
+    token: Union[str, None] = None,
     keep_cache: bool = True,
     **kwargs: Any,
 ) -> None:
