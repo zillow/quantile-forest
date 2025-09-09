@@ -12,8 +12,6 @@ from setuptools import find_packages, setup
 # is being loaded by the setup routine.
 builtins.__QF_SETUP__ = True
 
-import quantile_forest._min_dependencies as min_deps  # noqa
-
 
 def write_version_py():
     with open(os.path.join("quantile_forest", "version.txt")) as f:
