@@ -153,7 +153,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
                 "force_all_finite"
                 if sklearn_version < parse_version("1.6.dev0")
                 else "ensure_all_finite"
-            ): False,
+            ): True,
         }
         if validate_data is None:
             X, y = self._validate_data(**validation_params)
