@@ -31,21 +31,13 @@ jobs:
           uv pip install --verbose --editable .
 
       - name: Build documents
-        env:
-          GA_TRACKING_ID: ${{ secrets.GA_TRACKING_ID }}
-          PYTHONUNBUFFERED: "1"
-          MPLBACKEND: "Agg"
-          OMP_NUM_THREADS: "1"
-          OPENBLAS_NUM_THREADS: "1"
-          MKL_NUM_THREADS: "1"
-          NUMEXPR_NUM_THREADS: "1"
-          VECLIB_MAXIMUM_THREADS: "1"
-          MALLOC_ARENA_MAX: "2"
         run: |
           cd ./docs/
           uv run make clean
           mkdir -p source/_images
-          uv run make html
+          make html SPHINXBUILD="uv run sphinx-build"
+        env:
+          GA_TRACKING_ID: ${{ secrets.GA_TRACKING_ID }}
 
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v4
