@@ -32,10 +32,9 @@ jobs:
 
       - name: Build documents
         run: |
-          cd ./docs/
-          uv run make clean
-          mkdir -p source/_images
-          make html SPHINXBUILD="uv run sphinx-build"
+          uv pip install -r ./docs/sphinx_requirements.txt
+          mkdir -p ./docs/source/_images
+          uv run sphinx-build -b html ./docs/source ./docs/_build
         env:
           GA_TRACKING_ID: ${{ secrets.GA_TRACKING_ID }}
 
