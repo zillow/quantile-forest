@@ -50,7 +50,7 @@ def check_regression_toy(name, weighted_quantile):
     ForestRegressor = FOREST_REGRESSORS[name]
 
     est = ForestRegressor(n_estimators=10, max_samples_leaf=None, bootstrap=False, random_state=0)
-    est.fit(X, y)
+    est.fit(X, y, sample_weight=np.ones(len(X)))
 
     # Check model and apply outputs shape.
     leaf_indices = est.apply(X)
