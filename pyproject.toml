@@ -1,6 +1,5 @@
 [project]
 name = "quantile-forest"
-dynamic = ["version"]
 description = "Quantile regression forests compatible with scikit-learn."
 readme = "README.md"
 requires-python = ">=3.9"
@@ -51,6 +50,10 @@ requires = [
     "scipy>=1.4",
     "scikit-learn>=1.5",
 ]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.dynamic]
+version = { file = "quantile_forest/version.txt" }
 
 [tool.black]
 line-length = 99
