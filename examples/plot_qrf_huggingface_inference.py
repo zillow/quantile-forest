@@ -23,11 +23,15 @@ import joblib
 import numpy as np
 import pandas as pd
 import requests
-from __init__ import hub_utils
 from sklearn import datasets
 from sklearn.base import BaseEstimator, RegressorMixin, clone
 from sklearn.model_selection import KFold
 from vega_datasets import data
+
+try:
+    from examples import hub_utils
+except ImportError:
+    from __init__ import hub_utils
 
 token = "<Hugging Face Access Token>"
 repo_id = "quantile-forest/california-housing-example"
