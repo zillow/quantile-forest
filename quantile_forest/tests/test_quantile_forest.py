@@ -19,7 +19,7 @@ from sklearn.utils._testing import (
     assert_array_almost_equal,
     assert_array_equal,
 )
-from sklearn.utils.validation import check_is_fitted, check_random_state
+from sklearn.utils.validation import check_is_fitted
 
 from quantile_forest import ExtraTreesQuantileRegressor, RandomForestQuantileRegressor
 from quantile_forest._quantile_forest_fast import (
