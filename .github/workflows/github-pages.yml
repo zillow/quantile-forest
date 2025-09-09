@@ -27,20 +27,10 @@ jobs:
 
       - name: Install dependencies (constrained)
         run: |
-          uv pip install -r ./docs/sphinx_requirements.txt --constraint constraints.txt
-          uv run python - <<'PY'
-import sys, sklearn
-print("AFTER DOCS REQS PY:", sys.executable)
-print("AFTER DOCS REQS SKLEARN:", sklearn.__version__)
-assert sklearn.__version__.startswith("1.7."), "sklearn not 1.7.x after docs reqs"
-PY
-          uv pip install --verbose --editable . --constraint constraints.txt
-          uv run python - <<'PY'
-import sys, sklearn
-print("AFTER EDITABLE PY:", sys.executable)
-print("AFTER EDITABLE SKLEARN:", sklearn.__version__)
-assert sklearn.__version__.startswith("1.7."), "sklearn not 1.7.x after editable"
-PY
+          uv pip install -r ./docs/sphinx_requirements.txt
+          uv run python -c "import sys, sklearn; print('AFTER DOCS REQS PY:', sys.executable); print('AFTER DOCS REQS SKLEARN:', sklearn.__version__); assert sklearn.__version__.startswith('1.7.'), 'sklearn not 1.7.x after docs reqs'"
+          uv pip install --verbose --editable .
+          uv run python -c "import sys, sklearn; print('AFTER EDITABLE PY:', sys.executable); print('AFTER EDITABLE SKLEARN:', sklearn.__version__); assert sklearn.__version__.startswith('1.7.'), 'sklearn not 1.7.x after editable'"
 
       - name: Build documents (low memory, forced venv)
         env:
@@ -56,12 +46,7 @@ PY
           GA_TRACKING_ID: ${{ secrets.GA_TRACKING_ID }}
         run: |
           mkdir -p ./docs/source/_images
-          uv run python - <<'PY'
-import sys, sklearn
-print("PRE-BUILD PY:", sys.executable)
-print("PRE-BUILD SKLEARN:", sklearn.__version__)
-assert sklearn.__version__.startswith("1.7."), "sklearn not 1.7.x pre-build"
-PY
+          uv run python -c "import sys, sklearn; print('PRE-BUILD PY:', sys.executable); print('PRE-BUILD SKLEARN:', sklearn.__version__); assert sklearn.__version__.startswith('1.7.'), 'sklearn not 1.7.x pre-build'"
           uv run sphinx-build -b html -j 1 -v -T ./docs/source ./docs/_build/html
 
       - name: Deploy
