@@ -808,7 +808,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
                             clip_max[idx_mask] = y_bound_leaves[tree, leaves, 1]
                             leaf_vals[:, tree] = np.clip(leaf_vals[:, tree], clip_min, clip_max)
 
-                if len(quantiles) == 1 and quantiles[0] == -1:  # mean
+                if len(quantiles) == 1 and quantiles[0] == -1:  # calculate mean
                     func = np.mean if X_indices is None else np.nanmean
                     y_pred[:, output, :] = np.expand_dims(func(leaf_vals, axis=1), axis=1)
                 else:  # calculate quantiles
@@ -1378,13 +1378,13 @@ class RandomForestQuantileRegressor(BaseForestQuantileRegressor):
     Examples
     --------
     >>> from quantile_forest import RandomForestQuantileRegressor
-    >>> from sklearn.datasets import fetch_california_housing
-    >>> X, y = fetch_california_housing(return_X_y=True)
+    >>> from sklearn.datasets import make_regression
+    >>> X, y = make_regression(n_samples=10000, n_features=8, random_state=0)
     >>> qrf = RandomForestQuantileRegressor(random_state=0)
     >>> qrf.fit(X[:1000], y[:1000])
     RandomForestQuantileRegressor(random_state=0)
     >>> qrf.score(X, y, quantiles=0.5)
-    0.35...
+    0.859...
     """
 
     def __init__(
@@ -1706,13 +1706,13 @@ class ExtraTreesQuantileRegressor(BaseForestQuantileRegressor):
     Examples
     --------
     >>> from quantile_forest import ExtraTreesQuantileRegressor
-    >>> from sklearn.datasets import fetch_california_housing
-    >>> X, y = fetch_california_housing(return_X_y=True)
+    >>> from sklearn.datasets import make_regression
+    >>> X, y = make_regression(n_samples=10000, n_features=8, random_state=0)
     >>> qrf = ExtraTreesQuantileRegressor(random_state=0)
     >>> qrf.fit(X[:1000], y[:1000])
     ExtraTreesQuantileRegressor(random_state=0)
     >>> qrf.score(X, y, quantiles=0.5)
-    0.3...
+    0.894...
     """
 
     def __init__(

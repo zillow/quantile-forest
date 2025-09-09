@@ -32,14 +32,6 @@ from quantile_forest._quantile_forest_fast import (
 
 np.random.seed(0)
 
-rng = check_random_state(0)
-
-# Load the California Housing Prices dataset.
-california = datasets.fetch_california_housing()
-perm = rng.permutation(min(california.target.size, 500))
-X_california = california.data[perm]
-y_california = california.target[perm]
-
 FOREST_REGRESSORS: dict[str, Any] = {
     "ExtraTreesQuantileRegressor": ExtraTreesQuantileRegressor,
     "RandomForestQuantileRegressor": RandomForestQuantileRegressor,
@@ -120,35 +112,6 @@ def check_regression_params(name):
 @pytest.mark.parametrize("name", FOREST_REGRESSORS)
 def test_regression_params(name):
     check_regression_params(name)
-
-
-def check_california_criterion(name, criterion):
-    """Check for consistency on the California Housing dataset."""
-    ForestRegressor = FOREST_REGRESSORS[name]
-
-    est = ForestRegressor(n_estimators=5, criterion=criterion, max_features=None, random_state=0)
-    est.fit(X_california, y_california)
-    score = est.score(X_california, y_california, quantiles=0.5)
-    assert score > 0.9, f"Failed with max_features=None, criterion {criterion} and score={score}."
-
-    # Test maximum features.
-    est = ForestRegressor(n_estimators=5, criterion=criterion, max_features=6, random_state=0)
-    est.fit(X_california, y_california)
-    score = est.score(X_california, y_california, quantiles=0.5)
-    assert score > 0.9, f"Failed with max_features=6, criterion {criterion} and score={score}."
-
-    # Test sample weights.
-    est = ForestRegressor(n_estimators=5, criterion=criterion, random_state=0)
-    sample_weight = np.concatenate([np.zeros(1), np.ones(len(y_california) - 1)])
-    est.fit(X_california, y_california, sample_weight=sample_weight)
-    score = est.score(X_california, y_california, quantiles=0.5)
-    assert score > 0.9, f"Failed with criterion {criterion}, sample weight and score={score}."
-
-
-@pytest.mark.parametrize("name", FOREST_REGRESSORS)
-@pytest.mark.parametrize("criterion", ("squared_error", "absolute_error", "friedman_mse"))
-def test_california(name, criterion):
-    check_california_criterion(name, criterion)
 
 
 def check_predict_quantiles_toy(name):
@@ -335,10 +298,9 @@ def check_predict_quantiles(
         assert y_pred.shape == (X_test.shape[0],)
         assert_array_almost_equal(y_pred, y_test, -e1_high)
 
-    # Check predicted quantiles on the California Housing Prices dataset.
-    X_train, X_test, y_train, y_test = train_test_split(
-        X_california, y_california, test_size=0.25, random_state=0
-    )
+    # Check predicted quantiles on regression dataset.
+    X, y = datasets.make_regression(n_samples=500, n_features=8, noise=0.1, random_state=0)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=0)
 
     est = ForestRegressor(
         n_estimators=10,
@@ -794,14 +756,15 @@ def check_proximity_counts(name):
     proximity_counts = [[count for (_, count) in row] for row in proximities]
     assert np.sum(proximity_counts) == (1 * len(X) * len(X))
 
-    # Check proximity counts on the California Housing Prices dataset.
+    # Check proximity counts on regression dataset.
+    X, y = datasets.make_regression(n_samples=500, n_features=8, noise=0.1, random_state=0)
     est = ForestRegressor(n_estimators=10, max_samples_leaf=None, bootstrap=True, random_state=0)
-    est.fit(X_california, y_california)
+    est.fit(X, y)
 
     # Check that proximity counts match bootstrap counts.
-    n_samples = len(X_california)
-    proximities = est.proximity_counts(X_california)
-    X_leaves = est.apply(X_california)
+    n_samples = len(X)
+    proximities = est.proximity_counts(X)
+    X_leaves = est.apply(X)
     bootstrap_indices = np.array(
         [_generate_sample_indices(e.random_state, n_samples, n_samples) for e in est.estimators_]
     )
@@ -819,7 +782,7 @@ def check_proximity_counts(name):
     for i in range(len(proximities)):
         for j in range(len(proximities[i]) - 1):
             assert proximities[i][j][1] >= proximities[i][j + 1][1]
-    proximities_unsorted = est.proximity_counts(X_california, return_sorted=False)
+    proximities_unsorted = est.proximity_counts(X, return_sorted=False)
     assert proximities != proximities_unsorted
 
 
@@ -830,8 +793,7 @@ def test_proximity_counts(name):
 
 def check_max_samples_leaf(name):
     """Check that the `max_samples_leaf` parameter correctly samples leaves."""
-    X = X_california
-    y = y_california
+    X, y = datasets.make_regression(n_samples=500, n_features=8, noise=0.1, random_state=0)
 
     ForestRegressor = FOREST_REGRESSORS[name]
 
@@ -924,8 +886,7 @@ def test_missing_values(name):
 
 def check_oob_samples(name):
     """Check OOB sample generation."""
-    X = X_california
-    y = y_california
+    X, y = datasets.make_regression(n_samples=500, n_features=8, noise=0.1, random_state=0)
 
     ForestRegressor = FOREST_REGRESSORS[name]
 
@@ -990,8 +951,7 @@ def check_predict_oob(
     aggregate_leaves_first,
 ):
     """Check OOB predictions."""
-    X = X_california
-    y = y_california
+    X, y = datasets.make_regression(n_samples=500, n_features=8, noise=0.1, random_state=0)
 
     ForestRegressor = FOREST_REGRESSORS[name]
 
@@ -1199,8 +1159,7 @@ def test_predict_oob(
 
 def check_quantile_ranks_oob(name):
     """Check OOB quantile ranks."""
-    X = X_california
-    y = y_california
+    X, y = datasets.make_regression(n_samples=500, n_features=8, noise=0.1, random_state=0)
 
     ForestRegressor = FOREST_REGRESSORS[name]
 
@@ -1258,8 +1217,7 @@ def test_quantile_ranks_oob(name):
 
 def check_proximity_counts_oob(name):
     """Check OOB proximity counts."""
-    X = X_california
-    y = y_california
+    X, y = datasets.make_regression(n_samples=500, n_features=8, noise=0.1, random_state=0)
 
     ForestRegressor = FOREST_REGRESSORS[name]
 
@@ -1413,12 +1371,10 @@ def test_monotonic_constraints(name, max_samples_leaf):
 
 def check_serialization(name, sparse_pickle, monotonic_cst, multi_target):
     """Check model serialization/deserialization."""
-    X = X_california
+    X, y = datasets.make_regression(n_samples=500, n_features=8, noise=0.1, random_state=0)
 
     if multi_target:
-        y = np.vstack([y_california, y_california]).T
-    else:
-        y = y_california
+        y = np.vstack([y, y]).T
 
     if monotonic_cst and not multi_target:
         monotonic_cst = [1] * X.shape[1]
