@@ -49,7 +49,7 @@ requires = [
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.dynamic]
-version = { file = "quantile_forest/version.txt" }
+version = { attr = "quantile_forest.__version__" }
 
 [tool.black]
 line-length = 99
