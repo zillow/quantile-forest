@@ -1,18 +1,41 @@
 [project]
 name = "quantile-forest"
-dynamic = ["version"]
 description = "Quantile regression forests compatible with scikit-learn."
 readme = "README.md"
 requires-python = ">=3.9"
-license = { text = "Apache-2.0" }
-authors = [
-    { name = "Zillow Group AI Team" }
-]
+license = "Apache-2.0"
+authors = [{ name = "Zillow Group AI Team" }]
+maintainers = [{ name = "Zillow Group AI Team" }]
+dynamic = ["version"]
+
 dependencies = [
     "numpy>=1.23",
     "scipy>=1.4",
     "scikit-learn>=1.5",
 ]
+
+classifiers = [
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python",
+    "Topic :: Software Development",
+    "Topic :: Scientific/Engineering",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX",
+    "Operating System :: Unix",
+    "Operating System :: MacOS",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: Implementation :: CPython",
+]
+
+[project.urls]
+Documentation = "https://zillow.github.io/quantile-forest"
+Source = "https://github.com/zillow/quantile-forest"
+Tracker = "https://github.com/zillow/quantile-forest/issues"
 
 [build-system]
 requires = [
@@ -23,9 +46,10 @@ requires = [
     "scipy>=1.4",
     "scikit-learn>=1.5",
 ]
+build-backend = "setuptools.build_meta"
 
 [tool.setuptools.dynamic]
-version = { file = "quantile_forest/version.txt" }
+version = { attr = "quantile_forest.__version__" }
 
 [tool.black]
 line-length = 99
