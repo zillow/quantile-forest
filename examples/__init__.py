@@ -3,7 +3,6 @@ import itertools
 import json
 import os
 import shutil
-import warnings
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any, Literal, MutableMapping, Sequence, Union

@@ -2,7 +2,6 @@
 """scikit-learn compatible quantile forests."""
 
 import builtins
-import codecs
 import os
 import sys
 
