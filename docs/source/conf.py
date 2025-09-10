@@ -17,6 +17,7 @@ from datetime import datetime
 
 sys.path.insert(0, os.path.abspath("."))
 sys.path.insert(0, os.path.abspath(".."))
+sys.path.insert(0, os.path.abspath("../.."))
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -82,6 +83,8 @@ add_function_parentheses = False
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = "sphinx"
+
+tls_verify = False
 
 # -- Options for math equations -----------------------------------------------
 
