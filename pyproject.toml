@@ -29,6 +29,7 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Programming Language :: Python :: Implementation :: CPython",
 ]
 
@@ -54,7 +55,7 @@ version = { attr = "quantile_forest.__version__" }
 [tool.black]
 line-length = 99
 preview = true
-target_version = ["py39", "py310", "py311", "py312", "py313"]
+target_version = ["py39", "py310", "py311", "py312", "py313", "py314"]
 
 [tool.cython-lint]
 ignore = ["E741"]
