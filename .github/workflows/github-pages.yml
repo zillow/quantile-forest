@@ -31,18 +31,6 @@ jobs:
           uv pip install --editable . -c "$PIP_CONSTRAINT"
           uv pip install -r docs/sphinx_requirements.txt -c "$PIP_CONSTRAINT"
 
-      - name: Sanity check versions
-        run: |
-          . .venv/bin/activate
-          python -c "import numpy, sys; print('NumPy:', numpy.__version__)"
-          python - <<'PY'
-          try:
-              import numba
-              print('Numba:', numba.__version__)
-          except Exception as e:
-              import sys; print('Numba import failed:', e, file=sys.stderr); sys.exit(1)
-          PY
-
       - name: Build documents
         working-directory: docs
         env:
