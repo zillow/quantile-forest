@@ -857,9 +857,26 @@ def check_missing_values(name):
 
     ForestRegressor = FOREST_REGRESSORS[name]
 
-    est = ForestRegressor(n_estimators=1, max_samples_leaf=None, random_state=0)
-    with pytest.raises(ValueError):
+    est = ForestRegressor(
+        n_estimators=1,
+        max_samples_leaf=None,
+        random_state=0,
+        handle_empty_leaves="leaf_value",
+    )
+    est.fit(X, y)
+    y_pred = est.predict(X)
+    assert np.isnan(y_pred).sum() == 0
+
+    if ForestRegressor == RandomForestQuantileRegressor:
+        est = ForestRegressor(
+            n_estimators=1,
+            max_samples_leaf=None,
+            random_state=0,
+            handle_empty_leaves="raise",
+        )
         est.fit(X, y)
+        with pytest.raises(RuntimeError):
+            y_pred = est.predict(X)
 
 
 @pytest.mark.parametrize("name", FOREST_REGRESSORS)
