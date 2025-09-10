@@ -1,6 +1,7 @@
 sphinx
 altair
 geopandas
+huggingface_hub
 numpydoc
 pillow
 pydata_sphinx_theme

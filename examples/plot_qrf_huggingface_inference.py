@@ -26,8 +26,12 @@ import requests
 from sklearn import datasets
 from sklearn.base import BaseEstimator, RegressorMixin, clone
 from sklearn.model_selection import KFold
-from skops import hub_utils
 from vega_datasets import data
+
+try:
+    from examples import hub_utils
+except ImportError:
+    from __init__ import hub_utils
 
 token = "<Hugging Face Access Token>"
 repo_id = "quantile-forest/california-housing-example"
@@ -46,6 +50,7 @@ class CrossValidationPipeline(BaseEstimator, RegressorMixin):
         self.random_state = random_state
         self.fold_models = {}
         self.fold_indices = {}
+        self.is_fitted = False
 
     def fit(self, X, y):
         """Fit the model using k-fold cross-validation."""
@@ -56,6 +61,7 @@ class CrossValidationPipeline(BaseEstimator, RegressorMixin):
             model.fit(X_train, y_train)
             self.fold_models[fold_idx] = model
             self.fold_indices[fold_idx] = test_idx
+        self.is_fitted = True
         return self
 
     def predict(self, X, quantiles=None):
@@ -73,6 +79,9 @@ class CrossValidationPipeline(BaseEstimator, RegressorMixin):
     def save(self, filename):
         with open(filename, "wb") as f:
             joblib.dump(self.__getstate__(), f)
+
+    def __sklearn_is_fitted__(self):
+        return self.is_fitted
 
     @classmethod
     def load(cls, filename):
@@ -243,7 +252,7 @@ def plot_quantiles_by_latlon(df, quantiles, color_scheme="lightgreyred"):
 
     # Load the US counties data and filter to California counties.
     ca_counties = (
-        gpd.read_file(tmp_path, layer="counties")
+        gpd.read_file(f"TopoJSON:{tmp_path}", layer="counties")
         .set_crs("EPSG:4326")
         .assign(**{"county_fips": lambda x: x["id"].astype(int)})
         .drop(columns=["id"])

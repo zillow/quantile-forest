@@ -9,6 +9,8 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    env:
+      PIP_CONSTRAINT: ${{ github.workspace }}/docs/sphinx_constraints.txt
 
     steps:
       - uses: actions/checkout@v5
@@ -23,21 +25,21 @@ jobs:
 
       - name: Create virtual environment
         run: uv venv
-        shell: bash
 
       - name: Install dependencies
         run: |
-          uv pip install -r ./docs/sphinx_requirements.txt
-          uv pip install --verbose --editable .
+          uv pip install --editable . -c "$PIP_CONSTRAINT"
+          uv pip install -r docs/sphinx_requirements.txt -c "$PIP_CONSTRAINT"
 
       - name: Build documents
-        run: |
-          cd ./docs/
-          uv run make clean
-          mkdir -p source/_images
-          uv run make html
+        working-directory: docs
         env:
           GA_TRACKING_ID: ${{ secrets.GA_TRACKING_ID }}
+        run: |
+          . ../.venv/bin/activate
+          make clean
+          mkdir -p source/_images
+          make html
 
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v4

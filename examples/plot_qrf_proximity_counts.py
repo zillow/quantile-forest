@@ -77,7 +77,7 @@ X_test_noisy = X_test.pipe(add_gaussian_noise, std=noise_std, random_state=rando
 # data is stored in the leaf nodes. By doing this, we allow the model to
 # consider all samples as potential candidates for proximity calculations.
 qrf = RandomForestQuantileRegressor(
-    n_estimators=500,
+    n_estimators=250,
     max_features=1 / 3,
     max_samples_leaf=None,
     random_state=random_state,
