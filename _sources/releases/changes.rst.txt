@@ -5,22 +5,40 @@
 Release Notes
 =============
 
+Version 1.4.1 (released Sep 10, 2025)
+-------------------------------------
+
+* Use uv for build by `@reidjohnson <https://github.com/reidjohnson>`_ in `#113 <https://github.com/zillow/quantile-forest/pull/113>`_
+* Update docs by `@reidjohnson <https://github.com/reidjohnson>`_ in `#114 <https://github.com/zillow/quantile-forest/pull/114>`_
+* Bump actions/checkout from 4 to 5 by `@dependabot <https://github.com/dependabot>`_ in `#121 <https://github.com/zillow/quantile-forest/pull/121>`_
+* Bump actions/download-artifact from 4 to 5 by `@dependabot <https://github.com/dependabot>`_ in `#122 <https://github.com/zillow/quantile-forest/pull/122>`_
+* Bump pypa/cibuildwheel from 3.1.3 to 3.1.4 by `@dependabot <https://github.com/dependabot>`_ in `#123 <https://github.com/zillow/quantile-forest/pull/123>`_
+* Remove California dataset in tests by `@reidjohnson <https://github.com/reidjohnson>`_ in `#127 <https://github.com/zillow/quantile-forest/pull/127>`_
+* Bump pypa/gh-action-pypi-publish from 1.12.4 to 1.13.0 by `@dependabot <https://github.com/dependabot>`_ in `#125 <https://github.com/zillow/quantile-forest/pull/125>`_
+* Bump actions/setup-python from 5 to 6 by `@dependabot <https://github.com/dependabot>`_ in `#126 <https://github.com/zillow/quantile-forest/pull/126>`_
+* Add NaN check and test by `@reidjohnson <https://github.com/reidjohnson>`_ in `#129 <https://github.com/zillow/quantile-forest/pull/129>`_
+* Add `sample_weight` to tests by `@reidjohnson <https://github.com/reidjohnson>`_ in `#130 <https://github.com/zillow/quantile-forest/pull/130>`_
+* Update build files for warnings by `@reidjohnson <https://github.com/reidjohnson>`_ in `#131 <https://github.com/zillow/quantile-forest/pull/131>`_
+* Update docs for package compatibility by `@reidjohnson <https://github.com/reidjohnson>`_ in `#132 <https://github.com/zillow/quantile-forest/pull/132>`_
+
+**Full Changelog**: https://github.com/zillow/quantile-forest/compare/v1.4.0...v1.4.1
+
 Version 1.4.0 (released Jan 21, 2025)
 -------------------------------------
 
-* Upgrade Minimum sklearn by `@brentonmallen1 <https://github.com/brentonmallen1>`_ in `#92 <https://github.com/zillow/quantile-forest/pull/92>`_
-* Refactor Usage of scikit-learn Utilities by `@reidjohnson <https://github.com/reidjohnson>`_ in `#95 <https://github.com/zillow/quantile-forest/pull/95>`_
-* Update Contributor Documentation by `@reidjohnson <https://github.com/reidjohnson>`_ in `#96 <https://github.com/zillow/quantile-forest/pull/96>`_
+* Upgrade minimum sklearn by `@brentonmallen1 <https://github.com/brentonmallen1>`_ in `#92 <https://github.com/zillow/quantile-forest/pull/92>`_
+* Refactor usage of scikit-learn utilities by `@reidjohnson <https://github.com/reidjohnson>`_ in `#95 <https://github.com/zillow/quantile-forest/pull/95>`_
+* Update contributor documentation by `@reidjohnson <https://github.com/reidjohnson>`_ in `#96 <https://github.com/zillow/quantile-forest/pull/96>`_
 * Bump pypa/gh-action-pypi-publish from 1.10.1 to 1.10.2 by `@dependabot <https://github.com/dependabot>`_ in `#93 <https://github.com/zillow/quantile-forest/pull/93>`_
 * Bump pypa/cibuildwheel from 2.20.0 to 2.21.1 by `@dependabot <https://github.com/dependabot>`_ in `#94 <https://github.com/zillow/quantile-forest/pull/94>`_
-* Update Typing for Python 3.9+ by `@reidjohnson <https://github.com/reidjohnson>`_ in `#97 <https://github.com/zillow/quantile-forest/pull/97>`_
+* Update typing for Python 3.9+ by `@reidjohnson <https://github.com/reidjohnson>`_ in `#97 <https://github.com/zillow/quantile-forest/pull/97>`_
 * Bump pypa/cibuildwheel from 2.21.1 to 2.21.2 by `@dependabot <https://github.com/dependabot>`_ in `#98 <https://github.com/zillow/quantile-forest/pull/98>`_
 * Bump pypa/gh-action-pypi-publish from 1.10.2 to 1.10.3 by `@dependabot <https://github.com/dependabot>`_ in `#99 <https://github.com/zillow/quantile-forest/pull/99>`_
 * Bump pypa/cibuildwheel from 2.21.2 to 2.21.3 by `@dependabot <https://github.com/dependabot>`_ in `#100 <https://github.com/zillow/quantile-forest/pull/100>`_
-* Add Conda Instructions to Docs by `@reidjohnson <https://github.com/reidjohnson>`_ in `#101 <https://github.com/zillow/quantile-forest/pull/101>`_
+* Add Conda instructions to docs by `@reidjohnson <https://github.com/reidjohnson>`_ in `#101 <https://github.com/zillow/quantile-forest/pull/101>`_
 * Bump pypa/gh-action-pypi-publish from 1.10.3 to 1.11.0 by `@dependabot <https://github.com/dependabot>`_ in `#102 <https://github.com/zillow/quantile-forest/pull/102>`_
 * Bump pypa/gh-action-pypi-publish from 1.11.0 to 1.12.2 by `@dependabot <https://github.com/dependabot>`_ in `#104 <https://github.com/zillow/quantile-forest/pull/104>`_
-* scikit-learn 1.6 Compatibility by `@reidjohnson <https://github.com/reidjohnson>`_ in `#105 <https://github.com/zillow/quantile-forest/pull/105>`_
+* scikit-learn 1.6 compatibility by `@reidjohnson <https://github.com/reidjohnson>`_ in `#105 <https://github.com/zillow/quantile-forest/pull/105>`_
 * Bump codecov/codecov-action from 4 to 5 by `@dependabot <https://github.com/dependabot>`_ in `#106 <https://github.com/zillow/quantile-forest/pull/106>`_
 * Bump pypa/cibuildwheel from 2.21.3 to 2.22.0 by `@dependabot <https://github.com/dependabot>`_ in `#107 <https://github.com/zillow/quantile-forest/pull/107>`_
 * Bump pypa/gh-action-pypi-publish from 1.12.2 to 1.12.3 by `@dependabot <https://github.com/dependabot>`_ in `#108 <https://github.com/zillow/quantile-forest/pull/108>`_
