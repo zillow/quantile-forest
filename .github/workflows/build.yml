@@ -29,7 +29,7 @@ jobs:
       - name: Install dependencies
         run: |
           uv pip install black cython-lint flake8 isort pytest pytest-cov
-          uv pip install -r ./docs/sphinx_requirements.txt
+          uv pip install --no-deps -r ./docs/sphinx_requirements.txt
           uv pip install --verbose --editable .
 
       - name: Check Python formatting with black
