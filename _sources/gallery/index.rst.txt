@@ -129,19 +129,6 @@ General-purpose, introductory and illustrative examples.
     <span class="image-title">Tree SHAP with Quantile Regression Forests</span>
     </a>
     
-    <a class="imagegroup" href="plot_qrf_proximity_counts.html">
-    <span
-        class="image" alt="Using Proximity Counts to Identify Similar Samples"
-    
-        data-light-src="url(../_static/plot_qrf_proximity_counts-thumb.png)"
-        data-dark-src="url(../_static/plot_qrf_proximity_counts-thumb-dark.png)"
-        style="background-image: url(../_static/plot_qrf_proximity_counts-thumb.png);"
-    
-    ></span>
-
-    <span class="image-title">Using Proximity Counts to Identify Similar Samples</span>
-    </a>
-    
     <a class="imagegroup" href="plot_qrf_quantile_ranks.html">
     <span
         class="image" alt="Using Quantile Ranks to Identify Potential Outliers"
