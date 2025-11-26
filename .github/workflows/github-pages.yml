@@ -13,7 +13,7 @@ jobs:
       PIP_CONSTRAINT: ${{ github.workspace }}/docs/sphinx_constraints.txt
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Set up Python 3.13
         uses: actions/setup-python@v6
