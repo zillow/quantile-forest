@@ -5,6 +5,20 @@
 Release Notes
 =============
 
+Version 1.4.2 (released TBD)
+-------------------------------------
+
+* Update Precommit Hooks by `@reidjohnson <https://github.com/reidjohnson>`_ in `#140 <https://github.com/zillow/quantile-forest/pull/140>`_
+* Bump actions/upload-artifact from 4 to 5 by `@dependabot <https://github.com/dependabot>`_ in `#136 <https://github.com/zillow/quantile-forest/pull/136>`_
+* Bump actions/download-artifact from 5 to 6 by `@dependabot <https://github.com/dependabot>`_ in `#137 <https://github.com/zillow/quantile-forest/pull/137>`_
+* Bump pypa/cibuildwheel from 3.1.4 to 3.3.0 by `@dependabot <https://github.com/dependabot>`_ in `#139 <https://github.com/zillow/quantile-forest/pull/139>`_
+* Bump actions/checkout from 5 to 6 by `@dependabot <https://github.com/dependabot>`_ in `#141 <https://github.com/zillow/quantile-forest/pull/141>`_
+* Python 3.14 Support by `@reidjohnson <https://github.com/reidjohnson>`_ in `#133 <https://github.com/zillow/quantile-forest/pull/133>`_
+* Bump actions/upload-artifact from 5 to 6 by `@dependabot <https://github.com/dependabot>`_ in `#143 <https://github.com/zillow/quantile-forest/pull/143>`_
+* Bump actions/download-artifact from 6 to 7 by `@dependabot <https://github.com/dependabot>`_ in `#142 <https://github.com/zillow/quantile-forest/pull/142>`_
+
+**Full Changelog**: https://github.com/zillow/quantile-forest/compare/v1.4.1...v1.4.2
+
 Version 1.4.1 (released Sep 10, 2025)
 -------------------------------------
 
