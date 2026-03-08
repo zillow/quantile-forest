@@ -38,7 +38,7 @@ from sklearn.ensemble._forest import (
 )
 from sklearn.tree import DecisionTreeRegressor, ExtraTreeRegressor
 from sklearn.tree._tree import DTYPE
-from sklearn.utils._param_validation import Interval, RealNotInt
+from sklearn.utils._param_validation import Interval, RealNotInt, StrOptions
 from sklearn.utils.fixes import parse_version
 from sklearn.utils.validation import check_is_fitted
 
@@ -69,6 +69,8 @@ class BaseForestQuantileRegressor(ForestRegressor):
             Interval(RealNotInt, 0, 1, closed="right"),
             Interval(Integral, 1, None, closed="left"),
         ],
+        # How to handle leaves that have no recorded training indices.
+        "handle_empty_leaves": [StrOptions({"leaf_value", "ignore", "raise"})],
     }
     _parameter_constraints.pop("splitter")
 
@@ -87,6 +89,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
         warm_start=False,
         max_samples=None,
         max_samples_leaf=1,
+        handle_empty_leaves="leaf_value",
     ):
         """Initialize base quantile forest regressor."""
         init_dict = {
@@ -102,6 +105,8 @@ class BaseForestQuantileRegressor(ForestRegressor):
             "max_samples": max_samples,
         }
         super().__init__(**init_dict)
+        self.max_samples_leaf = max_samples_leaf
+        self.handle_empty_leaves = handle_empty_leaves
 
     def fit(self, X, y, sample_weight=None, sparse_pickle=False):
         """Build a forest from the training set (X, y).
@@ -153,7 +158,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
                 "force_all_finite"
                 if sklearn_version < parse_version("1.6.dev0")
                 else "ensure_all_finite"
-            ): True,
+            ): False,
         }
         if validate_data is None:
             X, y = self._validate_data(**validation_params)
@@ -193,6 +198,13 @@ class BaseForestQuantileRegressor(ForestRegressor):
         self.n_train_samples_ = len(y_sorted)
         self.X_train_hash_ = joblib.hash(X)
         self.unsampled_indices_ = None
+
+        # Precompute per-tree leaf values.
+        # Used as a degenerate fallback when a leaf has no recorded training indices.
+        self._per_tree_leaf_vals_ = []
+        for est in self.estimators_:
+            self._per_tree_leaf_vals_.append(est.tree_.value[:, 0, :].astype(np.float64))
+        self._per_tree_leaf_vals_ = tuple(self._per_tree_leaf_vals_)
 
         return self
 
@@ -591,6 +603,38 @@ class BaseForestQuantileRegressor(ForestRegressor):
         )
         return np.asarray(unsampled_indices)
 
+    def _compute_fallback_from_tree_values(self, X_leaves, X_indices, quantiles, interpolation):
+        """Build a per-sample fallback prediction using per-tree leaf values only.
+
+        Used to fill NaNs returned by the quantile forest.
+        """
+        n_samples = X_leaves.shape[0]
+        n_outputs = self.n_outputs_
+
+        # Gather per-tree leaf values for each sample.
+        vals = np.empty((n_samples, self.n_estimators, n_outputs), dtype=np.float64)
+        for t_idx, est in enumerate(self.estimators_):
+            per_node_vals = self._per_tree_leaf_vals_[t_idx]  # (n_nodes, n_outputs)
+            leaves_t = X_leaves[:, t_idx]
+            vals[:, t_idx, :] = per_node_vals[leaves_t, :]
+            if X_indices is not None:
+                mask = X_indices[:, t_idx] == 1
+                vals[~mask, t_idx, :] = np.nan  # ignore non-OOB trees for that row
+
+        # Compute aggregate by quantile across trees.
+        if quantiles == [-1]:  # mean
+            out = np.nanmean(vals, axis=1)[:, :, None]  # (n_samples, n_outputs, 1)
+        else:
+            method = (
+                interpolation.decode()
+                if isinstance(interpolation, (bytes, bytearray))
+                else interpolation
+            )
+            out = np.empty((n_samples, n_outputs, len(quantiles)), dtype=np.float64)
+            for o in range(n_outputs):
+                out[:, o, :] = np.nanquantile(vals[:, :, o], quantiles, method=method, axis=1).T
+        return out
+
     def predict(
         self,
         X,
@@ -724,6 +768,19 @@ class BaseForestQuantileRegressor(ForestRegressor):
                         leaves = X_leaves[:, tree]
                         train_indices = y_train_leaves[tree, leaves, output, 0]
                         leaf_vals[:, tree] = y_train[train_indices - 1, output]
+                        empty_rows = train_indices == 0  # empty rows in in-bag
+                        if np.any(empty_rows):
+                            if self.handle_empty_leaves == "leaf_value":
+                                per_node_vals = self._per_tree_leaf_vals_[tree]
+                                leaf_vals[empty_rows, tree] = per_node_vals[
+                                    leaves[empty_rows], output
+                                ]
+                            elif self.handle_empty_leaves == "raise":
+                                raise RuntimeError(
+                                    f"Got {empty_rows.sum()} empty leaf nodes in tree {tree}."
+                                )
+                        if self.handle_empty_leaves == "ignore":
+                            leaf_vals[empty_rows, tree] = np.nan
                         if self.monotonic_cst is not None:
                             clip_min = y_bound_leaves[tree, leaves, 0]
                             clip_max = y_bound_leaves[tree, leaves, 1]
@@ -735,6 +792,16 @@ class BaseForestQuantileRegressor(ForestRegressor):
                         train_indices[idx_mask] = y_train_leaves[tree, leaves, output, 0]
                         leaf_vals[:, tree] = np.nan
                         leaf_vals[idx_mask, tree] = y_train[train_indices[idx_mask] - 1, output]
+                        empty_rows = idx_mask & (train_indices == 0)  # empty rows in out-of-bag
+                        if np.any(empty_rows):
+                            if self.handle_empty_leaves == "raise":
+                                raise RuntimeError(
+                                    f"Empty leaf encountered in OOB for tree {tree}."
+                                )
+                            elif self.handle_empty_leaves != "ignore":
+                                per_node_vals = self._per_tree_leaf_vals_[tree]
+                                lv = per_node_vals[X_leaves[empty_rows, tree], output]
+                                leaf_vals[empty_rows, tree] = lv
                         if self.monotonic_cst is not None:
                             clip_min, clip_max = np.full(len(X), -np.inf), np.full(len(X), np.inf)
                             clip_min[idx_mask] = y_bound_leaves[tree, leaves, 0]
@@ -758,6 +825,20 @@ class BaseForestQuantileRegressor(ForestRegressor):
                 weighted_leaves,
                 aggregate_leaves_first,
             )
+            # If output has NaNs for any rows (e.g., empty leaves), optionally fill them.
+            if self.handle_empty_leaves == "raise":
+                if np.isnan(y_pred).any():
+                    raise RuntimeError(
+                        "NaN predictions due to empty leaves. "
+                        "Set handle_empty_leaves='leaf_value'."
+                    )
+            elif self.handle_empty_leaves != "ignore":
+                nan_mask = np.isnan(y_pred)
+                if nan_mask.any():
+                    fallback = self._compute_fallback_from_tree_values(
+                        X_leaves, X_indices, quantiles, interpolation
+                    )
+                    y_pred[nan_mask] = fallback[nan_mask]
 
         if y_pred.shape[2] == 1:
             y_pred = np.squeeze(y_pred, axis=2)
@@ -1209,6 +1290,14 @@ class RandomForestQuantileRegressor(BaseForestQuantileRegressor):
           - regressions trained on data with missing values,
           - trees with multi-sample leaves (i.e. when `max_samples_leaf > 1`).
 
+    handle_empty_leaves : {"leaf_value", "ignore", "raise"}, default="leaf_value"
+        How to handle leaves that have no recorded training indices.
+          - "leaf_value": Use the leaf value as the prediction.
+          - "ignore": Ignore the empty leaves.
+          - "raise": Raise an error.
+
+        .. versionadded:: 1.5
+
     Attributes
     ----------
     estimator_ : :class:`~sklearn.tree.DecisionTreeRegressor`
@@ -1321,6 +1410,7 @@ class RandomForestQuantileRegressor(BaseForestQuantileRegressor):
         ccp_alpha=0.0,
         max_samples=None,
         monotonic_cst=None,
+        handle_empty_leaves="leaf_value",
     ):
         """Initialize random forest quantile regressor."""
         init_dict = {
@@ -1347,6 +1437,7 @@ class RandomForestQuantileRegressor(BaseForestQuantileRegressor):
             "warm_start": warm_start,
             "max_samples": max_samples,
             "max_samples_leaf": max_samples_leaf,
+            "handle_empty_leaves": handle_empty_leaves,
         }
         super(RandomForestQuantileRegressor, self).__init__(**init_dict)
 
@@ -1362,6 +1453,7 @@ class RandomForestQuantileRegressor(BaseForestQuantileRegressor):
         self.min_impurity_decrease = min_impurity_decrease
         self.ccp_alpha = ccp_alpha
         self.monotonic_cst = monotonic_cst
+        self.handle_empty_leaves = handle_empty_leaves
 
 
 class ExtraTreesQuantileRegressor(BaseForestQuantileRegressor):
@@ -1540,6 +1632,14 @@ class ExtraTreesQuantileRegressor(BaseForestQuantileRegressor):
           - regressions trained on data with missing values,
           - trees with multi-sample leaves (i.e. when `max_samples_leaf > 1`).
 
+    handle_empty_leaves : {"leaf_value", "ignore", "raise"}, default="leaf_value"
+        How to handle leaves that have no recorded training indices.
+          - "leaf_value": Use the leaf value as the prediction.
+          - "ignore": Ignore the empty leaves.
+          - "raise": Raise an error.
+
+        .. versionadded:: 1.5
+
     Attributes
     ----------
     estimator_ : :class:`~sklearn.tree.ExtraTreeRegressor`
@@ -1638,6 +1738,7 @@ class ExtraTreesQuantileRegressor(BaseForestQuantileRegressor):
         ccp_alpha=0.0,
         max_samples=None,
         monotonic_cst=None,
+        handle_empty_leaves="leaf_value",
     ):
         """Initialize extra trees quantile regressor."""
         init_dict = {
@@ -1664,6 +1765,7 @@ class ExtraTreesQuantileRegressor(BaseForestQuantileRegressor):
             "warm_start": warm_start,
             "max_samples": max_samples,
             "max_samples_leaf": max_samples_leaf,
+            "handle_empty_leaves": handle_empty_leaves,
         }
         super(ExtraTreesQuantileRegressor, self).__init__(**init_dict)
 
@@ -1679,3 +1781,4 @@ class ExtraTreesQuantileRegressor(BaseForestQuantileRegressor):
         self.min_impurity_decrease = min_impurity_decrease
         self.ccp_alpha = ccp_alpha
         self.monotonic_cst = monotonic_cst
+        self.handle_empty_leaves = handle_empty_leaves
