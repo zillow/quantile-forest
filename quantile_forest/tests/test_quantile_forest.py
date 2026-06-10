@@ -7,6 +7,7 @@ from typing import Any
 
 import numpy as np
 import pytest
+import sklearn
 from scipy.stats import percentileofscore
 from sklearn import datasets
 from sklearn.ensemble import ExtraTreesRegressor, RandomForestRegressor
@@ -19,6 +20,7 @@ from sklearn.utils._testing import (
     assert_array_almost_equal,
     assert_array_equal,
 )
+from sklearn.utils.fixes import parse_version
 from sklearn.utils.validation import check_is_fitted
 
 from quantile_forest import ExtraTreesQuantileRegressor, RandomForestQuantileRegressor
@@ -29,6 +31,8 @@ from quantile_forest._quantile_forest_fast import (
     calc_weighted_mean,
     calc_weighted_quantile,
 )
+
+sklearn_version = parse_version(sklearn.__version__)
 
 np.random.seed(0)
 
@@ -765,8 +769,10 @@ def check_proximity_counts(name):
     n_samples = len(X)
     proximities = est.proximity_counts(X)
     X_leaves = est.apply(X)
+    params = (n_samples, n_samples)
+    params = params if sklearn_version < parse_version("1.9") else params + (None,)
     bootstrap_indices = np.array(
-        [_generate_sample_indices(e.random_state, n_samples, n_samples) for e in est.estimators_]
+        [_generate_sample_indices(e.random_state, *params) for e in est.estimators_]
     )
     for train_idx, train_idx_prox in enumerate(proximities):
         for proximity_idx, proximity_count in train_idx_prox:
@@ -1218,8 +1224,10 @@ def check_proximity_counts_oob(name):
     # Check that OOB proximity counts match OOB bootstrap counts.
     X_leaves = est.apply(X)
     n_samples = len(X)
+    params = (n_samples, n_samples)
+    params = params if sklearn_version < parse_version("1.9") else params + (None,)
     bootstrap_indices = np.array(
-        [_generate_sample_indices(e.random_state, n_samples, n_samples) for e in est.estimators_]
+        [_generate_sample_indices(e.random_state, *params) for e in est.estimators_]
     )
     for train_idx, train_idx_prox in enumerate(proximities):
         for proximity_idx, proximity_count in train_idx_prox:
@@ -1382,6 +1390,115 @@ def check_serialization(name, sparse_pickle, monotonic_cst, multi_target):
 @pytest.mark.parametrize("multi_target", [False, True])
 def test_serialization(name, sparse_pickle, monotonic_cst, multi_target):
     check_serialization(name, sparse_pickle, monotonic_cst, multi_target)
+
+
+@pytest.mark.skipif(
+    sklearn_version < parse_version("1.9"),
+    reason="sample_weight in bootstrap functions requires scikit-learn >= 1.9",
+)
+@pytest.mark.parametrize("name", FOREST_REGRESSORS)
+def test_sample_weight_stored_on_fit(name):
+    """Check that sample_weight is stored during fit."""
+    X, y = datasets.make_regression(n_samples=100, n_features=4, random_state=0)
+    sample_weight = np.random.default_rng(0).uniform(0.1, 2.0, size=len(y))
+
+    ForestRegressor = FOREST_REGRESSORS[name]
+
+    est = ForestRegressor(n_estimators=5, random_state=0)
+    est.fit(X, y, sample_weight=sample_weight)
+    assert est.sample_weight_ is not None
+    assert est.sample_weight_.shape[0] == len(y)
+
+    est_no_weight = ForestRegressor(n_estimators=5, random_state=0)
+    est_no_weight.fit(X, y)
+    assert est_no_weight.sample_weight_ is None
+
+
+@pytest.mark.skipif(
+    sklearn_version < parse_version("1.9"),
+    reason="sample_weight in bootstrap functions requires scikit-learn >= 1.9",
+)
+@pytest.mark.parametrize("name", FOREST_REGRESSORS)
+def test_sample_weight_predict(name):
+    """Check that predictions work with sample_weight on sklearn 1.9+."""
+    X, y = datasets.make_regression(n_samples=200, n_features=4, random_state=0)
+    sample_weight = np.random.default_rng(0).uniform(0.1, 2.0, size=len(y))
+
+    ForestRegressor = FOREST_REGRESSORS[name]
+
+    est = ForestRegressor(n_estimators=10, bootstrap=True, random_state=0)
+    est.fit(X, y, sample_weight=sample_weight)
+
+    y_pred = est.predict(X, quantiles=[0.25, 0.5, 0.75])
+    assert y_pred.shape == (len(X), 3)
+    assert not np.isnan(y_pred).any()
+
+    # Predictions with sample_weight should differ from uniform weights.
+    est_uniform = ForestRegressor(n_estimators=10, bootstrap=True, random_state=0)
+    est_uniform.fit(X, y)
+    y_pred_uniform = est_uniform.predict(X, quantiles=[0.25, 0.5, 0.75])
+    assert not np.allclose(y_pred, y_pred_uniform)
+
+
+@pytest.mark.skipif(
+    sklearn_version < parse_version("1.9"),
+    reason="sample_weight in bootstrap functions requires scikit-learn >= 1.9",
+)
+@pytest.mark.parametrize("name", FOREST_REGRESSORS)
+def test_sample_weight_oob(name):
+    """Check that OOB predictions work with sample_weight on sklearn 1.9+."""
+    X, y = datasets.make_regression(n_samples=500, n_features=8, noise=0.1, random_state=0)
+    sample_weight = np.random.default_rng(0).uniform(0.1, 2.0, size=len(y))
+
+    ForestRegressor = FOREST_REGRESSORS[name]
+
+    est = ForestRegressor(n_estimators=20, bootstrap=True, oob_score=True, random_state=0)
+    est.fit(X, y, sample_weight=sample_weight)
+
+    y_pred = est.predict(X, quantiles=[0.2, 0.5, 0.8], oob_score=True)
+    assert y_pred.shape == (len(X), 3)
+
+
+@pytest.mark.skipif(
+    sklearn_version < parse_version("1.9"),
+    reason="sample_weight in bootstrap functions requires scikit-learn >= 1.9",
+)
+@pytest.mark.parametrize("name", FOREST_REGRESSORS)
+def test_sample_weight_unsampled_indices(name):
+    """Check that _get_unsampled_indices uses sample_weight on sklearn 1.9+."""
+    X, y = datasets.make_regression(n_samples=200, n_features=4, random_state=0)
+    sample_weight = np.random.default_rng(0).uniform(0.1, 2.0, size=len(y))
+
+    ForestRegressor = FOREST_REGRESSORS[name]
+
+    est = ForestRegressor(n_estimators=5, bootstrap=True, random_state=0)
+    est.fit(X, y, sample_weight=sample_weight)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", UserWarning)
+        unsampled = est._get_unsampled_indices(est.estimators_[0])
+
+    assert len(unsampled) > 0
+    assert all(idx < len(y) for idx in unsampled)
+
+
+@pytest.mark.skipif(
+    sklearn_version < parse_version("1.9"),
+    reason="sample_weight in bootstrap functions requires scikit-learn >= 1.9",
+)
+@pytest.mark.parametrize("name", FOREST_REGRESSORS)
+def test_sample_weight_proximity_counts(name):
+    """Check that proximity_counts works with sample_weight on sklearn 1.9+."""
+    X, y = datasets.make_regression(n_samples=100, n_features=4, random_state=0)
+    sample_weight = np.random.default_rng(0).uniform(0.1, 2.0, size=len(y))
+
+    ForestRegressor = FOREST_REGRESSORS[name]
+
+    est = ForestRegressor(n_estimators=5, bootstrap=True, random_state=0)
+    est.fit(X, y, sample_weight=sample_weight)
+
+    proximities = est.proximity_counts(X)
+    assert len(proximities) == len(X)
 
 
 def test_calc_quantile():
