@@ -37,7 +37,11 @@ from sklearn.ensemble._forest import (
     _get_n_samples_bootstrap,
 )
 from sklearn.tree import DecisionTreeRegressor, ExtraTreeRegressor
-from sklearn.tree._tree import DTYPE
+
+try:
+    from sklearn.tree._tree import DTYPE
+except ImportError:  # scikit-learn >= 1.9 no longer re-exports DTYPE here
+    DTYPE = np.float32  # the value DTYPE has always held
 from sklearn.utils._param_validation import Interval, RealNotInt
 from sklearn.utils.fixes import parse_version
 from sklearn.utils.validation import check_is_fitted
