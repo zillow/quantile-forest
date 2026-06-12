@@ -174,12 +174,16 @@ class BaseForestQuantileRegressor(ForestRegressor):
         for i in range(y.shape[1]):
             y_sorted[:, i] = y[sorter[:, i], i]
 
+        self.sample_weight_ = sample_weight
+
         if sample_weight is not None:
-            sample_weight = np.asarray(sample_weight)[sorter]
+            sample_weight_sorted = np.asarray(sample_weight)[sorter]
+        else:
+            sample_weight_sorted = None
 
         # Get map of tree leaf nodes to training indices.
         y_train_leaves = self._get_y_train_leaves(
-            X, y_sorted, sorter=sorter, sample_weight=sample_weight
+            X, y_sorted, sorter=sorter, sample_weight=sample_weight_sorted
         )
 
         # Get map of tree leaf nodes to target value bounds (for monotonicity constraints).
@@ -352,7 +356,10 @@ class BaseForestQuantileRegressor(ForestRegressor):
             X_leaves = self.apply(X)
 
         if self.bootstrap:
-            n_samples_bootstrap = _get_n_samples_bootstrap(n_samples, self.max_samples)
+            args = (n_samples, self.max_samples)
+            if sklearn_version >= parse_version("1.9.0"):
+                args += (self.sample_weight_,)
+            n_samples_bootstrap = _get_n_samples_bootstrap(*args)
 
         shape = (n_samples if not self.bootstrap else n_samples_bootstrap, self.n_estimators)
         bootstrap_indices = np.empty(shape, dtype=np.int64)
@@ -360,9 +367,14 @@ class BaseForestQuantileRegressor(ForestRegressor):
         for i, estimator in enumerate(self.estimators_):
             # Get bootstrap indices.
             if self.bootstrap:
-                bootstrap_indices[:, i] = _generate_sample_indices(
-                    estimator.random_state, n_samples, n_samples_bootstrap
-                )
+                args = {
+                    "random_state": estimator.random_state,
+                    "n_samples": n_samples,
+                    "n_samples_bootstrap": n_samples_bootstrap,
+                }
+                if sklearn_version >= parse_version("1.9.0"):
+                    args["sample_weight"] = self.sample_weight_
+                bootstrap_indices[:, i] = _generate_sample_indices(**args)
             else:
                 bootstrap_indices[:, i] = np.arange(n_samples)
 
@@ -534,7 +546,9 @@ class BaseForestQuantileRegressor(ForestRegressor):
         for i, estimator in enumerate(self.estimators_):
             # Get the indices excluded from the bootstrapping process.
             if self.unsampled_indices_ is None:
-                unsampled_indices = self._get_unsampled_indices(estimator, duplicates=duplicates)
+                unsampled_indices = self._get_unsampled_indices(
+                    estimator, duplicates=duplicates, sample_weight=self.sample_weight_
+                )
             else:
                 # Avoid generating unsampled indices if they are precomputed.
                 unsampled_indices = np.asarray(self.unsampled_indices_[i])
@@ -564,7 +578,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
 
         return X_leaves, X_indices
 
-    def _get_unsampled_indices(self, estimator, duplicates=None):
+    def _get_unsampled_indices(self, estimator, duplicates=None, sample_weight=None):
         """Get the unsampled indices for a base estimator.
 
         Parameters
@@ -575,6 +589,13 @@ class BaseForestQuantileRegressor(ForestRegressor):
         duplicates : list of lists, default=None
             List of sets of functionally identical indices.
 
+        sample_weight : array-like of shape (n_samples, n_outputs), \
+                default=None
+            Sample weights. If None, then samples are equally weighted. Splits
+            that would create child nodes with net zero or negative weight are
+            ignored while searching for a split in each node. For each output,
+            the ordering of the weights correspond to the sorted samples.
+
         Returns
         -------
         unsampled_indices : array of shape (n_unsampled,)
@@ -583,10 +604,12 @@ class BaseForestQuantileRegressor(ForestRegressor):
         if not self.bootstrap:
             warn("Unsampled indices only exist if bootstrap=True.")
             return np.array([])
+        sample_weight = self.sample_weight_
+        args = () if sklearn_version < parse_version("1.9") else (sample_weight,)
         n_train_samples = self.n_train_samples_
-        n_samples_bootstrap = _get_n_samples_bootstrap(n_train_samples, self.max_samples)
+        n_samples_bootstrap = _get_n_samples_bootstrap(n_train_samples, self.max_samples, *args)
         sample_indices = _generate_sample_indices(
-            estimator.random_state, n_train_samples, n_samples_bootstrap
+            estimator.random_state, n_train_samples, n_samples_bootstrap, *args
         )
         unsampled_indices = generate_unsampled_indices(
             sample_indices,
