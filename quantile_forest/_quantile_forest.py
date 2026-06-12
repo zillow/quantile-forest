@@ -356,13 +356,13 @@ class BaseForestQuantileRegressor(ForestRegressor):
             X_leaves = self.apply(X)
 
         if self.bootstrap:
-            params = {
+            args = {
                 "n_samples": n_samples,
                 "max_samples": self.max_samples,
             }
             if sklearn_version >= parse_version("1.9.0"):
-                params["sample_weight"] = self.sample_weight_
-            n_samples_bootstrap = _get_n_samples_bootstrap(**params)
+                args["sample_weight"] = self.sample_weight_
+            n_samples_bootstrap = _get_n_samples_bootstrap(**args)
 
         shape = (n_samples if not self.bootstrap else n_samples_bootstrap, self.n_estimators)
         bootstrap_indices = np.empty(shape, dtype=np.int64)
@@ -370,14 +370,14 @@ class BaseForestQuantileRegressor(ForestRegressor):
         for i, estimator in enumerate(self.estimators_):
             # Get bootstrap indices.
             if self.bootstrap:
-                params = {
+                args = {
                     "random_state": estimator.random_state,
                     "n_samples": n_samples,
                     "n_samples_bootstrap": n_samples_bootstrap,
                 }
                 if sklearn_version >= parse_version("1.9.0"):
-                    params["sample_weight"] = self.sample_weight_
-                bootstrap_indices[:, i] = _generate_sample_indices(**params)
+                    args["sample_weight"] = self.sample_weight_
+                bootstrap_indices[:, i] = _generate_sample_indices(**args)
             else:
                 bootstrap_indices[:, i] = np.arange(n_samples)
 
@@ -607,13 +607,12 @@ class BaseForestQuantileRegressor(ForestRegressor):
         if not self.bootstrap:
             warn("Unsampled indices only exist if bootstrap=True.")
             return np.array([])
-        n_train_samples = self.n_train_samples_
         sample_weight = self.sample_weight_
-        params = {} if sklearn_version < parse_version("1.9") else {"sample_weight": sample_weight}
-        n_samples_bootstrap = _get_n_samples_bootstrap(n_train_samples, self.max_samples, **params)
-        params = {} if sklearn_version < parse_version("1.9") else {"sample_weight": sample_weight}
+        args = () if sklearn_version < parse_version("1.9") else (sample_weight)
+        n_train_samples = self.n_train_samples_
+        n_samples_bootstrap = _get_n_samples_bootstrap(n_train_samples, self.max_samples, **args)
         sample_indices = _generate_sample_indices(
-            estimator.random_state, n_train_samples, n_samples_bootstrap, **params
+            estimator.random_state, n_train_samples, n_samples_bootstrap, *args
         )
         unsampled_indices = generate_unsampled_indices(
             sample_indices,

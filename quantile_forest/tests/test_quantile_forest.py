@@ -769,10 +769,10 @@ def check_proximity_counts(name):
     n_samples = len(X)
     proximities = est.proximity_counts(X)
     X_leaves = est.apply(X)
-    params = (n_samples, n_samples)
-    params = params if sklearn_version < parse_version("1.9") else params + (None,)
+    args = (n_samples, n_samples)
+    args = args if sklearn_version < parse_version("1.9") else args + (None,)
     bootstrap_indices = np.array(
-        [_generate_sample_indices(e.random_state, *params) for e in est.estimators_]
+        [_generate_sample_indices(e.random_state, *args) for e in est.estimators_]
     )
     for train_idx, train_idx_prox in enumerate(proximities):
         for proximity_idx, proximity_count in train_idx_prox:
@@ -1224,10 +1224,10 @@ def check_proximity_counts_oob(name):
     # Check that OOB proximity counts match OOB bootstrap counts.
     X_leaves = est.apply(X)
     n_samples = len(X)
-    params = (n_samples, n_samples)
-    params = params if sklearn_version < parse_version("1.9") else params + (None,)
+    args = (n_samples, n_samples)
+    args = args if sklearn_version < parse_version("1.9") else args + (None,)
     bootstrap_indices = np.array(
-        [_generate_sample_indices(e.random_state, *params) for e in est.estimators_]
+        [_generate_sample_indices(e.random_state, *args) for e in est.estimators_]
     )
     for train_idx, train_idx_prox in enumerate(proximities):
         for proximity_idx, proximity_count in train_idx_prox:
