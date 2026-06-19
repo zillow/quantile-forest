@@ -367,14 +367,10 @@ class BaseForestQuantileRegressor(ForestRegressor):
         for i, estimator in enumerate(self.estimators_):
             # Get bootstrap indices.
             if self.bootstrap:
-                args = {
-                    "random_state": estimator.random_state,
-                    "n_samples": n_samples,
-                    "n_samples_bootstrap": n_samples_bootstrap,
-                }
+                args = (estimator.random_state, n_samples, n_samples_bootstrap)
                 if sklearn_version >= parse_version("1.9.0"):
-                    args["sample_weight"] = self.sample_weight_
-                bootstrap_indices[:, i] = _generate_sample_indices(**args)
+                    args += (self.sample_weight_,)
+                bootstrap_indices[:, i] = _generate_sample_indices(*args)
             else:
                 bootstrap_indices[:, i] = np.arange(n_samples)
 
