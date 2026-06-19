@@ -6,11 +6,11 @@ repos:
   - id: check-merge-conflict
   - id: trailing-whitespace
 - repo: https://github.com/psf/black
-  rev: 25.11.0
+  rev: 26.5.1
   hooks:
   - id: black
 - repo: https://github.com/pycqa/isort
-  rev: 7.0.0
+  rev: 9.0.0a3
   hooks:
   - id: isort
     name: isort (python)
@@ -18,7 +18,7 @@ repos:
     name: isort (cython)
     types: [cython]
 - repo: https://github.com/MarcoGorelli/cython-lint
-  rev: v0.18.1
+  rev: v0.20.0
   hooks:
   - id: cython-lint
   - id: double-quote-cython-strings
