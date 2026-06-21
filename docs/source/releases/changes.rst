@@ -26,6 +26,7 @@ Version 1.4.2 (released Jun 21, 2026)
 * Fix sample weight with sklearn 1.9 by `@reidjohnson <https://github.com/reidjohnson>`_ in `#153 <https://github.com/zillow/quantile-forest/pull/153>`_
 * Bump pypa/cibuildwheel from 3.4.1 to 4.1.0 by `@dependabot <https://github.com/dependabot>`_ in `#155 <https://github.com/zillow/quantile-forest/pull/155>`_
 * Bump codecov/codecov-action from 6 to 7 by `@dependabot <https://github.com/dependabot>`_ in `#154 <https://github.com/zillow/quantile-forest/pull/154>`_
+* Resolve Altair build warnings by `@reidjohnson <https://github.com/reidjohnson>`_ in `#156 <https://github.com/zillow/quantile-forest/pull/156>`_
 
 This version adds support for Python version 3.14 and scikit-learn 1.9.
 
