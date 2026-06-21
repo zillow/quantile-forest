@@ -172,12 +172,12 @@ by Carl McBride Ellis.
     def plot_prediction_intervals_by_strategy(df):
         """Plot prediction intervals by interval estimate strategy."""
 
-        def _plot_prediction_intervals(df, domain):
-            # Slider for varying the target coverage level.
-            slider = alt.binding_range(name="Coverage Target: ", min=0, max=1, step=0.1)
-            coverage_val = alt.param(name="coverage", value=0.9, bind=slider)
+        # Single shared slider for varying the target coverage level.
+        slider = alt.binding_range(name="Coverage Target: ", min=0, max=1, step=0.1)
+        coverage_val = alt.param(name="coverage", value=0.9, bind=slider)
 
-            click = alt.selection_point(bind="legend", fields=["y_label"])
+        def _plot_prediction_intervals(df, domain, suffix=""):
+            click = alt.selection_point(name=f"click{suffix}", bind="legend", fields=["y_label"])
 
             tooltip = [
                 alt.Tooltip("y_test:Q", format="$,d", title="True Price"),
@@ -282,21 +282,21 @@ by Carl McBride Ellis.
                 )
             )
 
-            chart = (
-                bar + tick_low + tick_upp + circle + diagonal + text_coverage + text_with
-            ).add_params(coverage_val)
+            chart = bar + tick_low + tick_upp + circle + diagonal + text_coverage + text_with
 
             return chart
 
-        chart = alt.hconcat()
-        for strategy in strategies.keys():
+        panels = []
+        for i, strategy in enumerate(strategies.keys()):
             domain = [
                 int(np.min((df[["y_test", "y_pred"]].min(axis=0)))),  # min of all axes
                 int(np.max((df[["y_test", "y_pred"]].max(axis=0)))),  # max of all axes
             ]
             df_i = df.query(f"strategy == '{strategy}'").reset_index(drop=True)
-            base = _plot_prediction_intervals(df_i, domain)
-            chart |= base.properties(height=225, width=300, title=strategies[strategy])
+            panel = _plot_prediction_intervals(df_i, domain, suffix=f"_{i}")
+            panels.append(panel.properties(height=225, width=300, title=strategies[strategy]))
+
+        chart = alt.hconcat(*panels).add_params(coverage_val)
 
         return chart
 
@@ -452,12 +452,12 @@ by Carl McBride Ellis.
             def plot_prediction_intervals_by_strategy(df):
                 """Plot prediction intervals by interval estimate strategy."""
 
-                def _plot_prediction_intervals(df, domain):
-                    # Slider for varying the target coverage level.
-                    slider = alt.binding_range(name="Coverage Target: ", min=0, max=1, step=0.1)
-                    coverage_val = alt.param(name="coverage", value=0.9, bind=slider)
+                # Single shared slider for varying the target coverage level.
+                slider = alt.binding_range(name="Coverage Target: ", min=0, max=1, step=0.1)
+                coverage_val = alt.param(name="coverage", value=0.9, bind=slider)
 
-                    click = alt.selection_point(bind="legend", fields=["y_label"])
+                def _plot_prediction_intervals(df, domain, suffix=""):
+                    click = alt.selection_point(name=f"click{suffix}", bind="legend", fields=["y_label"])
 
                     tooltip = [
                         alt.Tooltip("y_test:Q", format="$,d", title="True Price"),
@@ -562,21 +562,21 @@ by Carl McBride Ellis.
                         )
                     )
 
-                    chart = (
-                        bar + tick_low + tick_upp + circle + diagonal + text_coverage + text_with
-                    ).add_params(coverage_val)
+                    chart = bar + tick_low + tick_upp + circle + diagonal + text_coverage + text_with
 
                     return chart
 
-                chart = alt.hconcat()
-                for strategy in strategies.keys():
+                panels = []
+                for i, strategy in enumerate(strategies.keys()):
                     domain = [
                         int(np.min((df[["y_test", "y_pred"]].min(axis=0)))),  # min of all axes
                         int(np.max((df[["y_test", "y_pred"]].max(axis=0)))),  # max of all axes
                     ]
                     df_i = df.query(f"strategy == '{strategy}'").reset_index(drop=True)
-                    base = _plot_prediction_intervals(df_i, domain)
-                    chart |= base.properties(height=225, width=300, title=strategies[strategy])
+                    panel = _plot_prediction_intervals(df_i, domain, suffix=f"_{i}")
+                    panels.append(panel.properties(height=225, width=300, title=strategies[strategy]))
+
+                chart = alt.hconcat(*panels).add_params(coverage_val)
 
                 return chart
 
