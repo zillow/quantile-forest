@@ -149,12 +149,12 @@ def plot_digits_proximities(
 
     # Slider for determining the test index for which the data is being visualized.
     slider = alt.binding_range(name="Test Sample Index: ", min=0, max=n_samples - 1, step=1)
-    index_selection = alt.selection_point(value=0, bind=slider, fields=["index"])
+    index_selection = alt.selection_point(name="index_sel", value=0, bind=slider, fields=["index"])
 
     scale = alt.Scale(domain=[x_min, x_max], scheme="warmgreys")
     opacity = (alt.value(0), alt.value(0.5))
 
-    base = alt.Chart(df).add_params(index_selection).transform_filter(index_selection)
+    base = alt.Chart(df).transform_filter(index_selection)
 
     chart1 = (
         base.transform_filter("datum.prox_idx == 0")  # filter to one test sample row
@@ -234,7 +234,7 @@ def plot_digits_proximities(
     chart_spacer = alt.Chart(pd.DataFrame()).mark_rect().properties(width=subplot_dim * 2)
 
     chart = (
-        (chart1 | chart_spacer | chart2 | chart_spacer | chart3)
+        (chart1.add_params(index_selection) | chart_spacer | chart2 | chart_spacer | chart3)
         .configure_concat(spacing=0)
         .configure_facet(spacing=subplot_spacing)
         .configure_title(anchor="middle")
