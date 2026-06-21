@@ -5,7 +5,7 @@
 Release Notes
 =============
 
-Version 1.4.2 (released TBD)
+Version 1.4.2 (released Jun 21, 2026)
 -------------------------------------
 
 * Update Precommit Hooks by `@reidjohnson <https://github.com/reidjohnson>`_ in `#140 <https://github.com/zillow/quantile-forest/pull/140>`_
