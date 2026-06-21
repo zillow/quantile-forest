@@ -57,7 +57,9 @@ def plot_pred_and_ranks(df):
     slider = alt.binding_range(name="Rank Interval Threshold: ", min=0, max=1, step=0.01)
     interval_val = alt.param(name="interval", value=0.05, bind=slider)
 
-    click = alt.selection_point(bind="legend", fields=["outlier"], on="click")
+    click = alt.selection_point(
+        name="click_outlier", bind="legend", fields=["outlier"], on="click"
+    )
 
     base = alt.Chart(df)
 
@@ -102,7 +104,6 @@ def plot_pred_and_ranks(df):
                 alt.Tooltip("y_rank:Q", format=".3f", title="Quantile Rank"),
                 alt.Tooltip("threshold_low:Q", format=".3f", title="Lower Threshold"),
                 alt.Tooltip("threshold_upp:Q", format=".3f", title="Upper Threshold"),
-                alt.Tooltip("y_rank:Q", format=".3f", title="Quantile Rank"),
                 alt.Tooltip("outlier:N", title="Outlier"),
             ],
         )

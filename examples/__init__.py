@@ -277,8 +277,8 @@ def _create_config(
         - ``"skops"`` if the extension is ``".skops"``
     """
 
-    # so that we don't have to explicitly add keys and they're added as a
-    # dictionary if they are not found
+    # So that we don't have to explicitly add keys and they're added as a
+    # dictionary if they are not found.
     # see: https://stackoverflow.com/a/13151294/2536294
     def recursively_default_dict() -> MutableMapping:
         return collections.defaultdict(recursively_default_dict)
@@ -558,15 +558,11 @@ def download(
     if dst.exists() and bool(next(dst.iterdir(), None)):
         raise OSError("None-empty dst path already exists!")
 
-    # remove the folder only if it's empty and it exists
     if dst.exists():
         dst.rmdir()
 
-    # TODO: Switch from use_auth_token to token once huggingface_hub<0.11 is
-    # dropped. Until then, we ignore the mypy type check, because mypy doesn't
-    # see that use_auth_token is handled by the decorator of snapshot_download.
     cached_folder = snapshot_download(
-        repo_id=repo_id, revision=revision, use_auth_token=token, **kwargs  # type: ignore
+        repo_id=repo_id, revision=revision, token=token, **kwargs  # type: ignore
     )
     shutil.copytree(cached_folder, dst)
     if not keep_cache:
