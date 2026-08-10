@@ -25,7 +25,7 @@ jobs:
           platforms: arm64
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v4.1.0
+        uses: pypa/cibuildwheel@v4.2.0
         env:
           CIBW_BUILD: cp39-* cp310-* cp311-* cp312-* cp313-* cp314-*
           CIBW_SKIP: pp* *i686* *win32 *musllinux*
