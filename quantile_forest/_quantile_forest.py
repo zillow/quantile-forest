@@ -266,7 +266,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
 
         if leaf_subsample or sample_weight is not None:
             if leaf_subsample:
-                random.seed(random_state)
+                rng = random.Random(random_state)
 
             for j in range(len(leaf_values_list)):
                 if sample_weight is not None:
@@ -276,7 +276,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
                 if leaf_subsample:
                     # Sample leaf to length `max_samples_leaf`.
                     if len(leaf_values_list[j]) > max_samples_leaf:
-                        random.shuffle(leaf_values_list[j])  # to ensure random sampling
+                        rng.shuffle(leaf_values_list[j])  # to ensure random sampling
                         leaf_values_list[j] = leaf_values_list[j][:max_samples_leaf]
                 if len(leaf_values_list[j]) == 0:
                     leaf_values_list[j] = [0]
@@ -1196,6 +1196,8 @@ class RandomForestQuantileRegressor(BaseForestQuantileRegressor):
         when building trees (if ``bootstrap=True``) and the sampling of the
         features to consider when looking for the best split at each node
         (if ``max_features < n_features``).
+        Leaf subsampling uses a local generator and does not change Python's
+        global random state.
 
     verbose : int, default=0
         Controls the verbosity when fitting and predicting.
@@ -1527,6 +1529,9 @@ class ExtraTreesQuantileRegressor(BaseForestQuantileRegressor):
         - the sampling of the features to consider when looking for the best
           split at each node (if ``max_features < n_features``)
         - the draw of the splits for each of the `max_features`
+
+        Leaf subsampling uses a local generator and does not change Python's
+        global random state.
 
     verbose : int, default=0
         Controls the verbosity when fitting and predicting.
