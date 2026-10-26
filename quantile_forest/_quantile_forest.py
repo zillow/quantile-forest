@@ -123,7 +123,8 @@ class BaseForestQuantileRegressor(ForestRegressor):
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights. If None, then samples are equally weighted. Splits
             that would create child nodes with net zero or negative weight are
-            ignored while searching for a split in each node.
+            ignored while searching for a split in each node. Samples with
+            zero weight are excluded from the leaf samples used for prediction.
 
         sparse_pickle : bool, default=False
             Pickle the underlying data structure using a SciPy sparse matrix.
@@ -255,9 +256,6 @@ class BaseForestQuantileRegressor(ForestRegressor):
         """
         n_outputs = bootstrap_indices.shape[1]
 
-        if sample_weight is not None:
-            sample_weight = np.squeeze(sample_weight)
-
         shape = (max_node_count, n_outputs, max_samples_leaf)
         y_train_leaves_slice = np.zeros(shape, dtype=np.int64)
 
@@ -270,8 +268,10 @@ class BaseForestQuantileRegressor(ForestRegressor):
 
             for j in range(len(leaf_values_list)):
                 if sample_weight is not None:
-                    # Filter leaf samples with zero weight.
-                    weight_mask = sample_weight[leaf_values_list[j] - 1] > 0
+                    # Resolve bootstrap positions to sorted training indices.
+                    # Weights are shared across outputs, so one output suffices.
+                    sample_indices = bootstrap_indices[leaf_values_list[j], 0] - 1
+                    weight_mask = sample_weight[sample_indices, 0] > 0
                     leaf_values_list[j] = leaf_values_list[j][weight_mask]
                 if leaf_subsample:
                     # Sample leaf to length `max_samples_leaf`.
