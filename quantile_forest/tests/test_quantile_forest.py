@@ -1545,6 +1545,75 @@ def test_sample_weight_proximity_counts(name):
     assert len(proximities) == len(X)
 
 
+@pytest.mark.parametrize("name", FOREST_REGRESSORS)
+@pytest.mark.parametrize("bootstrap", [False, True])
+@pytest.mark.parametrize("multi_target", [False, True])
+def test_sample_weight_zero_weight_targets(name, bootstrap, multi_target):
+    """Exclude zero-weight samples using their original training indices."""
+    X = np.zeros((4, 1))
+    y = np.array([10, 40, 20, 30])
+    if multi_target:
+        y = np.column_stack((y, -y))
+    sample_weight = np.array([0, 1, 1, 1])
+    quantiles = [0.0, 0.5, 1.0]
+    est = FOREST_REGRESSORS[name](
+        n_estimators=1, bootstrap=bootstrap, max_samples_leaf=None, random_state=0
+    )
+    est.fit(X, y, sample_weight=sample_weight)
+
+    indices = est.estimators_samples_[0]
+    indices = indices[sample_weight[indices] > 0]
+    expected = np.quantile(y[indices], quantiles, axis=0).T
+    assert_allclose(est.predict(X[:1], quantiles=quantiles), expected[np.newaxis])
+
+
+@pytest.mark.parametrize("name", FOREST_REGRESSORS)
+@pytest.mark.parametrize("bootstrap", [False, True])
+@pytest.mark.parametrize("multi_target", [False, True])
+@pytest.mark.parametrize("max_samples_leaf", [1, None])
+def test_sample_weight_single_sample(name, bootstrap, multi_target, max_samples_leaf):
+    """Keep weight indexing valid for one training sample and any output count."""
+    X = [[0]]
+    y = [[2, -2]] if multi_target else [2]
+    est = FOREST_REGRESSORS[name](
+        n_estimators=1,
+        bootstrap=bootstrap,
+        max_samples_leaf=max_samples_leaf,
+        random_state=0,
+    )
+    est.fit(X, y, sample_weight=[1])
+    assert_allclose(est.predict(X), y)
+
+
+@pytest.mark.skipif(
+    sklearn_version < parse_version("1.9"),
+    reason="sample_weight in bootstrap functions requires scikit-learn >= 1.9",
+)
+@pytest.mark.parametrize("name", FOREST_REGRESSORS)
+@pytest.mark.parametrize("multi_target", [False, True])
+def test_sample_weight_bootstrap_more_than_n_samples(name, multi_target):
+    """Collect weighted bootstrap rows when their count exceeds the training size."""
+    X = np.zeros((4, 1))
+    y = np.array([10, 40, 20, 30])
+    if multi_target:
+        y = np.column_stack((y, -y))
+    sample_weight = np.full(len(X), 2.0)
+    quantiles = [0.0, 0.5, 1.0]
+    est = FOREST_REGRESSORS[name](
+        n_estimators=1,
+        bootstrap=True,
+        max_samples=1.0,
+        max_samples_leaf=None,
+        random_state=0,
+    )
+    est.fit(X, y, sample_weight=sample_weight)
+
+    indices = est.estimators_samples_[0]
+    assert len(indices) == 2 * len(X)
+    expected = np.quantile(y[indices], quantiles, axis=0).T
+    assert_allclose(est.predict(X[:1], quantiles=quantiles), expected[np.newaxis])
+
+
 def test_calc_quantile():
     """Check quantile calculations."""
     quantiles = [0.0, 0.25, 0.5, 0.75, 1.0]

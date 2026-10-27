@@ -123,7 +123,9 @@ class BaseForestQuantileRegressor(ForestRegressor):
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights. If None, then samples are equally weighted. Splits
             that would create child nodes with net zero or negative weight are
-            ignored while searching for a split in each node.
+            ignored while searching for a split in each node. Samples with
+            zero or negative weight are excluded from the leaf samples used for
+            prediction.
 
         sparse_pickle : bool, default=False
             Pickle the underlying data structure using a SciPy sparse matrix.
@@ -255,24 +257,26 @@ class BaseForestQuantileRegressor(ForestRegressor):
         """
         n_outputs = bootstrap_indices.shape[1]
 
-        if sample_weight is not None:
-            sample_weight = np.squeeze(sample_weight)
-
         shape = (max_node_count, n_outputs, max_samples_leaf)
         y_train_leaves_slice = np.zeros(shape, dtype=np.int64)
 
         # Group training indices by leaf node.
         leaf_indices, leaf_values_list = group_indices_by_value(X_leaves_bootstrap)
 
-        if leaf_subsample or sample_weight is not None:
+        positive_mask = None
+        if sample_weight is not None:
+            # Weights are shared across outputs, so output 0 suffices.
+            positive_mask = sample_weight[bootstrap_indices[:, 0] - 1, 0] > 0
+            if positive_mask.all():
+                positive_mask = None
+
+        if leaf_subsample or positive_mask is not None:
             if leaf_subsample:
                 rng = random.Random(random_state)
 
             for j in range(len(leaf_values_list)):
-                if sample_weight is not None:
-                    # Filter leaf samples with zero weight.
-                    weight_mask = sample_weight[leaf_values_list[j] - 1] > 0
-                    leaf_values_list[j] = leaf_values_list[j][weight_mask]
+                if positive_mask is not None:
+                    leaf_values_list[j] = leaf_values_list[j][positive_mask[leaf_values_list[j]]]
                 if leaf_subsample:
                     # Sample leaf to length `max_samples_leaf`.
                     if len(leaf_values_list[j]) > max_samples_leaf:
