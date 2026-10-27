@@ -912,6 +912,14 @@ def check_missing_values(name):
         est.fit(X, y)
     assert not hasattr(est, "estimators_")  # rejected before fitting the forest
 
+    # Check that missing values are rejected when predicting too.
+    est.fit(np.nan_to_num(X), y)
+    for method in ["predict", "apply", "proximity_counts"]:
+        with pytest.raises(ValueError):
+            getattr(est, method)(X)
+    with pytest.raises(ValueError):
+        est.quantile_ranks(X, y)
+
     # Check that the estimator tags agree that missing values are not supported.
     if sklearn_version >= parse_version("1.6"):
         from sklearn.utils import get_tags

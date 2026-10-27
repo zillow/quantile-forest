@@ -42,7 +42,7 @@ try:
     from sklearn.tree._tree import DTYPE
 except ImportError:  # scikit-learn >= 1.9 no longer re-exports DTYPE here
     DTYPE = np.float32  # the value DTYPE has always held
-from sklearn.utils import check_array
+from sklearn.utils import assert_all_finite, check_array
 from sklearn.utils._param_validation import Interval, RealNotInt
 from sklearn.utils.fixes import parse_version
 from sklearn.utils.validation import check_is_fitted
@@ -116,6 +116,13 @@ class BaseForestQuantileRegressor(ForestRegressor):
 
     def _more_tags(self):  # scikit-learn < 1.6
         return {"allow_nan": False}
+
+    def _validate_X_predict(self, X):
+        """Validate X whenever one tries to predict, apply, or get proximities."""
+        X = super()._validate_X_predict(X)
+        # The trees may accept missing values, but the quantile forest does not.
+        assert_all_finite(X, input_name="X", estimator_name=self.__class__.__name__)
+        return X
 
     def fit(self, X, y, sample_weight=None, sparse_pickle=False):
         """Build a forest from the training set (X, y).
