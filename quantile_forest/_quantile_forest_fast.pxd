@@ -14,8 +14,9 @@ cdef class QuantileForest:
 
     # Input/Output layout.
     cdef public vector[vector[float64_t]] y_train
-    cdef public intp_t[:, :, :, :] y_train_leaves
-    cdef public float64_t[:, :, :] y_bound_leaves
+    # C-contiguous, since each leaf's indices are read as one block of memory.
+    cdef public intp_t[:, :, :, ::1] y_train_leaves
+    cdef public float64_t[:, :, ::1] y_bound_leaves
     cdef public bint sparse_pickle
 
     # Methods.
