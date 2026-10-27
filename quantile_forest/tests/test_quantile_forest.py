@@ -1834,6 +1834,40 @@ def test_calc_quantile_matches_numpy(interpolation):
         assert_allclose(actual, expected, rtol=1e-12, atol=1e-12)
 
 
+@pytest.mark.parametrize("C, method", [(0, "weibull"), (0.5, "hazen"), (1, "linear")])
+@pytest.mark.parametrize("interpolation", ["linear", "lower", "higher", "midpoint", "nearest"])
+def test_calc_quantile_rank_constant(C, method, interpolation):
+    """Check quantiles for each constant C in the rank, including weighted ones."""
+    rng = np.random.default_rng(0)
+    for _ in range(300):
+        n = int(rng.integers(1, 15))
+        inputs = np.sort(rng.integers(0, 5, size=n).astype(float))  # many ties
+        weights = rng.integers(0, 4, size=n).astype(float)  # some zero weights
+        weights[rng.integers(n)] += 1
+        repeated = np.repeat(inputs, weights.astype(int))
+        n_repeated = len(repeated)
+
+        # Include the ends, which C < 1 can index past, and exact ranks.
+        quantiles = list(rng.random(3)) + [0.0, 1.0]
+        if n_repeated + 1 - 2 * C > 0:
+            ranks = rng.integers(0, n_repeated, size=3)
+            quantiles += list((ranks + 1 - C) / (n_repeated + 1 - 2 * C))
+
+        kwargs = {"issorted": True, "C": C}
+        expected = calc_quantile(repeated, quantiles, interpolation.encode(), **kwargs)
+        if interpolation == "linear":
+            # Check against NumPy's method for this constant.
+            assert_allclose(
+                expected, np.quantile(repeated, quantiles, method=method), rtol=1e-12, atol=1e-12
+            )
+
+        # Check that integer weights match the quantiles of the repeated values.
+        actual = calc_weighted_quantile(
+            inputs, weights, quantiles, interpolation.encode(), **kwargs
+        )
+        assert_allclose(actual, expected, rtol=1e-12, atol=1e-12)
+
+
 @pytest.mark.parametrize("interpolation", ["linear", "lower", "higher", "midpoint", "nearest"])
 def test_calc_weighted_quantile_ignores_zero_weights(interpolation):
     """Check that zero-weight inputs never affect the weighted quantile."""

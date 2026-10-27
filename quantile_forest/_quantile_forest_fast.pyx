@@ -86,11 +86,32 @@ cpdef double calc_weighted_mean(
     return out
 
 
+cdef inline double calc_quantile_index(
+    double n,
+    double quantile,
+    double C,
+) noexcept nogil:
+    """Return the 0-based (fractional) index of a quantile.
+
+    The index is ``(n + 1 - 2C)q + C - 1``, the 0-based form of the input rank
+    ``x = (n + 1 - 2C)q + C``, where ``n`` is the number of inputs (or the total
+    weight) and ``C`` is a constant (degree of freedom). ``C = 1`` matches
+    NumPy's "linear" method, ``C = 1/2`` its "hazen" method, and ``C = 0`` its
+    "weibull" method.
+
+    The index is computed with one multiplication and one addition of the
+    constant ``C - 1``, which avoids extra rounding at exact ranks. For
+    ``C = 1``, this is exactly NumPy's ``(n - 1)q``.
+    """
+    return quantile * (n - (2 * C - 1)) + (C - 1)
+
+
 cpdef vector[double] calc_quantile(
     vector[double]& inputs,
     vector[double] quantiles,
     char* interpolation=b"linear",
     bint issorted=<bint>False,
+    double C=1,
 ) noexcept nogil:
     """Return quantiles for list of inputs.
 
@@ -123,6 +144,12 @@ cpdef vector[double] calc_quantile(
 
     issorted : bool, default=False
         Inputs are sorted in ascending order.
+
+    C : float, default=1
+        The constant ``C`` in the input rank ``x``, in the range [0, 1]. The
+        default of 1 matches NumPy's "linear" method, 1/2 matches "hazen", and
+        0 matches "weibull". With other values, the interpolation methods are
+        applied at the same rank.
 
     Returns
     -------
@@ -157,10 +184,8 @@ cpdef vector[double] calc_quantile(
     for i in range(n_quantiles):
         quantile = quantiles[i]
 
-        # Calculate the quantile's (potentially fractional) index. With
-        # ``C = 1``, ``(N + 1 - 2C)q + C - 1`` is ``(N - 1)q``, computed as NumPy
-        # does so that quantiles landing exactly on a rank match NumPy.
-        idx = (n_inputs - 1) * quantile
+        # Calculate the quantile's (potentially fractional) index.
+        idx = calc_quantile_index(<double>n_inputs, quantile, C)
 
         # Check if the quantile is the first or last value.
         if idx >= <int>n_inputs - 1:
@@ -205,6 +230,7 @@ cpdef vector[double] calc_weighted_quantile(
     vector[double] quantiles,
     char* interpolation=b"linear",
     bint issorted=<bint>False,
+    double C=1,
 ) noexcept nogil:
     """Return quantiles for list of weighted inputs.
 
@@ -250,6 +276,12 @@ cpdef vector[double] calc_weighted_quantile(
 
     issorted : bool, default=False
         Inputs and weights are sorted by inputs in ascending order.
+
+    C : float, default=1
+        The constant ``C`` in the input rank ``x``, in the range [0, 1]. The
+        default of 1 matches NumPy's "linear" method, 1/2 matches "hazen", and
+        0 matches "weibull". With other values, the interpolation methods are
+        applied at the same rank.
 
     Returns
     -------
@@ -313,10 +345,11 @@ cpdef vector[double] calc_weighted_quantile(
         k = <intp_t>sorted_quantile_indices[i]
 
         # Calculate the quantile's position, treating an input with weight `w`
-        # as occupying `w` consecutive positions (like `w` repeated values). With
-        # ``C = 1``, ``(W + 1 - 2C)q + C - 1`` is ``(W - 1)q``, computed as NumPy
-        # does so that integer weights match NumPy exactly.
-        pos = (total_weight - 1) * quantile
+        # as occupying `w` consecutive positions (like `w` repeated values), so
+        # that integer weights match the unweighted quantile of repeated values.
+        # Positions before the first input or after the last one (possible when
+        # C < 1) give the first or last input, as for unweighted quantiles.
+        pos = calc_quantile_index(total_weight, quantile, C)
 
         # Find the last input with positive weight whose final position is at
         # or before `pos`.
