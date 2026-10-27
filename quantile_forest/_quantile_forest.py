@@ -389,15 +389,21 @@ class BaseForestQuantileRegressor(ForestRegressor):
         bootstrap_indices += 1  # for sparse matrix (0s as empty)
 
         # Get the maximum number of nodes (internal + leaves) across trees.
-        # Get the maximum number of samples per leaf across trees (if needed).
+        # Get the maximum number of samples per leaf across trees.
         max_node_count = 0
-        max_samples_leaf = 0 if not leaf_subsample else max_samples_leaf
+        max_leaf_count = 0
         for i, estimator in enumerate(self.estimators_):
             node_count = estimator.tree_.node_count
             max_node_count = max(max_node_count, node_count)
-            if not leaf_subsample:
-                sample_count = np.max(np.bincount(X_leaves_bootstrap[:, i]))
-                max_samples_leaf = max(max_samples_leaf, sample_count)
+            sample_count = np.max(np.bincount(X_leaves_bootstrap[:, i]))
+            max_leaf_count = max(max_leaf_count, sample_count)
+
+        # Pad leaves to the largest leaf, not to the requested maximum, which
+        # can be far larger (e.g., a float `max_samples_leaf` near 1).
+        if leaf_subsample:
+            max_samples_leaf = min(max_samples_leaf, max_leaf_count)
+        else:
+            max_samples_leaf = max_leaf_count
 
         y_train_leaves = [
             self._get_y_train_leaves_slice(
@@ -739,7 +745,12 @@ class BaseForestQuantileRegressor(ForestRegressor):
                 X_leaves = self.apply(X)
             X_indices = None
 
-        if self.max_samples_leaf == 1:  # optimize for single-sample-per-leaf performance
+        # Optimize for single-sample-per-leaf performance. A float of 1.0 means
+        # "keep all samples" (100%), so only an integer 1 qualifies.
+        if (
+            isinstance(self.max_samples_leaf, (Integral, np.integer))
+            and self.max_samples_leaf == 1
+        ):
             y_train_leaves = np.asarray(self.forest_.y_train_leaves)
             y_bound_leaves = np.asarray(self.forest_.y_bound_leaves)
             y_train = np.asarray(self.forest_.y_train).T
