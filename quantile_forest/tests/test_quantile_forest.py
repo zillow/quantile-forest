@@ -2,6 +2,7 @@
 
 import math
 import pickle
+import random
 import warnings
 from typing import Any
 
@@ -40,6 +41,49 @@ FOREST_REGRESSORS: dict[str, Any] = {
     "ExtraTreesQuantileRegressor": ExtraTreesQuantileRegressor,
     "RandomForestQuantileRegressor": RandomForestQuantileRegressor,
 }
+
+
+@pytest.mark.parametrize("name", FOREST_REGRESSORS)
+@pytest.mark.parametrize("max_samples_leaf", [1, 3, None])
+def test_fit_preserves_python_random_state(name, max_samples_leaf):
+    """Leaf subsampling must not reseed the caller's Python random generator."""
+    original_state = random.getstate()
+    try:
+        random.seed(42)
+        expected_state = random.getstate()
+        X = np.arange(40, dtype=float).reshape(20, 2)
+        y = np.arange(20, dtype=float)
+        FOREST_REGRESSORS[name](
+            n_estimators=3,
+            max_depth=1,
+            max_samples_leaf=max_samples_leaf,
+            random_state=0,
+        ).fit(X, y)
+        assert random.getstate() == expected_state
+    finally:
+        random.setstate(original_state)
+
+
+def test_leaf_subsampling_keeps_seeded_selection():
+    """Use the same seeded shuffle while keeping the caller's state intact."""
+    indices = list(range(10))
+    random.Random(17).shuffle(indices)
+    expected = np.asarray(indices[:3]) + 1
+    original_state = random.getstate()
+    try:
+        actual = RandomForestQuantileRegressor._get_y_train_leaves_slice(
+            bootstrap_indices=np.arange(1, 11).reshape(-1, 1),
+            X_leaves_bootstrap=np.ones(10, dtype=np.intp),
+            sample_weight=None,
+            leaf_subsample=True,
+            max_node_count=2,
+            max_samples_leaf=3,
+            random_state=17,
+        )
+        assert_array_equal(actual[1, 0], expected)
+        assert random.getstate() == original_state
+    finally:
+        random.setstate(original_state)
 
 
 def check_regression_toy(name, weighted_quantile):
