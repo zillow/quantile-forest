@@ -910,6 +910,15 @@ def check_missing_values(name):
     est = ForestRegressor(n_estimators=1, max_samples_leaf=None, random_state=0)
     with pytest.raises(ValueError):
         est.fit(X, y)
+    assert not hasattr(est, "estimators_")  # rejected before fitting the forest
+
+    # Check that the estimator tags agree that missing values are not supported.
+    if sklearn_version >= parse_version("1.6"):
+        from sklearn.utils import get_tags
+
+        assert not get_tags(est).input_tags.allow_nan
+    else:
+        assert not est._get_tags()["allow_nan"]
 
 
 @pytest.mark.parametrize("name", FOREST_REGRESSORS)
