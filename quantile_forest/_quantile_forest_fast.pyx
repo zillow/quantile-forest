@@ -913,7 +913,7 @@ cdef class QuantileForest:
         intp_t[:, :] X_leaves,
         uint8_t[:, :] X_indices=None,
         uint32_t max_proximities=0,
-        intp_t[:, :] sorter=None,
+        const intp_t[:, :] sorter=None,
     ):
         """Return proximity counts of the training samples for target leaves.
 

@@ -6,6 +6,7 @@ import random
 import warnings
 from typing import Any
 
+import joblib
 import numpy as np
 import pytest
 import sklearn
@@ -1460,6 +1461,35 @@ def test_serialization_sparse_pickle(name, max_samples_leaf, multi_target):
     assert_allclose(est_loaded.predict(X, quantiles), est.predict(X, quantiles))
     assert_allclose(est_loaded.quantile_ranks(X, y), est.quantile_ranks(X, y))
     assert est_loaded.proximity_counts(X[:5]) == est.proximity_counts(X[:5])
+
+
+@pytest.mark.parametrize("name", FOREST_REGRESSORS)
+@pytest.mark.parametrize("max_samples_leaf", [1, None])
+@pytest.mark.parametrize("sparse_pickle", [False, True])
+def test_serialization_memory_mapped(name, max_samples_leaf, sparse_pickle, tmp_path):
+    """Check that a model loaded with read-only memory mapping works."""
+    X, y = datasets.make_regression(n_samples=100, n_features=2, random_state=0)
+
+    ForestRegressor = FOREST_REGRESSORS[name]
+
+    est = ForestRegressor(
+        n_estimators=5, max_samples_leaf=max_samples_leaf, bootstrap=True, random_state=0
+    )
+    est.fit(X, y, sparse_pickle=sparse_pickle)
+
+    joblib.dump(est, tmp_path / "model.joblib")
+    est_loaded = joblib.load(tmp_path / "model.joblib", mmap_mode="r")
+
+    quantiles = [0.25, 0.5, 0.75]
+    assert_allclose(est_loaded.predict(X, quantiles), est.predict(X, quantiles))
+    assert_allclose(est_loaded.quantile_ranks(X, y), est.quantile_ranks(X, y))
+    assert est_loaded.proximity_counts(X[:5]) == est.proximity_counts(X[:5])
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")  # some samples have no OOB predictions
+        assert_allclose(
+            est_loaded.predict(X, quantiles, oob_score=True),
+            est.predict(X, quantiles, oob_score=True),
+        )
 
 
 @pytest.mark.skipif(
