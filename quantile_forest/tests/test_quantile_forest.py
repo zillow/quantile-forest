@@ -9,6 +9,7 @@ from typing import Any
 import numpy as np
 import pytest
 import sklearn
+from scipy import sparse
 from scipy.stats import percentileofscore
 from sklearn import datasets
 from sklearn.ensemble import ExtraTreesRegressor, RandomForestRegressor
@@ -615,6 +616,37 @@ def test_predict_quantiles(
         weighted_quantile,
         aggregate_leaves_first,
     )
+
+
+@pytest.mark.parametrize("name", FOREST_REGRESSORS)
+@pytest.mark.parametrize("max_samples_leaf", [1, None])
+@pytest.mark.parametrize("sparse_container", [sparse.csr_matrix, sparse.csc_matrix])
+def test_predict_sparse(name, max_samples_leaf, sparse_container):
+    """Check that sparse inputs give the same predictions as dense inputs."""
+    X, y = datasets.make_regression(n_samples=200, n_features=4, random_state=0)
+    X[X < 0.5] = 0
+    X_sparse = sparse_container(X)
+
+    ForestRegressor = FOREST_REGRESSORS[name]
+
+    est = ForestRegressor(
+        n_estimators=10, max_samples_leaf=max_samples_leaf, bootstrap=True, random_state=0
+    )
+    est.fit(X_sparse, y)
+
+    for quantiles in [[0.1, 0.5, 0.9], "mean"]:
+        assert_allclose(est.predict(X_sparse, quantiles), est.predict(X, quantiles))
+    assert_allclose(est.score(X_sparse, y), est.score(X, y))
+
+    # OOB predictions on the sparse training data don't warn that the data differ.
+    with warnings.catch_warnings(record=True) as record:
+        warnings.simplefilter("always")
+        y_pred_oob = est.predict(X_sparse, quantiles=0.5, oob_score=True)
+    assert not any("not identical" in str(w.message) for w in record)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")  # dense X is not in the training format
+        assert_allclose(y_pred_oob, est.predict(X, quantiles=0.5, oob_score=True))
 
 
 def check_quantile_ranks_toy(name):
