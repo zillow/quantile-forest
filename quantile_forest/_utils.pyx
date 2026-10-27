@@ -8,7 +8,7 @@ cimport numpy as cnp
 cnp.import_array()
 
 
-cdef inline void parallel_qsort_asc(
+cdef void parallel_qsort_asc(
     vector[double]& a,
     vector[double]& b,
     intp_t left,
