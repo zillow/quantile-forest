@@ -739,6 +739,33 @@ def test_quantile_ranks(name):
     check_quantile_ranks(name)
 
 
+@pytest.mark.parametrize("name", FOREST_REGRESSORS)
+def test_quantile_ranks_keeps_fitted_features(name):
+    """Check that quantile ranks do not reset the fitted feature attributes."""
+    pd = pytest.importorskip("pandas")
+
+    X, y = datasets.make_regression(n_samples=100, n_features=3, random_state=0)
+    X_df = pd.DataFrame(X, columns=["a", "b", "c"])
+
+    ForestRegressor = FOREST_REGRESSORS[name]
+
+    est = ForestRegressor(n_estimators=5, random_state=0).fit(X_df, y)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", UserWarning)  # X without feature names
+
+        # Scoring a NumPy array keeps the feature names seen during fit.
+        est.quantile_ranks(X, y)
+        assert_array_equal(est.feature_names_in_, ["a", "b", "c"])
+
+        # Scoring the wrong number of features raises without changing the model.
+        with pytest.raises(ValueError):
+            est.quantile_ranks(np.hstack([X, X]), y)
+        assert est.n_features_in_ == 3
+
+    est.predict(X_df)
+
+
 def check_proximity_counts(name):
     """Check proximity counts."""
     ForestRegressor = FOREST_REGRESSORS[name]
