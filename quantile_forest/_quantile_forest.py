@@ -44,7 +44,7 @@ except ImportError:  # scikit-learn >= 1.9 no longer re-exports DTYPE here
     DTYPE = np.float32  # the value DTYPE has always held
 from sklearn.utils._param_validation import Interval, RealNotInt
 from sklearn.utils.fixes import parse_version
-from sklearn.utils.validation import check_is_fitted
+from sklearn.utils.validation import _check_sample_weight, check_is_fitted
 
 try:
     from sklearn.utils.validation import validate_data
@@ -176,12 +176,15 @@ class BaseForestQuantileRegressor(ForestRegressor):
         for i in range(y.shape[1]):
             y_sorted[:, i] = y[sorter[:, i], i]
 
-        self.sample_weight_ = sample_weight
-
         if sample_weight is not None:
-            sample_weight_sorted = np.asarray(sample_weight)[sorter]
+            # Validate the weights as the forest did when it drew its bootstrap
+            # samples, so that the stored weights redraw the same samples.
+            sample_weight = _check_sample_weight(sample_weight, X)
+            sample_weight_sorted = sample_weight[sorter]
         else:
             sample_weight_sorted = None
+
+        self.sample_weight_ = sample_weight
 
         # Get map of tree leaf nodes to training indices.
         y_train_leaves = self._get_y_train_leaves(
