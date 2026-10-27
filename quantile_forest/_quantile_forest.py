@@ -52,7 +52,7 @@ except ImportError:
     validate_data = None
 
 from ._quantile_forest_fast import QuantileForest
-from ._utils import generate_unsampled_indices, group_indices_by_value, map_indices_to_leaves
+from ._utils import group_indices_by_value, map_indices_to_leaves
 
 sklearn_version = parse_version(sklearn.__version__)
 
@@ -203,6 +203,11 @@ class BaseForestQuantileRegressor(ForestRegressor):
         self.n_train_samples_ = len(y_sorted)
         self.X_train_hash_ = joblib.hash(X)
         self.unsampled_indices_ = None
+
+        # Record the samples left out of each tree, for out-of-bag estimation.
+        self._unsampled_masks = None
+        if self.bootstrap:
+            self._unsampled_masks = self._get_unsampled_masks()
 
         return self
 
@@ -541,31 +546,36 @@ class BaseForestQuantileRegressor(ForestRegressor):
         if indices is not None and n_samples != len(indices):
             raise ValueError("If `indices` are not None, X and indices must be the same length.")
 
-        X_leaves = np.empty((n_samples, n_estimators), dtype=np.intp)
+        # Get the training index of each sample, if it has a valid one.
+        if indices is None:
+            train_indices = np.arange(n_samples)
+            has_index = np.ones(n_samples, dtype=bool)
+        else:
+            indices = np.asarray(indices)
+            with np.errstate(invalid="ignore"):
+                train_indices = indices.astype(np.intp)
+            has_index = (
+                (train_indices == indices)
+                & (train_indices >= 0)
+                & (train_indices < self.n_train_samples_)
+            )
+
+        # Look up the bits of the training indices excluded from each tree's
+        # bootstrap sample.
+        unsampled_masks = self._get_unsampled_masks(duplicates)
+        train_indices = train_indices[has_index]
+        shifts = (7 - (train_indices & 7)).astype(np.uint8)
+        unsampled_bits = (unsampled_masks[:, train_indices >> 3] >> shifts) & 1
+
         X_indices = np.zeros((n_samples, n_estimators), dtype=np.uint8)
+        X_indices[has_index] = unsampled_bits.T
+        if indices is not None:
+            # Token index (-1) denotes indices that are always unsampled.
+            X_indices[indices == -1] = 1
+
+        X_leaves = np.empty((n_samples, n_estimators), dtype=np.intp)
         for i, estimator in enumerate(self.estimators_):
-            # Get the indices excluded from the bootstrapping process.
-            if self.unsampled_indices_ is None:
-                unsampled_indices = self._get_unsampled_indices(
-                    estimator, duplicates=duplicates, sample_weight=self.sample_weight_
-                )
-            else:
-                # Avoid generating unsampled indices if they are precomputed.
-                unsampled_indices = np.asarray(self.unsampled_indices_[i])
-
-            if unsampled_indices.size > 0 and indices is not None:
-                # Select only those unsampled indices specified by `indices`.
-                # Token index (-1) denotes indices that are always unsampled.
-                if len(indices) == 1:  # optimize for single-row performance
-                    unsampled_indices = [
-                        x_i for x_i, x in enumerate(indices) if x in unsampled_indices or x == -1
-                    ]
-                    unsampled_indices = np.array(unsampled_indices)
-                else:
-                    unsampled_mask = np.isin(indices, unsampled_indices)
-                    unsampled_mask = unsampled_mask | np.equal(indices, -1)
-                    unsampled_indices = np.arange(len(indices))[unsampled_mask]
-
+            unsampled_indices = np.flatnonzero(X_indices[:, i])
             if unsampled_indices.size > 0:
                 # Check data.
                 X_unsampled = self._validate_X_predict(X[unsampled_indices])
@@ -573,10 +583,82 @@ class BaseForestQuantileRegressor(ForestRegressor):
                 # Get leaf node indices for unsampled training samples.
                 X_leaves[unsampled_indices, i] = estimator.apply(X_unsampled)
 
-                # Set indicator value for unsampled training samples.
-                X_indices[unsampled_indices, i] = 1
-
         return X_leaves, X_indices
+
+    def _get_unsampled_masks(self, duplicates=None):
+        """Get the unsampled indices of all base estimators as bit masks.
+
+        Parameters
+        ----------
+        duplicates : list of lists, default=None
+            List of sets of functionally identical indices.
+
+        Returns
+        -------
+        unsampled_masks : array of shape (n_estimators, ceil(n_train_samples / 8))
+            For each base estimator, a mask of the training indices excluded
+            from its bootstrap sample, with bits packed by ``np.packbits``.
+        """
+        n_estimators = len(self.estimators_)
+        n_train_samples = self.n_train_samples_
+
+        if self.unsampled_indices_ is not None:  # precomputed unsampled indices
+            masks = np.zeros((n_estimators, n_train_samples), dtype=bool)
+            for i, unsampled_indices in enumerate(self.unsampled_indices_):
+                unsampled_indices = np.asarray(unsampled_indices, dtype=np.intp)
+                in_range = (unsampled_indices >= 0) & (unsampled_indices < n_train_samples)
+                masks[i, unsampled_indices[in_range]] = True
+            return np.packbits(masks, axis=1)
+
+        if not duplicates and getattr(self, "_unsampled_masks", None) is not None:
+            return self._unsampled_masks  # stored during fit
+
+        if not self.bootstrap:
+            warn("Unsampled indices only exist if bootstrap=True.")
+            return np.zeros((n_estimators, (n_train_samples + 7) // 8), dtype=np.uint8)
+
+        groups = []
+        for group in duplicates or []:
+            group = np.asarray(list(group), dtype=np.intp)
+            groups.append(group[(group >= 0) & (group < n_train_samples)])
+
+        masks = np.zeros((n_estimators, (n_train_samples + 7) // 8), dtype=np.uint8)
+        for i, estimator in enumerate(self.estimators_):
+            masks[i] = np.packbits(self._get_unsampled_mask(estimator, groups))
+        return masks
+
+    def _get_unsampled_mask(self, estimator, duplicates=None):
+        """Get a boolean mask of the unsampled indices for a base estimator.
+
+        Parameters
+        ----------
+        estimator : object
+            Base estimator.
+
+        duplicates : list of array-likes, default=None
+            List of sets of functionally identical indices.
+
+        Returns
+        -------
+        unsampled_mask : array of shape (n_train_samples,)
+            True for the training indices excluded from the bootstrap sample.
+        """
+        sample_weight = self.sample_weight_
+        args = () if sklearn_version < parse_version("1.9") else (sample_weight,)
+        n_train_samples = self.n_train_samples_
+        n_samples_bootstrap = _get_n_samples_bootstrap(n_train_samples, self.max_samples, *args)
+        sample_indices = _generate_sample_indices(
+            estimator.random_state, n_train_samples, n_samples_bootstrap, *args
+        )
+        sampled_mask = np.bincount(sample_indices, minlength=n_train_samples) > 0
+
+        # Treat a set of duplicates as sampled if any of them is sampled.
+        for group in duplicates or []:
+            group = np.asarray(list(group), dtype=np.intp)
+            if sampled_mask[group].any():
+                sampled_mask[group] = True
+
+        return ~sampled_mask
 
     def _get_unsampled_indices(self, estimator, duplicates=None, sample_weight=None):
         """Get the unsampled indices for a base estimator.
@@ -604,19 +686,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
         if not self.bootstrap:
             warn("Unsampled indices only exist if bootstrap=True.")
             return np.array([])
-        sample_weight = self.sample_weight_
-        args = () if sklearn_version < parse_version("1.9") else (sample_weight,)
-        n_train_samples = self.n_train_samples_
-        n_samples_bootstrap = _get_n_samples_bootstrap(n_train_samples, self.max_samples, *args)
-        sample_indices = _generate_sample_indices(
-            estimator.random_state, n_train_samples, n_samples_bootstrap, *args
-        )
-        unsampled_indices = generate_unsampled_indices(
-            sample_indices,
-            n_train_samples,
-            duplicates=[] if duplicates is None else duplicates,
-        )
-        return np.asarray(unsampled_indices)
+        return np.flatnonzero(self._get_unsampled_mask(estimator, duplicates))
 
     def predict(
         self,
