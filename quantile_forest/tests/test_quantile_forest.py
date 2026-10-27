@@ -841,6 +841,29 @@ def test_proximity_counts(name):
     check_proximity_counts(name)
 
 
+@pytest.mark.parametrize("name", FOREST_REGRESSORS)
+def test_proximity_counts_params(name):
+    """Check the accepted types of `max_proximities` and the returned types."""
+    X, y = datasets.make_regression(n_samples=100, n_features=2, random_state=0)
+
+    ForestRegressor = FOREST_REGRESSORS[name]
+
+    est = ForestRegressor(n_estimators=5, max_samples_leaf=None, random_state=0)
+    est.fit(X, y)
+
+    proximities = est.proximity_counts(X[:5], max_proximities=3)
+    assert est.proximity_counts(X[:5], max_proximities=np.int64(3)) == proximities
+
+    for max_proximities in [0, 3.0, "3"]:
+        with pytest.raises(ValueError):
+            est.proximity_counts(X[:5], max_proximities=max_proximities)
+
+    # Unsorted proximities are lists of tuples too.
+    proximities = est.proximity_counts(X[:5], return_sorted=False)
+    assert all(isinstance(p, list) for p in proximities)
+    assert [sorted(p) for p in proximities] == [sorted(p) for p in est.proximity_counts(X[:5])]
+
+
 def check_max_samples_leaf(name):
     """Check that the `max_samples_leaf` parameter correctly samples leaves."""
     X, y = datasets.make_regression(n_samples=500, n_features=8, noise=0.1, random_state=0)
