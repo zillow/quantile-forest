@@ -43,6 +43,7 @@ try:
     from sklearn.tree._tree import DTYPE
 except ImportError:  # scikit-learn >= 1.9 no longer re-exports DTYPE here
     DTYPE = np.float32  # the value DTYPE has always held
+from sklearn.utils import assert_all_finite, check_array
 from sklearn.utils._param_validation import Interval, RealNotInt
 from sklearn.utils.fixes import parse_version
 from sklearn.utils.validation import _check_sample_weight, check_is_fitted
@@ -157,6 +158,22 @@ class BaseForestQuantileRegressor(ForestRegressor):
         }
         super().__init__(**init_dict)
 
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        # Missing values are not supported, even where the trees support them.
+        tags.input_tags.allow_nan = False
+        return tags
+
+    def _more_tags(self):  # scikit-learn < 1.6
+        return {"allow_nan": False}
+
+    def _validate_X_predict(self, X):
+        """Validate X whenever one tries to predict, apply, or get proximities."""
+        X = super()._validate_X_predict(X)
+        # The trees may accept missing values, but the quantile forest does not.
+        assert_all_finite(X, input_name="X", estimator_name=self.__class__.__name__)
+        return X
+
     def fit(self, X, y, sample_weight=None, sparse_pickle=False):
         """Build a forest from the training set (X, y).
 
@@ -196,6 +213,22 @@ class BaseForestQuantileRegressor(ForestRegressor):
                     "Monotonicity constraints are not supported with multiple values per leaf. "
                     "To apply monotonicity constraints, set `max_samples_leaf=1`."
                 )
+
+        # The forest accepts missing values, so reject them before fitting it.
+        check_array(
+            X,
+            accept_sparse=True,
+            dtype=[DTYPE, np.float64],  # convert other types (e.g., None to NaN)
+            input_name="X",
+            estimator=self,
+            **{
+                (
+                    "force_all_finite"
+                    if sklearn_version < parse_version("1.6.dev0")
+                    else "ensure_all_finite"
+                ): True
+            },
+        )
 
         super(BaseForestQuantileRegressor, self).fit(X, y, sample_weight=sample_weight)
 
