@@ -538,60 +538,61 @@ class BaseForestQuantileRegressor(ForestRegressor):
         if self.monotonic_cst is None:
             return None
 
+        monotonic_cst = np.asarray(self.monotonic_cst)
         y_bound_leaves = np.full((*y_train_leaves.shape[:2], 2), [-np.inf, np.inf])
 
+        # Process each tree one depth level at a time, rather than node by node.
         for i, estimator in enumerate(self.estimators_):
             tree = estimator.tree_
+            children_left = tree.children_left
+            children_right = tree.children_right
+            is_leaf = children_left == children_right
 
-            num_values = np.zeros(tree.node_count)
-            sum_values = np.zeros(tree.node_count)
+            # Group the nodes by depth, from the root down.
+            levels = [np.array([0])]
+            while True:
+                parents = levels[-1][~is_leaf[levels[-1]]]
+                if parents.size == 0:
+                    break
+                levels.append(np.concatenate([children_left[parents], children_right[parents]]))
 
-            # Iterate over all nodes in reverse order (leaves to root).
-            for node_idx in range(tree.node_count - 1, -1, -1):
-                if tree.children_left[node_idx] == tree.children_right[node_idx]:  # leaf node
-                    # Populate the leaf nodes.
-                    leaf_indices = y_train_leaves[i, node_idx]
-                    leaf_indices = leaf_indices[leaf_indices != 0]
-                    if leaf_indices.size > 0:
-                        leaf_targets = y[leaf_indices - 1]
-                        num_values[node_idx] = leaf_indices.size
-                        sum_values[node_idx] = leaf_targets.sum()
-                else:  # non-leaf node
-                    # Populate the non-leaf nodes based on the children.
-                    left_child = tree.children_left[node_idx]
-                    right_child = tree.children_right[node_idx]
-                    num_values[node_idx] = num_values[left_child] + num_values[right_child]
-                    sum_values[node_idx] = sum_values[left_child] + sum_values[right_child]
+            # Count and sum the stored targets of the leaves, then of the
+            # non-leaf nodes from their children, from the deepest level up.
+            leaf_indices = y_train_leaves[i, : tree.node_count].reshape(tree.node_count, -1)
+            is_stored = leaf_indices != 0
+            num_values = is_stored.sum(axis=1).astype(np.float64)
+            leaf_targets = y[leaf_indices - 1].sum(axis=-1)
+            sum_values = np.where(is_stored, leaf_targets, 0).sum(axis=1)
+            for nodes in reversed(levels):
+                nodes = nodes[~is_leaf[nodes]]
+                left, right = children_left[nodes], children_right[nodes]
+                num_values[nodes] = num_values[left] + num_values[right]
+                sum_values[nodes] = sum_values[left] + sum_values[right]
 
-            # Traverse from root to leaves to enforce monotonicity.
-            stack = [(0, -np.inf, np.inf)]  # start with root node (node 0)
+            # Pass bounds from the root down to enforce monotonicity: a split on
+            # a constrained feature bounds its children at the midpoint of their
+            # mean targets (clipped to the node's own bounds).
+            constraints = np.zeros(tree.node_count, dtype=int)
+            constraints[~is_leaf] = monotonic_cst[tree.feature[~is_leaf]]
+            with np.errstate(divide="ignore", invalid="ignore"):
+                half_means = sum_values / (2 * num_values)
+            lower = np.full(tree.node_count, -np.inf)
+            upper = np.full(tree.node_count, np.inf)
+            for nodes in levels:
+                nodes = nodes[~is_leaf[nodes]]
+                left, right = children_left[nodes], children_right[nodes]
+                min_bound, max_bound = lower[nodes], upper[nodes]
+                mid = half_means[left] + half_means[right]
+                mid = np.maximum(np.minimum(mid, max_bound), min_bound)
+                cst = constraints[nodes]
+                lower[left] = np.where(cst == -1, mid, min_bound)  # decreasing
+                upper[left] = np.where(cst == 1, mid, max_bound)  # increasing
+                lower[right] = np.where(cst == 1, mid, min_bound)
+                upper[right] = np.where(cst == -1, mid, max_bound)
 
-            while stack:
-                node_idx, min_bound, max_bound = stack.pop()
-                if tree.children_left[node_idx] == tree.children_right[node_idx]:  # leaf node
-                    # The bounds have already been calculated in the leaf.
-                    y_bound_leaves[i, node_idx] = [min_bound, max_bound]
-                else:  # non-leaf node
-                    feature_idx = tree.feature[node_idx]
-
-                    left_child = tree.children_left[node_idx]
-                    right_child = tree.children_right[node_idx]
-
-                    if self.monotonic_cst[feature_idx] == 0:
-                        stack.append((left_child, min_bound, max_bound))
-                        stack.append((right_child, min_bound, max_bound))
-                    else:
-                        # Calculate midpoint that respects the current node's bounds.
-                        left_avg = sum_values[left_child] / (2 * num_values[left_child])
-                        right_avg = sum_values[right_child] / (2 * num_values[right_child])
-                        mid = max(min(left_avg + right_avg, max_bound), min_bound)
-
-                        if self.monotonic_cst[feature_idx] == 1:  # increasing monotonicity
-                            stack.append((left_child, min_bound, mid))
-                            stack.append((right_child, mid, max_bound))
-                        elif self.monotonic_cst[feature_idx] == -1:  # decreasing monotonicity
-                            stack.append((left_child, mid, max_bound))
-                            stack.append((right_child, min_bound, mid))
+            leaves = np.flatnonzero(is_leaf)
+            y_bound_leaves[i, leaves, 0] = lower[leaves]
+            y_bound_leaves[i, leaves, 1] = upper[leaves]
 
         return y_bound_leaves
 
