@@ -13,9 +13,10 @@ cdef class QuantileForest:
     # The QuantileForest object.
 
     # Input/Output layout.
-    cdef public vector[vector[float64_t]] y_train
     # Read-only views, so that read-only (e.g., memory-mapped) arrays work, and
     # C-contiguous, since each leaf's indices are read as one block of memory.
+    # Python reads them as arrays without copying (e.g., `y_train` in predict).
+    cdef public const float64_t[:, ::1] y_train
     cdef public const intp_t[:, :, :, ::1] y_train_leaves
     cdef public const float64_t[:, :, ::1] y_bound_leaves
     cdef public bint sparse_pickle
