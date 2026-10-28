@@ -57,6 +57,17 @@ def test_group_indices_by_value():
         assert_array_equal(actual, expected)
 
 
+def test_group_indices_by_value_stable():
+    """Check that each group keeps its indices in their original order."""
+    rng = np.random.default_rng(0)
+    inputs = rng.integers(0, 100, size=10_000).astype(np.int64)  # many ties
+
+    values, groups = group_indices_by_value(inputs)
+    assert_array_equal(values, np.unique(inputs))
+    for value, group in zip(values, groups):
+        assert_array_equal(group, np.flatnonzero(inputs == value))
+
+
 def test_map_indices_to_leaves():
     """Check mapping of indices to leaf nodes."""
     y_train_leaves = np.zeros((3, 1, 3), dtype=np.int64)
