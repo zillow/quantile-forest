@@ -687,6 +687,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
             Calculate predictions using aggregated leaf values. If True, a
             single prediction is calculated over the aggregated leaf values.
             If False, a prediction is calculated for each leaf and aggregated.
+            Only used if `max_samples_leaf!=1`.
 
         oob_score : bool, default=False
             Only use out-of-bag (OOB) samples to predict quantiles.
@@ -975,8 +976,9 @@ class BaseForestQuantileRegressor(ForestRegressor):
 
         Returns
         -------
-        proximities : list of tuples, length = n_samples
-            List of tuples mapping training sample indices to proximity counts.
+        proximities : list of lists of tuples, length = n_samples
+            For each sample, a list of ``(index, count)`` tuples that map
+            training sample indices to proximity counts.
 
         Notes
         -----
@@ -989,14 +991,14 @@ class BaseForestQuantileRegressor(ForestRegressor):
 
         if max_proximities is None:
             max_proximities = 0
+        elif not isinstance(max_proximities, Integral):
+            raise ValueError(
+                f"`max_proximities` must be an integer if not None, got {max_proximities}."
+            )
         elif max_proximities < 1:
             raise ValueError(
                 "`max_proximities` must be larger than or equal to 1 if not"
                 f" None, got {max_proximities}."
-            )
-        elif not isinstance(max_proximities, (int)):
-            raise ValueError(
-                f"`max_proximities` must be an integer if not None, got {max_proximities}."
             )
 
         if oob_score:
@@ -1030,7 +1032,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
                 sorted(p.items(), key=lambda x: x[1], reverse=True) for p in proximities
             ]
         else:
-            proximities = [p.items() for p in proximities]
+            proximities = [list(p.items()) for p in proximities]
 
         return proximities
 
@@ -1056,8 +1058,9 @@ class BaseForestQuantileRegressor(ForestRegressor):
         y : array-like of shape (n_samples,) or (n_samples, n_outputs)
             True values for `X`.
 
-        quantiles : float or list, default=0.5
-            The quantile or list of quantiles that the model tries to predict.
+        quantiles : float or "mean", default=0.5
+            The quantile that the model tries to predict. If "mean", the model
+            predicts the mean.
 
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
