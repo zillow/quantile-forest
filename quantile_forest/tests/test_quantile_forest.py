@@ -26,6 +26,7 @@ from sklearn.utils.fixes import parse_version
 from sklearn.utils.validation import check_is_fitted
 
 from quantile_forest import ExtraTreesQuantileRegressor, RandomForestQuantileRegressor
+from quantile_forest._quantile_forest import _hash_X
 from quantile_forest._quantile_forest_fast import (
     calc_mean,
     calc_quantile,
@@ -647,6 +648,28 @@ def test_predict_sparse(name, max_samples_leaf, sparse_container):
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")  # dense X is not in the training format
         assert_allclose(y_pred_oob, est.predict(X, quantiles=0.5, oob_score=True))
+
+
+def test_hash_X_sparse():
+    """Check that sparse inputs hash equally if they hold the same matrix."""
+    X = np.array([[0, 1.5, 0], [2, 0, 0], [0, 0.5, 3]], dtype=np.float32)
+    X_csc = sparse.csc_matrix(X)
+
+    # The same matrix, with unsorted indices in column 1 and a duplicate entry in column 2.
+    data = np.array([2, 0.5, 1.5, 1, 2], dtype=np.float32)
+    indices = np.array([1, 2, 0, 2, 2], dtype=np.int32)
+    indptr = np.array([0, 1, 3, 5], dtype=np.int32)
+    X_noncanonical = sparse.csc_matrix((data, indices, indptr), shape=X.shape)
+    assert not X_noncanonical.has_canonical_format
+    assert_array_equal(X_noncanonical.toarray(), X)
+
+    for X_same in [X_noncanonical, X_csc.tocsr()]:
+        assert _hash_X(X_same) == _hash_X(X_csc)
+    assert _hash_X(sparse.csc_matrix(2 * X)) != _hash_X(X_csc)
+
+    # Hashing does not modify the input.
+    assert_array_equal(X_noncanonical.indices, [1, 2, 0, 2, 2])
+    assert_array_equal(X_noncanonical.data, [2, 0.5, 1.5, 1, 2])
 
 
 def check_quantile_ranks_toy(name):
