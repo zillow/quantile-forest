@@ -138,7 +138,10 @@ cpdef group_indices_by_value(cnp.ndarray[intp_t, ndim=1] a):
     cdef intp_t* unq_first_indices
 
     num_samples = a.shape[0]
-    sort_idx = np.argsort(a)
+    # A stable sort keeps each group's indices in their original order. An
+    # unstable sort orders ties differently on different CPUs (NumPy's SIMD
+    # sorts), which would change the samples that leaf subsampling keeps.
+    sort_idx = np.argsort(a, kind="stable")
     a_sorted = a[sort_idx]
     unq_count_idx = 0
     unq_count = <intp_t*>malloc(num_samples * sizeof(intp_t))
