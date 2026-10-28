@@ -1786,6 +1786,49 @@ def test_monotonic_constraints(name, max_samples_leaf):
     check_monotonic_constraints(name, max_samples_leaf)
 
 
+@pytest.mark.parametrize("name", FOREST_REGRESSORS)
+def test_monotonic_bounds(name):
+    """Check the leaf bounds for monotonicity against a node-by-node traversal."""
+    rng = np.random.default_rng(0)
+    X = rng.normal(size=(300, 3))
+    y = X[:, 0] - X[:, 1] + rng.normal(size=300)
+    monotonic_cst = [1, -1, 0]
+
+    ForestRegressor = FOREST_REGRESSORS[name]
+
+    est = ForestRegressor(n_estimators=3, monotonic_cst=monotonic_cst, random_state=0)
+    est.fit(X, y)
+
+    y_train = np.asarray(est.forest_.y_train)[0]
+    y_train_leaves = np.asarray(est.forest_.y_train_leaves)
+    y_bound_leaves = np.asarray(est.forest_.y_bound_leaves)
+    for i, estimator in enumerate(est.estimators_):
+        tree = estimator.tree_
+        paths = estimator.decision_path(X).toarray().astype(bool)
+        X_leaves = estimator.apply(X)
+
+        def mean_target(node):
+            """Return the mean of the stored targets of the leaves below `node`."""
+            indices = y_train_leaves[i, np.unique(X_leaves[paths[:, node]])].ravel()
+            return y_train[indices[indices != 0] - 1].mean()
+
+        stack = [(0, -np.inf, np.inf)]  # (node, lower bound, upper bound)
+        while stack:
+            node, lower, upper = stack.pop()
+            left, right = tree.children_left[node], tree.children_right[node]
+            if left == right:  # leaf
+                assert_allclose(y_bound_leaves[i, node], [lower, upper])
+                continue
+            cst = monotonic_cst[tree.feature[node]]
+            mid = np.clip((mean_target(left) + mean_target(right)) / 2, lower, upper)
+            if cst == 0:
+                stack += [(left, lower, upper), (right, lower, upper)]
+            elif cst == 1:
+                stack += [(left, lower, mid), (right, mid, upper)]
+            else:
+                stack += [(left, mid, upper), (right, lower, mid)]
+
+
 def check_serialization(name, sparse_pickle, monotonic_cst, multi_target):
     """Check model serialization/deserialization."""
     X, y = datasets.make_regression(n_samples=500, n_features=8, noise=0.1, random_state=0)
