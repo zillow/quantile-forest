@@ -1,5 +1,4 @@
 from libc.math cimport ceil, fabs, floor, round
-from libc.string cimport memset
 from libcpp.algorithm cimport sort as sort_cpp
 from libcpp.map cimport map
 from libcpp.pair cimport pair
@@ -611,6 +610,8 @@ cdef class QuantileForest:
         cdef list[char*] interpolations
         cdef vector[double] leaf_samples
         cdef vector[double] leaf_weights
+        cdef vector[intp_t] touched_indices
+        cdef vector[double] touched_weights
         cdef vector[vector[intp_t]] train_indices
         cdef vector[vector[double]] train_weights
         cdef intp_t idx, train_idx
@@ -720,21 +721,34 @@ cdef class QuantileForest:
                             if train_indices[k].size() == 0:
                                 continue
 
-                            # Reset leaf weights for all training indices to 0.
-                            memset(&leaf_weights[0], 0, n_train * sizeof(double))
-
-                            # Sum the weights/counts for each training index.
+                            # Sum the weights/counts for each training index,
+                            # and record the indices with a weight, so that only
+                            # they are used rather than all `n_train` indices.
+                            touched_indices.clear()
                             for l in range(<intp_t>(train_indices[k].size())):
                                 train_idx = train_indices[k][l]
                                 train_wgt = train_weights[k][l]
                                 if train_idx != 0:
+                                    if leaf_weights[train_idx - 1] == 0:
+                                        touched_indices.push_back(train_idx - 1)
                                     leaf_weights[train_idx - 1] += train_wgt
+
+                            # Get the targets and weights in sorted order, and
+                            # reset the leaf weights to 0.
+                            sort_cpp(touched_indices.begin(), touched_indices.end())
+                            leaf_samples.resize(touched_indices.size())
+                            touched_weights.resize(touched_indices.size())
+                            for l in range(<intp_t>(touched_indices.size())):
+                                train_idx = touched_indices[l]
+                                leaf_samples[l] = self.y_train[j][train_idx]
+                                touched_weights[l] = leaf_weights[train_idx]
+                                leaf_weights[train_idx] = 0
 
                             # Calculate quantiles (or mean).
                             if not use_mean:
                                 pred = calc_weighted_quantile(
-                                    self.y_train[j],
-                                    leaf_weights,
+                                    leaf_samples,
+                                    touched_weights,
                                     quantiles,
                                     interpolation,
                                     issorted=True,
@@ -744,7 +758,10 @@ cdef class QuantileForest:
                             else:
                                 if self.y_train[j].size() > 0:
                                     pred = vector[double](1)
-                                    pred[0] = calc_weighted_mean(self.y_train[j], leaf_weights)
+                                    if touched_indices.size() > 0:
+                                        pred[0] = calc_weighted_mean(leaf_samples, touched_weights)
+                                    else:  # all weights are 0, so the mean is NaN, as before
+                                        pred[0] = calc_weighted_mean(self.y_train[j], leaf_weights)
                                     leaf_preds[0].push_back(pred[0])
                     else:
                         # For each list of training indices, calculate output.
@@ -951,6 +968,7 @@ cdef class QuantileForest:
         cdef intp_t i, j
         cdef vector[intp_t] train_indices
         cdef vector[int] leaf_weights
+        cdef vector[intp_t] touched_indices
         cdef intp_t train_idx
         cdef int cutoff, train_wgt
         cdef priority_queue[pair[int, intp_t]] queue
@@ -981,7 +999,7 @@ cdef class QuantileForest:
             leaf_weights = vector[int](n_train)
             for i in range(n_samples):
                 train_indices.clear()
-                memset(&leaf_weights[0], 0, n_train * sizeof(int))
+                touched_indices.clear()
 
                 # Accumulate training indices across leaves for each tree.
                 # Choose the first target output index, even if multi-output.
@@ -993,21 +1011,25 @@ cdef class QuantileForest:
                             &self.y_train_leaves[j, X_leaves[i, j], 0, max_idx],
                         )
 
-                # Sum the weights/counts for each training index.
+                # Sum the weights/counts for each training index, and record
+                # the indices with a count, so that only they are ranked.
                 for train_idx in train_indices:
                     if train_idx != 0:
                         train_idx -= 1
                         if sorter is not None:
                             # Align to the input (unsorted) training index.
                             train_idx = sorter[:, 0][train_idx]
+                        if leaf_weights[train_idx] == 0:
+                            touched_indices.push_back(train_idx)
                         leaf_weights[train_idx] += 1
 
                 # Build priority queue by -weight (so smallest weight is top).
                 # Using a priority queue can avoid having to sort all samples.
+                # The kept proximities don't depend on the order of the pushes.
                 cutoff = 1
-                for j in range(n_train):
-                    train_idx = j
-                    train_wgt = leaf_weights[j]
+                for train_idx in touched_indices:
+                    train_wgt = leaf_weights[train_idx]
+                    leaf_weights[train_idx] = 0  # reset for the next sample
                     if train_wgt >= cutoff:
                         queue.push(pair[int, intp_t](-train_wgt, train_idx))
                         if queue.size() > max_proximities:

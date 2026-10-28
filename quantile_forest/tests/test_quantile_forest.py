@@ -164,6 +164,34 @@ def test_regression_params(name):
     check_regression_params(name)
 
 
+@pytest.mark.parametrize("name", FOREST_REGRESSORS)
+@pytest.mark.parametrize("weighted_leaves", [False, True])
+@pytest.mark.parametrize("aggregate_leaves_first", [True, False])
+def test_predict_weighted_rows_independent(name, weighted_leaves, aggregate_leaves_first):
+    """Check that the weighted prediction of a sample doesn't depend on other samples."""
+    X, y = datasets.make_regression(n_samples=200, n_features=2, random_state=0)
+
+    ForestRegressor = FOREST_REGRESSORS[name]
+
+    est = ForestRegressor(n_estimators=5, max_samples_leaf=None, bootstrap=True, random_state=0)
+    est.fit(X, y)
+
+    kwargs = {
+        "weighted_quantile": True,
+        "weighted_leaves": weighted_leaves,
+        "aggregate_leaves_first": aggregate_leaves_first,
+    }
+    for quantiles in [[0.25, 0.5, 0.75], "mean"]:
+        y_pred = est.predict(X[:20], quantiles, **kwargs)
+        for i in range(20):
+            assert_array_equal(est.predict(X[[i]], quantiles, **kwargs)[0], y_pred[i])
+        assert_array_equal(est.predict(X[19::-1], quantiles, **kwargs), y_pred[::-1])
+
+    proximities = est.proximity_counts(X[:20])
+    for i in range(20):
+        assert est.proximity_counts(X[[i]]) == proximities[i : i + 1]
+
+
 def check_predict_quantiles_toy(name):
     """Check quantile predictions on toy data."""
     quantiles = [0.25, 0.5, 0.75]
