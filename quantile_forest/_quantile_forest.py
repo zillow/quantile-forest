@@ -1090,6 +1090,16 @@ class BaseForestQuantileRegressor(ForestRegressor):
     ):
         """Return training proximity counts for input samples.
 
+        The proximity count of an input sample and a training sample is the
+        number of times that the training sample is among the samples kept in
+        the leaf nodes that the input sample falls into, summed across the
+        trees. With bootstrapping, each tree keeps only the samples drawn for
+        it, once for each draw. Each leaf node keeps at most
+        `max_samples_leaf` samples, so with `max_samples_leaf=1` (the
+        default), each tree adds a count for only one training sample. To
+        count all of the samples in each leaf node, fit the model with
+        `max_samples_leaf=None`. See :ref:`user-guide-proximities`.
+
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
@@ -1129,8 +1139,17 @@ class BaseForestQuantileRegressor(ForestRegressor):
 
         Notes
         -----
-        For details on the calculation and use of random forest proximities:
+        For a model fit without sample weights, the proximity counts are the
+        weights that `predict` gives the training samples by default. They
+        differ from the proximities described by Breiman, which put all of the
+        training samples down each tree, whether or not they were drawn for
+        it, add one for each tree in which two samples share a leaf node, and
+        divide by the number of trees:
+
             - https://www.stat.berkeley.edu/~breiman/RandomForests/cc_home.htm#prox
+
+        If `bootstrap=False` and `max_samples_leaf=None`, each proximity count
+        is the number of trees in which the two samples share a leaf node.
         """
         check_is_fitted(self)
         # Check data.
