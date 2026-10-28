@@ -665,15 +665,20 @@ class BaseForestQuantileRegressor(ForestRegressor):
             # Token index (-1) denotes indices that are always unsampled.
             X_indices[indices == -1] = 1
 
+        # Check data once for all trees, as `apply` does. Callers pass arrays
+        # they have already validated, which have no feature names to check.
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", UserWarning)
+            X = self._validate_X_predict(X)
+
         X_leaves = np.empty((n_samples, n_estimators), dtype=np.intp)
         for i, estimator in enumerate(self.estimators_):
             unsampled_indices = np.flatnonzero(X_indices[:, i])
             if unsampled_indices.size > 0:
-                # Check data.
-                X_unsampled = self._validate_X_predict(X[unsampled_indices])
-
                 # Get leaf node indices for unsampled training samples.
-                X_leaves[unsampled_indices, i] = estimator.apply(X_unsampled)
+                X_leaves[unsampled_indices, i] = estimator.apply(
+                    X[unsampled_indices], check_input=False
+                )
 
         return X_leaves, X_indices
 

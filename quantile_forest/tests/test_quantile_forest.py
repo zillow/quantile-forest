@@ -1608,6 +1608,41 @@ def test_proximity_counts_oob(name):
     check_proximity_counts_oob(name)
 
 
+@pytest.mark.parametrize("name", FOREST_REGRESSORS)
+def test_oob_methods_validate_once(name):
+    """Check that OOB methods validate inputs once, not once per tree."""
+    pd = pytest.importorskip("pandas")
+
+    X, y = datasets.make_regression(n_samples=100, n_features=3, random_state=0)
+    X_df = pd.DataFrame(X, columns=["a", "b", "c"])
+
+    ForestRegressor = FOREST_REGRESSORS[name]
+
+    est = ForestRegressor(n_estimators=5, bootstrap=True, random_state=0).fit(X_df, y)
+
+    # A model fitted with feature names doesn't warn about them for each tree.
+    with warnings.catch_warnings(record=True) as record:
+        warnings.simplefilter("always")
+        y_pred = est.predict(X_df, oob_score=True)
+        y_ranks = est.quantile_ranks(X_df, y, oob_score=True)
+        est.proximity_counts(X_df, oob_score=True)
+    assert not any("feature names" in str(w.message) for w in record)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")  # X without feature names, samples without OOB trees
+
+        # Sparse inputs, which quantile_ranks validates as CSC, give the same results.
+        X_sparse = sparse.csr_matrix(X)
+        assert_allclose(est.predict(X_sparse, oob_score=True), y_pred)
+        assert_allclose(est.quantile_ranks(X_sparse, y, oob_score=True), y_ranks)
+
+        # Missing values are still rejected.
+        X_nan = X.copy()
+        X_nan[0, 0] = np.nan
+        with pytest.raises(ValueError):
+            est.quantile_ranks(X_nan, y, oob_score=True)
+
+
 def check_monotonic_constraints(name, max_samples_leaf):
     """Check monotonic constraints."""
     ForestRegressor = FOREST_REGRESSORS[name]
