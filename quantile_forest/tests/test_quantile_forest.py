@@ -921,12 +921,11 @@ def check_missing_values(name):
         est.quantile_ranks(X, y)
 
     # Check that the estimator tags agree that missing values are not supported.
+    assert not est._more_tags()["allow_nan"]  # the tags of scikit-learn < 1.6
     if sklearn_version >= parse_version("1.6"):
         from sklearn.utils import get_tags
 
         assert not get_tags(est).input_tags.allow_nan
-    else:
-        assert not est._get_tags()["allow_nan"]
 
 
 @pytest.mark.parametrize("name", FOREST_REGRESSORS)
