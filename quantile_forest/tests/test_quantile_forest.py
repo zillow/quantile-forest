@@ -21,6 +21,7 @@ from sklearn.utils._testing import (
     assert_array_almost_equal,
     assert_array_equal,
 )
+from sklearn.utils.estimator_checks import check_sample_weights_not_an_array
 from sklearn.utils.fixes import parse_version
 from sklearn.utils.validation import check_is_fitted
 
@@ -1509,6 +1510,39 @@ def test_sample_weight_stored_on_fit(name):
     est_no_weight = ForestRegressor(n_estimators=5, random_state=0)
     est_no_weight.fit(X, y)
     assert est_no_weight.sample_weight_ is None
+
+
+@pytest.mark.parametrize("name", FOREST_REGRESSORS)
+@pytest.mark.parametrize("bootstrap", [False, True])
+def test_sample_weight_validation(name, bootstrap):
+    """Check that sample weights are accepted in any form scikit-learn accepts."""
+    X, y = datasets.make_regression(n_samples=100, n_features=4, random_state=0)
+    sample_weight = np.random.default_rng(0).uniform(0.1, 2.0, size=len(y))
+    params = {"n_estimators": 5, "bootstrap": bootstrap, "random_state": 0}
+    if bootstrap:
+        params["max_samples"] = 0.5  # draws relative to the weights on sklearn 1.9+
+    quantiles = [0.25, 0.5, 0.75]
+
+    ForestRegressor = FOREST_REGRESSORS[name]
+
+    # A list of weights gives the same model as an array of weights.
+    est = ForestRegressor(**params).fit(X, y, sample_weight=sample_weight)
+    est_list = ForestRegressor(**params).fit(X, y, sample_weight=sample_weight.tolist())
+    assert isinstance(est_list.sample_weight_, np.ndarray)
+    assert_allclose(est_list.predict(X, quantiles), est.predict(X, quantiles))
+    if bootstrap:
+        kwargs = {"quantiles": quantiles, "oob_score": True}
+        assert_allclose(est_list.predict(X, **kwargs), est.predict(X, **kwargs))
+
+    # A scalar weight is applied to every sample.
+    est = ForestRegressor(**params).fit(X, y, sample_weight=np.full(len(y), 2.0))
+    est_scalar = ForestRegressor(**params).fit(X, y, sample_weight=2.0)
+    assert_array_equal(est_scalar.sample_weight_, np.full(len(y), 2.0))
+    assert_allclose(est_scalar.predict(X, quantiles), est.predict(X, quantiles))
+
+    # Weights that only support conversion to an array work too.
+    est = ForestRegressor(n_estimators=5, bootstrap=bootstrap, random_state=0)
+    check_sample_weights_not_an_array(name, est)
 
 
 @pytest.mark.skipif(
