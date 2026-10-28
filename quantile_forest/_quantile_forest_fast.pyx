@@ -511,13 +511,13 @@ cdef class QuantileForest:
         bint sparse_pickle=<bint>False,
     ):
         """Constructor."""
-        self.y_train = y_train
-        self.y_train_leaves = y_train_leaves
-        self.y_bound_leaves = y_bound_leaves
-        self.sparse_pickle = sparse_pickle
+        if y_bound_leaves is None:
+            y_bound_leaves = np.empty(shape=(0, 0, 0), dtype=np.float64)
 
-        if self.y_bound_leaves is None:
-            self.y_bound_leaves = np.empty(shape=(0, 0, 0), dtype=np.float64)
+        self.y_train = y_train
+        self.y_train_leaves = np.ascontiguousarray(y_train_leaves)
+        self.y_bound_leaves = np.ascontiguousarray(y_bound_leaves)
+        self.sparse_pickle = sparse_pickle
 
     def __reduce__(self):
         """Reduce re-implementation, for pickling."""
@@ -554,8 +554,9 @@ cdef class QuantileForest:
     def __setstate__(self, d):
         """Setstate re-implementation, for unpickling."""
         if self.sparse_pickle:
-            self.y_train_leaves = d["matrix1"].toarray().reshape(d["shape1"])
-            self.y_bound_leaves = d["matrix2"].toarray().reshape(d["shape2"])
+            # Dense arrays from sparse matrices may not be C-contiguous.
+            self.y_train_leaves = np.ascontiguousarray(d["matrix1"].toarray().reshape(d["shape1"]))
+            self.y_bound_leaves = np.ascontiguousarray(d["matrix2"].toarray().reshape(d["shape2"]))
 
     cpdef cnp.ndarray predict(
         self,
@@ -912,7 +913,7 @@ cdef class QuantileForest:
         intp_t[:, :] X_leaves,
         uint8_t[:, :] X_indices=None,
         uint32_t max_proximities=0,
-        intp_t[:, :] sorter=None,
+        const intp_t[:, :] sorter=None,
     ):
         """Return proximity counts of the training samples for target leaves.
 
