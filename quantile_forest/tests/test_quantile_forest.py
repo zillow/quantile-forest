@@ -1214,6 +1214,46 @@ def test_oob_samples_duplicates(name):
     check_oob_samples_duplicates(name)
 
 
+@pytest.mark.parametrize("name", FOREST_REGRESSORS)
+def test_oob_samples_unsampled_masks(name):
+    """Check that OOB samples come from masks of each tree's unsampled indices."""
+    X, y = datasets.make_regression(n_samples=200, n_features=4, random_state=0)
+
+    ForestRegressor = FOREST_REGRESSORS[name]
+
+    est = ForestRegressor(n_estimators=5, bootstrap=True, max_samples=0.7, random_state=0)
+    for random_state in [0, 1]:  # check that refitting replaces the masks
+        est.set_params(random_state=random_state).fit(X, y)
+        masks = np.unpackbits(est._unsampled_masks, axis=1, count=len(X)).astype(bool)
+        for mask, sample_indices in zip(masks, est.estimators_samples_):
+            expected = np.setdiff1d(np.arange(len(X)), sample_indices)
+            assert_array_equal(np.flatnonzero(mask), expected)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", UserWarning)
+
+        # Check that selected rows match the rows of all training samples.
+        _, X_indices = est._oob_samples(X)
+        indices = [5, -1, 17, 5]
+        _, X_indices_selected = est._oob_samples(X[[5, 0, 17, 5]], indices=indices)
+        assert_array_equal(X_indices_selected[[0, 2, 3]], X_indices[[5, 17, 5]])
+        assert np.all(X_indices_selected[1] == 1)  # token index (-1) is always unsampled
+
+        # Check that the masks are recomputed if missing, e.g., in older models.
+        del est._unsampled_masks
+        _, X_indices_recomputed = est._oob_samples(X)
+        assert_array_equal(X_indices_recomputed, X_indices)
+
+    # Check that no samples are out-of-bag without bootstrapping, with a warning.
+    est = ForestRegressor(n_estimators=5, bootstrap=False, random_state=0).fit(X, y)
+    assert est._unsampled_masks is None
+    with warnings.catch_warnings(record=True) as record:
+        warnings.simplefilter("always")
+        _, X_indices = est._oob_samples(X)
+    assert any("only exist if bootstrap=True" in str(w.message) for w in record)
+    assert not X_indices.any()
+
+
 def check_predict_oob(
     name,
     max_samples,
