@@ -145,3 +145,15 @@ User-Specified Functions
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 While a QRF is designed to estimate quantiles from the empirical distribution calculated for each sample, in many cases it may be useful to use the empirical distribution to calculate other quantities of interest. For more details, see :ref:`gallery_plot_qrf_custom_functions`.
+
+Monotonic Constraints
+~~~~~~~~~~~~~~~~~~~~~
+
+Predictions can be constrained to increase (1) or decrease (-1) monotonically with individual features by specifying `monotonic_cst`, which requires `max_samples_leaf=1` (the default)::
+
+    >>> monotonic_cst = [1] + [0] * (X_train.shape[1] - 1)  # increasing in the first feature
+    >>> qrf = RandomForestQuantileRegressor(monotonic_cst=monotonic_cst)
+    >>> qrf.fit(X_train, y_train)
+    RandomForestQuantileRegressor(...)
+
+Each tree is kept monotonic by clipping the target value that each leaf keeps: a split on a constrained feature bounds the leaves on either side by the midpoint of their mean targets. Because the bounds are derived from means, they also clip much of the variation across trees that quantile predictions rely on, so the predicted distributions are much narrower than without constraints. For example, with 2,000 training samples whose targets equal a feature plus standard normal noise, `min_samples_leaf=5`, and an increasing constraint on that feature, 80% prediction intervals covered 31% of new targets, against 74% without the constraint. Monotonic constraints are therefore best suited to point predictions, such as the median or mean. If prediction intervals are needed, calibrate them on held-out data (e.g., with conformal prediction), or fit without the constraint.

@@ -1404,6 +1404,13 @@ class RandomForestQuantileRegressor(BaseForestQuantileRegressor):
           - regressions trained on data with missing values,
           - trees with multi-sample leaves (i.e. when `max_samples_leaf > 1`).
 
+        Each tree is kept monotonic by clipping the target value that each
+        leaf keeps to bounds derived from the mean targets on either side of
+        each constrained split. This makes the predicted distributions much
+        narrower than without constraints, so prediction intervals can be far
+        too narrow. The constraints are best suited to point predictions, such
+        as the median or mean. See :ref:`user-guide-fit-predict`.
+
     Attributes
     ----------
     estimator_ : :class:`~sklearn.tree.DecisionTreeRegressor`
@@ -1737,6 +1744,13 @@ class ExtraTreesQuantileRegressor(BaseForestQuantileRegressor):
           - multioutput regressions (i.e. when `n_outputs_ > 1`),
           - regressions trained on data with missing values,
           - trees with multi-sample leaves (i.e. when `max_samples_leaf > 1`).
+
+        Each tree is kept monotonic by clipping the target value that each
+        leaf keeps to bounds derived from the mean targets on either side of
+        each constrained split. This makes the predicted distributions much
+        narrower than without constraints, so prediction intervals can be far
+        too narrow. The constraints are best suited to point predictions, such
+        as the median or mean. See :ref:`user-guide-fit-predict`.
 
     Attributes
     ----------
