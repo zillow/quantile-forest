@@ -108,6 +108,23 @@ def _hash_X(X):
     return joblib.hash(X)
 
 
+def _nanquantile_rows(a, quantiles, method):
+    """Return the quantiles of each row of `a`, ignoring NaNs.
+
+    Equivalent to ``np.nanquantile(a, quantiles, method=method, axis=1)``,
+    which loops over the rows in Python. Instead, sort the rows, which puts
+    NaNs last, and compute the quantiles of all rows with the same number of
+    values at once. Rows of only NaNs give NaNs.
+    """
+    n_values = np.count_nonzero(~np.isnan(a), axis=1)
+    a = np.sort(a, axis=1)
+    out = np.full((len(quantiles), a.shape[0]), np.nan)
+    for n in np.unique(n_values[n_values > 0]):
+        rows = n_values == n
+        out[:, rows] = np.quantile(a[rows, :n], quantiles, method=method, axis=1)
+    return out
+
+
 class BaseForestQuantileRegressor(ForestRegressor):
     """Base class for quantile regression forests.
 
@@ -934,9 +951,12 @@ class BaseForestQuantileRegressor(ForestRegressor):
                     func = np.mean if X_indices is None else np.nanmean
                     y_pred[:, output, :] = np.expand_dims(func(leaf_vals, axis=1), axis=1)
                 else:  # calculate quantiles
-                    func = np.quantile if X_indices is None else np.nanquantile
                     method = interpolation.decode()
-                    y_pred[:, output, :] = func(leaf_vals, quantiles, method=method, axis=1).T
+                    if X_indices is None:
+                        y_q = np.quantile(leaf_vals, quantiles, method=method, axis=1)
+                    else:  # trees where a sample is in-bag have NaN values
+                        y_q = _nanquantile_rows(leaf_vals, quantiles, method)
+                    y_pred[:, output, :] = y_q.T
         else:  # get predictions for arbitrary leaf sizes
             y_pred = self.forest_.predict(
                 quantiles,
