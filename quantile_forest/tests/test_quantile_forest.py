@@ -896,6 +896,32 @@ def test_max_samples_leaf(name):
     check_max_samples_leaf(name)
 
 
+@pytest.mark.parametrize("name", FOREST_REGRESSORS)
+@pytest.mark.parametrize("max_samples_leaf", [1.0, 1000])
+def test_max_samples_leaf_above_leaf_sizes(name, max_samples_leaf):
+    """Check that a limit above every leaf size keeps all samples, like None."""
+    X, y = datasets.make_regression(n_samples=300, n_features=3, noise=1.0, random_state=0)
+    params = {"n_estimators": 10, "min_samples_leaf": 10, "random_state": 0}
+
+    ForestRegressor = FOREST_REGRESSORS[name]
+
+    est = ForestRegressor(max_samples_leaf=max_samples_leaf, **params).fit(X, y)
+    est_none = ForestRegressor(max_samples_leaf=None, **params).fit(X, y)
+
+    # Leaves are padded to the largest leaf, not to the requested maximum.
+    assert_array_equal(
+        np.asarray(est.forest_.y_train_leaves), np.asarray(est_none.forest_.y_train_leaves)
+    )
+
+    # A float of 1.0 means all samples, so it must not use the 1-sample path.
+    quantiles = [0.1, 0.5, 0.9]
+    for weighted_quantile in [True, False]:
+        assert_allclose(
+            est.predict(X, quantiles=quantiles, weighted_quantile=weighted_quantile),
+            est_none.predict(X, quantiles=quantiles, weighted_quantile=weighted_quantile),
+        )
+
+
 def check_missing_values(name):
     X = np.array(
         [
