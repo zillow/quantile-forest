@@ -1005,6 +1005,15 @@ def test_oob_samples_unsampled_masks(name):
         _, X_indices_recomputed = est._oob_samples(X)
         assert_array_equal(X_indices_recomputed, X_indices)
 
+    # Check that no samples are out-of-bag without bootstrapping, with a warning.
+    est = ForestRegressor(n_estimators=5, bootstrap=False, random_state=0).fit(X, y)
+    assert est._unsampled_masks is None
+    with warnings.catch_warnings(record=True) as record:
+        warnings.simplefilter("always")
+        _, X_indices = est._oob_samples(X)
+    assert any("only exist if bootstrap=True" in str(w.message) for w in record)
+    assert not X_indices.any()
+
 
 def check_predict_oob(
     name,
