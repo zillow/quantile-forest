@@ -330,6 +330,68 @@ def test_predict_quantiles_toy(name):
     check_predict_quantiles_toy(name)
 
 
+@pytest.mark.parametrize("name", FOREST_REGRESSORS)
+@pytest.mark.parametrize("max_samples_leaf", [1, None])
+def test_predict_quantiles_array_like(name, max_samples_leaf):
+    """Check that quantiles can be any array-like of floats, or "mean" in a list."""
+    X, y = datasets.make_regression(n_samples=100, n_features=2, random_state=0)
+
+    ForestRegressor = FOREST_REGRESSORS[name]
+
+    est = ForestRegressor(n_estimators=5, max_samples_leaf=max_samples_leaf, random_state=0)
+    est.fit(X, y)
+
+    quantiles = [0.25, 0.5, 0.75]
+    y_pred = est.predict(X, quantiles=quantiles)
+    for quantiles_array_like in [
+        tuple(quantiles),
+        np.array(quantiles),
+        np.array(quantiles, dtype=np.float32),
+    ]:
+        assert_allclose(est.predict(X, quantiles=quantiles_array_like), y_pred)
+
+    for quantile in [np.float32(0.5), np.array(0.5), np.int64(1)]:
+        assert_allclose(est.predict(X, quantiles=quantile), est.predict(X, float(quantile)))
+
+    est.set_params(default_quantiles=np.array(quantiles))
+    assert_allclose(est.predict(X), y_pred)
+
+    assert_allclose(est.predict(X, quantiles=["mean"]), est.predict(X, quantiles="mean"))
+
+
+@pytest.mark.parametrize("name", FOREST_REGRESSORS)
+@pytest.mark.parametrize("max_samples_leaf", [1, None])
+@pytest.mark.parametrize("weighted_quantile", [True, False])
+def test_predict_quantiles_invalid(name, max_samples_leaf, weighted_quantile):
+    """Check that invalid quantiles raise an error instead of predicting."""
+    X, y = datasets.make_regression(n_samples=100, n_features=2, random_state=0)
+
+    ForestRegressor = FOREST_REGRESSORS[name]
+
+    est = ForestRegressor(n_estimators=5, max_samples_leaf=max_samples_leaf, random_state=0)
+    est.fit(X, y)
+
+    for quantiles in [
+        np.nan,
+        [0.5, np.nan],
+        [],
+        -0.01,
+        1.01,
+        "median",
+        [0.5, "mean"],
+        [[0.5]],
+        [0.1, [0.2, 0.3]],  # ragged
+    ]:
+        with pytest.raises(ValueError, match="Quantiles must"):
+            est.predict(X, quantiles=quantiles, weighted_quantile=weighted_quantile)
+
+    # The Cython predictor checks its inputs too.
+    X_leaves = est.apply(X)
+    for quantiles in [[np.nan], []]:
+        with pytest.raises(ValueError, match="Quantiles must"):
+            est.forest_.predict(quantiles, X_leaves, weighted_quantile=weighted_quantile)
+
+
 def check_predict_quantiles(
     name,
     max_samples,

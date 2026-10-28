@@ -631,12 +631,15 @@ cdef class QuantileForest:
         n_train = self.y_train[0].size()
         max_idx = self.y_train_leaves.shape[3]
 
+        if n_quantiles == 0:
+            raise ValueError("Quantiles must not be empty.")
+
         use_mean = False
         if len(quantiles) == 1 and quantiles[0] == -1:
             use_mean = True
         else:
             for q in quantiles:
-                if q < 0 or q > 1:
+                if not 0 <= q <= 1:  # also rejects NaN
                     raise ValueError(f"Quantiles must be in the range [0, 1], got {q}.")
 
         if X_indices is not None:

@@ -55,6 +55,39 @@ except ImportError:
 from ._quantile_forest_fast import QuantileForest
 from ._utils import generate_unsampled_indices, group_indices_by_value, map_indices_to_leaves
 
+
+def _check_quantiles(quantiles):
+    """Validate quantiles and return them as a list of floats.
+
+    Returns ``[-1]`` if the mean is requested instead.
+    """
+    if isinstance(quantiles, str) and quantiles == "mean":
+        return [-1]
+    if isinstance(quantiles, list) and quantiles == ["mean"]:
+        return [-1]
+
+    try:
+        quantiles_array = np.asarray(quantiles)
+    except ValueError:  # e.g., ragged nested lists
+        quantiles_array = None
+    if (
+        quantiles_array is None
+        or quantiles_array.dtype.kind not in "biuf"  # boolean, integer, or float
+        or quantiles_array.ndim > 1
+    ):
+        raise ValueError(
+            f'Quantiles must be a float, an array-like of floats, or "mean", got {quantiles!r}.'
+        )
+
+    quantiles = quantiles_array.astype(np.float64).reshape(-1).tolist()
+    if not quantiles:
+        raise ValueError("Quantiles must not be empty.")
+    for q in quantiles:
+        if not 0 <= q <= 1:  # also rejects NaN
+            raise ValueError(f"Quantiles must be in the range [0, 1], got {q}.")
+    return quantiles
+
+
 sklearn_version = parse_version(sklearn.__version__)
 
 
@@ -665,10 +698,10 @@ class BaseForestQuantileRegressor(ForestRegressor):
             ``dtype=np.float32``. If a sparse matrix is provided, it will be
             converted into a sparse ``csr_matrix``.
 
-        quantiles : float, list, or "mean", default=None
+        quantiles : float, array-like, or "mean", default=None
             The quantile or list of quantiles that the model tries to predict.
-            Each quantile must be strictly between 0 and 1. If "mean", the
-            model predicts the mean. If None, the model uses the value of
+            Each quantile must be in the range [0, 1]. If "mean", the model
+            predicts the mean. If None, the model uses the value of
             `default_quantiles`.
 
         interpolation : {"linear", "lower", "higher", "midpoint", "nearest"}, \
@@ -734,16 +767,8 @@ class BaseForestQuantileRegressor(ForestRegressor):
         X = self._validate_X_predict(X)
 
         if quantiles is None:
-            quantiles = ["mean"] if self.default_quantiles is None else self.default_quantiles
-        if not isinstance(quantiles, list):
-            quantiles = [quantiles]
-
-        if quantiles == ["mean"]:
-            quantiles = [-1]
-        else:
-            for q in quantiles:
-                if not isinstance(q, (float, int)) or (q < 0 or q > 1):
-                    raise ValueError(f"Quantiles must be in the range [0, 1], got {q}.")
+            quantiles = "mean" if self.default_quantiles is None else self.default_quantiles
+        quantiles = _check_quantiles(quantiles)
 
         if not isinstance(interpolation, (bytes, bytearray)):
             interpolation = interpolation.encode()
@@ -1115,10 +1140,10 @@ class RandomForestQuantileRegressor(BaseForestQuantileRegressor):
     n_estimators : int, default=100
         The number of trees in the forest.
 
-    default_quantiles : float, list, or "mean", default=0.5
+    default_quantiles : float, array-like, or "mean", default=0.5
         The default quantile or list of quantiles that the model tries to
-        predict. Each quantile must be strictly between 0 and 1. If "mean",
-        the model predicts the mean.
+        predict. Each quantile must be in the range [0, 1]. If "mean", the
+        model predicts the mean.
 
         .. versionadded:: 1.2
 
@@ -1445,10 +1470,10 @@ class ExtraTreesQuantileRegressor(BaseForestQuantileRegressor):
     n_estimators : int, default=100
         The number of trees in the forest.
 
-    default_quantiles : float, list, or "mean", default=0.5
+    default_quantiles : float, array-like, or "mean", default=0.5
         The default quantile or list of quantiles that the model tries to
-        predict. Each quantile must be strictly between 0 and 1. If "mean",
-        the model predicts the mean.
+        predict. Each quantile must be in the range [0, 1]. If "mean", the
+        model predicts the mean.
 
         .. versionadded:: 1.2
 
