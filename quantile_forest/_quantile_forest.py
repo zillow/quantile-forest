@@ -804,6 +804,92 @@ class BaseForestQuantileRegressor(ForestRegressor):
             return np.array([])
         return np.flatnonzero(self._get_unsampled_mask(estimator, duplicates))
 
+    def _clipped_quantile_ranks(self, y, X_leaves, X_indices, kind, aggregate_leaves_first):
+        """Return quantile ranks among the clipped leaf values.
+
+        With monotonicity constraints, each tree keeps one value per leaf,
+        which predict clips to the bounds of the leaf. Rank the scores among
+        the clipped values, as the quantile ranks kernel ranks them among the
+        values that the leaves keep.
+
+        Parameters
+        ----------
+        y : array-like of shape (n_samples, n_outputs)
+            The target values for which to calculate ranks.
+
+        X_leaves : array-like of shape (n_samples, n_estimators)
+            Target leaf node indices along samples and trees.
+
+        X_indices : array-like of shape (n_samples, n_estimators)
+            Mask for the trees to use for each sample. 1 if used, 0 otherwise.
+            If None, all trees are used for all samples.
+
+        kind : {b"rank", b"weak", b"strict", b"mean"}
+            Specifies the interpretation of the resulting score.
+
+        aggregate_leaves_first : bool
+            Calculate ranks using leaf values aggregated across trees.
+
+        Returns
+        -------
+        y_ranks : array of shape (n_samples, n_outputs)
+            Quantile ranks in range [0, 1]. NaN if a sample has no trees.
+        """
+        y_train_leaves = np.asarray(self.forest_.y_train_leaves)
+        y_bound_leaves = np.asarray(self.forest_.y_bound_leaves)
+        y_train = np.asarray(self.forest_.y_train).T
+        n_samples, n_trees = X_leaves.shape
+        n_outputs = y_train.shape[1]
+
+        if y.shape[1] != n_outputs:
+            raise ValueError(
+                f"Number of target outputs in training data ({n_outputs}) does not "
+                f"match the number of outputs in test data being scored ({y.shape[1]})."
+            )
+
+        if kind not in [b"rank", b"weak", b"strict", b"mean"]:
+            raise ValueError(f"Invalid kind {kind}.")
+
+        y_ranks = np.full((n_samples, n_outputs), np.nan)
+        for output in range(n_outputs):
+            # Get each tree's clipped leaf value, or NaN if the tree is unused.
+            leaf_vals = np.full((n_samples, n_trees), np.nan)
+            for tree in range(n_trees):
+                rows = slice(None) if X_indices is None else X_indices[:, tree] == 1
+                leaves = X_leaves[rows, tree]
+                train_indices = y_train_leaves[tree, leaves, output, 0]
+                leaf_vals[rows, tree] = np.clip(
+                    y_train[train_indices - 1, output],
+                    y_bound_leaves[tree, leaves, 0],
+                    y_bound_leaves[tree, leaves, 1],
+                )
+
+            # Count the values below (left) and up to (right) each score within
+            # each tree, or across all trees if aggregating leaves first.
+            scores = y[:, [output]]
+            n_values = np.count_nonzero(~np.isnan(leaf_vals), axis=1)
+            left = (leaf_vals < scores).astype(np.intp)  # NaN values are not counted
+            right = (leaf_vals <= scores).astype(np.intp)
+            if aggregate_leaves_first:
+                left, right = left.sum(axis=1), right.sum(axis=1)
+
+            if kind == b"rank":
+                ranks = (left + right + (right > left)) * 0.5
+            elif kind == b"weak":
+                ranks = right
+            elif kind == b"strict":
+                ranks = left
+            else:  # mean
+                ranks = (left + right) * 0.5
+
+            if not aggregate_leaves_first:
+                ranks = ranks.sum(axis=1)  # to average the ranks of the trees
+
+            has_values = n_values > 0
+            y_ranks[has_values, output] = ranks[has_values] / n_values[has_values]
+
+        return y_ranks
+
     def predict(
         self,
         X,
@@ -1094,13 +1180,23 @@ class BaseForestQuantileRegressor(ForestRegressor):
         if y.ndim == 1:
             y = np.expand_dims(y, axis=1)
 
-        y_ranks = self.forest_.quantile_ranks(
-            y.astype(np.float64),
-            X_leaves,
-            X_indices,
-            kind,
-            aggregate_leaves_first,
-        )
+        if self.monotonic_cst is not None:
+            # Rank among the clipped leaf values that predict uses.
+            y_ranks = self._clipped_quantile_ranks(
+                y.astype(np.float64),
+                X_leaves,
+                X_indices,
+                kind,
+                aggregate_leaves_first,
+            )
+        else:
+            y_ranks = self.forest_.quantile_ranks(
+                y.astype(np.float64),
+                X_leaves,
+                X_indices,
+                kind,
+                aggregate_leaves_first,
+            )
 
         if y_ranks.shape[1] == 1:
             y_ranks = np.squeeze(y_ranks, axis=1)

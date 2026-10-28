@@ -939,6 +939,60 @@ def test_quantile_ranks_keeps_fitted_features(name):
     est.predict(X_df)
 
 
+@pytest.mark.parametrize("name", FOREST_REGRESSORS)
+def test_quantile_ranks_monotonic_constraints(name):
+    """Check that quantile ranks use the clipped leaf values that predict uses."""
+    rng = np.random.RandomState(0)
+    X = rng.uniform(0, 10, size=(200, 2))
+    y = X[:, 0] + rng.normal(size=200)
+
+    ForestRegressor = FOREST_REGRESSORS[name]
+
+    n_estimators = 25
+    est = ForestRegressor(
+        n_estimators=n_estimators,
+        min_samples_leaf=5,
+        monotonic_cst=[1, 0],
+        random_state=0,
+    )
+    est.fit(X, y)
+
+    # With "nearest" interpolation, these quantiles are the clipped leaf values.
+    quantiles = np.linspace(0, 1, n_estimators)
+    leaf_vals = est.predict(X, quantiles=quantiles, interpolation="nearest")
+
+    # Check ranks of scores between and equal to the clipped leaf values.
+    for y_score in [y, leaf_vals[:, 5], leaf_vals[:, 20]]:
+        for kind in ["rank", "weak", "strict", "mean"]:
+            y_ranks = est.quantile_ranks(X, y_score, kind=kind)
+            expected = [
+                percentileofscore(v, s, kind=kind) / 100 for v, s in zip(leaf_vals, y_score)
+            ]
+            assert_allclose(y_ranks, expected)
+
+    # Check ranks calculated for each tree and then averaged.
+    for kind in ["rank", "weak", "strict", "mean"]:
+        y_ranks = est.quantile_ranks(X[:20], y[:20], kind=kind, aggregate_leaves_first=False)
+        expected = [
+            np.mean([percentileofscore([v_i], s, kind=kind) / 100 for v_i in v])
+            for v, s in zip(leaf_vals[:20], y[:20])
+        ]
+        assert_allclose(y_ranks, expected)
+
+    # Check OOB ranks of the smallest and largest OOB predictions.
+    est.set_params(n_estimators=50, bootstrap=True).fit(X, y)  # so all samples are OOB
+    y_min = est.predict(X, quantiles=0, oob_score=True)
+    y_max = est.predict(X, quantiles=1, oob_score=True)
+    assert_array_equal(est.quantile_ranks(X, y_min, kind="strict", oob_score=True), 0)
+    assert_array_equal(est.quantile_ranks(X, y_max, kind="weak", oob_score=True), 1)
+
+    # Check errors for an invalid kind or number of outputs.
+    with pytest.raises(ValueError, match="Invalid kind"):
+        est.quantile_ranks(X, y, kind="invalid")
+    with pytest.raises(ValueError, match="Number of target outputs"):
+        est.quantile_ranks(X, np.stack([y, y], axis=1))
+
+
 def check_proximity_counts(name):
     """Check proximity counts."""
     ForestRegressor = FOREST_REGRESSORS[name]
