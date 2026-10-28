@@ -28,7 +28,7 @@ from sklearn.utils.fixes import parse_version
 from sklearn.utils.validation import check_is_fitted
 
 from quantile_forest import ExtraTreesQuantileRegressor, RandomForestQuantileRegressor
-from quantile_forest._quantile_forest import _hash_X
+from quantile_forest._quantile_forest import _hash_X, _nanquantile_rows
 from quantile_forest._quantile_forest_fast import (
     calc_mean,
     calc_quantile,
@@ -1493,6 +1493,48 @@ def test_predict_oob(
         weighted_quantile,
         aggregate_leaves_first,
     )
+
+
+@pytest.mark.parametrize(
+    "method", ["linear", "lower", "higher", "midpoint", "nearest", "hazen", "inverted_cdf"]
+)
+def test_nanquantile_rows(method):
+    """Check that the row quantiles used for OOB predictions match np.nanquantile."""
+    rng = np.random.default_rng(0)
+    a = np.round(rng.normal(size=(300, 12)), 1)  # with ties
+    a[rng.random(a.shape) < 0.5] = np.nan
+    a[:5] = np.nan  # rows without values
+    quantiles = [0.0, 0.1, 0.5, 0.75, 1.0]
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", RuntimeWarning)  # rows without values
+        expected = np.nanquantile(a, quantiles, method=method, axis=1)
+    assert_array_equal(_nanquantile_rows(a, quantiles, method), expected)
+
+
+@pytest.mark.parametrize("name", FOREST_REGRESSORS)
+def test_predict_oob_single_sample_leaves(name):
+    """Check OOB quantiles with max_samples_leaf=1 against each tree's OOB values."""
+    X, y = datasets.make_regression(n_samples=200, n_features=2, random_state=0)
+
+    ForestRegressor = FOREST_REGRESSORS[name]
+
+    est = ForestRegressor(n_estimators=10, bootstrap=True, random_state=0).fit(X, y)
+
+    # Each tree's value for each sample, or NaN if the sample is in the tree's bootstrap.
+    leaves = est.apply(X)
+    y_train_leaves = np.asarray(est.forest_.y_train_leaves)
+    y_train = np.asarray(est.forest_.y_train)[0]
+    values = np.full(leaves.shape, np.nan)
+    for tree, sample_indices in enumerate(est.estimators_samples_):
+        oob = np.setdiff1d(np.arange(len(X)), sample_indices)
+        values[oob, tree] = y_train[y_train_leaves[tree, leaves[oob, tree], 0, 0] - 1]
+
+    quantiles = [0.1, 0.5, 0.9]
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")  # some samples have no OOB trees
+        expected = np.nanquantile(values, quantiles, axis=1).T
+        assert_allclose(est.predict(X, quantiles=quantiles, oob_score=True), expected)
 
 
 def check_quantile_ranks_oob(name):
