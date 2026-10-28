@@ -1,4 +1,4 @@
-from libc.math cimport ceil, fabs, floor, round
+from libc.math cimport NAN, ceil, fabs, floor, round
 from libcpp.algorithm cimport sort as sort_cpp
 from libcpp.map cimport map
 from libcpp.pair cimport pair
@@ -521,7 +521,7 @@ cdef class QuantileForest:
         if y_bound_leaves is None:
             y_bound_leaves = np.empty(shape=(0, 0, 0), dtype=np.float64)
 
-        self.y_train = y_train
+        self.y_train = np.ascontiguousarray(y_train)
         self.y_train_leaves = np.ascontiguousarray(y_train_leaves)
         self.y_bound_leaves = np.ascontiguousarray(y_bound_leaves)
         self.sparse_pickle = sparse_pickle
@@ -632,11 +632,11 @@ cdef class QuantileForest:
         cdef double[:, :, :] preds_view
 
         n_samples = X_leaves.shape[0]
-        n_outputs = self.y_train.size()
+        n_outputs = self.y_train.shape[0]
         n_quantiles = len(quantiles)
 
         n_trees = X_leaves.shape[1]
-        n_train = self.y_train[0].size()
+        n_train = self.y_train.shape[1]
         max_idx = self.y_train_leaves.shape[3]
 
         if n_quantiles == 0:
@@ -751,7 +751,7 @@ cdef class QuantileForest:
                             touched_weights.resize(touched_indices.size())
                             for l in range(<intp_t>(touched_indices.size())):
                                 train_idx = touched_indices[l]
-                                leaf_samples[l] = self.y_train[j][train_idx]
+                                leaf_samples[l] = self.y_train[j, train_idx]
                                 touched_weights[l] = leaf_weights[train_idx]
                                 leaf_weights[train_idx] = 0
 
@@ -767,12 +767,12 @@ cdef class QuantileForest:
                                 for l in range(<intp_t>(pred.size())):
                                     leaf_preds[l].push_back(pred[l])
                             else:
-                                if self.y_train[j].size() > 0:
+                                if n_train > 0:
                                     pred = vector[double](1)
                                     if touched_indices.size() > 0:
                                         pred[0] = calc_weighted_mean(leaf_samples, touched_weights)
                                     else:  # all weights are 0, so the mean is NaN, as before
-                                        pred[0] = calc_weighted_mean(self.y_train[j], leaf_weights)
+                                        pred[0] = NAN
                                     leaf_preds[0].push_back(pred[0])
                     else:
                         # For each list of training indices, calculate output.
@@ -786,7 +786,7 @@ cdef class QuantileForest:
                             # Get training target values associated with indices.
                             for train_idx in train_indices[k]:
                                 if train_idx != 0:
-                                    leaf_samples.push_back(self.y_train[j][train_idx - 1])
+                                    leaf_samples.push_back(self.y_train[j, train_idx - 1])
 
                             # Calculate quantiles (or mean).
                             if not use_mean:
@@ -864,9 +864,9 @@ cdef class QuantileForest:
         n_samples = y_scores.shape[0]
         n_outputs = y_scores.shape[1]
 
-        if n_outputs != <intp_t>self.y_train.size():
+        if n_outputs != self.y_train.shape[0]:
             raise ValueError(
-                f"Number of target outputs in training data ({self.y_train.size()}) does not "
+                f"Number of target outputs in training data ({self.y_train.shape[0]}) does not "
                 f"match the number of outputs in test data being scored ({n_outputs})."
             )
 
@@ -921,7 +921,7 @@ cdef class QuantileForest:
                         # Get training target values associated with indices.
                         for train_idx in train_indices[k]:
                             if train_idx != 0:
-                                leaf_samples.push_back(self.y_train[j][train_idx - 1])
+                                leaf_samples.push_back(self.y_train[j, train_idx - 1])
 
                         # Calculate rank.
                         pred = calc_quantile_rank(leaf_samples, y_scores[i, j], kind=kind)
@@ -989,7 +989,7 @@ cdef class QuantileForest:
         n_samples = X_leaves.shape[0]
 
         n_trees = X_leaves.shape[1]
-        n_train = self.y_train[0].size()
+        n_train = self.y_train.shape[1]
         max_idx = self.y_train_leaves.shape[3]
 
         if X_indices is not None:

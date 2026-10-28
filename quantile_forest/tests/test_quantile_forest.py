@@ -1770,6 +1770,21 @@ def test_serialization_memory_mapped(name, max_samples_leaf, sparse_pickle, tmp_
         )
 
 
+@pytest.mark.parametrize("name", FOREST_REGRESSORS)
+def test_y_train_is_array(name):
+    """Check that the training targets are stored as an array, read without copying."""
+    X, y = datasets.make_regression(n_samples=100, n_features=2, n_targets=2, random_state=0)
+
+    ForestRegressor = FOREST_REGRESSORS[name]
+
+    est = ForestRegressor(n_estimators=5, random_state=0).fit(X, y)
+
+    y_train = np.asarray(est.forest_.y_train)
+    assert y_train.dtype == np.float64
+    assert_array_equal(y_train, np.sort(y, axis=0).T)  # sorted, one row per output
+    assert np.shares_memory(y_train, np.asarray(est.forest_.y_train))  # not a copy
+
+
 @pytest.mark.skipif(
     sklearn_version < parse_version("1.9"),
     reason="sample_weight in bootstrap functions requires scikit-learn >= 1.9",
