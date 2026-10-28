@@ -85,11 +85,32 @@ cpdef double calc_weighted_mean(
     return out
 
 
+cdef inline double calc_quantile_index(
+    double n,
+    double quantile,
+    double C,
+) noexcept nogil:
+    """Return the 0-based (fractional) index of a quantile.
+
+    The index is ``(n + 1 - 2C)q + C - 1``, the 0-based form of the input rank
+    ``x = (n + 1 - 2C)q + C``, where ``n`` is the number of inputs (or the total
+    weight) and ``C`` is a constant (degree of freedom). ``C = 1`` matches
+    NumPy's "linear" method, ``C = 1/2`` its "hazen" method, and ``C = 0`` its
+    "weibull" method.
+
+    The index is computed with one multiplication and one addition of the
+    constant ``C - 1``, which avoids extra rounding at exact ranks. For
+    ``C = 1``, this is exactly NumPy's ``(n - 1)q``.
+    """
+    return quantile * (n - (2 * C - 1)) + (C - 1)
+
+
 cpdef vector[double] calc_quantile(
     vector[double]& inputs,
     vector[double] quantiles,
     char* interpolation=b"linear",
     bint issorted=<bint>False,
+    double C=1,
 ) noexcept nogil:
     """Return quantiles for list of inputs.
 
@@ -123,17 +144,20 @@ cpdef vector[double] calc_quantile(
     issorted : bool, default=False
         Inputs are sorted in ascending order.
 
+    C : float, default=1
+        The constant ``C`` in the input rank ``x``, in the range [0, 1]. The
+        default of 1 matches NumPy's "linear" method, 1/2 matches "hazen", and
+        0 matches "weibull". With other values, the interpolation methods are
+        applied at the same rank.
+
     Returns
     -------
     out : array-like of shape (n_quantiles,)
         Quantiles for `inputs` as floats. Empty list if empty inputs.
     """
-    cdef double C = 1
-
     cdef intp_t n_inputs, n_quantiles
     cdef string s_interpolation
     cdef intp_t i
-    cdef double f
     cdef double quantile
     cdef double idx, v_floor, v_ceil, frac
     cdef vector[double] out
@@ -154,15 +178,13 @@ cpdef vector[double] calc_quantile(
     if not issorted:
         sort_cpp(inputs.begin(), inputs.end())
 
-    f = <int>n_inputs + 1 - (2 * C)
-
     out = vector[double](n_quantiles)
 
     for i in range(n_quantiles):
         quantile = quantiles[i]
 
         # Calculate the quantile's (potentially fractional) index.
-        idx = quantile * f + C - 1
+        idx = calc_quantile_index(<double>n_inputs, quantile, C)
 
         # Check if the quantile is the first or last value.
         if idx >= <int>n_inputs - 1:
@@ -207,21 +229,23 @@ cpdef vector[double] calc_weighted_quantile(
     vector[double] quantiles,
     char* interpolation=b"linear",
     bint issorted=<bint>False,
+    double C=1,
 ) noexcept nogil:
     """Return quantiles for list of weighted inputs.
 
     The weighted quantile is calculated by first calculating the empirical
-    cumulative distribution function (ECDF) from the weights and then finding
-    the first index where the proportion of the ECDF weight is greater than
-    the quantile's proportion of total weight.
+    cumulative distribution function (ECDF) from the weights, treating an
+    input with weight ``w`` as occupying ``w`` consecutive ranks, and then
+    finding the inputs on either side of the desired rank. Inputs with zero
+    weight are ignored.
 
     If the weights represent frequencies of appearance ``f_v`` for each value
     ``v``, the output is equivalent to calculating the unweighted quantile
     with each value ``v`` appearing ``f_v`` times.
 
     A desired quantile is calculated from the input rank ``x`` such that
-    ``x = (N + 1 - 2C)q + C``, where ``q`` is the quantile, ``N`` is the
-    number of samples, and ``C`` is a constant (degree of freedom).
+    ``x = (W + 1 - 2C)q + C``, where ``q`` is the quantile, ``W`` is the
+    total weight, and ``C`` is a constant (degree of freedom).
 
     If the desired quantile lies between two input ranks ``i < j``, then the
     quantile is interpolated based on the specified `interpolation` method.
@@ -252,22 +276,25 @@ cpdef vector[double] calc_weighted_quantile(
     issorted : bool, default=False
         Inputs and weights are sorted by inputs in ascending order.
 
+    C : float, default=1
+        The constant ``C`` in the input rank ``x``, in the range [0, 1]. The
+        default of 1 matches NumPy's "linear" method, 1/2 matches "hazen", and
+        0 matches "weibull". With other values, the interpolation methods are
+        applied at the same rank.
+
     Returns
     -------
     out : array-like of shape (n_quantiles,)
         Quantiles for `inputs` as floats. Empty list if empty inputs.
     """
-    cdef double C = 1
-
     cdef intp_t n_inputs, n_quantiles
     cdef string s_interpolation
-    cdef intp_t i, j
-    cdef double f
-    cdef double quantile
-    cdef vector[double] cum_weights, sorted_quantile_indices
+    cdef intp_t i, j, k
     cdef intp_t idx_floor, idx_ceil
-    cdef double p, p_floor, p_ceil
-    cdef double v_floor, v_ceil, frac
+    cdef double total_weight
+    cdef double quantile, pos, pos_floor, frac
+    cdef double v_floor, v_ceil
+    cdef vector[double] cum_weights, sorted_quantile_indices
     cdef vector[double] out
 
     n_inputs = inputs.size()
@@ -288,10 +315,9 @@ cpdef vector[double] calc_weighted_quantile(
     for i in range(1, n_inputs):
         cum_weights[i] = cum_weights[i - 1] + weights[i]
 
-    if cum_weights[n_inputs - 1] <= 0:
+    total_weight = cum_weights[n_inputs - 1]
+    if total_weight <= 0:
         return out
-
-    f = cum_weights[n_inputs - 1] + 1 - (2 * C)
 
     # Get the indices that would sort the quantiles in ascending order.
     sorted_quantile_indices = vector[double](n_quantiles)
@@ -304,99 +330,81 @@ cpdef vector[double] calc_weighted_quantile(
 
     out = vector[double](n_quantiles)
 
+    # Inputs with zero weight are never part of the distribution, so start at
+    # the first input with positive weight.
     idx_floor = 0
-    idx_ceil = 1
+    while weights[idx_floor] <= 0:
+        idx_floor += 1
+    j = idx_floor
 
     for i in range(n_quantiles):
         quantile = quantiles[i]
 
         # Assign the output based on the input quantile ordering.
-        i = <intp_t>sorted_quantile_indices[i]
+        k = <intp_t>sorted_quantile_indices[i]
 
-        # Calculate the quantile's proportion of total weight.
-        p = quantile * f + C
+        # Calculate the quantile's position, treating an input with weight `w`
+        # as occupying `w` consecutive positions (like `w` repeated values), so
+        # that integer weights match the unweighted quantile of repeated values.
+        # Positions before the first input or after the last one (possible when
+        # C < 1) give the first or last input, as for unweighted quantiles.
+        pos = calc_quantile_index(total_weight, quantile, C)
 
-        # Find the first index where the proportion of weight exceeds p.
-        for j in range(idx_floor, n_inputs):
-            if p >= cum_weights[j]:
-                if weights[j] > 0:
-                    idx_floor = j
-                    idx_ceil = j + 1
-            else:
-                break
+        # Find the last input with positive weight whose final position is at
+        # or before `pos`.
+        while j < n_inputs and cum_weights[j] - 1 <= pos:
+            if weights[j] > 0:
+                idx_floor = j
+            j += 1
 
-        # Ensure `idx_ceil` is not out of bounds.
-        if idx_ceil > n_inputs - 1:
-            idx_ceil = n_inputs - 1
+        # The final position of the floor input.
+        pos_floor = cum_weights[idx_floor] - 1
 
-        # Ensure the input indexed by `idx_ceil` does not have 0 weight.
-        while weights[idx_ceil] == 0:
-            idx_ceil = idx_ceil + 1
-            if idx_ceil > n_inputs - 1:
-                idx_ceil = idx_floor
-                break
-
-        # Check if the quantile is the first, last, or known index value.
-        if idx_floor >= n_inputs - 1:
-            out[i] = inputs[n_inputs - 1]
+        # Check if the quantile lies within the positions of the first input.
+        if pos < pos_floor:
+            out[k] = inputs[idx_floor]
             continue
-        if idx_ceil <= 0:
-            out[i] = inputs[0]
-            continue
-        if idx_floor == idx_ceil:
-            out[i] = inputs[idx_floor]
+
+        # Find the next input with positive weight.
+        idx_ceil = idx_floor + 1
+        while idx_ceil < n_inputs and weights[idx_ceil] <= 0:
+            idx_ceil += 1
+
+        # Check if the floor input is the last input with positive weight.
+        if idx_ceil >= n_inputs:
+            out[k] = inputs[idx_floor]
             continue
 
         v_floor = inputs[idx_floor]
         v_ceil = inputs[idx_ceil]
 
-        # Check if the quantile does not lie between two values.
-        if v_floor == v_ceil:
-            out[i] = v_floor
+        # The ceiling input's first position is one past the floor input's final
+        # position, so the fractional remainder is the distance from the floor.
+        frac = pos - pos_floor
+
+        # Check if the quantile lies at the floor value or within the ceiling.
+        if frac <= 0 or v_floor == v_ceil:
+            out[k] = v_floor
             continue
-
-        # Calculate the proportion of weights at indices from the ECDF.
-        p_floor = (cum_weights[idx_floor] - C) / f
-        p_ceil = (cum_weights[idx_ceil] - C) / f
-
-        # Ensure `p_floor` and `p_ceil` are not out of bounds.
-        p_floor = min(quantile, p_floor)
-        p_ceil = max(quantile, p_ceil)
-
-        # Interpolate the minimum proportion for `p_ceil` (for weights > 1).
-        # Equivalent to taking the index of the first occurrence of `v_ceil`.
-        p_ceil = p_floor + ((p_ceil - p_floor) / weights[idx_ceil])
-
-        # Check if the quantile lies at the interpolated ceiling value.
-        if quantile >= p_ceil:
-            out[i] = v_ceil
-            continue
-
-        # Calculate the fractional remainder.
-        frac = (quantile - p_floor) / (p_ceil - p_floor)
-
-        # Check if the quantile lies at the ceiling or floor values.
-        if frac <= 0:
-            out[i] = v_floor
-            continue
-        elif frac >= 1:
-            out[i] = v_ceil
+        if frac >= 1:
+            out[k] = v_ceil
             continue
 
         # Interpolate the quantile, as it lies between two values.
         if s_interpolation == <char*>b"lower":
-            out[i] = v_floor
+            out[k] = v_floor
         elif s_interpolation == <char*>b"higher":
-            out[i] = v_ceil
+            out[k] = v_ceil
         elif s_interpolation == <char*>b"midpoint":
-            out[i] = 0.5 * (v_floor + v_ceil)
+            out[k] = 0.5 * (v_floor + v_ceil)
         elif s_interpolation == <char*>b"nearest":
-            if fabs(frac - 0.5) < 1e-16:
-                out[i] = v_floor if cum_weights[idx_floor] % 2 else v_ceil
+            if frac == 0.5:
+                # Round half to the even position, as NumPy does.
+                out[k] = v_floor if floor(pos_floor / 2) * 2 == pos_floor else v_ceil
             else:
-                out[i] = v_floor if frac < 0.5 else v_ceil
+                out[k] = v_floor if frac < 0.5 else v_ceil
         elif s_interpolation == <char*>b"linear":
-            out[i] = v_floor + frac * (v_ceil - v_floor)
+            out[k] = v_floor + frac * (v_ceil - v_floor)
 
     return out
 

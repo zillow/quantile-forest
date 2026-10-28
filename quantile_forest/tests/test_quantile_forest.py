@@ -2134,6 +2134,102 @@ def test_calc_weighted_quantile():
         calc_weighted_quantile([1, 2], [1, 1], [0.5], interpolation=None)
 
 
+@pytest.mark.parametrize("interpolation", ["linear", "lower", "higher", "midpoint", "nearest"])
+def test_calc_quantile_matches_numpy(interpolation):
+    """Check that quantiles match NumPy, including weights given as repeats."""
+    rng = np.random.default_rng(0)
+    for _ in range(300):
+        n = int(rng.integers(1, 15))
+        inputs = np.sort(rng.integers(0, 5, size=n).astype(float))  # many ties
+        weights = rng.integers(0, 4, size=n).astype(float)  # some zero weights
+        weights[rng.integers(n)] += 1
+        repeated = np.repeat(inputs, weights.astype(int))
+
+        # Include quantiles that land exactly on a rank of the repeated values.
+        quantiles = list(rng.random(3)) + [0.0, 1.0]
+        if len(repeated) > 1:
+            quantiles += list(rng.integers(0, len(repeated), size=3) / (len(repeated) - 1))
+
+        expected = np.quantile(inputs, quantiles, method=interpolation)
+        actual = calc_quantile(inputs, quantiles, interpolation.encode(), issorted=True)
+        assert_allclose(actual, expected, rtol=1e-12, atol=1e-12)
+
+        expected = np.quantile(repeated, quantiles, method=interpolation)
+        actual = calc_weighted_quantile(
+            inputs, weights, quantiles, interpolation.encode(), issorted=True
+        )
+        assert_allclose(actual, expected, rtol=1e-12, atol=1e-12)
+
+
+@pytest.mark.parametrize("C, method", [(0, "weibull"), (0.5, "hazen"), (1, "linear")])
+@pytest.mark.parametrize("interpolation", ["linear", "lower", "higher", "midpoint", "nearest"])
+def test_calc_quantile_rank_constant(C, method, interpolation):
+    """Check quantiles for each constant C in the rank, including weighted ones."""
+    rng = np.random.default_rng(0)
+    for _ in range(300):
+        n = int(rng.integers(1, 15))
+        inputs = np.sort(rng.integers(0, 5, size=n).astype(float))  # many ties
+        weights = rng.integers(0, 4, size=n).astype(float)  # some zero weights
+        weights[rng.integers(n)] += 1
+        repeated = np.repeat(inputs, weights.astype(int))
+        n_repeated = len(repeated)
+
+        # Include the ends, which C < 1 can index past, and exact ranks.
+        quantiles = list(rng.random(3)) + [0.0, 1.0]
+        if n_repeated + 1 - 2 * C > 0:
+            ranks = rng.integers(0, n_repeated, size=3)
+            quantiles += list((ranks + 1 - C) / (n_repeated + 1 - 2 * C))
+
+        kwargs = {"issorted": True, "C": C}
+        expected = calc_quantile(repeated, quantiles, interpolation.encode(), **kwargs)
+        if interpolation == "linear":
+            # Check against NumPy's method for this constant.
+            assert_allclose(
+                expected, np.quantile(repeated, quantiles, method=method), rtol=1e-12, atol=1e-12
+            )
+
+        # Check that integer weights match the quantiles of the repeated values.
+        actual = calc_weighted_quantile(
+            inputs, weights, quantiles, interpolation.encode(), **kwargs
+        )
+        assert_allclose(actual, expected, rtol=1e-12, atol=1e-12)
+
+
+@pytest.mark.parametrize("interpolation", ["linear", "lower", "higher", "midpoint", "nearest"])
+def test_calc_weighted_quantile_ignores_zero_weights(interpolation):
+    """Check that zero-weight inputs never affect the weighted quantile."""
+    inputs = [-0.7, -0.1, 0.2, 1.1, 1.5]
+    weights = [0, 3, 3, 0, 0]
+
+    # The lowest input has zero weight, so q=0 must return the next input.
+    actual = calc_weighted_quantile(inputs, weights, [0.0, 1.0], interpolation.encode())
+    assert_allclose(actual, [-0.1, 0.2])
+
+    # Fractional weights: q=1 must reach the last input with positive weight.
+    actual = calc_weighted_quantile([0.0, 1.0], [1.0, 0.05], [1.0], interpolation.encode())
+    assert_allclose(actual, [1.0])
+
+
+@pytest.mark.parametrize("name", FOREST_REGRESSORS)
+@pytest.mark.parametrize("interpolation", ["linear", "lower", "higher", "midpoint", "nearest"])
+def test_predict_weighted_matches_unweighted(name, interpolation):
+    """Check that weighted and unweighted quantiles agree with count weights."""
+    X, y = datasets.make_regression(n_samples=400, n_features=4, noise=10, random_state=2)
+    est = FOREST_REGRESSORS[name](
+        n_estimators=5, max_samples_leaf=None, min_samples_leaf=20, random_state=2
+    )
+    est.fit(X, y)
+    X_test = np.random.default_rng(2).normal(size=(200, 4))
+
+    # With leaf weights off, the weights are counts, so both must agree.
+    quantiles = [0.0, 0.25, 0.5, 0.75, 1.0]
+    kwargs = {"quantiles": quantiles, "interpolation": interpolation}
+    assert_allclose(
+        est.predict(X_test, weighted_quantile=True, **kwargs),
+        est.predict(X_test, weighted_quantile=False, **kwargs),
+    )
+
+
 def test_calc_quantile_rank():
     """Check quantile rank calculations."""
     kinds = [b"rank", b"weak", b"strict", b"mean"]
