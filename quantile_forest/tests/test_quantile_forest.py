@@ -392,6 +392,32 @@ def test_predict_quantiles_invalid(name, max_samples_leaf, weighted_quantile):
             est.forest_.predict(quantiles, X_leaves, weighted_quantile=weighted_quantile)
 
 
+@pytest.mark.parametrize("name", FOREST_REGRESSORS)
+@pytest.mark.parametrize("max_samples_leaf", [1, None])
+def test_predict_uses_fitted_trees(name, max_samples_leaf):
+    """Check that predictions use the fitted trees, even if n_estimators changes."""
+    X, y = datasets.make_regression(n_samples=120, n_features=2, random_state=0)
+    X_train, y_train, X_test = X[:100], y[:100], X[100:]
+
+    ForestRegressor = FOREST_REGRESSORS[name]
+
+    est = ForestRegressor(
+        n_estimators=10, max_samples_leaf=max_samples_leaf, bootstrap=True, random_state=0
+    )
+    est.fit(X_train, y_train)
+
+    quantiles = [0.1, 0.5, 0.9]
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")  # some samples have no OOB trees
+        y_pred = est.predict(X_test, quantiles=quantiles)
+        y_pred_oob = est.predict(X_train, quantiles=quantiles, oob_score=True)
+
+        for n_estimators in [5, 20]:  # e.g., set before a warm-start refit
+            est.set_params(n_estimators=n_estimators)
+            assert_allclose(est.predict(X_test, quantiles=quantiles), y_pred)
+            assert_allclose(est.predict(X_train, quantiles=quantiles, oob_score=True), y_pred_oob)
+
+
 def check_predict_quantiles(
     name,
     max_samples,

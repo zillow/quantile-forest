@@ -456,7 +456,8 @@ class BaseForestQuantileRegressor(ForestRegressor):
                 args += (self.sample_weight_,)
             n_samples_bootstrap = _get_n_samples_bootstrap(*args)
 
-        shape = (n_samples if not self.bootstrap else n_samples_bootstrap, self.n_estimators)
+        n_estimators = len(self.estimators_)
+        shape = (n_samples if not self.bootstrap else n_samples_bootstrap, n_estimators)
         bootstrap_indices = np.empty(shape, dtype=np.int64)
         X_leaves_bootstrap = np.empty(shape, dtype=np.int64)
         for i, estimator in enumerate(self.estimators_):
@@ -476,7 +477,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
             # Reassign bootstrap indices to account for target sorting.
             bootstrap_indices = np.argsort(sorter, axis=0)[bootstrap_indices]
 
-        bootstrap_indices = bootstrap_indices.reshape(-1, self.n_estimators, n_outputs)
+        bootstrap_indices = bootstrap_indices.reshape(-1, n_estimators, n_outputs)
         bootstrap_indices += 1  # for sparse matrix (0s as empty)
 
         # Get the maximum number of nodes (internal + leaves) across trees.
@@ -904,10 +905,11 @@ class BaseForestQuantileRegressor(ForestRegressor):
             y_bound_leaves = np.asarray(self.forest_.y_bound_leaves)
             y_train = np.asarray(self.forest_.y_train).T
             n_samples = X.shape[0]  # X may be sparse, so avoid len(X)
+            n_trees = X_leaves.shape[1]  # the fitted trees, even if n_estimators changed
             y_pred = np.empty((n_samples, y_train.shape[1], len(quantiles)))
             for output in range(y_train.shape[1]):
-                leaf_vals = np.empty((n_samples, self.n_estimators))
-                for tree in range(self.n_estimators):
+                leaf_vals = np.empty((n_samples, n_trees))
+                for tree in range(n_trees):
                     if X_indices is None:  # in-bag scoring
                         leaves = X_leaves[:, tree]
                         train_indices = y_train_leaves[tree, leaves, output, 0]
