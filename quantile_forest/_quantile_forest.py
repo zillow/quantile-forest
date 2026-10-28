@@ -31,6 +31,7 @@ from warnings import warn
 import joblib
 import numpy as np
 import sklearn
+from scipy.sparse import issparse
 from sklearn.ensemble._forest import (
     ForestRegressor,
     _generate_sample_indices,
@@ -55,6 +56,22 @@ from ._quantile_forest_fast import QuantileForest
 from ._utils import generate_unsampled_indices, group_indices_by_value, map_indices_to_leaves
 
 sklearn_version = parse_version(sklearn.__version__)
+
+
+def _hash_X(X):
+    """Hash input samples so that equal data gives equal hashes.
+
+    Fit validates sparse inputs as CSC and predict validates them as CSR, so
+    sparse inputs are hashed in canonical CSC form, independent of the format
+    and container they were passed in.
+    """
+    if issparse(X):
+        X = X.tocsc()  # no copy if already CSC, as it is during fit
+        if not X.has_canonical_format:
+            X = X.copy()
+            X.sum_duplicates()  # also sorts the indices
+        return joblib.hash((X.shape, X.data, X.indices, X.indptr))
+    return joblib.hash(X)
 
 
 class BaseForestQuantileRegressor(ForestRegressor):
@@ -204,7 +221,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
 
         self.sorter_ = sorter
         self.n_train_samples_ = len(y_sorted)
-        self.X_train_hash_ = joblib.hash(X)
+        self.X_train_hash_ = _hash_X(X)
         self.unsampled_indices_ = None
 
         return self
@@ -544,7 +561,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
                 raise ValueError(
                     "If `indices` are None, OOB samples must be same length as training samples."
                 )
-            elif joblib.hash(X) != self.X_train_hash_:
+            elif _hash_X(X) != self.X_train_hash_:
                 warn("OOB samples are not identical to training samples.")
 
         if indices is not None and n_samples != len(indices):
@@ -758,9 +775,10 @@ class BaseForestQuantileRegressor(ForestRegressor):
             y_train_leaves = np.asarray(self.forest_.y_train_leaves)
             y_bound_leaves = np.asarray(self.forest_.y_bound_leaves)
             y_train = np.asarray(self.forest_.y_train).T
-            y_pred = np.empty((len(X), y_train.shape[1], len(quantiles)))
+            n_samples = X.shape[0]  # X may be sparse, so avoid len(X)
+            y_pred = np.empty((n_samples, y_train.shape[1], len(quantiles)))
             for output in range(y_train.shape[1]):
-                leaf_vals = np.empty((len(X), self.n_estimators))
+                leaf_vals = np.empty((n_samples, self.n_estimators))
                 for tree in range(self.n_estimators):
                     if X_indices is None:  # in-bag scoring
                         leaves = X_leaves[:, tree]
@@ -773,12 +791,13 @@ class BaseForestQuantileRegressor(ForestRegressor):
                     else:  # out-of-bag scoring
                         idx_mask = X_indices[:, tree] == 1
                         leaves = X_leaves[idx_mask, tree]
-                        train_indices = np.zeros(len(X), dtype=int)
+                        train_indices = np.zeros(n_samples, dtype=int)
                         train_indices[idx_mask] = y_train_leaves[tree, leaves, output, 0]
                         leaf_vals[:, tree] = np.nan
                         leaf_vals[idx_mask, tree] = y_train[train_indices[idx_mask] - 1, output]
                         if self.monotonic_cst is not None:
-                            clip_min, clip_max = np.full(len(X), -np.inf), np.full(len(X), np.inf)
+                            clip_min = np.full(n_samples, -np.inf)
+                            clip_max = np.full(n_samples, np.inf)
                             clip_min[idx_mask] = y_bound_leaves[tree, leaves, 0]
                             clip_max[idx_mask] = y_bound_leaves[tree, leaves, 1]
                             leaf_vals[:, tree] = np.clip(leaf_vals[:, tree], clip_min, clip_max)
