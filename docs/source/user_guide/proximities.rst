@@ -10,14 +10,25 @@ Proximity counts measure how often a quantile forest puts a sample in the same l
     >>> from quantile_forest import RandomForestQuantileRegressor
     >>> X, y = datasets.load_diabetes(return_X_y=True)
     >>> X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25)
-    >>> qrf = RandomForestQuantileRegressor(max_samples_leaf=None).fit(X_train, y_train)
+    >>> qrf = RandomForestQuantileRegressor().fit(X_train, y_train)
     >>> proximities = qrf.proximity_counts(X_test)  # proximity counts for test data
 
 For each test sample, the method outputs a list of tuples of the training index and proximity count, listed in descending order by proximity count. The proximity count of a training sample is the number of times that it is among the samples kept in the leaf nodes that the test sample falls into, summed across the trees. For example, a test sample with an output of [(1, 5), (0, 3), (3, 1)] means that the training samples that were (zero-)indexed as 1, 0, and 3 during model fitting were kept 5, 3, and 1 times, respectively, in the leaf nodes that the test sample falls into.
 
-The counts therefore depend on which training samples the leaf nodes keep:
+By default (`max_samples_leaf=1`), each leaf node keeps one randomly selected training sample, so each tree adds one count, and the counts of a test sample add up to the number of trees::
 
-- Each leaf node keeps at most `max_samples_leaf` samples. By default (`max_samples_leaf=1`), each leaf node keeps one sample, so each tree adds one count. Setting `max_samples_leaf=None`, as above, keeps all of the training samples in each leaf node.
+    >>> sum(count for _, count in proximities[0])
+    100
+
+So the counts cover at most as many training samples as there are trees, and a training sample that shares a leaf node with the test sample counts only if the leaf node kept it. To count all of the training samples in the leaf nodes, keep them all by setting `max_samples_leaf=None`::
+
+    >>> qrf = RandomForestQuantileRegressor(max_samples_leaf=None)
+    >>> qrf.fit(X_train, y_train)
+    RandomForestQuantileRegressor(max_samples_leaf=None)
+    >>> proximities = qrf.proximity_counts(X_test)
+
+The counts also depend on which training samples each tree uses:
+
 - With bootstrapping (`bootstrap=True`), each tree keeps only the samples drawn for it, and a sample drawn more than once is counted once for each draw.
 - Samples with zero or negative weight are not kept.
 
@@ -25,7 +36,8 @@ For a model fit without sample weights, the proximity counts are the weights tha
 
     >>> X_train_leaves = qrf.apply(X_train)
     >>> X_test_leaves = qrf.apply(X_test)
-    >>> proximity_matrix = (X_test_leaves[:, None, :] == X_train_leaves[None, :, :]).mean(axis=2)
+    >>> same_leaf = X_test_leaves[:, None, :] == X_train_leaves[None, :, :]
+    >>> proximity_matrix = same_leaf.mean(axis=2)
     >>> proximity_matrix.shape == (len(X_test), len(X_train))
     True
 

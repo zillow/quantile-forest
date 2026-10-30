@@ -132,6 +132,10 @@ html_context = {"default_mode": "light"}
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_images", "_static", "_static/css"]
 
+# Pages that redirect from the old addresses of moved pages (e.g., renamed examples), copied
+# to the output directory. They can be removed once the old addresses are no longer in use.
+html_extra_path = ["_redirects"]
+
 # Output file base name for HTML help builder.
 html_short_title = "quantile-forest"
 

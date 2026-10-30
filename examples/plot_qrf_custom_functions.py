@@ -10,8 +10,6 @@ this scenario, we compute the empirical cumulative distribution function
 (ECDF) for test samples.
 """
 
-from itertools import chain
-
 import altair as alt
 import numpy as np
 import pandas as pd
@@ -25,7 +23,7 @@ random_state = np.random.RandomState(0)
 n_test_samples = 100
 
 
-def predict(qrf, X, quantiles=0.5, what=None):
+def predict(qrf, X, y_train, quantiles=0.5, what=None):
     """Custom prediction method that allows user-specified function.
 
     Parameters
@@ -34,35 +32,34 @@ def predict(qrf, X, quantiles=0.5, what=None):
         Quantile forest model object.
     X : array-like, of shape (n_samples, n_features)
         New test data.
+    y_train : array-like, of shape (n_train_samples,) or (n_train_samples, n_outputs)
+        Training target values, in the order used to fit the model.
     quantiles : float or list of floats, default=0.5
         Scalar or vector of quantiles for quantile prediction.
     what : Any, optional
         User-specified function for prediction used instead of quantiles.
-        Must return a numeric vector.
 
     Returns
     -------
-    Output array with the user-specified function applied (if any).
+    Output array, or list of outputs of the user-specified function (if any).
     """
     if what is None:
         return qrf.predict(X, quantiles=quantiles)
 
-    # Get the complete set of proximities for each sample.
+    # Get the complete set of proximities for each sample: pairs of the index of
+    # a training sample and the number of times that it is kept in the leaves
+    # of the test sample, which is its weight for prediction (by default).
     proximities = qrf.proximity_counts(X)
 
-    # Retrieve the unsorted training responses from the model (stored in sorted order).
-    reverse_sorter = np.argsort(qrf.sorter_, axis=0)
-    y_train = np.empty_like(qrf.forest_.y_train).T
-    for i in range(y_train.shape[1]):
-        y_train[:, i] = np.asarray(qrf.forest_.y_train)[i, reverse_sorter[:, i]]
-
     # For each sample, construct an array of the training responses used for prediction.
-    s = [np.concatenate([np.repeat(y_train[i[0]], i[1]) for i in prox]) for prox in proximities]
+    y_train = np.asarray(y_train)
+    s = [
+        np.repeat(y_train[[i for i, _ in prox]], [c for _, c in prox], axis=0)
+        for prox in proximities
+    ]
 
-    # Apply the user-specified function for each sample. Must return a numeric vector.
-    y_out = np.array([what(s_i) for s_i in s])
-
-    return y_out
+    # Apply the user-specified function for each sample.
+    return [what(s_i) for s_i in s]
 
 
 # Load the Diabetes dataset.
@@ -76,20 +73,17 @@ qrf = RandomForestQuantileRegressor(random_state=random_state)
 qrf.fit(X_train, y_train)
 
 # Define a user-specified function.
-# Here we randomly sample 1,000 values with replacement from the empirical distribution.
-func = lambda x: random_state.choice(x, size=1000)
+# Here we calculate the empirical cumulative distribution function (ECDF).
+func = lambda x: sp.stats.ecdf(x).cdf
 
-# Output array with the user-specified function applied to each sample's empirical distribution.
-y_out = predict(qrf, X_test, what=func)
+# Output list with the user-specified function applied to each sample's empirical distribution.
+y_out = predict(qrf, X_test, y_train, what=func)
 
 dfs = []
 for idx in range(n_test_samples):
-    # Calculate the ECDF from output array.
-    y_ecdf = [sp.stats.ecdf(y_i).cdf for y_i in y_out[idx].reshape(1, -1)]
-
-    # Get quantiles (x-axis) and probabilities (y-axis).
-    quantiles = list(chain.from_iterable([y_i.quantiles for y_i in y_ecdf]))
-    probabilities = list(chain.from_iterable([y_i.probabilities for y_i in y_ecdf]))
+    # Get the quantiles (x-axis) and probabilities (y-axis) of the ECDF.
+    quantiles = y_out[idx].quantiles.tolist()
+    probabilities = y_out[idx].probabilities.tolist()
 
     df_i = pd.DataFrame(
         {
