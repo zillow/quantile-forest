@@ -207,9 +207,16 @@ class BaseForestQuantileRegressor(ForestRegressor):
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights. If None, then samples are equally weighted. Splits
             that would create child nodes with net zero or negative weight are
-            ignored while searching for a split in each node. Samples with
-            zero or negative weight are excluded from the leaf samples used for
-            prediction.
+            ignored while searching for a split in each node. The leaf samples
+            used for prediction are weighted too, so that a sample with weight
+            2 counts like two samples with weight 1. (With bootstrapping on
+            scikit-learn 1.9 or later, the bootstrap samples are drawn in
+            proportion to the weights instead.) Only the relative weights
+            matter: where the number of samples does too (e.g., for quantiles
+            that interpolate between samples), a sample of average positive
+            weight counts as one sample. Samples with zero or negative weight
+            are excluded from the leaf samples. See
+            :ref:`user-guide-fit-predict`.
 
         sparse_pickle : bool, default=False
             Pickle the underlying data structure using a SciPy sparse matrix.
@@ -286,9 +293,24 @@ class BaseForestQuantileRegressor(ForestRegressor):
 
         self.sample_weight_ = sample_weight
 
+        # Get the weights of the leaf samples, if they are weighted. With an
+        # integer `max_samples_leaf=1`, each leaf keeps one sample, so pick it
+        # in proportion to its weight instead.
+        leaf_weight = self._get_leaf_weight(sample_weight)
+        weighted_subsample = leaf_weight is not None and (
+            isinstance(self.max_samples_leaf, (Integral, np.integer))
+            and self.max_samples_leaf == 1
+        )
+        if weighted_subsample:
+            leaf_weight = None
+
         # Get map of tree leaf nodes to training indices.
         y_train_leaves = self._get_y_train_leaves(
-            X, y_sorted, sorter=sorter, sample_weight=sample_weight_sorted
+            X,
+            y_sorted,
+            sorter=sorter,
+            sample_weight=sample_weight_sorted,
+            weighted_subsample=weighted_subsample,
         )
 
         # Get map of tree leaf nodes to target value bounds (for monotonicity constraints).
@@ -300,6 +322,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
             y_train_leaves,
             y_bound_leaves,
             sparse_pickle=sparse_pickle,
+            sample_weight=None if leaf_weight is None else leaf_weight[sorter].T,
         )
 
         self.sorter_ = sorter
@@ -314,6 +337,43 @@ class BaseForestQuantileRegressor(ForestRegressor):
 
         return self
 
+    def _get_leaf_weight(self, sample_weight):
+        """Return the weights of the training samples in the leaf nodes.
+
+        Scikit-learn fits each tree with the sample weights, except that with
+        bootstrapping, scikit-learn 1.9 and later draw the bootstrap samples in
+        proportion to the weights and fit each tree with the counts of the
+        samples drawn. So the leaf samples are weighted only if the trees are
+        fit with the weights, so that a sample with weight 2 counts like two
+        samples with weight 1.
+
+        Parameters
+        ----------
+        sample_weight : array-like of shape (n_samples,)
+            Sample weights. If None, then samples are equally weighted.
+
+        Returns
+        -------
+        leaf_weight : array-like of shape (n_samples,)
+            Weights of the training samples in the leaf nodes, which are 0 for
+            samples with zero or negative weight. None if the leaf samples are
+            not weighted, including if all positive weights are equal.
+        """
+        if sample_weight is None:
+            return None
+
+        if self.bootstrap and sklearn_version >= parse_version("1.9.0"):
+            return None  # the bootstrap samples are drawn in proportion to the weights
+
+        positive = sample_weight > 0
+        positive_weight = sample_weight[positive]
+        if not np.any(positive_weight != positive_weight[:1]):
+            return None  # samples with zero weight are already excluded
+
+        # Keep the weights as given (e.g., exact integers), since predictions
+        # scale them where the number of samples matters.
+        return np.where(positive, sample_weight, 0).astype(np.float64)
+
     @staticmethod
     def _get_y_train_leaves_slice(
         bootstrap_indices,
@@ -323,6 +383,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
         max_node_count,
         max_samples_leaf,
         random_state,
+        weighted_subsample=False,
     ):
         """Return a mapping of training sample indices to a tree's leaf nodes.
 
@@ -354,6 +415,10 @@ class BaseForestQuantileRegressor(ForestRegressor):
         random_state : int, RandomState instance
             Controls the sampling of the training indices at each leaf node.
 
+        weighted_subsample : bool, default=False
+            Sample the training indices at each leaf node in proportion to
+            their weights. Only used if `max_samples_leaf=1`.
+
         Returns
         -------
         y_train_leaves_slice : array-like of shape \
@@ -371,12 +436,15 @@ class BaseForestQuantileRegressor(ForestRegressor):
         # Group training indices by leaf node.
         leaf_indices, leaf_values_list = group_indices_by_value(X_leaves_bootstrap)
 
+        weights = None
         positive_mask = None
         if sample_weight is not None:
             # Weights are shared across outputs, so output 0 suffices.
-            positive_mask = sample_weight[bootstrap_indices[:, 0] - 1, 0] > 0
+            weights = sample_weight[bootstrap_indices[:, 0] - 1, 0]
+            positive_mask = weights > 0
             if positive_mask.all():
                 positive_mask = None
+        weighted_subsample = weighted_subsample and weights is not None and max_samples_leaf == 1
 
         if leaf_subsample or positive_mask is not None:
             if leaf_subsample:
@@ -388,8 +456,13 @@ class BaseForestQuantileRegressor(ForestRegressor):
                 if leaf_subsample:
                     # Sample leaf to length `max_samples_leaf`.
                     if len(leaf_values_list[j]) > max_samples_leaf:
-                        rng.shuffle(leaf_values_list[j])  # to ensure random sampling
-                        leaf_values_list[j] = leaf_values_list[j][:max_samples_leaf]
+                        if weighted_subsample:
+                            # Pick one sample with probability proportional to its weight.
+                            leaf_weights = weights[leaf_values_list[j]]
+                            leaf_values_list[j] = rng.choices(leaf_values_list[j], leaf_weights)
+                        else:
+                            rng.shuffle(leaf_values_list[j])  # to ensure random sampling
+                            leaf_values_list[j] = leaf_values_list[j][:max_samples_leaf]
                 if len(leaf_values_list[j]) == 0:
                     leaf_values_list[j] = [0]
 
@@ -408,7 +481,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
 
         return y_train_leaves_slice
 
-    def _get_y_train_leaves(self, X, y, sorter=None, sample_weight=None):
+    def _get_y_train_leaves(self, X, y, sorter=None, sample_weight=None, weighted_subsample=False):
         """Return a mapping of each leaf node to its list of training indices.
 
         The ``apply`` function is used on the ``X`` values to obtain the leaf
@@ -434,6 +507,10 @@ class BaseForestQuantileRegressor(ForestRegressor):
             that would create child nodes with net zero or negative weight are
             ignored while searching for a split in each node. For each output,
             the ordering of the weights correspond to the sorted samples.
+
+        weighted_subsample : bool, default=False
+            Sample the training indices at each leaf node in proportion to
+            their weights. Only used if `max_samples_leaf=1`.
 
         Returns
         -------
@@ -523,6 +600,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
                 max_node_count,
                 max_samples_leaf,
                 estimator.random_state,
+                weighted_subsample=weighted_subsample,
             )
             for i, estimator in enumerate(self.estimators_)
         ]
@@ -894,7 +972,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
         self,
         X,
         quantiles=None,
-        interpolation="linear",
+        interpolation="averaged_inverted_cdf",
         weighted_quantile=True,
         weighted_leaves=False,
         aggregate_leaves_first=True,
@@ -917,10 +995,27 @@ class BaseForestQuantileRegressor(ForestRegressor):
             predicts the mean. If None, the model uses the value of
             `default_quantiles`.
 
-        interpolation : {"linear", "lower", "higher", "midpoint", "nearest"}, \
-                default="linear"
-            Specifies the interpolation method to use when the desired
-            quantile lies between two data points ``i < j``:
+        interpolation : {"averaged_inverted_cdf", "inverted_cdf", "linear", \
+                "lower", "higher", "midpoint", "nearest"}, \
+                default="averaged_inverted_cdf"
+            Specifies how to calculate a quantile from the training samples:
+
+            - If "averaged_inverted_cdf", then the smallest training target
+              such that a fraction (at least) ``q`` of the weighted training
+              samples are at or below it, except that if the fraction is
+              exactly ``q``, that target and the next one are averaged, so
+              that the median is the usual median.
+            - If "inverted_cdf", then the same, without averaging.
+
+            These match NumPy's methods of the same names, and the default
+            matches scikit-learn's weighted quantiles (e.g., the leaf values
+            of trees fit with ``criterion="absolute_error"``). They depend
+            only on the relative weights of the training samples, so a sample
+            with weight 2 counts exactly like two samples with weight 1.
+
+            The other methods interpolate when the desired quantile lies
+            between two data points ``i < j``, as NumPy's methods of the same
+            names do:
 
             - If "linear", then ``i + (j - i) * fraction``, where ``fraction``
               is the fractional part of the index surrounded by ``i`` and
@@ -929,6 +1024,9 @@ class BaseForestQuantileRegressor(ForestRegressor):
             - If "higher", then ``j``.
             - If "nearest", then ``i`` or ``j``, whichever is nearest.
             - If "midpoint", then ``(i + j) / 2``.
+
+            .. versionchanged:: 1.5
+                The default changed from "linear" to "averaged_inverted_cdf".
 
             .. note::
                 When `max_samples_leaf=1`, the specific interpolation
