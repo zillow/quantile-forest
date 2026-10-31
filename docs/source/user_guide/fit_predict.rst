@@ -21,6 +21,21 @@ Let's fit a quantile forest on a simple regression dataset::
 
 During model initialization, the parameter `max_samples_leaf` can be specified, which determines the maximum number of samples per leaf node to retain. If `max_samples_leaf` is smaller than the number of samples in a given leaf node, then a subset of values are randomly selected. By default, the model retains one randomly selected sample per leaf node (`max_samples_leaf=1`), which enables the use of optimizations at prediction time that are not available when a variable number of samples may be retained per leaf. All samples can be retained by specifying `max_samples_leaf=None`. Note that the number of retained samples can materially impact the size of the model object.
 
+Sample Weights
+~~~~~~~~~~~~~~
+
+Sample weights can be specified when fitting the model, as for a scikit-learn forest, which uses them to fit the trees::
+
+    >>> import numpy as np
+    >>> sample_weight = np.random.default_rng(0).uniform(0.5, 2, size=len(y_train))
+    >>> qrf_weighted = RandomForestQuantileRegressor()
+    >>> qrf_weighted.fit(X_train, y_train, sample_weight=sample_weight)
+    RandomForestQuantileRegressor(...)
+
+The training samples used for prediction are weighted too: a sample with weight 2 counts like two samples with weight 1, and samples with zero weight are left out. With bootstrapping (`bootstrap=True`), scikit-learn 1.9 and later draw the bootstrap samples in proportion to the weights, so each sample counts once for each time it is drawn. Otherwise, the samples in each leaf node are weighted, except that if each leaf node keeps one sample (`max_samples_leaf=1`), the sample is picked with probability proportional to its weight. With `weighted_leaves=True`, the size of a leaf node is the total weight of its samples. Either way, as without weights, the mean predictions of a model fit with `max_samples_leaf=None` equal those of a scikit-learn forest if `aggregate_leaves_first=False` (see below), and so do the medians of a model fit with `criterion="absolute_error"` (with the default `interpolation="averaged_inverted_cdf"`). Proximity counts do not include the weights.
+
+Only the relative weights matter. The quantiles of `interpolation="inverted_cdf"` and `interpolation="averaged_inverted_cdf"` depend on nothing else, so integer weights give the same quantiles as repeating each sample that number of times. The other interpolation methods also depend on the number of samples, for which a sample of average (positive) weight counts as one sample. For an example that uses sample weights to correct for oversampling, see :ref:`gallery_plot_qrf_sample_weights`.
+
 Making Predictions
 ~~~~~~~~~~~~~~~~~~
 
@@ -63,6 +78,12 @@ The output of the `predict` method is an array with one column for each specifie
     >>> y_pred = qrf.predict(X_test, quantiles=[0.5, 0.25, 0.75])
     >>> bool((y_pred[:, 0] >= y_pred[:, 1]).all())
     True
+
+By default (`interpolation="averaged_inverted_cdf"`), a quantile `q` is the smallest training target such that at least a fraction `q` of the (weighted) training samples are at or below it, or, if exactly that fraction are, its average with the next target, so that the median is the usual median. This is NumPy's method of the same name and how scikit-learn calculates weighted quantiles. Other methods can be specified with `interpolation`, such as linear interpolation between training targets, the default before version 1.5::
+
+    >>> y_pred = qrf.predict(X_test, interpolation="linear")
+
+For a comparison of the methods, see :ref:`gallery_plot_qrf_interpolation_methods`.
 
 Multi-target quantile regression is also supported. If the target values are multi-dimensional, then the second output column will correspond to the number of targets::
 

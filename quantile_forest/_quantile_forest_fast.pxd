@@ -19,7 +19,9 @@ cdef class QuantileForest:
     cdef public const float64_t[:, ::1] y_train
     cdef public const intp_t[:, :, :, ::1] y_train_leaves
     cdef public const float64_t[:, :, ::1] y_bound_leaves
+    cdef public const float64_t[:, ::1] sample_weight
     cdef public bint sparse_pickle
+    cdef double weight_unit
 
     # Methods.
     cpdef cnp.ndarray predict(

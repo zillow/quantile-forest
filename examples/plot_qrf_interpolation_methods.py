@@ -5,10 +5,14 @@ Comparing Quantile Interpolation Methods
 This example illustrates different interpolation methods that can be used
 during prediction in quantile regression forests (QRF). When a desired quantile
 lies between two data points, interpolation methods determine the predicted
-value. In this toy example, the QRF creates a split that divides the samples
-into two groups (samples 1–3 and samples 4–5), with quantiles calculated
-separately for each. The interpolation methods demonstrate how predictions are
-handled when a quantile does not exactly match a data point.
+value. The inverted cumulative distribution function (CDF) methods instead
+predict the data point at the desired fraction of the samples (or, for the
+averaged method, the average of two data points if the fraction falls exactly
+between them). The averaged inverted CDF method is the default. In this toy
+example, the QRF creates a split that divides the samples into two groups
+(samples 1–3 and samples 4–5), with quantiles calculated separately for each.
+The interpolation methods demonstrate how predictions are handled when a
+quantile does not exactly match a data point.
 
 """
 
@@ -41,6 +45,8 @@ interpolations = {
     "Higher": "#0d4599",
     "Midpoint": "#f2a619",
     "Nearest": "#a6e5ff",
+    "Inverted CDF": "#8a3ffc",
+    "Averaged Inverted CDF": "#24a148",
 }
 
 legend = {"Actual": "#808080"}
@@ -65,7 +71,8 @@ for idx, interval in enumerate(intervals):
     # Populate data based on prediction results with different interpolations.
     for interpolation in interpolations:
         # Get predictions using the specified quantiles and interpolation method.
-        y_pred = qrf.predict(X, quantiles=quantiles, interpolation=interpolation.lower())
+        method = interpolation.lower().replace(" ", "_")  # e.g., "averaged_inverted_cdf"
+        y_pred = qrf.predict(X, quantiles=quantiles, interpolation=method)
 
         data["method"].extend([interpolation] * len(y))
         data["X"].extend([f"Sample {idx + 1} ({x})" for idx, x in enumerate(X.tolist())])

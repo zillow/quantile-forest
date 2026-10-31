@@ -9,7 +9,7 @@ However random forests provide information about the full conditional distributi
 
 The quantiles give more complete information about the distribution of :math:`Y` as a function of the predictor variable :math:`X` than the conditional mean alone. They can be useful, for example, to build prediction intervals or to perform outlier detection in a high-dimensional dataset.
 
-In practice, the empirical estimation of quantiles can be calculated in several ways. In this package, a desired quantile is calculated from the input rank :math:`x` such that :math:`x = (N + 1 - 2C)q + C`, where :math:`q` is the quantile, :math:`N` is the number of samples, and :math:`C` is a constant (degree of freedom). In this package, :math:`C = 1`. This package provides methods that calculate quantiles using samples that are weighted and unweighted. In a weighted quantile, :math:`N` is calculated from the fraction of the total weight instead of the total number of samples.
+In practice, the empirical estimation of quantiles can be calculated in several ways. By default, this package calculates the quantile :math:`q` as the smallest training response such that a fraction (at least) :math:`q` of the (weighted) training samples are at or below it, averaged with the next response if exactly that fraction are, so that the median is the usual median. This is NumPy's `averaged_inverted_cdf` method, and how scikit-learn calculates weighted quantiles. Other methods can be specified with the `interpolation` parameter of the `predict` method. With `interpolation="linear"`, the default before version 1.5, a quantile is calculated from the input rank :math:`x` such that :math:`x = (N + 1 - 2C)q + C`, where :math:`N` is the number of samples and :math:`C = 1` is a constant (degree of freedom). For weighted samples, :math:`N` is their total weight instead, with the weights scaled so that a sample of average weight counts as one sample.
 
 Quantile Regression Forests
 ---------------------------
@@ -26,7 +26,7 @@ where :math:`L(x)` denotes the leaf that :math:`x` falls into.
 
 Informally, this means that given a new unknown sample, we first find the leaf that it falls into for each tree in the ensemble. Each training sample :math:`y_j` that falls into the same leaf as the new sample is given a weight that equals the fraction of samples in the leaf. Each :math:`y_j` that does not fall into the same leaf as the new sample is given a weight or frequency of zero. The weights or frequencies for each :math:`y_j` are then summed or aggregated across all of the trees in the ensemble. This information can then be used to calculate the empirical quantile estimates.
 
-This approach was first proposed by :cite:t:`2006:meinshausen`.
+This approach was first proposed by :cite:t:`2006:meinshausen`. This package uses these weights if each leaf keeps all of its training samples (`max_samples_leaf=None`) and `weighted_leaves=True` (see :ref:`user-guide-fit-predict`). By default, each leaf keeps one randomly selected sample (`max_samples_leaf=1`), so that each tree contributes one response value, and if leaves keep more samples, each sample in a leaf counts once, whatever the size of the leaf (`weighted_leaves=False`).
 
 .. toctree::
    :maxdepth: 1
