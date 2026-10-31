@@ -460,14 +460,17 @@ def plot_qrf_vs_xtrapolation_comparison(df, func_str):
             tooltip=tooltip_true,
         )
 
-        line_pred = base.mark_line(clip=True).encode(
+        line_pred = base.mark_line(clip=True, size=4).encode(
             x=alt.X("X_true:Q", title="", scale=x_scale),
             y=alt.Y("y_pred:Q", scale=y_scale),
             color=alt.condition(alt.datum["extrapolate"], alt.value("red"), alt.value("#006aff")),
             tooltip=tooltip_pred,
         )
 
-        chart = bar_pred + circle_true + line_true + line_pred
+        # Draw the true function over the predicted median too, where they overlap.
+        line_true_top = line_true.encode(color=alt.value("gray"))
+
+        chart = bar_pred + circle_true + line_true + line_pred + line_true_top
 
         if "coverage" in df.columns:
             text_coverage = (
@@ -516,7 +519,7 @@ def plot_qrf_vs_xtrapolation_comparison(df, func_str):
                 chart += blank
             chart = chart.resolve_scale(color="independent")
 
-        chart = chart.properties(title=title, height=200, width=300)
+        chart = chart.properties(title=title, height=250, width=300)
         return chart
 
     kwargs = {"func_str": func_str, "x_domain": [0, 15], "y_domain": [-15, 20]}

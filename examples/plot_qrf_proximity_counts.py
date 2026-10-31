@@ -175,7 +175,7 @@ def plot_digits_proximities(
                 alt.Tooltip("y:Q", title="Pixel Y"),
             ],
         )
-        .properties(height=height, width=width, title="Test Digit (noisy)")
+        .properties(height=height, width=width, title="Test Digit (Noisy)")
     )
 
     chart2 = (
@@ -206,7 +206,7 @@ def plot_digits_proximities(
             ),
         )
         .properties(
-            height=subplot_dim, width=subplot_dim, title=f"Proximity Digits (top {n_prox})"
+            height=subplot_dim, width=subplot_dim, title=f"Proximity Digits (Top {n_prox})"
         )
     )
 
@@ -228,7 +228,7 @@ def plot_digits_proximities(
                 alt.Tooltip("y:Q", title="Pixel Y"),
             ],
         )
-        .properties(title="Test Digit (original)", height=height, width=width)
+        .properties(title="Test Digit (Original)", height=height, width=width)
     )
 
     chart_spacer = alt.Chart(pd.DataFrame()).mark_rect().properties(width=subplot_dim * 2)

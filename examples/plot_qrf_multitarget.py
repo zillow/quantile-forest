@@ -132,7 +132,7 @@ def plot_multitargets(df, legend):
         tooltip=tooltip,
     )
 
-    line = base.mark_line(color="black", size=3).encode(
+    line = base.mark_line(color="black", size=4).encode(
         x=x,
         y=alt.Y("y_pred:Q", title="Y"),
         color=color,

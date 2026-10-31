@@ -126,7 +126,10 @@ def plot_monotonic_constraints(df, df_test, metrics, coverage):
         f"Constrained QRF's {coverage:.0%} Interval": "#99c2ff",
     }
     labels = list(colors.keys())
-    shapes = ["circle", "stroke", "stroke", "circle", "circle"]  # the legend symbols
+    # The legend symbols. The lines are drawn as thin bars rather than strokes, as
+    # stroked symbols would space the legend entries unevenly.
+    bar = "M-1,-0.2L1,-0.2L1,0.2L-1,0.2Z"
+    shapes = ["circle", bar, bar, "circle", "circle"]
 
     # Clicking an entry of the legend highlights its marks (shift-click for more).
     click = alt.selection_point(name="click", fields=["label"], bind="legend")
@@ -208,10 +211,9 @@ def plot_monotonic_constraints(df, df_test, metrics, coverage):
                     color=alt.Color(
                         "label:N",
                         scale=scale,
-                        legend=alt.Legend(symbolOpacity=1, symbolStrokeWidth=2),
+                        legend=alt.Legend(symbolOpacity=1),
                         title=None,
                     ),
-                    stroke=alt.Stroke("label:N", scale=scale, title=None),
                     shape=alt.Shape(
                         "label:N", scale=alt.Scale(domain=labels, range=shapes), title=None
                     ),

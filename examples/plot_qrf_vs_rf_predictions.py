@@ -105,7 +105,7 @@ def plot_predictions_and_errors(df, df_mae, legend, max_value=8):
                     labelAngle=0,
                     labelExpr="datum.value % 1 == 0 ? datum.value : null",
                 ),
-                title=f"Actual and Predicted Target Values (up to {max_value})",
+                title=f"Actual and Predicted Target Values (Up to {max_value})",
             ),
             y=alt.Y("count():Q", axis=alt.Axis(format=",d", title="Counts")),
             color=alt.condition(
@@ -117,7 +117,7 @@ def plot_predictions_and_errors(df, df_mae, legend, max_value=8):
             xOffset=alt.XOffset("label:N"),
             tooltip=[
                 alt.Tooltip("label:N", title="Label"),
-                alt.Tooltip("value:Q", title="Value (binned)"),
+                alt.Tooltip("value:Q", title="Value (Binned)"),
                 alt.Tooltip("count():Q", format=",d", title="Counts"),
             ],
         )

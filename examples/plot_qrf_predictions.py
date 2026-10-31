@@ -158,7 +158,7 @@ def plot_predictions_and_intervals(df):
     line_pred = (
         alt.Chart(df.assign(**{"y_pred_label": "Predicted Median"}))
         .transform_filter(~alt.datum["test"])  # filter to non-test data
-        .mark_line(color="#006aff", size=5)
+        .mark_line(color="#006aff", size=4)
         .encode(
             x=alt.X("x:Q", scale=alt.Scale(nice=False)),
             y=alt.Y("y_pred:Q", title=""),

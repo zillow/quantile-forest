@@ -96,7 +96,7 @@ def plot_pred_and_ranks(df):
 
     # For desired legend labels.
     dummy_legend = (
-        base.mark_line(opacity=1)
+        base.mark_line(color="#006aff", opacity=1)
         .encode(
             opacity=alt.Opacity(
                 "model:N",

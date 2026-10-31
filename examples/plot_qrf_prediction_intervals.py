@@ -73,7 +73,7 @@ def plot_california_calibration_and_intervals(df):
                 "y_pred:Q",
                 axis=alt.Axis(format="$,d"),
                 scale=alt.Scale(domain=domain, nice=False),
-                title="Fitted Values (conditional median)",
+                title="Fitted Values (Conditional Median)",
             ),
             y=alt.Y(
                 "y_true:Q",
@@ -168,7 +168,7 @@ def plot_california_calibration_and_intervals(df):
             y=alt.Y(
                 "y_true:Q",
                 axis=alt.Axis(format="$,d"),
-                title="Observed Values and Prediction Intervals (centered)",
+                title="Observed Values and Prediction Intervals (Centered)",
             ),
             color=alt.value("#f2a619"),
             tooltip=tooltip,
