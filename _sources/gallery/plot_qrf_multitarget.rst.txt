@@ -145,7 +145,7 @@ for each target: the median line and the area defined by the interval points.
             tooltip=tooltip,
         )
 
-        line = base.mark_line(color="black", size=3).encode(
+        line = base.mark_line(color="black", size=4).encode(
             x=x,
             y=alt.Y("y_pred:Q", title="Y"),
             color=color,
@@ -294,7 +294,7 @@ for each target: the median line and the area defined by the interval points.
                     tooltip=tooltip,
                 )
 
-                line = base.mark_line(color="black", size=3).encode(
+                line = base.mark_line(color="black", size=4).encode(
                     x=x,
                     y=alt.Y("y_pred:Q", title="Y"),
                     color=color,

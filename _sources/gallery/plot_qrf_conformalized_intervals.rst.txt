@@ -270,11 +270,11 @@ by Carl McBride Ellis.
                 .encode(x=alt.value(5))
             )
             text_coverage = text.encode(y=alt.value(5), text=alt.Text("coverage_text:N"))
-            text_width = text.encode(y=alt.value(20), text=alt.Text("width_text:N"))
+            text_width = text.encode(y=alt.value(18), text=alt.Text("width_text:N"))
 
             chart = bar + tick_low + tick_upp + circle + diagonal + text_coverage + text_width
 
-            return chart.properties(height=225, width=300)
+            return chart.properties(height=250, width=300)
 
         # The CQR plot shows the intervals of the calibration chosen in the drop-down menu.
         panel_qrf = _plot_prediction_intervals(
@@ -536,11 +536,11 @@ by Carl McBride Ellis.
                         .encode(x=alt.value(5))
                     )
                     text_coverage = text.encode(y=alt.value(5), text=alt.Text("coverage_text:N"))
-                    text_width = text.encode(y=alt.value(20), text=alt.Text("width_text:N"))
+                    text_width = text.encode(y=alt.value(18), text=alt.Text("width_text:N"))
 
                     chart = bar + tick_low + tick_upp + circle + diagonal + text_coverage + text_width
 
-                    return chart.properties(height=225, width=300)
+                    return chart.properties(height=250, width=300)
 
                 # The CQR plot shows the intervals of the calibration chosen in the drop-down menu.
                 panel_qrf = _plot_prediction_intervals(
