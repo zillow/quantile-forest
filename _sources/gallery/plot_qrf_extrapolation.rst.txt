@@ -158,15 +158,9 @@ adapted from `"Extrapolation-Aware Nonparametric Statistical Inference"
                 # Fit tree.
                 tree.fit(X[split1, :], Y[split1].flatten())
 
-                # Extract tree weight matrix.
-                y_train_leaves = tree._get_y_train_leaves(X[split2, :], Y.reshape(-1, 1))
-                nrows = X[split2, :].shape[0]
-                matrix = np.zeros((nrows, nrows))
-                for leaf in y_train_leaves[0]:
-                    indices = leaf[0]
-                    indices = indices[indices != 0] - 1
-                    if len(indices) > 0:
-                        matrix[np.ix_(indices, indices)] = 1
+                # Extract the tree weight matrix: whether each pair of samples shares a leaf.
+                leaves = tree.apply(X[split2, :])[:, 0]
+                matrix = (leaves[:, np.newaxis] == leaves[np.newaxis, :]).astype(float)
                 weight_mat[np.ix_(split2, split2)] += matrix
 
             # Normalize weights (rows correspond to weights - non-symmetric).
@@ -314,7 +308,7 @@ adapted from `"Extrapolation-Aware Nonparametric Statistical Inference"
             return bounds
 
 
-    def train_test_split(train_indices, rng=None, **kwargs):
+    def fit_and_extrapolate(train_indices, rng=None, **kwargs):
         """Fit model on training samples and extrapolate on test samples."""
         X_train = X[train_indices, :]
         y_train = y[train_indices]
@@ -383,13 +377,12 @@ adapted from `"Extrapolation-Aware Nonparametric Statistical Inference"
     # Create a dataset that requires extrapolation.
     X, y = make_func_Xy(func, n_samples, bounds, add_noise=True, random_state=0)
 
-    # Fit and extrapolate based on train-test split (depending on X).
+    # Fit on the middle of the range of X, and extrapolate to both ends.
     extrap_min_idx = int(n_samples * (extrap_frac / 2))
     extrap_max_idx = int(n_samples - (n_samples * (extrap_frac / 2)))
-    sort_X = np.argsort(X.squeeze())
-    train_indices = np.repeat(False, len(y))
-    train_indices[sort_X[extrap_min_idx] : sort_X[extrap_max_idx]] = True
-    res = train_test_split(train_indices, rng=random_state, **qrf_params)
+    X_ranks = np.argsort(np.argsort(X.squeeze()))
+    train_indices = (X_ranks >= extrap_min_idx) & (X_ranks < extrap_max_idx)
+    res = fit_and_extrapolate(train_indices, rng=random_state, **qrf_params)
 
     # Get coverages for extrapolated samples.
     args = (train_indices, ~train_indices, y[train_indices], quantiles[1] - quantiles[0], random_state)
@@ -408,8 +401,8 @@ adapted from `"Extrapolation-Aware Nonparametric Statistical Inference"
             "bb_upp": np.min(res["bounds_list"][1][:, :, 1], axis=1),
             "bb_mid": np.median(res["bounds_list"][2][:, :, :2], axis=(1, 2)),
             "train": res["train_indices"],
-            "test_left": [True] * extrap_min_idx + [False] * (len(y) - extrap_min_idx),
-            "test_right": [False] * extrap_max_idx + [True] * (len(y) - extrap_max_idx),
+            "test_left": X_ranks < extrap_min_idx,
+            "test_right": X_ranks >= extrap_max_idx,
             "cov_qrf": cov_qrf,
             "cov_xtr": cov_xtr,
         }
@@ -715,15 +708,9 @@ adapted from `"Extrapolation-Aware Nonparametric Statistical Inference"
                         # Fit tree.
                         tree.fit(X[split1, :], Y[split1].flatten())
 
-                        # Extract tree weight matrix.
-                        y_train_leaves = tree._get_y_train_leaves(X[split2, :], Y.reshape(-1, 1))
-                        nrows = X[split2, :].shape[0]
-                        matrix = np.zeros((nrows, nrows))
-                        for leaf in y_train_leaves[0]:
-                            indices = leaf[0]
-                            indices = indices[indices != 0] - 1
-                            if len(indices) > 0:
-                                matrix[np.ix_(indices, indices)] = 1
+                        # Extract the tree weight matrix: whether each pair of samples shares a leaf.
+                        leaves = tree.apply(X[split2, :])[:, 0]
+                        matrix = (leaves[:, np.newaxis] == leaves[np.newaxis, :]).astype(float)
                         weight_mat[np.ix_(split2, split2)] += matrix
 
                     # Normalize weights (rows correspond to weights - non-symmetric).
@@ -871,7 +858,7 @@ adapted from `"Extrapolation-Aware Nonparametric Statistical Inference"
                     return bounds
 
 
-            def train_test_split(train_indices, rng=None, **kwargs):
+            def fit_and_extrapolate(train_indices, rng=None, **kwargs):
                 """Fit model on training samples and extrapolate on test samples."""
                 X_train = X[train_indices, :]
                 y_train = y[train_indices]
@@ -940,13 +927,12 @@ adapted from `"Extrapolation-Aware Nonparametric Statistical Inference"
             # Create a dataset that requires extrapolation.
             X, y = make_func_Xy(func, n_samples, bounds, add_noise=True, random_state=0)
 
-            # Fit and extrapolate based on train-test split (depending on X).
+            # Fit on the middle of the range of X, and extrapolate to both ends.
             extrap_min_idx = int(n_samples * (extrap_frac / 2))
             extrap_max_idx = int(n_samples - (n_samples * (extrap_frac / 2)))
-            sort_X = np.argsort(X.squeeze())
-            train_indices = np.repeat(False, len(y))
-            train_indices[sort_X[extrap_min_idx] : sort_X[extrap_max_idx]] = True
-            res = train_test_split(train_indices, rng=random_state, **qrf_params)
+            X_ranks = np.argsort(np.argsort(X.squeeze()))
+            train_indices = (X_ranks >= extrap_min_idx) & (X_ranks < extrap_max_idx)
+            res = fit_and_extrapolate(train_indices, rng=random_state, **qrf_params)
 
             # Get coverages for extrapolated samples.
             args = (train_indices, ~train_indices, y[train_indices], quantiles[1] - quantiles[0], random_state)
@@ -965,8 +951,8 @@ adapted from `"Extrapolation-Aware Nonparametric Statistical Inference"
                     "bb_upp": np.min(res["bounds_list"][1][:, :, 1], axis=1),
                     "bb_mid": np.median(res["bounds_list"][2][:, :, :2], axis=(1, 2)),
                     "train": res["train_indices"],
-                    "test_left": [True] * extrap_min_idx + [False] * (len(y) - extrap_min_idx),
-                    "test_right": [False] * extrap_max_idx + [True] * (len(y) - extrap_max_idx),
+                    "test_left": X_ranks < extrap_min_idx,
+                    "test_right": X_ranks >= extrap_max_idx,
                     "cov_qrf": cov_qrf,
                     "cov_xtr": cov_xtr,
                 }

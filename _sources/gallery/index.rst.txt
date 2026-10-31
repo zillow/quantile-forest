@@ -51,6 +51,19 @@ General-purpose, introductory and illustrative examples.
     <span class="image-title">Extrapolation with Quantile Regression Forests</span>
     </a>
     
+    <a class="imagegroup" href="plot_qrf_monotonic_constraints.html">
+    <span
+        class="image" alt="Monotonic Constraints with Quantile Regression Forests"
+    
+        data-light-src="url(../_static/plot_qrf_monotonic_constraints-thumb.png)"
+        data-dark-src="url(../_static/plot_qrf_monotonic_constraints-thumb-dark.png)"
+        style="background-image: url(../_static/plot_qrf_monotonic_constraints-thumb.png);"
+    
+    ></span>
+
+    <span class="image-title">Monotonic Constraints with Quantile Regression Forests</span>
+    </a>
+    
     <a class="imagegroup" href="plot_qrf_multitarget.html">
     <span
         class="image" alt="Multi-target Quantile Regression with QRFs"
@@ -116,17 +129,17 @@ General-purpose, introductory and illustrative examples.
     <span class="image-title">Quantile Regression Forests vs. Random Forests</span>
     </a>
     
-    <a class="imagegroup" href="plot_qrf_treeshap_explanations.html">
+    <a class="imagegroup" href="plot_qrf_shap_explanations.html">
     <span
-        class="image" alt="Tree SHAP with Quantile Regression Forests"
+        class="image" alt="SHAP Explanations with Quantile Regression Forests"
     
-        data-light-src="url(../_static/plot_qrf_treeshap_explanations-thumb.png)"
-        data-dark-src="url(../_static/plot_qrf_treeshap_explanations-thumb-dark.png)"
-        style="background-image: url(../_static/plot_qrf_treeshap_explanations-thumb.png);"
+        data-light-src="url(../_static/plot_qrf_shap_explanations-thumb.png)"
+        data-dark-src="url(../_static/plot_qrf_shap_explanations-thumb-dark.png)"
+        style="background-image: url(../_static/plot_qrf_shap_explanations-thumb.png);"
     
     ></span>
 
-    <span class="image-title">Tree SHAP with Quantile Regression Forests</span>
+    <span class="image-title">SHAP Explanations with Quantile Regression Forests</span>
     </a>
     
     <a class="imagegroup" href="plot_qrf_proximity_counts.html">

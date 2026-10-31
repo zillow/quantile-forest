@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" data-theme="light">
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>SHAP Explanations with Quantile Regression Forests &#8212; quantile-forest 1.4.2 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "light";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=18bd87630a240e9c25be" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=18bd87630a240e9c25be" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../_static/altair-plot.css?v=a673d9d3" />
+    <link rel="stylesheet" type="text/css" href="../_static/gallery.css?v=8f271e45" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- So that users can add custom icons -->
+  <script defer src="../_static/scripts/fontawesome.js?digest=18bd87630a240e9c25be"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=18bd87630a240e9c25be" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=18bd87630a240e9c25be" />
+
+    <script src="../_static/documentation_options.js?v=02f2166e"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../_static/copybutton.js?v=ccdb6887"></script>
+    <script>
+        (function() {
+            function switchGalleryThumbnails() {
+                const theme = document.documentElement.getAttribute("data-theme");
+                const darkMode = (theme === "dark");
+
+                document.querySelectorAll(".image, .preview").forEach(function(plot) {
+                    const attr = darkMode ? "data-dark-src" : "data-light-src";
+                    const src = plot.getAttribute(attr);
+                    if (src) {
+                        plot.style.backgroundImage = src;
+                    }
+                });
+            }
+
+            document.addEventListener("DOMContentLoaded", switchGalleryThumbnails);
+
+            const observer = new MutationObserver(function(mutations) {
+                if (mutations.some(m => m.attributeName === "data-theme")) {
+                    switchGalleryThumbnails();
+                }
+            });
+
+            observer.observe(document.documentElement, {
+                attributes: true,
+                attributeFilter: ["data-theme"]
+            });
+        })();
+        </script>
+    <script src="../_static/design-tabs.js?v=f930bc37"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vega@6"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vega-lite@6.4.1"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vega-embed@7"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'gallery/plot_qrf_shap_explanations';</script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
+    <link rel="icon" href="../_static/favicon.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="color-scheme" content="light dark"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="1.4.2" />
+  
+    
+    <script src="../_static/searchtools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <script src="../searchindex.js"></script>
+  
+  </head>
+  <body data-default-mode="light">
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+  
+  
+  
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button type="button" class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+    
+    
+    
+    <img src="../_static/quantile-forest-logo.svg" class="logo__image only-light" alt="quantile-forest 1.4.2 documentation - Home"/>
+    <img src="../_static/quantile-forest-logo-white.svg" class="logo__image only-dark pst-js-only" alt="quantile-forest 1.4.2 documentation - Home"/>
+  
+  
+</a></div>
+    
+      <div class="navbar-item"><a class="navbar-brand" href="../index.html">
+<p class="title">quantile-forest</p>
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../getting_started/installation.html">
+    Getting Started
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../user_guide/introduction.html">
+    User Guide
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="index.html">
+    Examples
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../api.html">
+    API
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../releases/changes.html">
+    Release Notes
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button type="button" class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button type="button" class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/zillow/quantile-forest" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fab fa-github fa-lg fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button type="button" class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar hide-on-wide">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../getting_started/installation.html">
+    Getting Started
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../user_guide/introduction.html">
+    User Guide
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="index.html">
+    Examples
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../api.html">
+    API
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../releases/changes.html">
+    Release Notes
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button type="button" class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/zillow/quantile-forest" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fab fa-github fa-lg fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">SHAP Explanations with Quantile Regression Forests</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="shap-explanations-with-quantile-regression-forests">
+<span id="gallery-plot-qrf-shap-explanations"></span><h1>SHAP Explanations with Quantile Regression Forests<a class="headerlink" href="#shap-explanations-with-quantile-regression-forests" title="Link to this heading">#</a></h1>
+<p>This example demonstrates the use of SHAP (SHapley Additive exPlanations) to
+explain the predictions of a quantile regression forest (QRF) model. SHAP
+values offer insight into the contribution of each feature to the predicted
+value. We generate a waterfall plot to visualize the explanations for a single
+sample across multiple quantiles. The <a class="reference external" href="https://shap.readthedocs.io/en/latest/generated/shap.TreeExplainer.html">Tree SHAP</a>
+method explains predictions that are sums over the trees of a model, which the
+quantile predictions of a QRF generally are not; by default, a quantile is
+calculated from the training samples pooled across the trees. Instead, we use
+the <a class="reference external" href="https://shap.readthedocs.io/en/latest/generated/shap.ExactExplainer.html">exact explainer</a>,
+which explains any model from its predictions. The SHAP values add up to the
+predicted quantile, and this plot allows us to observe how the feature
+contributions vary with the quantile, since a feature can change the spread of
+the predicted distribution, not just its location. With fully grown trees (the
+default), the low and high quantiles come from few training samples, which
+makes their SHAP values noisy, so the leaves here keep at least 10 samples,
+and there are 300 trees.</p>
+
+        <div class="altair-plot" id="container-vega-spec-0cf42399a17b499c826aa10dfe449503">
+            <script type="application/json" id="vega-spec-0cf42399a17b499c826aa10dfe449503">
+                {"$schema": "https://vega.github.io/schema/vega-lite/v6.4.1.json", "config": {"view": {"continuousHeight": 300, "continuousWidth": 300, "strokeOpacity": 0}}, "data": {"name": "data-c9c0a032ebb2f48160e15096484b26da"}, "datasets": {"data-9f7d6a4de89a9f57aea921fe4286c8ae": [{"label": "f(x) = 113,760.00", "quantile": 0.1, "type": "end", "x": 113759.99999999988}, {"label": "E[f(X)] = 163,578.76", "quantile": 0.1, "type": "start", "x": 163578.75555555554}, {"label": "f(x) = 141,700.00", "quantile": 0.2, "type": "end", "x": 141700.00000000012}, {"label": "E[f(X)] = 177,981.29", "quantile": 0.2, "type": "start", "x": 177981.2888888889}, {"label": "f(x) = 155,400.00", "quantile": 0.3, "type": "end", "x": 155400.00000000003}, {"label": "E[f(X)] = 187,853.19", "quantile": 0.3, "type": "start", "x": 187853.1888888889}, {"label": "f(x) = 162,500.00", "quantile": 0.4, "type": "end", "x": 162500.0000000001}, {"label": "E[f(X)] = 196,519.69", "quantile": 0.4, "type": "start", "x": 196519.6888888889}, {"label": "f(x) = 170,000.00", "quantile": 0.5, "type": "end", "x": 170000.00000000035}, {"label": "E[f(X)] = 204,812.22", "quantile": 0.5, "type": "start", "x": 204812.22222222222}, {"label": "f(x) = 176,000.00", "quantile": 0.6, "type": "end", "x": 175999.99999999988}, {"label": "E[f(X)] = 213,638.59", "quantile": 0.6, "type": "start", "x": 213638.58866666668}, {"label": "f(x) = 193,100.00", "quantile": 0.7, "type": "end", "x": 193099.99999999977}, {"label": "E[f(X)] = 223,502.76", "quantile": 0.7, "type": "start", "x": 223502.76255555556}, {"label": "f(x) = 205,600.00", "quantile": 0.8, "type": "end", "x": 205599.99999999985}, {"label": "E[f(X)] = 236,217.00", "quantile": 0.8, "type": "start", "x": 236217.0}, {"label": "f(x) = 238,500.00", "quantile": 0.9, "type": "end", "x": 238499.9999999999}, {"label": "E[f(X)] = 258,782.41", "quantile": 0.9, "type": "start", "x": 258782.41222222222}], "data-c9c0a032ebb2f48160e15096484b26da": [{"abs_shap_value": 69391.25550264561, "base_value": 163578.75555555554, "end": 113759.99999999988, "feature": "1.917 = MedInc", "feature2": null, "feature_name": "MedInc", "feature_value": 1.9167, "model_output": 113759.99999999988, "quantile": 0.1, "shap_value": -69391.25550264561, "start": 183151.25550264548, "value_label": "-69,391.26"}, {"abs_shap_value": 17959.37634920635, "base_value": 163578.75555555554, "end": 183151.25550264548, "feature": "1.955 = AveOccup", "feature2": "1.917 = MedInc", "feature_name": "AveOccup", "feature_value": 1.9548387096774194, "model_output": 113759.99999999988, "quantile": 0.1, "shap_value": 17959.37634920635, "start": 165191.87915343913, "value_label": "+17,959.38"}, {"abs_shap_value": 4607.802037037058, "base_value": 163578.75555555554, "end": 165191.87915343913, "feature": "4.263 = AveRooms", "feature2": "1.955 = AveOccup", "feature_name": "AveRooms", "feature_value": 4.262903225806451, "model_output": 113759.99999999988, "quantile": 0.1, "shap_value": -4607.802037037058, "start": 169799.6811904762, "value_label": "-4,607.80"}, {"abs_shap_value": 3918.633862433862, "base_value": 163578.75555555554, "end": 169799.6811904762, "feature": "-122.26 = Longitude", "feature2": "4.263 = AveRooms", "feature_name": "Longitude", "feature_value": -122.26, "model_output": 113759.99999999988, "quantile": 0.1, "shap_value": 3918.633862433862, "start": 165881.04732804233, "value_label": "+3,918.63"}, {"abs_shap_value": 2345.8899206349047, "base_value": 163578.75555555554, "end": 165881.04732804233, "feature": "1212 = Population", "feature2": "-122.26 = Longitude", "feature_name": "Population", "feature_value": 1212.0, "model_output": 113759.99999999988, "quantile": 0.1, "shap_value": 2345.8899206349047, "start": 163535.15740740742, "value_label": "+2,345.89"}, {"abs_shap_value": 949.1644179893826, "base_value": 163578.75555555554, "end": 163535.15740740742, "feature": "52 = HouseAge", "feature2": "1212 = Population", "feature_name": "HouseAge", "feature_value": 52.0, "model_output": 113759.99999999988, "quantile": 0.1, "shap_value": -949.1644179893826, "start": 164484.32182539682, "value_label": "-949.16"}, {"abs_shap_value": 499.59666666666135, "base_value": 163578.75555555554, "end": 164484.32182539682, "feature": "1.01 = AveBedrms", "feature2": "52 = HouseAge", "feature_name": "AveBedrms", "feature_value": 1.0096774193548388, "model_output": 113759.99999999988, "quantile": 0.1, "shap_value": 499.59666666666135, "start": 163984.72515873014, "value_label": "+499.60"}, {"abs_shap_value": 405.9696031746066, "base_value": 163578.75555555554, "end": 163984.72515873014, "feature": "37.85 = Latitude", "feature2": "1.01 = AveBedrms", "feature_name": "Latitude", "feature_value": 37.85, "model_output": 113759.99999999988, "quantile": 0.1, "shap_value": 405.9696031746066, "start": 163578.75555555554, "value_label": "+405.97"}, {"abs_shap_value": 69049.92243386243, "base_value": 177981.2888888889, "end": 141700.00000000012, "feature": "1.917 = MedInc", "feature2": null, "feature_name": "MedInc", "feature_value": 1.9167, "model_output": 141700.00000000012, "quantile": 0.2, "shap_value": -69049.92243386243, "start": 210749.92243386255, "value_label": "-69,049.92"}, {"abs_shap_value": 26726.40544973547, "base_value": 177981.2888888889, "end": 210749.92243386255, "feature": "1.955 = AveOccup", "feature2": "1.917 = MedInc", "feature_name": "AveOccup", "feature_value": 1.9548387096774194, "model_output": 141700.00000000012, "quantile": 0.2, "shap_value": 26726.40544973547, "start": 184023.51698412708, "value_label": "+26,726.41"}, {"abs_shap_value": 5432.328994708991, "base_value": 177981.2888888889, "end": 184023.51698412708, "feature": "-122.26 = Longitude", "feature2": "1.955 = AveOccup", "feature_name": "Longitude", "feature_value": -122.26, "model_output": 141700.00000000012, "quantile": 0.2, "shap_value": 5432.328994708991, "start": 178591.18798941807, "value_label": "+5,432.33"}, {"abs_shap_value": 4243.867936507915, "base_value": 177981.2888888889, "end": 178591.18798941807, "feature": "4.263 = AveRooms", "feature2": "-122.26 = Longitude", "feature_name": "AveRooms", "feature_value": 4.262903225806451, "model_output": 141700.00000000012, "quantile": 0.2, "shap_value": -4243.867936507915, "start": 182835.055925926, "value_label": "-4,243.87"}, {"abs_shap_value": 3319.2098412698374, "base_value": 177981.2888888889, "end": 182835.055925926, "feature": "1212 = Population", "feature2": "4.263 = AveRooms", "feature_name": "Population", "feature_value": 1212.0, "model_output": 141700.00000000012, "quantile": 0.2, "shap_value": 3319.2098412698374, "start": 179515.84608465616, "value_label": "+3,319.21"}, {"abs_shap_value": 1295.1913756613721, "base_value": 177981.2888888889, "end": 179515.84608465616, "feature": "37.85 = Latitude", "feature2": "1212 = Population", "feature_name": "Latitude", "feature_value": 37.85, "model_output": 141700.00000000012, "quantile": 0.2, "shap_value": 1295.1913756613721, "start": 178220.65470899479, "value_label": "+1,295.19"}, {"abs_shap_value": 714.8158730158907, "base_value": 177981.2888888889, "end": 178220.65470899479, "feature": "1.01 = AveBedrms", "feature2": "37.85 = Latitude", "feature_name": "AveBedrms", "feature_value": 1.0096774193548388, "model_output": 141700.00000000012, "quantile": 0.2, "shap_value": 714.8158730158907, "start": 177505.8388359789, "value_label": "+714.82"}, {"abs_shap_value": 475.4500529100012, "base_value": 177981.2888888889, "end": 177505.8388359789, "feature": "52 = HouseAge", "feature2": "1.01 = AveBedrms", "feature_name": "HouseAge", "feature_value": 52.0, "model_output": 141700.00000000012, "quantile": 0.2, "shap_value": -475.4500529100012, "start": 177981.2888888889, "value_label": "-475.45"}, {"abs_shap_value": 70940.65222222217, "base_value": 187853.1888888889, "end": 155400.00000000006, "feature": "1.917 = MedInc", "feature2": null, "feature_name": "MedInc", "feature_value": 1.9167, "model_output": 155400.00000000003, "quantile": 0.3, "shap_value": -70940.65222222217, "start": 226340.65222222224, "value_label": "-70,940.65"}, {"abs_shap_value": 29791.718650793642, "base_value": 187853.1888888889, "end": 226340.65222222224, "feature": "1.955 = AveOccup", "feature2": "1.917 = MedInc", "feature_name": "AveOccup", "feature_value": 1.9548387096774194, "model_output": 155400.00000000003, "quantile": 0.3, "shap_value": 29791.718650793642, "start": 196548.93357142858, "value_label": "+29,791.72"}, {"abs_shap_value": 7216.8395502645535, "base_value": 187853.1888888889, "end": 196548.93357142858, "feature": "-122.26 = Longitude", "feature2": "1.955 = AveOccup", "feature_name": "Longitude", "feature_value": -122.26, "model_output": 155400.00000000003, "quantile": 0.3, "shap_value": 7216.8395502645535, "start": 189332.09402116403, "value_label": "+7,216.84"}, {"abs_shap_value": 3995.597142857173, "base_value": 187853.1888888889, "end": 189332.09402116403, "feature": "4.263 = AveRooms", "feature2": "-122.26 = Longitude", "feature_name": "AveRooms", "feature_value": 4.262903225806451, "model_output": 155400.00000000003, "quantile": 0.3, "shap_value": -3995.597142857173, "start": 193327.6911640212, "value_label": "-3,995.60"}, {"abs_shap_value": 2973.404047619045, "base_value": 187853.1888888889, "end": 193327.6911640212, "feature": "37.85 = Latitude", "feature2": "4.263 = AveRooms", "feature_name": "Latitude", "feature_value": 37.85, "model_output": 155400.00000000003, "quantile": 0.3, "shap_value": 2973.404047619045, "start": 190354.28711640215, "value_label": "+2,973.40"}, {"abs_shap_value": 2601.5070105820078, "base_value": 187853.1888888889, "end": 190354.28711640215, "feature": "1212 = Population", "feature2": "37.85 = Latitude", "feature_name": "Population", "feature_value": 1212.0, "model_output": 155400.00000000003, "quantile": 0.3, "shap_value": 2601.5070105820078, "start": 187752.78010582016, "value_label": "+2,601.51"}, {"abs_shap_value": 462.7761640211363, "base_value": 187853.1888888889, "end": 187752.78010582016, "feature": "52 = HouseAge", "feature2": "1212 = Population", "feature_name": "HouseAge", "feature_value": 52.0, "model_output": 155400.00000000003, "quantile": 0.3, "shap_value": -462.7761640211363, "start": 188215.5562698413, "value_label": "-462.78"}, {"abs_shap_value": 362.3673809523932, "base_value": 187853.1888888889, "end": 188215.5562698413, "feature": "1.01 = AveBedrms", "feature2": "52 = HouseAge", "feature_name": "AveBedrms", "feature_value": 1.0096774193548388, "model_output": 155400.00000000003, "quantile": 0.3, "shap_value": 362.3673809523932, "start": 187853.1888888889, "value_label": "+362.37"}, {"abs_shap_value": 74503.42894179889, "base_value": 196519.6888888889, "end": 162500.00000000006, "feature": "1.917 = MedInc", "feature2": null, "feature_name": "MedInc", "feature_value": 1.9167, "model_output": 162500.0000000001, "quantile": 0.4, "shap_value": -74503.42894179889, "start": 237003.42894179895, "value_label": "-74,503.43"}, {"abs_shap_value": 30501.671269841252, "base_value": 196519.6888888889, "end": 237003.42894179895, "feature": "1.955 = AveOccup", "feature2": "1.917 = MedInc", "feature_name": "AveOccup", "feature_value": 1.9548387096774194, "model_output": 162500.0000000001, "quantile": 0.4, "shap_value": 30501.671269841252, "start": 206501.75767195772, "value_label": "+30,501.67"}, {"abs_shap_value": 7556.109682539677, "base_value": 196519.6888888889, "end": 206501.75767195772, "feature": "-122.26 = Longitude", "feature2": "1.955 = AveOccup", "feature_name": "Longitude", "feature_value": -122.26, "model_output": 162500.0000000001, "quantile": 0.4, "shap_value": 7556.109682539677, "start": 198945.64798941804, "value_label": "+7,556.11"}, {"abs_shap_value": 4225.147989417986, "base_value": 196519.6888888889, "end": 198945.64798941804, "feature": "37.85 = Latitude", "feature2": "-122.26 = Longitude", "feature_name": "Latitude", "feature_value": 37.85, "model_output": 162500.0000000001, "quantile": 0.4, "shap_value": 4225.147989417986, "start": 194720.50000000006, "value_label": "+4,225.15"}, {"abs_shap_value": 3733.986507936497, "base_value": 196519.6888888889, "end": 194720.50000000006, "feature": "4.263 = AveRooms", "feature2": "37.85 = Latitude", "feature_name": "AveRooms", "feature_value": 4.262903225806451, "model_output": 162500.0000000001, "quantile": 0.4, "shap_value": -3733.986507936497, "start": 198454.48650793656, "value_label": "-3,733.99"}, {"abs_shap_value": 2208.615555555539, "base_value": 196519.6888888889, "end": 198454.48650793656, "feature": "1212 = Population", "feature2": "4.263 = AveRooms", "feature_name": "Population", "feature_value": 1212.0, "model_output": 162500.0000000001, "quantile": 0.4, "shap_value": 2208.615555555539, "start": 196245.870952381, "value_label": "+2,208.62"}, {"abs_shap_value": 528.3997354496857, "base_value": 196519.6888888889, "end": 196245.870952381, "feature": "52 = HouseAge", "feature2": "1212 = Population", "feature_name": "HouseAge", "feature_value": 52.0, "model_output": 162500.0000000001, "quantile": 0.4, "shap_value": -528.3997354496857, "start": 196774.2706878307, "value_label": "-528.40"}, {"abs_shap_value": 254.58179894179466, "base_value": 196519.6888888889, "end": 196774.2706878307, "feature": "1.01 = AveBedrms", "feature2": "52 = HouseAge", "feature_name": "AveBedrms", "feature_value": 1.0096774193548388, "model_output": 162500.0000000001, "quantile": 0.4, "shap_value": 254.58179894179466, "start": 196519.6888888889, "value_label": "+254.58"}, {"abs_shap_value": 76871.06236772463, "base_value": 204812.22222222222, "end": 170000.00000000035, "feature": "1.917 = MedInc", "feature2": null, "feature_name": "MedInc", "feature_value": 1.9167, "model_output": 170000.00000000035, "quantile": 0.5, "shap_value": -76871.06236772463, "start": 246871.06236772498, "value_label": "-76,871.06"}, {"abs_shap_value": 31101.96210317462, "base_value": 204812.22222222222, "end": 246871.06236772498, "feature": "1.955 = AveOccup", "feature2": "1.917 = MedInc", "feature_name": "AveOccup", "feature_value": 1.9548387096774194, "model_output": 170000.00000000035, "quantile": 0.5, "shap_value": 31101.96210317462, "start": 215769.10026455036, "value_label": "+31,101.96"}, {"abs_shap_value": 7958.325595238093, "base_value": 204812.22222222222, "end": 215769.10026455036, "feature": "-122.26 = Longitude", "feature2": "1.955 = AveOccup", "feature_name": "Longitude", "feature_value": -122.26, "model_output": 170000.00000000035, "quantile": 0.5, "shap_value": 7958.325595238093, "start": 207810.7746693123, "value_label": "+7,958.33"}, {"abs_shap_value": 5322.561706349206, "base_value": 204812.22222222222, "end": 207810.7746693123, "feature": "37.85 = Latitude", "feature2": "-122.26 = Longitude", "feature_name": "Latitude", "feature_value": 37.85, "model_output": 170000.00000000035, "quantile": 0.5, "shap_value": 5322.561706349206, "start": 202488.21296296307, "value_label": "+5,322.56"}, {"abs_shap_value": 3695.383531746, "base_value": 204812.22222222222, "end": 202488.21296296307, "feature": "4.263 = AveRooms", "feature2": "37.85 = Latitude", "feature_name": "AveRooms", "feature_value": 4.262903225806451, "model_output": 170000.00000000035, "quantile": 0.5, "shap_value": -3695.383531746, "start": 206183.59649470908, "value_label": "-3,695.38"}, {"abs_shap_value": 1737.6803571428545, "base_value": 204812.22222222222, "end": 206183.59649470908, "feature": "1212 = Population", "feature2": "4.263 = AveRooms", "feature_name": "Population", "feature_value": 1212.0, "model_output": 170000.00000000035, "quantile": 0.5, "shap_value": 1737.6803571428545, "start": 204445.9161375662, "value_label": "+1,737.68"}, {"abs_shap_value": 468.4259920634149, "base_value": 204812.22222222222, "end": 204445.9161375662, "feature": "52 = HouseAge", "feature2": "1212 = Population", "feature_name": "HouseAge", "feature_value": 52.0, "model_output": 170000.00000000035, "quantile": 0.5, "shap_value": -468.4259920634149, "start": 204914.34212962963, "value_label": "-468.43"}, {"abs_shap_value": 102.11990740741112, "base_value": 204812.22222222222, "end": 204914.34212962963, "feature": "1.01 = AveBedrms", "feature2": "52 = HouseAge", "feature_name": "AveBedrms", "feature_value": 1.0096774193548388, "model_output": 170000.00000000035, "quantile": 0.5, "shap_value": 102.11990740741112, "start": 204812.22222222222, "value_label": "+102.12"}, {"abs_shap_value": 78859.5026661377, "base_value": 213638.58866666668, "end": 175999.99999999988, "feature": "1.917 = MedInc", "feature2": null, "feature_name": "MedInc", "feature_value": 1.9167, "model_output": 175999.99999999988, "quantile": 0.6, "shap_value": -78859.5026661377, "start": 254859.5026661376, "value_label": "-78,859.50"}, {"abs_shap_value": 31402.682169312146, "base_value": 213638.58866666668, "end": 254859.5026661376, "feature": "1.955 = AveOccup", "feature2": "1.917 = MedInc", "feature_name": "AveOccup", "feature_value": 1.9548387096774194, "model_output": 175999.99999999988, "quantile": 0.6, "shap_value": 31402.682169312146, "start": 223456.82049682544, "value_label": "+31,402.68"}, {"abs_shap_value": 6556.431160846561, "base_value": 213638.58866666668, "end": 223456.82049682544, "feature": "-122.26 = Longitude", "feature2": "1.955 = AveOccup", "feature_name": "Longitude", "feature_value": -122.26, "model_output": 175999.99999999988, "quantile": 0.6, "shap_value": 6556.431160846561, "start": 216900.3893359789, "value_label": "+6,556.43"}, {"abs_shap_value": 5663.033347089947, "base_value": 213638.58866666668, "end": 216900.3893359789, "feature": "37.85 = Latitude", "feature2": "-122.26 = Longitude", "feature_name": "Latitude", "feature_value": 37.85, "model_output": 175999.99999999988, "quantile": 0.6, "shap_value": 5663.033347089947, "start": 211237.35598888894, "value_label": "+5,663.03"}, {"abs_shap_value": 3627.3346238095187, "base_value": 213638.58866666668, "end": 211237.35598888894, "feature": "4.263 = AveRooms", "feature2": "37.85 = Latitude", "feature_name": "AveRooms", "feature_value": 4.262903225806451, "model_output": 175999.99999999988, "quantile": 0.6, "shap_value": -3627.3346238095187, "start": 214864.69061269847, "value_label": "-3,627.33"}, {"abs_shap_value": 1702.1358883597823, "base_value": 213638.58866666668, "end": 214864.69061269847, "feature": "1212 = Population", "feature2": "4.263 = AveRooms", "feature_name": "Population", "feature_value": 1212.0, "model_output": 175999.99999999988, "quantile": 0.6, "shap_value": 1702.1358883597823, "start": 213162.55472433867, "value_label": "+1,702.14"}, {"abs_shap_value": 372.48562328038497, "base_value": 213638.58866666668, "end": 213162.55472433867, "feature": "52 = HouseAge", "feature2": "1212 = Population", "feature_name": "HouseAge", "feature_value": 52.0, "model_output": 175999.99999999988, "quantile": 0.6, "shap_value": -372.48562328038497, "start": 213535.04034761907, "value_label": "-372.49"}, {"abs_shap_value": 103.5483190476134, "base_value": 213638.58866666668, "end": 213535.04034761907, "feature": "1.01 = AveBedrms", "feature2": "52 = HouseAge", "feature_name": "AveBedrms", "feature_value": 1.0096774193548388, "model_output": 175999.99999999988, "quantile": 0.6, "shap_value": -103.5483190476134, "start": 213638.58866666668, "value_label": "-103.55"}, {"abs_shap_value": 77932.25025634936, "base_value": 223502.76255555556, "end": 193099.99999999977, "feature": "1.917 = MedInc", "feature2": null, "feature_name": "MedInc", "feature_value": 1.9167, "model_output": 193099.99999999977, "quantile": 0.7, "shap_value": -77932.25025634936, "start": 271032.25025634916, "value_label": "-77,932.25"}, {"abs_shap_value": 35068.596683597876, "base_value": 223502.76255555556, "end": 271032.25025634916, "feature": "1.955 = AveOccup", "feature2": "1.917 = MedInc", "feature_name": "AveOccup", "feature_value": 1.9548387096774194, "model_output": 193099.99999999977, "quantile": 0.7, "shap_value": 35068.596683597876, "start": 235963.65357275127, "value_label": "+35,068.60"}, {"abs_shap_value": 7920.956720370366, "base_value": 223502.76255555556, "end": 235963.65357275127, "feature": "-122.26 = Longitude", "feature2": "1.955 = AveOccup", "feature_name": "Longitude", "feature_value": -122.26, "model_output": 193099.99999999977, "quantile": 0.7, "shap_value": 7920.956720370366, "start": 228042.6968523809, "value_label": "+7,920.96"}, {"abs_shap_value": 5458.260863492056, "base_value": 223502.76255555556, "end": 228042.6968523809, "feature": "37.85 = Latitude", "feature2": "-122.26 = Longitude", "feature_name": "Latitude", "feature_value": 37.85, "model_output": 193099.99999999977, "quantile": 0.7, "shap_value": 5458.260863492056, "start": 222584.43598888884, "value_label": "+5,458.26"}, {"abs_shap_value": 3421.460018253951, "base_value": 223502.76255555556, "end": 222584.43598888884, "feature": "4.263 = AveRooms", "feature2": "37.85 = Latitude", "feature_name": "AveRooms", "feature_value": 4.262903225806451, "model_output": 193099.99999999977, "quantile": 0.7, "shap_value": -3421.460018253951, "start": 226005.8960071428, "value_label": "-3,421.46"}, {"abs_shap_value": 2312.388875661363, "base_value": 223502.76255555556, "end": 226005.8960071428, "feature": "1212 = Population", "feature2": "4.263 = AveRooms", "feature_name": "Population", "feature_value": 1212.0, "model_output": 193099.99999999977, "quantile": 0.7, "shap_value": 2312.388875661363, "start": 223693.50713148143, "value_label": "+2,312.39"}, {"abs_shap_value": 158.7224507936121, "base_value": 223502.76255555556, "end": 223693.50713148143, "feature": "52 = HouseAge", "feature2": "1212 = Population", "feature_name": "HouseAge", "feature_value": 52.0, "model_output": 193099.99999999977, "quantile": 0.7, "shap_value": 158.7224507936121, "start": 223534.78468068782, "value_label": "+158.72"}, {"abs_shap_value": 32.02212513225686, "base_value": 223502.76255555556, "end": 223534.78468068782, "feature": "1.01 = AveBedrms", "feature2": "52 = HouseAge", "feature_name": "AveBedrms", "feature_value": 1.0096774193548388, "model_output": 193099.99999999977, "quantile": 0.7, "shap_value": 32.02212513225686, "start": 223502.76255555556, "value_label": "+32.02"}, {"abs_shap_value": 78351.03985740744, "base_value": 236217.0, "end": 205599.99999999985, "feature": "1.917 = MedInc", "feature2": null, "feature_name": "MedInc", "feature_value": 1.9167, "model_output": 205599.99999999985, "quantile": 0.8, "shap_value": -78351.03985740744, "start": 283951.0398574073, "value_label": "-78,351.04"}, {"abs_shap_value": 38263.059128306864, "base_value": 236217.0, "end": 283951.0398574073, "feature": "1.955 = AveOccup", "feature2": "1.917 = MedInc", "feature_name": "AveOccup", "feature_value": 1.9548387096774194, "model_output": 205599.99999999985, "quantile": 0.8, "shap_value": 38263.059128306864, "start": 245687.98072910044, "value_label": "+38,263.06"}, {"abs_shap_value": 7495.023364285711, "base_value": 236217.0, "end": 245687.98072910044, "feature": "-122.26 = Longitude", "feature2": "1.955 = AveOccup", "feature_name": "Longitude", "feature_value": -122.26, "model_output": 205599.99999999985, "quantile": 0.8, "shap_value": 7495.023364285711, "start": 238192.9573648147, "value_label": "+7,495.02"}, {"abs_shap_value": 3987.252442592597, "base_value": 236217.0, "end": 238192.9573648147, "feature": "37.85 = Latitude", "feature2": "-122.26 = Longitude", "feature_name": "Latitude", "feature_value": 37.85, "model_output": 205599.99999999985, "quantile": 0.8, "shap_value": 3987.252442592597, "start": 234205.70492222212, "value_label": "+3,987.25"}, {"abs_shap_value": 3452.396342063466, "base_value": 236217.0, "end": 234205.70492222212, "feature": "4.263 = AveRooms", "feature2": "37.85 = Latitude", "feature_name": "AveRooms", "feature_value": 4.262903225806451, "model_output": 205599.99999999985, "quantile": 0.8, "shap_value": -3452.396342063466, "start": 237658.1012642856, "value_label": "-3,452.40"}, {"abs_shap_value": 1446.4294526454992, "base_value": 236217.0, "end": 237658.1012642856, "feature": "1212 = Population", "feature2": "4.263 = AveRooms", "feature_name": "Population", "feature_value": 1212.0, "model_output": 205599.99999999985, "quantile": 0.8, "shap_value": 1446.4294526454992, "start": 236211.6718116401, "value_label": "+1,446.43"}, {"abs_shap_value": 104.99574735452597, "base_value": 236217.0, "end": 236211.6718116401, "feature": "1.01 = AveBedrms", "feature2": "1212 = Population", "feature_name": "AveBedrms", "feature_value": 1.0096774193548388, "model_output": 205599.99999999985, "quantile": 0.8, "shap_value": -104.99574735452597, "start": 236316.6675589946, "value_label": "-105.00"}, {"abs_shap_value": 99.66755899461305, "base_value": 236217.0, "end": 236316.6675589946, "feature": "52 = HouseAge", "feature2": "1.01 = AveBedrms", "feature_name": "HouseAge", "feature_value": 52.0, "model_output": 205599.99999999985, "quantile": 0.8, "shap_value": 99.66755899461305, "start": 236217.0, "value_label": "+99.67"}, {"abs_shap_value": 78155.31109391546, "base_value": 258782.41222222222, "end": 238499.9999999999, "feature": "1.917 = MedInc", "feature2": null, "feature_name": "MedInc", "feature_value": 1.9167, "model_output": 238499.9999999999, "quantile": 0.9, "shap_value": -78155.31109391546, "start": 316655.31109391537, "value_label": "-78,155.31"}, {"abs_shap_value": 44231.150582010574, "base_value": 258782.41222222222, "end": 316655.31109391537, "feature": "1.955 = AveOccup", "feature2": "1.917 = MedInc", "feature_name": "AveOccup", "feature_value": 1.9548387096774194, "model_output": 238499.9999999999, "quantile": 0.9, "shap_value": 44231.150582010574, "start": 272424.1605119048, "value_label": "+44,231.15"}, {"abs_shap_value": 13696.558068783086, "base_value": 258782.41222222222, "end": 272424.1605119048, "feature": "-122.26 = Longitude", "feature2": "1.955 = AveOccup", "feature_name": "Longitude", "feature_value": -122.26, "model_output": 238499.9999999999, "quantile": 0.9, "shap_value": 13696.558068783086, "start": 258727.60244312172, "value_label": "+13,696.56"}, {"abs_shap_value": 4145.903686507876, "base_value": 258782.41222222222, "end": 258727.60244312172, "feature": "4.263 = AveRooms", "feature2": "-122.26 = Longitude", "feature_name": "AveRooms", "feature_value": 4.262903225806451, "model_output": 238499.9999999999, "quantile": 0.9, "shap_value": -4145.903686507876, "start": 262873.50612962956, "value_label": "-4,145.90"}, {"abs_shap_value": 3888.745062169321, "base_value": 258782.41222222222, "end": 262873.50612962956, "feature": "37.85 = Latitude", "feature2": "4.263 = AveRooms", "feature_name": "Latitude", "feature_value": 37.85, "model_output": 238499.9999999999, "quantile": 0.9, "shap_value": 3888.745062169321, "start": 258984.76106746026, "value_label": "+3,888.75"}, {"abs_shap_value": 311.76127910052355, "base_value": 258782.41222222222, "end": 258984.76106746026, "feature": "1212 = Population", "feature2": "37.85 = Latitude", "feature_name": "Population", "feature_value": 1212.0, "model_output": 238499.9999999999, "quantile": 0.9, "shap_value": 311.76127910052355, "start": 258672.99978835974, "value_label": "+311.76"}, {"abs_shap_value": 98.59529100526879, "base_value": 258782.41222222222, "end": 258672.99978835974, "feature": "1.01 = AveBedrms", "feature2": "1212 = Population", "feature_name": "AveBedrms", "feature_value": 1.0096774193548388, "model_output": 238499.9999999999, "quantile": 0.9, "shap_value": -98.59529100526879, "start": 258771.595079365, "value_label": "-98.60"}, {"abs_shap_value": 10.817142857209092, "base_value": 258782.41222222222, "end": 258771.595079365, "feature": "52 = HouseAge", "feature2": "1.01 = AveBedrms", "feature_name": "HouseAge", "feature_value": 52.0, "model_output": 238499.9999999999, "quantile": 0.9, "shap_value": -10.817142857209092, "start": 258782.41222222222, "value_label": "-10.82"}]}, "height": 300, "layer": [{"encoding": {"color": {"condition": {"test": "(datum['shap_value'] > 0)", "value": "#ff0251"}, "value": "#018bfb"}, "tooltip": [{"field": "feature_name", "title": "Feature Name", "type": "nominal"}, {"field": "feature_value", "title": "Feature Value", "type": "quantitative"}, {"field": "shap_value", "format": ",.2f", "title": "SHAP Value", "type": "quantitative"}, {"field": "start", "format": ",.2f", "title": "SHAP Start", "type": "quantitative"}, {"field": "end", "format": ",.2f", "title": "SHAP End", "type": "quantitative"}], "x": {"axis": {"format": ",.2f", "grid": false}, "field": "start", "scale": {"domain": [93470.46889060833, 336944.8422033069], "zero": false}, "title": null, "type": "quantitative"}, "x2": {"field": "end_shifted"}, "y": {"field": "feature", "sort": null, "title": null, "type": "nominal"}}, "mark": {"type": "bar"}, "transform": [{"filter": "round(datum.quantile * 100) == round(quantile * 100)"}, {"as": "end_shifted", "calculate": "datum.shap_value > 0 ? datum.end - 2028.9531109391548 : datum.end + 2028.9531109391548"}, {"as": "end_shifted", "calculate": "abs(datum.shap_value) < 2028.9531109391548 ? datum.end : datum.end_shifted"}]}, {"encoding": {"color": {"condition": {"test": "(datum['shap_value'] > 0)", "value": "#ff0251"}, "value": "#018bfb"}, "shape": {"condition": {"test": "(datum['shap_value'] > 0)", "value": "M 0,-3 L 1,0 L 0,3 Z"}, "value": "M 0,3 L -1,0 L 0,-3 Z"}, "tooltip": [{"field": "feature_name", "title": "Feature Name", "type": "nominal"}, {"field": "feature_value", "title": "Feature Value", "type": "quantitative"}, {"field": "shap_value", "format": ",.2f", "title": "SHAP Value", "type": "quantitative"}, {"field": "start", "format": ",.2f", "title": "SHAP Start", "type": "quantitative"}, {"field": "end", "format": ",.2f", "title": "SHAP End", "type": "quantitative"}], "x": {"field": "end_shifted", "title": null, "type": "quantitative"}, "y": {"field": "feature", "sort": null, "title": null, "type": "nominal"}}, "mark": {"filled": true, "opacity": 1, "size": 125, "type": "point"}, "transform": [{"filter": "round(datum.quantile * 100) == round(quantile * 100)"}, {"as": "end_shifted", "calculate": "datum.shap_value > 0 ? datum.end - 2028.9531109391548 : datum.end + 2028.9531109391548"}, {"as": "end_shifted", "calculate": "abs(datum.shap_value) < 2028.9531109391548 ? datum.end : datum.end_shifted"}, {"filter": "abs(datum.shap_value) > 2028.9531109391548"}]}, {"layer": [{"encoding": {"color": {"condition": {"test": "(datum['shap_value'] > 0)", "value": "#ff0251"}, "value": "#018bfb"}, "opacity": {"condition": {"test": "(datum['shap_value'] > 0)", "value": 0}, "value": 1}, "text": {"field": "value_label", "type": "nominal"}, "tooltip": [{"field": "feature_name", "title": "Feature Name", "type": "nominal"}, {"field": "feature_value", "title": "Feature Value", "type": "quantitative"}, {"field": "shap_value", "format": ",.2f", "title": "SHAP Value", "type": "quantitative"}, {"field": "start", "format": ",.2f", "title": "SHAP Start", "type": "quantitative"}, {"field": "end", "format": ",.2f", "title": "SHAP End", "type": "quantitative"}], "x": {"axis": {"format": ",.2f", "grid": false}, "field": "start", "scale": {"domain": [93470.46889060833, 336944.8422033069], "zero": false}, "title": null, "type": "quantitative"}, "y": {"field": "feature", "sort": null, "title": null, "type": "nominal"}}, "mark": {"align": "left", "baseline": "middle", "color": "gray", "dx": 5, "type": "text"}, "transform": [{"filter": "round(datum.quantile * 100) == round(quantile * 100)"}, {"as": "end_shifted", "calculate": "datum.shap_value > 0 ? datum.end - 2028.9531109391548 : datum.end + 2028.9531109391548"}, {"as": "end_shifted", "calculate": "abs(datum.shap_value) < 2028.9531109391548 ? datum.end : datum.end_shifted"}]}, {"encoding": {"color": {"condition": {"test": "(datum['shap_value'] > 0)", "value": "#ff0251"}, "value": "#018bfb"}, "opacity": {"condition": {"test": "(datum['shap_value'] > 0)", "value": 1}, "value": 0}, "text": {"field": "value_label", "type": "nominal"}, "tooltip": [{"field": "feature_name", "title": "Feature Name", "type": "nominal"}, {"field": "feature_value", "title": "Feature Value", "type": "quantitative"}, {"field": "shap_value", "format": ",.2f", "title": "SHAP Value", "type": "quantitative"}, {"field": "start", "format": ",.2f", "title": "SHAP Start", "type": "quantitative"}, {"field": "end", "format": ",.2f", "title": "SHAP End", "type": "quantitative"}], "x": {"axis": {"format": ",.2f", "grid": false}, "field": "start", "scale": {"domain": [93470.46889060833, 336944.8422033069], "zero": false}, "title": null, "type": "quantitative"}, "y": {"field": "feature", "sort": null, "title": null, "type": "nominal"}}, "mark": {"align": "right", "baseline": "middle", "color": "gray", "dx": -5, "type": "text"}, "transform": [{"filter": "round(datum.quantile * 100) == round(quantile * 100)"}, {"as": "end_shifted", "calculate": "datum.shap_value > 0 ? datum.end - 2028.9531109391548 : datum.end + 2028.9531109391548"}, {"as": "end_shifted", "calculate": "abs(datum.shap_value) < 2028.9531109391548 ? datum.end : datum.end_shifted"}]}, {"data": {"name": "data-9f7d6a4de89a9f57aea921fe4286c8ae"}, "encoding": {"text": {"field": "label", "type": "nominal"}, "x": {"field": "x", "type": "quantitative"}}, "mark": {"align": "left", "color": "gray", "dx": -16, "dy": 180, "type": "text"}, "transform": [{"filter": "round(datum.quantile * 100) == round(quantile * 100)"}, {"filter": "datum.type == 'start'"}]}, {"data": {"name": "data-9f7d6a4de89a9f57aea921fe4286c8ae"}, "encoding": {"text": {"field": "label", "type": "nominal"}, "x": {"field": "x", "type": "quantitative"}}, "mark": {"align": "left", "color": "gray", "dx": -8, "dy": -165, "type": "text"}, "transform": [{"filter": "round(datum.quantile * 100) == round(quantile * 100)"}, {"filter": "datum.type == 'end'"}]}]}, {"layer": [{"encoding": {"x": {"field": "end", "type": "quantitative"}, "y": {"field": "feature", "sort": null, "type": "nominal"}, "y2": {"field": "feature2"}}, "mark": {"color": "gray", "opacity": 0.8, "strokeDash": [1, 1], "type": "rule", "y2Offset": -17, "yOffset": 17}, "transform": [{"filter": "round(datum.quantile * 100) == round(quantile * 100)"}, {"as": "end_shifted", "calculate": "datum.shap_value > 0 ? datum.end - 2028.9531109391548 : datum.end + 2028.9531109391548"}, {"as": "end_shifted", "calculate": "abs(datum.shap_value) < 2028.9531109391548 ? datum.end : datum.end_shifted"}, {"filter": "isValid(datum.feature2)"}]}, {"encoding": {"x": {"field": "model_output", "type": "quantitative"}}, "mark": {"color": "gray", "opacity": 0.8, "strokeDash": [1, 1], "type": "rule"}, "transform": [{"filter": "round(datum.quantile * 100) == round(quantile * 100)"}, {"as": "end_shifted", "calculate": "datum.shap_value > 0 ? datum.end - 2028.9531109391548 : datum.end + 2028.9531109391548"}, {"as": "end_shifted", "calculate": "abs(datum.shap_value) < 2028.9531109391548 ? datum.end : datum.end_shifted"}]}, {"data": {"name": "data-9f7d6a4de89a9f57aea921fe4286c8ae"}, "encoding": {"x": {"field": "x", "type": "quantitative"}}, "mark": {"color": "gray", "opacity": 1, "type": "rule", "y": 300, "y2": 306}, "transform": [{"filter": "round(datum.quantile * 100) == round(quantile * 100)"}, {"filter": "datum.type == 'start'"}]}, {"data": {"name": "data-9f7d6a4de89a9f57aea921fe4286c8ae"}, "encoding": {"x": {"field": "x", "type": "quantitative"}}, "mark": {"color": "gray", "opacity": 1, "type": "rule", "y": 0, "y2": -6}, "transform": [{"filter": "round(datum.quantile * 100) == round(quantile * 100)"}, {"filter": "datum.type == 'end'"}]}]}], "params": [{"bind": {"input": "range", "max": 0.9, "min": 0.1, "name": "Predicted Quantile: ", "step": 0.1}, "name": "quantile", "value": 0.5}], "title": "Waterfall Plot of SHAP Values for QRF Predictions", "width": 600}
+            </script>
+            <script>
+            (function() {
+                const container = document.getElementById("container-vega-spec-0cf42399a17b499c826aa10dfe449503");
+                const specScript = document.getElementById("vega-spec-0cf42399a17b499c826aa10dfe449503");
+                if (!container || !specScript) {
+                    console.error("No container or spec script found!");
+                    return;
+                }
+
+                function reRenderAltairPlot() {
+                    const dt = document.documentElement.getAttribute("data-theme")
+                    const theme = dt === "dark" ? "dark" : "light";
+                    const spec = JSON.parse(specScript.textContent);
+
+                    const existingChartDiv = container.querySelector(".vega-embed");
+                    if (existingChartDiv) {
+                        existingChartDiv.remove();
+                    }
+
+                    const newDiv = document.createElement("div");
+                    container.appendChild(newDiv);
+
+                    vegaEmbed(newDiv, spec, {
+                        theme: theme,
+                        actions: {
+                            export: true,
+                            source: true,
+                            editor: true,
+                            compiled: false
+                        },
+                        defaultStyle: true
+                    }).catch(console.error);
+                }
+
+                document.addEventListener("DOMContentLoaded", reRenderAltairPlot);
+
+                const observer = new MutationObserver(function(mutations) {
+                    if (mutations.some(m => m.attributeName === "data-theme")) {
+                        reRenderAltairPlot();
+                    }
+                });
+                observer.observe(document.documentElement, {
+                    attributes: true,
+                    attributeFilter: ["data-theme"]
+                });
+            })();
+            </script>
+        </div>
+        <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">altair</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">alt</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">shap</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn</span><span class="w"> </span><span class="kn">import</span> <span class="n">datasets</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.model_selection</span><span class="w"> </span><span class="kn">import</span> <span class="n">train_test_split</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">quantile_forest</span><span class="w"> </span><span class="kn">import</span> <span class="n">RandomForestQuantileRegressor</span>
+
+<span class="n">random_state</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">RandomState</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">n_samples</span> <span class="o">=</span> <span class="mi">1000</span>
+<span class="n">test_idx</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="n">quantiles</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.9</span><span class="p">,</span> <span class="n">num</span><span class="o">=</span><span class="mi">9</span><span class="p">)</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>  <span class="c1"># in steps of 0.1</span>
+
+<span class="c1"># Load the California Housing dataset.</span>
+<span class="n">X</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">datasets</span><span class="o">.</span><span class="n">fetch_california_housing</span><span class="p">(</span><span class="n">return_X_y</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">as_frame</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">perm</span> <span class="o">=</span> <span class="n">random_state</span><span class="o">.</span><span class="n">permutation</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">X</span><span class="p">),</span> <span class="n">n_samples</span><span class="p">))</span>
+<span class="n">X</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">perm</span><span class="p">]</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">y</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">perm</span><span class="p">]</span>
+<span class="n">y</span> <span class="o">*=</span> <span class="mi">100_000</span>  <span class="c1"># convert to dollars</span>
+
+<span class="n">X_train</span><span class="p">,</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">y_test</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">random_state</span><span class="p">)</span>
+
+<span class="c1"># Keep at least 10 training samples in each leaf, and fit more trees than the</span>
+<span class="c1"># default, for quantiles (and SHAP values) that vary less from fit to fit.</span>
+<span class="n">qrf</span> <span class="o">=</span> <span class="n">RandomForestQuantileRegressor</span><span class="p">(</span>
+    <span class="n">n_estimators</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">min_samples_leaf</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">random_state</span>
+<span class="p">)</span>
+<span class="n">qrf</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">predict_quantiles</span><span class="p">(</span><span class="n">X</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Predict the quantiles (with any other parameters of `predict`, too)."""</span>
+    <span class="k">return</span> <span class="n">qrf</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">quantiles</span><span class="o">=</span><span class="n">quantiles</span><span class="p">)</span>
+
+
+<span class="c1"># Get the SHAP values at each quantile for the specified test sample, with the</span>
+<span class="c1"># features outside of each subset taken from the training data.</span>
+<span class="n">masker</span> <span class="o">=</span> <span class="n">shap</span><span class="o">.</span><span class="n">maskers</span><span class="o">.</span><span class="n">Independent</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">max_samples</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">X_train</span><span class="p">))</span>
+<span class="n">explainer</span> <span class="o">=</span> <span class="n">shap</span><span class="o">.</span><span class="n">explainers</span><span class="o">.</span><span class="n">Exact</span><span class="p">(</span><span class="n">predict_quantiles</span><span class="p">,</span> <span class="n">masker</span><span class="p">)</span>
+<span class="n">X_explain</span> <span class="o">=</span> <span class="n">X_test</span><span class="o">.</span><span class="n">iloc</span><span class="p">[[</span><span class="n">test_idx</span><span class="p">]]</span>
+<span class="n">shap_values</span> <span class="o">=</span> <span class="n">explainer</span><span class="p">(</span><span class="n">X_explain</span><span class="p">,</span> <span class="n">silent</span><span class="o">=</span><span class="kc">True</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># the SHAP values by feature and quantile</span>
+
+<span class="c1"># The SHAP values add up to the QRF predictions.</span>
+<span class="n">y_pred</span> <span class="o">=</span> <span class="n">predict_quantiles</span><span class="p">(</span><span class="n">X_explain</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+<span class="n">np</span><span class="o">.</span><span class="n">testing</span><span class="o">.</span><span class="n">assert_allclose</span><span class="p">(</span><span class="n">shap_values</span><span class="o">.</span><span class="n">base_values</span> <span class="o">+</span> <span class="n">shap_values</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span> <span class="n">y_pred</span><span class="p">)</span>
+
+<span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span>
+    <span class="p">[</span>
+        <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="s2">"feature"</span><span class="p">:</span> <span class="p">[</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">round</span><span class="p">(</span><span class="n">v</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">)</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2"> = </span><span class="si">{</span><span class="n">c</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">c</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">X_test</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">test_idx</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">()],</span>
+                <span class="s2">"feature_name"</span><span class="p">:</span> <span class="n">X</span><span class="o">.</span><span class="n">columns</span><span class="p">,</span>
+                <span class="s2">"feature_value"</span><span class="p">:</span> <span class="n">X_test</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">test_idx</span><span class="p">]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">(),</span>
+                <span class="s2">"shap_value"</span><span class="p">:</span> <span class="n">shap_values</span><span class="o">.</span><span class="n">values</span><span class="p">[:,</span> <span class="n">i</span><span class="p">],</span>
+                <span class="s2">"abs_shap_value"</span><span class="p">:</span> <span class="nb">abs</span><span class="p">(</span><span class="n">shap_values</span><span class="o">.</span><span class="n">values</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]),</span>
+                <span class="s2">"base_value"</span><span class="p">:</span> <span class="n">shap_values</span><span class="o">.</span><span class="n">base_values</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+                <span class="s2">"model_output"</span><span class="p">:</span> <span class="n">shap_values</span><span class="o">.</span><span class="n">base_values</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="nb">sum</span><span class="p">(</span><span class="n">shap_values</span><span class="o">.</span><span class="n">values</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]),</span>
+                <span class="s2">"quantile"</span><span class="p">:</span> <span class="n">q</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">q</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">quantiles</span><span class="p">)</span>
+    <span class="p">],</span>
+    <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">plot_shap_waterfall_with_quantiles</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">300</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Plot SHAP waterfall plot by quantile predictions."""</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+    <span class="c1"># Slider for varying the applied quantile estimates.</span>
+    <span class="n">slider</span> <span class="o">=</span> <span class="n">alt</span><span class="o">.</span><span class="n">binding_range</span><span class="p">(</span>
+        <span class="n">name</span><span class="o">=</span><span class="s2">"Predicted Quantile: "</span><span class="p">,</span> <span class="nb">min</span><span class="o">=</span><span class="n">quantiles</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">max</span><span class="o">=</span><span class="n">quantiles</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">step</span><span class="o">=</span><span class="mf">0.1</span>
+    <span class="p">)</span>
+    <span class="n">quantile_val</span> <span class="o">=</span> <span class="n">alt</span><span class="o">.</span><span class="n">param</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"quantile"</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">bind</span><span class="o">=</span><span class="n">slider</span><span class="p">)</span>
+
+    <span class="n">df_grouped</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">df</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">"quantile"</span><span class="p">)[</span><span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">tolist</span><span class="p">()]</span>
+        <span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">g</span><span class="p">:</span> <span class="n">g</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="s2">"abs_shap_value"</span><span class="p">,</span> <span class="n">ascending</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+        <span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">assign</span><span class="p">(</span>
+            <span class="o">**</span><span class="p">{</span>
+                <span class="s2">"start"</span><span class="p">:</span> <span class="p">(</span>
+                    <span class="k">lambda</span> <span class="n">df</span><span class="p">:</span> <span class="n">df</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">"quantile"</span><span class="p">,</span> <span class="n">group_keys</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span>
+                        <span class="k">lambda</span> <span class="n">g</span><span class="p">:</span> <span class="n">g</span><span class="p">[</span><span class="s2">"shap_value"</span><span class="p">]</span><span class="o">.</span><span class="n">shift</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">fill_value</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">cumsum</span><span class="p">()</span>
+                        <span class="o">+</span> <span class="n">g</span><span class="p">[</span><span class="s2">"base_value"</span><span class="p">],</span>
+                        <span class="n">include_groups</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                    <span class="p">)</span>
+                <span class="p">),</span>
+                <span class="s2">"end"</span><span class="p">:</span> <span class="p">(</span>
+                    <span class="k">lambda</span> <span class="n">df</span><span class="p">:</span> <span class="n">df</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">"quantile"</span><span class="p">,</span> <span class="n">group_keys</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span>
+                        <span class="k">lambda</span> <span class="n">g</span><span class="p">:</span> <span class="n">g</span><span class="p">[</span><span class="s2">"shap_value"</span><span class="p">]</span><span class="o">.</span><span class="n">cumsum</span><span class="p">()</span> <span class="o">+</span> <span class="n">g</span><span class="p">[</span><span class="s2">"base_value"</span><span class="p">],</span> <span class="n">include_groups</span><span class="o">=</span><span class="kc">False</span>
+                    <span class="p">)</span>
+                <span class="p">),</span>
+                <span class="s2">"value_label"</span><span class="p">:</span> <span class="p">(</span>
+                    <span class="k">lambda</span> <span class="n">df</span><span class="p">:</span> <span class="n">df</span><span class="p">[</span><span class="s2">"shap_value"</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span>
+                        <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="p">(</span><span class="s2">"+"</span> <span class="k">if</span> <span class="n">x</span> <span class="o">&gt;=</span> <span class="mi">0</span> <span class="k">else</span> <span class="s2">"-"</span><span class="p">)</span> <span class="o">+</span> <span class="s2">"</span><span class="si">{0:,.2f}</span><span class="s2">"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+                    <span class="p">)</span>
+                <span class="p">),</span>
+                <span class="s2">"feature2"</span><span class="p">:</span> <span class="p">(</span>
+                    <span class="k">lambda</span> <span class="n">df</span><span class="p">:</span> <span class="n">df</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">"quantile"</span><span class="p">,</span> <span class="n">group_keys</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span>
+                        <span class="k">lambda</span> <span class="n">g</span><span class="p">:</span> <span class="n">g</span><span class="p">[</span><span class="s2">"feature"</span><span class="p">]</span><span class="o">.</span><span class="n">shift</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="n">include_groups</span><span class="o">=</span><span class="kc">False</span>
+                    <span class="p">)</span>
+                <span class="p">),</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+        <span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">"quantile"</span><span class="p">)[</span><span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span> <span class="o">+</span> <span class="p">[</span><span class="s2">"start"</span><span class="p">,</span> <span class="s2">"end"</span><span class="p">,</span> <span class="s2">"value_label"</span><span class="p">,</span> <span class="s2">"feature2"</span><span class="p">]]</span>
+        <span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">g</span><span class="p">:</span> <span class="n">g</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="s2">"abs_shap_value"</span><span class="p">,</span> <span class="n">ascending</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+        <span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">x_min</span> <span class="o">=</span> <span class="n">df_grouped</span><span class="p">[[</span><span class="s2">"base_value"</span><span class="p">,</span> <span class="s2">"model_output"</span><span class="p">,</span> <span class="s2">"start"</span><span class="p">,</span> <span class="s2">"end"</span><span class="p">]]</span><span class="o">.</span><span class="n">min</span><span class="p">()</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
+    <span class="n">x_max</span> <span class="o">=</span> <span class="n">df_grouped</span><span class="p">[[</span><span class="s2">"base_value"</span><span class="p">,</span> <span class="s2">"model_output"</span><span class="p">,</span> <span class="s2">"start"</span><span class="p">,</span> <span class="s2">"end"</span><span class="p">]]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+    <span class="n">x_shift</span> <span class="o">=</span> <span class="p">(</span><span class="n">x_max</span> <span class="o">-</span> <span class="n">x_min</span><span class="p">)</span> <span class="o">/</span> <span class="mi">100</span>
+
+    <span class="n">y_rule_offset</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">height</span> <span class="o">/</span> <span class="n">df_grouped</span><span class="p">[</span><span class="s2">"feature"</span><span class="p">]</span><span class="o">.</span><span class="n">nunique</span><span class="p">()</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="mi">2</span>
+    <span class="n">y_text_offset</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">height</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+
+    <span class="n">triangle_size</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">height</span> <span class="o">/</span> <span class="mi">100</span><span class="p">)</span>
+    <span class="n">triangle_left</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"M 0,</span><span class="si">{</span><span class="n">triangle_size</span><span class="si">}</span><span class="s2"> L -1,0 L 0,-</span><span class="si">{</span><span class="n">triangle_size</span><span class="si">}</span><span class="s2"> Z"</span>
+    <span class="n">triangle_right</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"M 0,-</span><span class="si">{</span><span class="n">triangle_size</span><span class="si">}</span><span class="s2"> L 1,0 L 0,</span><span class="si">{</span><span class="n">triangle_size</span><span class="si">}</span><span class="s2"> Z"</span>
+
+    <span class="n">df_text_labels</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">df_grouped</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">"quantile"</span><span class="p">)[</span><span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">]</span>
+        <span class="o">.</span><span class="n">apply</span><span class="p">(</span>
+            <span class="k">lambda</span> <span class="n">g</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+                <span class="p">{</span>
+                    <span class="s2">"label"</span><span class="p">:</span> <span class="p">[</span>
+                        <span class="sa">f</span><span class="s2">"f(x) = </span><span class="si">{</span><span class="n">g</span><span class="p">[</span><span class="s1">'model_output'</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">:</span><span class="s2">,.2f</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+                        <span class="sa">f</span><span class="s2">"E[f(X)] = </span><span class="si">{</span><span class="n">g</span><span class="p">[</span><span class="s1">'base_value'</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">:</span><span class="s2">,.2f</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+                    <span class="p">],</span>
+                    <span class="s2">"type"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"end"</span><span class="p">,</span> <span class="s2">"start"</span><span class="p">],</span>
+                    <span class="s2">"x"</span><span class="p">:</span> <span class="p">[</span><span class="n">g</span><span class="p">[</span><span class="s2">"model_output"</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">g</span><span class="p">[</span><span class="s2">"base_value"</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span>
+                    <span class="s2">"quantile"</span><span class="p">:</span> <span class="p">[</span><span class="n">g</span><span class="p">[</span><span class="s2">"quantile"</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">g</span><span class="p">[</span><span class="s2">"quantile"</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span>
+                <span class="p">}</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+        <span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">base</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">alt</span><span class="o">.</span><span class="n">Chart</span><span class="p">(</span><span class="n">df_grouped</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">transform_filter</span><span class="p">(</span><span class="s2">"round(datum.quantile * 100) == round(quantile * 100)"</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">transform_calculate</span><span class="p">(</span>
+            <span class="n">end_shifted</span><span class="o">=</span><span class="sa">f</span><span class="s2">"datum.shap_value &gt; 0 ? datum.end - </span><span class="si">{</span><span class="n">x_shift</span><span class="si">}</span><span class="s2"> : datum.end + </span><span class="si">{</span><span class="n">x_shift</span><span class="si">}</span><span class="s2">"</span>
+        <span class="p">)</span>
+        <span class="o">.</span><span class="n">transform_calculate</span><span class="p">(</span>
+            <span class="n">end_shifted</span><span class="o">=</span><span class="sa">f</span><span class="s2">"abs(datum.shap_value) &lt; </span><span class="si">{</span><span class="n">x_shift</span><span class="si">}</span><span class="s2"> ? datum.end : datum.end_shifted"</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">bar</span> <span class="o">=</span> <span class="n">base</span><span class="o">.</span><span class="n">mark_bar</span><span class="p">()</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span>
+        <span class="n">x</span><span class="o">=</span><span class="n">alt</span><span class="o">.</span><span class="n">X</span><span class="p">(</span>
+            <span class="s2">"start:Q"</span><span class="p">,</span>
+            <span class="n">axis</span><span class="o">=</span><span class="n">alt</span><span class="o">.</span><span class="n">Axis</span><span class="p">(</span><span class="nb">format</span><span class="o">=</span><span class="s2">",.2f"</span><span class="p">,</span> <span class="n">grid</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+            <span class="n">scale</span><span class="o">=</span><span class="n">alt</span><span class="o">.</span><span class="n">Scale</span><span class="p">(</span><span class="n">domain</span><span class="o">=</span><span class="p">[</span><span class="n">x_min</span> <span class="o">-</span> <span class="mi">10</span> <span class="o">*</span> <span class="n">x_shift</span><span class="p">,</span> <span class="n">x_max</span> <span class="o">+</span> <span class="mi">10</span> <span class="o">*</span> <span class="n">x_shift</span><span class="p">],</span> <span class="n">zero</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+            <span class="n">title</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">y</span><span class="o">=</span><span class="n">alt</span><span class="o">.</span><span class="n">Y</span><span class="p">(</span><span class="s2">"feature:N"</span><span class="p">,</span> <span class="n">sort</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="kc">None</span><span class="p">),</span>
+        <span class="n">color</span><span class="o">=</span><span class="n">alt</span><span class="o">.</span><span class="n">condition</span><span class="p">(</span>
+            <span class="n">alt</span><span class="o">.</span><span class="n">datum</span><span class="p">[</span><span class="s2">"shap_value"</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">alt</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="s2">"#ff0251"</span><span class="p">),</span> <span class="n">alt</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="s2">"#018bfb"</span><span class="p">)</span>
+        <span class="p">),</span>
+        <span class="n">tooltip</span><span class="o">=</span><span class="p">[</span>
+            <span class="n">alt</span><span class="o">.</span><span class="n">Tooltip</span><span class="p">(</span><span class="s2">"feature_name:N"</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">"Feature Name"</span><span class="p">),</span>
+            <span class="n">alt</span><span class="o">.</span><span class="n">Tooltip</span><span class="p">(</span><span class="s2">"feature_value:Q"</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">"Feature Value"</span><span class="p">),</span>
+            <span class="n">alt</span><span class="o">.</span><span class="n">Tooltip</span><span class="p">(</span><span class="s2">"shap_value:Q"</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">",.2f"</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">"SHAP Value"</span><span class="p">),</span>
+            <span class="n">alt</span><span class="o">.</span><span class="n">Tooltip</span><span class="p">(</span><span class="s2">"start:Q"</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">",.2f"</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">"SHAP Start"</span><span class="p">),</span>
+            <span class="n">alt</span><span class="o">.</span><span class="n">Tooltip</span><span class="p">(</span><span class="s2">"end:Q"</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">",.2f"</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">"SHAP End"</span><span class="p">),</span>
+        <span class="p">],</span>
+    <span class="p">)</span>
+
+    <span class="n">point</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">bar</span><span class="o">.</span><span class="n">transform_filter</span><span class="p">(</span><span class="sa">f</span><span class="s2">"abs(datum.shap_value) &gt; </span><span class="si">{</span><span class="n">x_shift</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">mark_point</span><span class="p">(</span><span class="n">filled</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">opacity</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">125</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">encode</span><span class="p">(</span>
+            <span class="n">x</span><span class="o">=</span><span class="n">alt</span><span class="o">.</span><span class="n">X</span><span class="p">(</span><span class="s2">"end_shifted:Q"</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="kc">None</span><span class="p">),</span>
+            <span class="n">shape</span><span class="o">=</span><span class="n">alt</span><span class="o">.</span><span class="n">condition</span><span class="p">(</span>
+                <span class="n">alt</span><span class="o">.</span><span class="n">datum</span><span class="p">[</span><span class="s2">"shap_value"</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">alt</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">triangle_right</span><span class="p">),</span> <span class="n">alt</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">triangle_left</span><span class="p">)</span>
+            <span class="p">),</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">text_bar_left</span> <span class="o">=</span> <span class="n">bar</span><span class="o">.</span><span class="n">mark_text</span><span class="p">(</span>
+        <span class="n">align</span><span class="o">=</span><span class="s2">"left"</span><span class="p">,</span>
+        <span class="n">baseline</span><span class="o">=</span><span class="s2">"middle"</span><span class="p">,</span>
+        <span class="n">dx</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+        <span class="n">color</span><span class="o">=</span><span class="s2">"gray"</span><span class="p">,</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span>
+        <span class="n">text</span><span class="o">=</span><span class="s2">"value_label"</span><span class="p">,</span>
+        <span class="n">opacity</span><span class="o">=</span><span class="n">alt</span><span class="o">.</span><span class="n">condition</span><span class="p">(</span><span class="n">alt</span><span class="o">.</span><span class="n">datum</span><span class="p">[</span><span class="s2">"shap_value"</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">alt</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">alt</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="mi">1</span><span class="p">)),</span>
+    <span class="p">)</span>
+    <span class="n">text_bar_right</span> <span class="o">=</span> <span class="n">bar</span><span class="o">.</span><span class="n">mark_text</span><span class="p">(</span><span class="n">align</span><span class="o">=</span><span class="s2">"right"</span><span class="p">,</span> <span class="n">baseline</span><span class="o">=</span><span class="s2">"middle"</span><span class="p">,</span> <span class="n">dx</span><span class="o">=-</span><span class="mi">5</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">"gray"</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span>
+        <span class="n">text</span><span class="o">=</span><span class="s2">"value_label"</span><span class="p">,</span>
+        <span class="n">opacity</span><span class="o">=</span><span class="n">alt</span><span class="o">.</span><span class="n">condition</span><span class="p">(</span><span class="n">alt</span><span class="o">.</span><span class="n">datum</span><span class="p">[</span><span class="s2">"shap_value"</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">alt</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="n">alt</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="mi">0</span><span class="p">)),</span>
+    <span class="p">)</span>
+    <span class="n">text_label_start</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">alt</span><span class="o">.</span><span class="n">Chart</span><span class="p">(</span><span class="n">df_text_labels</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">transform_filter</span><span class="p">(</span><span class="s2">"round(datum.quantile * 100) == round(quantile * 100)"</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">transform_filter</span><span class="p">(</span><span class="s2">"datum.type == 'start'"</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">mark_text</span><span class="p">(</span><span class="n">align</span><span class="o">=</span><span class="s2">"left"</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">"gray"</span><span class="p">,</span> <span class="n">dx</span><span class="o">=-</span><span class="mi">16</span><span class="p">,</span> <span class="n">dy</span><span class="o">=</span><span class="n">y_text_offset</span> <span class="o">+</span> <span class="mi">30</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">text</span><span class="o">=</span><span class="n">alt</span><span class="o">.</span><span class="n">Text</span><span class="p">(</span><span class="s2">"label"</span><span class="p">),</span> <span class="n">x</span><span class="o">=</span><span class="n">alt</span><span class="o">.</span><span class="n">X</span><span class="p">(</span><span class="s2">"x:Q"</span><span class="p">))</span>
+    <span class="p">)</span>
+    <span class="n">text_label_end</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">alt</span><span class="o">.</span><span class="n">Chart</span><span class="p">(</span><span class="n">df_text_labels</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">transform_filter</span><span class="p">(</span><span class="s2">"round(datum.quantile * 100) == round(quantile * 100)"</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">transform_filter</span><span class="p">(</span><span class="s2">"datum.type == 'end'"</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">mark_text</span><span class="p">(</span><span class="n">align</span><span class="o">=</span><span class="s2">"left"</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">"gray"</span><span class="p">,</span> <span class="n">dx</span><span class="o">=-</span><span class="mi">8</span><span class="p">,</span> <span class="n">dy</span><span class="o">=-</span><span class="n">y_text_offset</span> <span class="o">-</span> <span class="mi">15</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">text</span><span class="o">=</span><span class="n">alt</span><span class="o">.</span><span class="n">Text</span><span class="p">(</span><span class="s2">"label"</span><span class="p">),</span> <span class="n">x</span><span class="o">=</span><span class="n">alt</span><span class="o">.</span><span class="n">X</span><span class="p">(</span><span class="s2">"x:Q"</span><span class="p">))</span>
+    <span class="p">)</span>
+    <span class="n">text</span> <span class="o">=</span> <span class="n">text_bar_left</span> <span class="o">+</span> <span class="n">text_bar_right</span> <span class="o">+</span> <span class="n">text_label_start</span> <span class="o">+</span> <span class="n">text_label_end</span>
+
+    <span class="n">feature_bar_rule</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">base</span><span class="o">.</span><span class="n">transform_filter</span><span class="p">(</span><span class="s2">"isValid(datum.feature2)"</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">mark_rule</span><span class="p">(</span>
+            <span class="n">color</span><span class="o">=</span><span class="s2">"gray"</span><span class="p">,</span>
+            <span class="n">yOffset</span><span class="o">=</span><span class="n">y_rule_offset</span><span class="p">,</span>
+            <span class="n">y2Offset</span><span class="o">=-</span><span class="n">y_rule_offset</span><span class="p">,</span>
+            <span class="n">opacity</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span>
+            <span class="n">strokeDash</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+        <span class="p">)</span>
+        <span class="o">.</span><span class="n">encode</span><span class="p">(</span>
+            <span class="n">x</span><span class="o">=</span><span class="n">alt</span><span class="o">.</span><span class="n">X</span><span class="p">(</span><span class="s2">"end:Q"</span><span class="p">),</span>
+            <span class="n">y</span><span class="o">=</span><span class="n">alt</span><span class="o">.</span><span class="n">Y</span><span class="p">(</span><span class="s2">"feature"</span><span class="p">,</span> <span class="n">sort</span><span class="o">=</span><span class="kc">None</span><span class="p">),</span>
+            <span class="n">y2</span><span class="o">=</span><span class="n">alt</span><span class="o">.</span><span class="n">Y2</span><span class="p">(</span><span class="s2">"feature2"</span><span class="p">),</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">end_bar_rule</span> <span class="o">=</span> <span class="n">base</span><span class="o">.</span><span class="n">mark_rule</span><span class="p">(</span><span class="n">color</span><span class="o">=</span><span class="s2">"gray"</span><span class="p">,</span> <span class="n">opacity</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span> <span class="n">strokeDash</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span>
+        <span class="n">x</span><span class="o">=</span><span class="n">alt</span><span class="o">.</span><span class="n">X</span><span class="p">(</span><span class="s2">"model_output:Q"</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">tick_start_rule</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">alt</span><span class="o">.</span><span class="n">Chart</span><span class="p">(</span><span class="n">df_text_labels</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">transform_filter</span><span class="p">(</span><span class="s2">"round(datum.quantile * 100) == round(quantile * 100)"</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">transform_filter</span><span class="p">(</span><span class="s2">"datum.type == 'start'"</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">mark_rule</span><span class="p">(</span><span class="n">color</span><span class="o">=</span><span class="s2">"gray"</span><span class="p">,</span> <span class="n">opacity</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">height</span><span class="p">,</span> <span class="n">y2</span><span class="o">=</span><span class="n">height</span> <span class="o">+</span> <span class="mi">6</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">alt</span><span class="o">.</span><span class="n">X</span><span class="p">(</span><span class="s2">"x:Q"</span><span class="p">))</span>
+    <span class="p">)</span>
+    <span class="n">tick_end_rule</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">alt</span><span class="o">.</span><span class="n">Chart</span><span class="p">(</span><span class="n">df_text_labels</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">transform_filter</span><span class="p">(</span><span class="s2">"round(datum.quantile * 100) == round(quantile * 100)"</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">transform_filter</span><span class="p">(</span><span class="s2">"datum.type == 'end'"</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">mark_rule</span><span class="p">(</span><span class="n">color</span><span class="o">=</span><span class="s2">"gray"</span><span class="p">,</span> <span class="n">opacity</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">y2</span><span class="o">=-</span><span class="mi">6</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">alt</span><span class="o">.</span><span class="n">X</span><span class="p">(</span><span class="s2">"x:Q"</span><span class="p">))</span>
+    <span class="p">)</span>
+    <span class="n">rule</span> <span class="o">=</span> <span class="n">feature_bar_rule</span> <span class="o">+</span> <span class="n">end_bar_rule</span> <span class="o">+</span> <span class="n">tick_start_rule</span> <span class="o">+</span> <span class="n">tick_end_rule</span>
+
+    <span class="n">bar</span> <span class="o">=</span> <span class="n">bar</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">x2</span><span class="o">=</span><span class="n">alt</span><span class="o">.</span><span class="n">X2</span><span class="p">(</span><span class="s2">"end_shifted:Q"</span><span class="p">))</span>
+
+    <span class="n">chart</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="p">(</span><span class="n">bar</span> <span class="o">+</span> <span class="n">point</span> <span class="o">+</span> <span class="n">text</span> <span class="o">+</span> <span class="n">rule</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">add_params</span><span class="p">(</span><span class="n">quantile_val</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">configure_view</span><span class="p">(</span><span class="n">strokeOpacity</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">properties</span><span class="p">(</span>
+            <span class="n">title</span><span class="o">=</span><span class="s2">"Waterfall Plot of SHAP Values for QRF Predictions"</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="n">height</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">600</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">chart</span>
+
+
+<span class="n">chart</span> <span class="o">=</span> <span class="n">plot_shap_waterfall_with_quantiles</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+<span class="n">chart</span>
+</pre></div>
+</div>
+</section>
+
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../_static/scripts/bootstrap.js?digest=18bd87630a240e9c25be"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=18bd87630a240e9c25be"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2022-2026, Zillow Group.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.2.0.
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.23.0.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

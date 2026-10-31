@@ -13,12 +13,17 @@ QRFs for Conformalized Quantile Regression
 This example demonstrates the use of a quantile regression forest (QRF) to
 construct reliable prediction intervals using conformalized quantile
 regression (CQR). While QRFs can estimate quantiles, they may require
-additional calibration to provide reliable interval estimates. CQR provides
-prediction intervals that attain valid coverage. In this example, we use CQR
-to enhance QRF by producing prediction intervals that achieve a level of
+additional calibration to provide reliable interval estimates. CQR calibrates
+the intervals on data held out from training, which guarantees that their
 coverage (i.e., the percentage of samples that actually fall within their
-prediction interval) that is generally closer to the target level. This
-example is adapted from `"Prediction intervals: Quantile Regression Forests"
+prediction interval) is at least the target level, on average. We also
+calibrate them with the out-of-bag (OOB) predictions of the training samples,
+which lets the QRF fit on all of the training data and gives narrower
+intervals, but does not guarantee the coverage. Since the coverage on one
+split of the data varies by chance, the plots show each sample's interval from
+one repetition of 4-fold cross-validation, and the mean coverage and interval
+width over five repetitions (20 splits). This example is adapted from
+`"Prediction intervals: Quantile Regression Forests"
 <https://www.kaggle.com/code/carlmcbrideellis/prediction-intervals-quantile-regression-forests>`_
 by Carl McBride Ellis.
 
@@ -32,7 +37,7 @@ by Carl McBride Ellis.
     import numpy as np
     import pandas as pd
     from sklearn import datasets
-    from sklearn.model_selection import train_test_split
+    from sklearn.model_selection import RepeatedKFold, train_test_split
 
     from quantile_forest import RandomForestQuantileRegressor
 
@@ -40,12 +45,9 @@ by Carl McBride Ellis.
     random_state = np.random.RandomState(random_seed)
 
     n_samples = 900
-    coverages = np.linspace(0, 1, num=11, endpoint=True).round(1).tolist()  # the "coverage level"
-
-    strategies = {
-        "qrf": "Quantile Regression Forest (QRF)",
-        "cqr": "Conformalized Quantile Regression (CQR)",
-    }
+    n_folds = 4  # the number of folds of the cross-validation
+    n_repeats = 5  # the number of times that the cross-validation is repeated
+    coverages = np.linspace(0.1, 0.9, num=9).round(1).tolist()  # the "coverage level"
 
     # Load the California Housing dataset.
     X, y = datasets.fetch_california_housing(return_X_y=True, as_frame=True)
@@ -53,130 +55,124 @@ by Carl McBride Ellis.
     X = X.iloc[perm]
     y = y.iloc[perm]
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=random_state)
+
+    def predict_intervals(qrf, X, **kwargs):
+        """Predict the interval at each coverage level, as an array of shape (n, n_coverages, 2)."""
+        quantiles = [q for coverage in coverages for q in [(1 - coverage) / 2, (1 + coverage) / 2]]
+        return qrf.predict(X, quantiles=quantiles, **kwargs).reshape(len(X), len(coverages), 2)
 
 
-    def sort_y_values(y_test, y_pred, y_pis):
-        """Sort the target values and predictions."""
-        indices = np.argsort(y_test)
+    def conformalize(y_pis, y_pis_calib, y_calib):
+        """Calibrate prediction intervals with CQR, given those of calibration samples."""
+        y_pis = y_pis.copy()
+        for i, coverage in enumerate(coverages):
+            # Calculate the conformity scores on the calibration data.
+            conf_scores = np.maximum(y_pis_calib[:, i, 0] - y_calib, y_calib - y_pis_calib[:, i, 1])
+
+            # Get the ceil((n + 1) * coverage)-th smallest of the n conformity scores,
+            # `s`, which guarantees a coverage of at least `coverage`.
+            n_calib = len(y_calib)
+            level = min(1, np.ceil((n_calib + 1) * coverage) / n_calib)
+            s = np.quantile(conf_scores, level, method="higher")
+
+            # Subtract `s` from the lower quantile and add it to the upper quantile.
+            y_pis[:, i, 0] -= s
+            y_pis[:, i, 1] += s
+        return y_pis
+
+
+    def predict_strategies(X_train, X_test, y_train, random_state=None):
+        """Predict the point predictions and prediction intervals of each strategy."""
+        qrf = RandomForestQuantileRegressor(max_samples_leaf=None, random_state=random_state)
+        qrf.fit(X_train, y_train)
+
+        # Calculate the point predictions and prediction intervals on the test data.
+        y_pred = qrf.predict(X_test, quantiles="mean", aggregate_leaves_first=False)
+        y_pis = predict_intervals(qrf, X_test)
+
+        # For CQR, fit on half of the training data and calibrate on the other half.
+        X_fit, X_calib, y_fit, y_calib = train_test_split(
+            X_train, y_train, test_size=0.5, random_state=random_state
+        )
+        qrf_cqr = RandomForestQuantileRegressor(max_samples_leaf=None, random_state=random_state)
+        qrf_cqr.fit(X_fit, y_fit)
+        y_pred_cqr = qrf_cqr.predict(X_test, quantiles="mean", aggregate_leaves_first=False)
+        y_pis_cqr = conformalize(
+            predict_intervals(qrf_cqr, X_test), predict_intervals(qrf_cqr, X_calib), y_calib
+        )
+
+        # For CQR with OOB calibration, calibrate on the training data, with the
+        # intervals of each sample predicted by the trees that did not draw it.
+        y_pis_oob = predict_intervals(qrf, X_train, oob_score=True)
+        y_pis_cqr_oob = conformalize(y_pis, y_pis_oob, y_train)
+
         return {
-            "y_test": np.asarray(y_test)[indices],
-            "y_pred": y_pred[indices],
-            "y_pred_low": y_pis[:, 0][indices],
-            "y_pred_upp": y_pis[:, 1][indices],
+            "qrf": (y_pred, y_pis),
+            "cqr": (y_pred_cqr, y_pis_cqr),
+            "cqr_oob": (y_pred, y_pis_cqr_oob),
         }
 
 
-    def coverage_score(y_true, y_pred_low, y_pred_upp):
-        """Effective coverage score obtained by the prediction intervals."""
-        coverage = np.mean((y_pred_low <= y_true) & (y_pred_upp >= y_true))
-        return float(coverage)
+    # Predict with each strategy on each split of the cross-validation.
+    cv = RepeatedKFold(n_splits=n_folds, n_repeats=n_repeats, random_state=random_seed)
+    dfs, metrics = [], []
+    for split, (train_index, test_index) in enumerate(cv.split(X)):
+        X_train, X_test = X.iloc[train_index], X.iloc[test_index]
+        y_train, y_test = y.iloc[train_index], y.iloc[test_index].to_numpy()
+        for strategy, (y_pred, y_pis) in predict_strategies(
+            X_train, X_test, y_train, random_state=random_seed + split
+        ).items():
+            y_pred_low, y_pred_upp = y_pis[:, :, 0], y_pis[:, :, 1]
+
+            # Calculate the coverage and mean width of the intervals at each level.
+            within = (y_pred_low <= y_test[:, np.newaxis]) & (y_test[:, np.newaxis] <= y_pred_upp)
+            metrics.append(
+                pd.DataFrame(
+                    {
+                        "strategy": strategy,
+                        "target": coverages,
+                        "coverage": within.mean(axis=0),
+                        "width": (y_pred_upp - y_pred_low).mean(axis=0) * 100_000,
+                    }
+                )
+            )
+
+            # Keep the intervals of the first repetition, in which each sample is tested once.
+            if split < n_folds:
+                y_values = {"y_test": y_test, "y_pred": y_pred}
+                for i, coverage in enumerate(coverages):
+                    y_values[f"y_pred_low_{round(coverage * 100)}"] = y_pred_low[:, i]
+                    y_values[f"y_pred_upp_{round(coverage * 100)}"] = y_pred_upp[:, i]
+                dfs.append(
+                    pd.DataFrame(y_values)
+                    .pipe(lambda x: (x * 100_000).round().astype(int))  # convert to dollars
+                    .assign(strategy=strategy)
+                )
+    df = pd.concat(dfs, ignore_index=True)
+    df_metrics = pd.concat(metrics).groupby(["strategy", "target"], as_index=False).mean()
 
 
-    def mean_width_score(y_pred_low, y_pred_upp):
-        """Effective mean width score obtained by the prediction intervals."""
-        mean_width = np.abs(y_pred_upp - y_pred_low).mean()
-        return float(mean_width)
-
-
-    def qrf_strategy(alpha, X_train, X_test, y_train, y_test, random_state=None):
-        """QRF (baseline) strategy."""
-        quantiles = [alpha / 2, 1 - alpha / 2]
-
-        qrf = RandomForestQuantileRegressor(max_samples_leaf=None, random_state=random_state)
-        qrf.fit(X_train, y_train)
-
-        # Calculate the lower and upper quantile values on the test data.
-        y_pred_interval = qrf.predict(X_test, quantiles=quantiles)
-        y_pred_low = y_pred_interval[:, 0]
-        y_pred_upp = y_pred_interval[:, 1]
-        y_pis = np.stack([y_pred_low, y_pred_upp], axis=1)
-
-        # Calculate the point predictions on the test data.
-        y_pred = qrf.predict(X_test, quantiles="mean", aggregate_leaves_first=False)
-
-        y_values = sort_y_values(y_test, y_pred, y_pis)
-
-        return pd.DataFrame(y_values).pipe(lambda x: x * 100_000).assign(strategy="qrf")
-
-
-    def cqr_strategy(alpha, X_train, X_test, y_train, y_test, random_state=None):
-        """Conformalized Quantile Regression (CQR) strategy with a QRF."""
-        quantiles = [alpha / 2, 1 - alpha / 2]
-
-        # Create calibration set.
-        X_train, X_calib, y_train, y_calib = train_test_split(
-            X_train, y_train, test_size=0.5, random_state=random_state
-        )
-
-        qrf = RandomForestQuantileRegressor(max_samples_leaf=None, random_state=random_state)
-        qrf.fit(X_train, y_train)
-
-        # Calculate the lower and upper quantile values on the test data.
-        y_pred_interval = qrf.predict(X_test, quantiles=quantiles)
-        y_pred_low = y_pred_interval[:, 0]
-        y_pred_upp = y_pred_interval[:, 1]
-
-        # Calculate the lower and upper quantile values on the calibration set.
-        y_pred_interval_calib = qrf.predict(X_calib, quantiles=quantiles)
-        y_pred_low_calib = y_pred_interval_calib[:, 0]
-        y_pred_upp_calib = y_pred_interval_calib[:, 1]
-
-        # Calculate the conformity scores on the calibration data.
-        a = y_pred_low_calib - y_calib
-        b = y_calib - y_pred_upp_calib
-        conf_scores = (np.vstack((a, b)).T).max(axis=1)
-
-        # Get the 1-alpha quantile `s` from the distribution of conformity scores.
-        s = np.quantile(conf_scores, np.clip((1 - alpha) * (1 + (1 / (len(y_calib)))), 0, 1))
-
-        # Subtract `s` from the lower quantile and add it to the upper quantile.
-        y_conf_low = y_pred_low - s
-        y_conf_upp = y_pred_upp + s
-        y_pis = np.stack([y_conf_low, y_conf_upp], axis=1)
-
-        # Calculate the point predictions on the test data.
-        y_pred = qrf.predict(X_test, quantiles="mean", aggregate_leaves_first=False)
-
-        y_values = sort_y_values(y_test, y_pred, y_pis)
-
-        return pd.DataFrame(y_values).pipe(lambda x: x * 100_000).assign(strategy="cqr")
-
-
-    # Get strategy outputs as a data frame.
-    dfs = []
-    for cov_frac in coverages:
-        alpha = float(round(1 - cov_frac, 2))
-        args = (alpha, X_train, X_test, y_train, y_test, random_seed)
-        dfs.append(pd.concat([qrf_strategy(*args), cqr_strategy(*args)]).assign(alpha=alpha))
-    df = pd.concat(dfs)
-
-    metrics = (
-        df.groupby(["alpha", "strategy"])
-        .apply(
-            lambda grp: pd.Series(
-                {
-                    "coverage": coverage_score(grp["y_test"], grp["y_pred_low"], grp["y_pred_upp"]),
-                    "width": mean_width_score(grp["y_pred_low"], grp["y_pred_upp"]),
-                }
-            ),
-            include_groups=False,
-        )
-        .reset_index()
-    )
-
-    # Merge the metrics into the data frame.
-    df = df.merge(metrics, on=["alpha", "strategy"], how="left")
-
-
-    def plot_prediction_intervals_by_strategy(df):
+    def plot_prediction_intervals_by_strategy(df, df_metrics):
         """Plot prediction intervals by interval estimate strategy."""
 
         # Single shared slider for varying the target coverage level.
-        slider = alt.binding_range(name="Coverage Target: ", min=0, max=1, step=0.1)
+        slider = alt.binding_range(name="Coverage Target: ", min=0.1, max=0.9, step=0.1)
         coverage_val = alt.param(name="coverage", value=0.9, bind=slider)
 
-        def _plot_prediction_intervals(df, domain, suffix=""):
+        # Drop-down menu for choosing the calibration data of the CQR intervals.
+        select = alt.binding_select(
+            name="CQR Calibration: ",
+            options=["cqr", "cqr_oob"],
+            labels=["Held-Out Data", "Out-of-Bag Predictions"],
+        )
+        calibration_val = alt.param(name="calibration", value="cqr", bind=select)
+
+        domain = [
+            int(np.min((df[["y_test", "y_pred"]].min(axis=0)))),  # min of all axes
+            int(np.max((df[["y_test", "y_pred"]].max(axis=0)))),  # max of all axes
+        ]
+
+        def _plot_prediction_intervals(df, df_metrics, filter_strategy="true", suffix=""):
             click = alt.selection_point(name=f"click{suffix}", bind="legend", fields=["y_label"])
 
             tooltip = [
@@ -189,7 +185,11 @@ by Carl McBride Ellis.
 
             base = (
                 alt.Chart(df)
-                .transform_filter("round((1 - datum.alpha) * 100) / 100 == coverage")
+                .transform_filter(filter_strategy)
+                .transform_calculate(
+                    y_pred_low="datum['y_pred_low_' + round(coverage * 100)]",
+                    y_pred_upp="datum['y_pred_upp_' + round(coverage * 100)]",
+                )
                 .transform_calculate(
                     y_label=(
                         "((datum.y_test >= datum.y_pred_low) & (datum.y_test <= datum.y_pred_upp))"
@@ -198,7 +198,7 @@ by Carl McBride Ellis.
                 )
             )
 
-            bar = base.mark_bar(width=2).encode(
+            bar = base.mark_bar(width=1).encode(
                 x=alt.X("y_pred:Q", scale=alt.Scale(domain=domain, padding=0), title=""),
                 y=alt.Y("y_pred_low:Q", scale=alt.Scale(domain=domain, padding=0), title=""),
                 y2=alt.Y2("y_pred_upp:Q", title=None),
@@ -217,19 +217,19 @@ by Carl McBride Ellis.
 
             circle = (
                 base.add_params(click)
-                .mark_circle(size=30)
+                .mark_circle(size=15)
                 .encode(
                     x=alt.X(
                         "y_pred:Q",
-                        axis=alt.Axis(format="$,d"),
+                        axis=alt.Axis(format="$~s"),
                         scale=alt.Scale(domain=domain, nice=False),
-                        title="True Prices",
+                        title="Predicted Prices",
                     ),
                     y=alt.Y(
                         "y_test:Q",
-                        axis=alt.Axis(format="$,d"),
+                        axis=alt.Axis(format="$~s"),
                         scale=alt.Scale(domain=domain, nice=False),
-                        title="Predicted Prices",
+                        title="True Prices",
                     ),
                     color=alt.condition(
                         click,
@@ -254,54 +254,45 @@ by Carl McBride Ellis.
                 )
             )
 
-            text_coverage = (
-                base.transform_aggregate(
-                    alpha="mean(alpha)", coverage="mean(coverage)", groupby=["strategy"]
-                )
+            # The mean coverage and interval width over all of the splits.
+            text = (
+                alt.Chart(df_metrics)
+                .transform_filter(filter_strategy)
+                .transform_filter("round(datum.target * 100) == round(coverage * 100)")
                 .transform_calculate(
                     coverage_text=(
-                        "'Coverage: ' + format(datum.coverage * 100, '.1f') + '%'"
-                        " + ' (target = ' + format((1 - datum.alpha) * 100, '.1f') + '%)'"
-                    )
+                        "'Mean Coverage: ' + format(datum.coverage * 100, '.1f') + '%'"
+                        " + ' (target = ' + format(datum.target * 100, '.1f') + '%)'"
+                    ),
+                    width_text="'Mean Interval Width: ' + format(datum.width, '$,d')",
                 )
                 .mark_text(align="left", baseline="top", color="gray")
-                .encode(
-                    x=alt.value(5),
-                    y=alt.value(5),
-                    text=alt.Text("coverage_text:N"),
-                )
+                .encode(x=alt.value(5))
             )
-            text_with = (
-                base.transform_aggregate(width="mean(width)", groupby=["strategy"])
-                .transform_calculate(width_text="'Interval Width: ' + format(datum.width, '$,d')")
-                .mark_text(align="left", baseline="top", color="gray")
-                .encode(
-                    x=alt.value(5),
-                    y=alt.value(20),
-                    text=alt.Text("width_text:N"),
-                )
-            )
+            text_coverage = text.encode(y=alt.value(5), text=alt.Text("coverage_text:N"))
+            text_width = text.encode(y=alt.value(20), text=alt.Text("width_text:N"))
 
-            chart = bar + tick_low + tick_upp + circle + diagonal + text_coverage + text_with
+            chart = bar + tick_low + tick_upp + circle + diagonal + text_coverage + text_width
 
-            return chart
+            return chart.properties(height=225, width=300)
 
-        panels = []
-        for i, strategy in enumerate(strategies.keys()):
-            domain = [
-                int(np.min((df[["y_test", "y_pred"]].min(axis=0)))),  # min of all axes
-                int(np.max((df[["y_test", "y_pred"]].max(axis=0)))),  # max of all axes
-            ]
-            df_i = df.query(f"strategy == '{strategy}'").reset_index(drop=True)
-            panel = _plot_prediction_intervals(df_i, domain, suffix=f"_{i}")
-            panels.append(panel.properties(height=225, width=300, title=strategies[strategy]))
+        # The CQR plot shows the intervals of the calibration chosen in the drop-down menu.
+        panel_qrf = _plot_prediction_intervals(
+            df.query("strategy == 'qrf'"), df_metrics.query("strategy == 'qrf'"), suffix="_qrf"
+        ).properties(title="Quantile Regression Forest (QRF)")
+        panel_cqr = _plot_prediction_intervals(
+            df.query("strategy != 'qrf'"),
+            df_metrics.query("strategy != 'qrf'"),
+            "datum.strategy == calibration",
+            suffix="_cqr",
+        ).properties(title="Conformalized Quantile Regression (CQR)")
 
-        chart = alt.hconcat(*panels).add_params(coverage_val)
+        chart = alt.hconcat(panel_qrf, panel_cqr).add_params(coverage_val, calibration_val)
 
         return chart
 
 
-    chart = plot_prediction_intervals_by_strategy(df)
+    chart = plot_prediction_intervals_by_strategy(df, df_metrics)
     chart
 
 
@@ -312,7 +303,7 @@ by Carl McBride Ellis.
             import numpy as np
             import pandas as pd
             from sklearn import datasets
-            from sklearn.model_selection import train_test_split
+            from sklearn.model_selection import RepeatedKFold, train_test_split
 
             from quantile_forest import RandomForestQuantileRegressor
 
@@ -320,12 +311,9 @@ by Carl McBride Ellis.
             random_state = np.random.RandomState(random_seed)
 
             n_samples = 900
-            coverages = np.linspace(0, 1, num=11, endpoint=True).round(1).tolist()  # the "coverage level"
-
-            strategies = {
-                "qrf": "Quantile Regression Forest (QRF)",
-                "cqr": "Conformalized Quantile Regression (CQR)",
-            }
+            n_folds = 4  # the number of folds of the cross-validation
+            n_repeats = 5  # the number of times that the cross-validation is repeated
+            coverages = np.linspace(0.1, 0.9, num=9).round(1).tolist()  # the "coverage level"
 
             # Load the California Housing dataset.
             X, y = datasets.fetch_california_housing(return_X_y=True, as_frame=True)
@@ -333,130 +321,124 @@ by Carl McBride Ellis.
             X = X.iloc[perm]
             y = y.iloc[perm]
 
-            X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=random_state)
+
+            def predict_intervals(qrf, X, **kwargs):
+                """Predict the interval at each coverage level, as an array of shape (n, n_coverages, 2)."""
+                quantiles = [q for coverage in coverages for q in [(1 - coverage) / 2, (1 + coverage) / 2]]
+                return qrf.predict(X, quantiles=quantiles, **kwargs).reshape(len(X), len(coverages), 2)
 
 
-            def sort_y_values(y_test, y_pred, y_pis):
-                """Sort the target values and predictions."""
-                indices = np.argsort(y_test)
+            def conformalize(y_pis, y_pis_calib, y_calib):
+                """Calibrate prediction intervals with CQR, given those of calibration samples."""
+                y_pis = y_pis.copy()
+                for i, coverage in enumerate(coverages):
+                    # Calculate the conformity scores on the calibration data.
+                    conf_scores = np.maximum(y_pis_calib[:, i, 0] - y_calib, y_calib - y_pis_calib[:, i, 1])
+
+                    # Get the ceil((n + 1) * coverage)-th smallest of the n conformity scores,
+                    # `s`, which guarantees a coverage of at least `coverage`.
+                    n_calib = len(y_calib)
+                    level = min(1, np.ceil((n_calib + 1) * coverage) / n_calib)
+                    s = np.quantile(conf_scores, level, method="higher")
+
+                    # Subtract `s` from the lower quantile and add it to the upper quantile.
+                    y_pis[:, i, 0] -= s
+                    y_pis[:, i, 1] += s
+                return y_pis
+
+
+            def predict_strategies(X_train, X_test, y_train, random_state=None):
+                """Predict the point predictions and prediction intervals of each strategy."""
+                qrf = RandomForestQuantileRegressor(max_samples_leaf=None, random_state=random_state)
+                qrf.fit(X_train, y_train)
+
+                # Calculate the point predictions and prediction intervals on the test data.
+                y_pred = qrf.predict(X_test, quantiles="mean", aggregate_leaves_first=False)
+                y_pis = predict_intervals(qrf, X_test)
+
+                # For CQR, fit on half of the training data and calibrate on the other half.
+                X_fit, X_calib, y_fit, y_calib = train_test_split(
+                    X_train, y_train, test_size=0.5, random_state=random_state
+                )
+                qrf_cqr = RandomForestQuantileRegressor(max_samples_leaf=None, random_state=random_state)
+                qrf_cqr.fit(X_fit, y_fit)
+                y_pred_cqr = qrf_cqr.predict(X_test, quantiles="mean", aggregate_leaves_first=False)
+                y_pis_cqr = conformalize(
+                    predict_intervals(qrf_cqr, X_test), predict_intervals(qrf_cqr, X_calib), y_calib
+                )
+
+                # For CQR with OOB calibration, calibrate on the training data, with the
+                # intervals of each sample predicted by the trees that did not draw it.
+                y_pis_oob = predict_intervals(qrf, X_train, oob_score=True)
+                y_pis_cqr_oob = conformalize(y_pis, y_pis_oob, y_train)
+
                 return {
-                    "y_test": np.asarray(y_test)[indices],
-                    "y_pred": y_pred[indices],
-                    "y_pred_low": y_pis[:, 0][indices],
-                    "y_pred_upp": y_pis[:, 1][indices],
+                    "qrf": (y_pred, y_pis),
+                    "cqr": (y_pred_cqr, y_pis_cqr),
+                    "cqr_oob": (y_pred, y_pis_cqr_oob),
                 }
 
 
-            def coverage_score(y_true, y_pred_low, y_pred_upp):
-                """Effective coverage score obtained by the prediction intervals."""
-                coverage = np.mean((y_pred_low <= y_true) & (y_pred_upp >= y_true))
-                return float(coverage)
+            # Predict with each strategy on each split of the cross-validation.
+            cv = RepeatedKFold(n_splits=n_folds, n_repeats=n_repeats, random_state=random_seed)
+            dfs, metrics = [], []
+            for split, (train_index, test_index) in enumerate(cv.split(X)):
+                X_train, X_test = X.iloc[train_index], X.iloc[test_index]
+                y_train, y_test = y.iloc[train_index], y.iloc[test_index].to_numpy()
+                for strategy, (y_pred, y_pis) in predict_strategies(
+                    X_train, X_test, y_train, random_state=random_seed + split
+                ).items():
+                    y_pred_low, y_pred_upp = y_pis[:, :, 0], y_pis[:, :, 1]
+
+                    # Calculate the coverage and mean width of the intervals at each level.
+                    within = (y_pred_low <= y_test[:, np.newaxis]) & (y_test[:, np.newaxis] <= y_pred_upp)
+                    metrics.append(
+                        pd.DataFrame(
+                            {
+                                "strategy": strategy,
+                                "target": coverages,
+                                "coverage": within.mean(axis=0),
+                                "width": (y_pred_upp - y_pred_low).mean(axis=0) * 100_000,
+                            }
+                        )
+                    )
+
+                    # Keep the intervals of the first repetition, in which each sample is tested once.
+                    if split < n_folds:
+                        y_values = {"y_test": y_test, "y_pred": y_pred}
+                        for i, coverage in enumerate(coverages):
+                            y_values[f"y_pred_low_{round(coverage * 100)}"] = y_pred_low[:, i]
+                            y_values[f"y_pred_upp_{round(coverage * 100)}"] = y_pred_upp[:, i]
+                        dfs.append(
+                            pd.DataFrame(y_values)
+                            .pipe(lambda x: (x * 100_000).round().astype(int))  # convert to dollars
+                            .assign(strategy=strategy)
+                        )
+            df = pd.concat(dfs, ignore_index=True)
+            df_metrics = pd.concat(metrics).groupby(["strategy", "target"], as_index=False).mean()
 
 
-            def mean_width_score(y_pred_low, y_pred_upp):
-                """Effective mean width score obtained by the prediction intervals."""
-                mean_width = np.abs(y_pred_upp - y_pred_low).mean()
-                return float(mean_width)
-
-
-            def qrf_strategy(alpha, X_train, X_test, y_train, y_test, random_state=None):
-                """QRF (baseline) strategy."""
-                quantiles = [alpha / 2, 1 - alpha / 2]
-
-                qrf = RandomForestQuantileRegressor(max_samples_leaf=None, random_state=random_state)
-                qrf.fit(X_train, y_train)
-
-                # Calculate the lower and upper quantile values on the test data.
-                y_pred_interval = qrf.predict(X_test, quantiles=quantiles)
-                y_pred_low = y_pred_interval[:, 0]
-                y_pred_upp = y_pred_interval[:, 1]
-                y_pis = np.stack([y_pred_low, y_pred_upp], axis=1)
-
-                # Calculate the point predictions on the test data.
-                y_pred = qrf.predict(X_test, quantiles="mean", aggregate_leaves_first=False)
-
-                y_values = sort_y_values(y_test, y_pred, y_pis)
-
-                return pd.DataFrame(y_values).pipe(lambda x: x * 100_000).assign(strategy="qrf")
-
-
-            def cqr_strategy(alpha, X_train, X_test, y_train, y_test, random_state=None):
-                """Conformalized Quantile Regression (CQR) strategy with a QRF."""
-                quantiles = [alpha / 2, 1 - alpha / 2]
-
-                # Create calibration set.
-                X_train, X_calib, y_train, y_calib = train_test_split(
-                    X_train, y_train, test_size=0.5, random_state=random_state
-                )
-
-                qrf = RandomForestQuantileRegressor(max_samples_leaf=None, random_state=random_state)
-                qrf.fit(X_train, y_train)
-
-                # Calculate the lower and upper quantile values on the test data.
-                y_pred_interval = qrf.predict(X_test, quantiles=quantiles)
-                y_pred_low = y_pred_interval[:, 0]
-                y_pred_upp = y_pred_interval[:, 1]
-
-                # Calculate the lower and upper quantile values on the calibration set.
-                y_pred_interval_calib = qrf.predict(X_calib, quantiles=quantiles)
-                y_pred_low_calib = y_pred_interval_calib[:, 0]
-                y_pred_upp_calib = y_pred_interval_calib[:, 1]
-
-                # Calculate the conformity scores on the calibration data.
-                a = y_pred_low_calib - y_calib
-                b = y_calib - y_pred_upp_calib
-                conf_scores = (np.vstack((a, b)).T).max(axis=1)
-
-                # Get the 1-alpha quantile `s` from the distribution of conformity scores.
-                s = np.quantile(conf_scores, np.clip((1 - alpha) * (1 + (1 / (len(y_calib)))), 0, 1))
-
-                # Subtract `s` from the lower quantile and add it to the upper quantile.
-                y_conf_low = y_pred_low - s
-                y_conf_upp = y_pred_upp + s
-                y_pis = np.stack([y_conf_low, y_conf_upp], axis=1)
-
-                # Calculate the point predictions on the test data.
-                y_pred = qrf.predict(X_test, quantiles="mean", aggregate_leaves_first=False)
-
-                y_values = sort_y_values(y_test, y_pred, y_pis)
-
-                return pd.DataFrame(y_values).pipe(lambda x: x * 100_000).assign(strategy="cqr")
-
-
-            # Get strategy outputs as a data frame.
-            dfs = []
-            for cov_frac in coverages:
-                alpha = float(round(1 - cov_frac, 2))
-                args = (alpha, X_train, X_test, y_train, y_test, random_seed)
-                dfs.append(pd.concat([qrf_strategy(*args), cqr_strategy(*args)]).assign(alpha=alpha))
-            df = pd.concat(dfs)
-
-            metrics = (
-                df.groupby(["alpha", "strategy"])
-                .apply(
-                    lambda grp: pd.Series(
-                        {
-                            "coverage": coverage_score(grp["y_test"], grp["y_pred_low"], grp["y_pred_upp"]),
-                            "width": mean_width_score(grp["y_pred_low"], grp["y_pred_upp"]),
-                        }
-                    ),
-                    include_groups=False,
-                )
-                .reset_index()
-            )
-
-            # Merge the metrics into the data frame.
-            df = df.merge(metrics, on=["alpha", "strategy"], how="left")
-
-
-            def plot_prediction_intervals_by_strategy(df):
+            def plot_prediction_intervals_by_strategy(df, df_metrics):
                 """Plot prediction intervals by interval estimate strategy."""
 
                 # Single shared slider for varying the target coverage level.
-                slider = alt.binding_range(name="Coverage Target: ", min=0, max=1, step=0.1)
+                slider = alt.binding_range(name="Coverage Target: ", min=0.1, max=0.9, step=0.1)
                 coverage_val = alt.param(name="coverage", value=0.9, bind=slider)
 
-                def _plot_prediction_intervals(df, domain, suffix=""):
+                # Drop-down menu for choosing the calibration data of the CQR intervals.
+                select = alt.binding_select(
+                    name="CQR Calibration: ",
+                    options=["cqr", "cqr_oob"],
+                    labels=["Held-Out Data", "Out-of-Bag Predictions"],
+                )
+                calibration_val = alt.param(name="calibration", value="cqr", bind=select)
+
+                domain = [
+                    int(np.min((df[["y_test", "y_pred"]].min(axis=0)))),  # min of all axes
+                    int(np.max((df[["y_test", "y_pred"]].max(axis=0)))),  # max of all axes
+                ]
+
+                def _plot_prediction_intervals(df, df_metrics, filter_strategy="true", suffix=""):
                     click = alt.selection_point(name=f"click{suffix}", bind="legend", fields=["y_label"])
 
                     tooltip = [
@@ -469,7 +451,11 @@ by Carl McBride Ellis.
 
                     base = (
                         alt.Chart(df)
-                        .transform_filter("round((1 - datum.alpha) * 100) / 100 == coverage")
+                        .transform_filter(filter_strategy)
+                        .transform_calculate(
+                            y_pred_low="datum['y_pred_low_' + round(coverage * 100)]",
+                            y_pred_upp="datum['y_pred_upp_' + round(coverage * 100)]",
+                        )
                         .transform_calculate(
                             y_label=(
                                 "((datum.y_test >= datum.y_pred_low) & (datum.y_test <= datum.y_pred_upp))"
@@ -478,7 +464,7 @@ by Carl McBride Ellis.
                         )
                     )
 
-                    bar = base.mark_bar(width=2).encode(
+                    bar = base.mark_bar(width=1).encode(
                         x=alt.X("y_pred:Q", scale=alt.Scale(domain=domain, padding=0), title=""),
                         y=alt.Y("y_pred_low:Q", scale=alt.Scale(domain=domain, padding=0), title=""),
                         y2=alt.Y2("y_pred_upp:Q", title=None),
@@ -497,19 +483,19 @@ by Carl McBride Ellis.
 
                     circle = (
                         base.add_params(click)
-                        .mark_circle(size=30)
+                        .mark_circle(size=15)
                         .encode(
                             x=alt.X(
                                 "y_pred:Q",
-                                axis=alt.Axis(format="$,d"),
+                                axis=alt.Axis(format="$~s"),
                                 scale=alt.Scale(domain=domain, nice=False),
-                                title="True Prices",
+                                title="Predicted Prices",
                             ),
                             y=alt.Y(
                                 "y_test:Q",
-                                axis=alt.Axis(format="$,d"),
+                                axis=alt.Axis(format="$~s"),
                                 scale=alt.Scale(domain=domain, nice=False),
-                                title="Predicted Prices",
+                                title="True Prices",
                             ),
                             color=alt.condition(
                                 click,
@@ -534,52 +520,43 @@ by Carl McBride Ellis.
                         )
                     )
 
-                    text_coverage = (
-                        base.transform_aggregate(
-                            alpha="mean(alpha)", coverage="mean(coverage)", groupby=["strategy"]
-                        )
+                    # The mean coverage and interval width over all of the splits.
+                    text = (
+                        alt.Chart(df_metrics)
+                        .transform_filter(filter_strategy)
+                        .transform_filter("round(datum.target * 100) == round(coverage * 100)")
                         .transform_calculate(
                             coverage_text=(
-                                "'Coverage: ' + format(datum.coverage * 100, '.1f') + '%'"
-                                " + ' (target = ' + format((1 - datum.alpha) * 100, '.1f') + '%)'"
-                            )
+                                "'Mean Coverage: ' + format(datum.coverage * 100, '.1f') + '%'"
+                                " + ' (target = ' + format(datum.target * 100, '.1f') + '%)'"
+                            ),
+                            width_text="'Mean Interval Width: ' + format(datum.width, '$,d')",
                         )
                         .mark_text(align="left", baseline="top", color="gray")
-                        .encode(
-                            x=alt.value(5),
-                            y=alt.value(5),
-                            text=alt.Text("coverage_text:N"),
-                        )
+                        .encode(x=alt.value(5))
                     )
-                    text_with = (
-                        base.transform_aggregate(width="mean(width)", groupby=["strategy"])
-                        .transform_calculate(width_text="'Interval Width: ' + format(datum.width, '$,d')")
-                        .mark_text(align="left", baseline="top", color="gray")
-                        .encode(
-                            x=alt.value(5),
-                            y=alt.value(20),
-                            text=alt.Text("width_text:N"),
-                        )
-                    )
+                    text_coverage = text.encode(y=alt.value(5), text=alt.Text("coverage_text:N"))
+                    text_width = text.encode(y=alt.value(20), text=alt.Text("width_text:N"))
 
-                    chart = bar + tick_low + tick_upp + circle + diagonal + text_coverage + text_with
+                    chart = bar + tick_low + tick_upp + circle + diagonal + text_coverage + text_width
 
-                    return chart
+                    return chart.properties(height=225, width=300)
 
-                panels = []
-                for i, strategy in enumerate(strategies.keys()):
-                    domain = [
-                        int(np.min((df[["y_test", "y_pred"]].min(axis=0)))),  # min of all axes
-                        int(np.max((df[["y_test", "y_pred"]].max(axis=0)))),  # max of all axes
-                    ]
-                    df_i = df.query(f"strategy == '{strategy}'").reset_index(drop=True)
-                    panel = _plot_prediction_intervals(df_i, domain, suffix=f"_{i}")
-                    panels.append(panel.properties(height=225, width=300, title=strategies[strategy]))
+                # The CQR plot shows the intervals of the calibration chosen in the drop-down menu.
+                panel_qrf = _plot_prediction_intervals(
+                    df.query("strategy == 'qrf'"), df_metrics.query("strategy == 'qrf'"), suffix="_qrf"
+                ).properties(title="Quantile Regression Forest (QRF)")
+                panel_cqr = _plot_prediction_intervals(
+                    df.query("strategy != 'qrf'"),
+                    df_metrics.query("strategy != 'qrf'"),
+                    "datum.strategy == calibration",
+                    suffix="_cqr",
+                ).properties(title="Conformalized Quantile Regression (CQR)")
 
-                chart = alt.hconcat(*panels).add_params(coverage_val)
+                chart = alt.hconcat(panel_qrf, panel_cqr).add_params(coverage_val, calibration_val)
 
                 return chart
 
 
-            chart = plot_prediction_intervals_by_strategy(df)
+            chart = plot_prediction_intervals_by_strategy(df, df_metrics)
             chart
