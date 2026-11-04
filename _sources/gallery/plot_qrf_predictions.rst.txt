@@ -92,32 +92,60 @@ conditional median and 95% interval, which are known for this toy dataset.
 
     def plot_predictions_and_intervals(df):
         """Plot model predictions and prediction intervals with ground truth."""
+        colors = {
+            "Test Observations": "#f2a619",
+            "True Median": "gray",
+            "True 95% Interval": "gray",
+            "Predicted Median": "#006aff",
+            "Predicted 95% Interval": "#e0f2ff",
+        }
+        labels = list(colors.keys())
+        # The legend symbols. The lines are drawn as thin bars (dashed for the true
+        # interval) rather than strokes, as stroked symbols would space the legend
+        # entries unevenly.
+        bar = "M-1,-0.2L1,-0.2L1,0.2L-1,0.2Z"
+        dashed_bar = (
+            "M-1,-0.2L-0.5,-0.2L-0.5,0.2L-1,0.2Z"
+            "M-0.25,-0.2L0.25,-0.2L0.25,0.2L-0.25,0.2Z"
+            "M0.5,-0.2L1,-0.2L1,0.2L0.5,0.2Z"
+        )
+        shapes = ["circle", bar, dashed_bar, bar, "circle"]
+
+        # Clicking an entry of the legend highlights its marks (shift-click for more).
+        click = alt.selection_point(name="click", fields=["label"], bind="legend")
+
+        def _opacity(value):
+            return alt.condition(click, alt.value(value), alt.value(0.1))
+
+        x = alt.X("x:Q", scale=alt.Scale(nice=False), title="X")
+        tooltip = [
+            alt.Tooltip("x:Q", format=",.3f", title="X"),
+            alt.Tooltip("y:Q", format=",.3f", title="True Median"),
+            alt.Tooltip("y_pred:Q", format=",.3f", title="Predicted Median"),
+            alt.Tooltip("y_pred_low:Q", format=",.3f", title="Predicted Lower Y"),
+            alt.Tooltip("y_pred_upp:Q", format=",.3f", title="Predicted Upper Y"),
+        ]
+        df_func = df.query("~test")  # the evenly spaced inputs
+
         area_pred = (
-            alt.Chart(df)
-            .transform_filter(~alt.datum["test"])  # filter to non-test data
-            .mark_area(color="#e0f2ff", opacity=0.8)
+            alt.Chart(df_func.assign(label=labels[4]))
+            .mark_area(color=colors[labels[4]])
             .encode(
-                x=alt.X("x:Q", scale=alt.Scale(nice=False), title="X"),
-                y=alt.Y("y_pred_low:Q", title=""),
-                y2=alt.Y2("y_pred_upp:Q", title=None),
-                tooltip=[
-                    alt.Tooltip("x:Q", format=",.3f", title="X"),
-                    alt.Tooltip("y:Q", format=",.3f", title="True Median"),
-                    alt.Tooltip("y_pred:Q", format=",.3f", title="Predicted Median"),
-                    alt.Tooltip("y_pred_low:Q", format=",.3f", title="Predicted Lower Y"),
-                    alt.Tooltip("y_pred_upp:Q", format=",.3f", title="Predicted Upper Y"),
-                ],
+                x=x,
+                y=alt.Y("y_pred_low:Q", title="Y"),
+                y2="y_pred_upp:Q",
+                opacity=_opacity(0.8),
+                tooltip=tooltip,
             )
         )
 
         circle_test = (
-            alt.Chart(df.assign(**{"point_label": "Test Observations"}))
-            .transform_filter(alt.datum["test"])  # filter to test data
-            .mark_circle(color="#f2a619")
+            alt.Chart(df.query("test").assign(label=labels[0]))
+            .mark_circle(color=colors[labels[0]])
             .encode(
-                x=alt.X("x:Q", scale=alt.Scale(nice=False)),
-                y=alt.Y("y:Q", title=""),
-                color=alt.Color("point_label:N", scale=alt.Scale(range=["#f2a619"]), title=None),
+                x=x,
+                y="y:Q",
+                opacity=_opacity(0.7),
                 tooltip=[
                     alt.Tooltip("x:Q", format=",.3f", title="X"),
                     alt.Tooltip("y:Q", format=",.3f", title="Y"),
@@ -125,41 +153,15 @@ conditional median and 95% interval, which are known for this toy dataset.
             )
         )
 
-        line_true = (
-            alt.Chart(df.assign(**{"y_true_label": "True Median"}))
-            .transform_filter(~alt.datum["test"])  # filter to non-test data
-            .mark_line(color="gray", size=2)
-            .encode(
-                x=alt.X("x:Q", scale=alt.Scale(nice=False)),
-                y=alt.Y("y:Q", title="Y"),
-                color=alt.Color(
-                    "y_true_label:N",
-                    scale=alt.Scale(range=["gray"]),
-                    legend=alt.Legend(symbolType="stroke", symbolStrokeWidth=2),
-                    title=None,
-                ),
-                tooltip=[
-                    alt.Tooltip("x:Q", format=",.3f", title="X"),
-                    alt.Tooltip("y:Q", format=",.3f", title="True Median"),
-                ],
-            )
-        )
-
         line_true_interval = (
-            alt.Chart(df.assign(**{"y_true_interval_label": "True 95% Interval"}))
-            .transform_filter(~alt.datum["test"])  # filter to non-test data
+            alt.Chart(df_func.assign(label=labels[2]))
             .transform_fold(["y_low", "y_upp"], as_=["bound", "y_bound"])
-            .mark_line(color="gray", size=2, strokeDash=[4, 4])
+            .mark_line(color=colors[labels[2]], size=2, strokeDash=[4, 4])
             .encode(
-                x=alt.X("x:Q", scale=alt.Scale(nice=False)),
-                y=alt.Y("y_bound:Q", title=""),
+                x=x,
+                y="y_bound:Q",
                 detail="bound:N",
-                color=alt.Color(
-                    "y_true_interval_label:N",
-                    scale=alt.Scale(range=["gray"]),
-                    legend=alt.Legend(symbolType="stroke", symbolStrokeWidth=2, symbolDash=[4, 4]),
-                    title=None,
-                ),
+                opacity=_opacity(1),
                 tooltip=[
                     alt.Tooltip("x:Q", format=",.3f", title="X"),
                     alt.Tooltip("y_low:Q", format=",.3f", title="True Lower Y"),
@@ -169,46 +171,37 @@ conditional median and 95% interval, which are known for this toy dataset.
         )
 
         line_pred = (
-            alt.Chart(df.assign(**{"y_pred_label": "Predicted Median"}))
-            .transform_filter(~alt.datum["test"])  # filter to non-test data
-            .mark_line(color="#006aff", size=4)
+            alt.Chart(df_func.assign(label=labels[3]))
+            .mark_line(color=colors[labels[3]], size=4)
+            .encode(x=x, y="y_pred:Q", opacity=_opacity(1), tooltip=tooltip)
+        )
+
+        # Draw the true median over the predicted median, where they overlap.
+        line_true = (
+            alt.Chart(df_func.assign(label=labels[1]))
+            .mark_line(color=colors[labels[1]], size=2)
+            .encode(x=x, y="y:Q", opacity=_opacity(1), tooltip=tooltip)
+        )
+
+        # A legend of all of the marks, drawn by invisible points.
+        legend = (
+            alt.Chart(pd.DataFrame({"label": labels}))
+            .mark_point(filled=True, opacity=0)
             .encode(
-                x=alt.X("x:Q", scale=alt.Scale(nice=False)),
-                y=alt.Y("y_pred:Q", title=""),
-                color=alt.Color("y_pred_label:N", scale=alt.Scale(range=["#006aff"]), title=None),
-                tooltip=[
-                    alt.Tooltip("x:Q", format=",.3f", title="X"),
-                    alt.Tooltip("y:Q", format=",.3f", title="True Median"),
-                    alt.Tooltip("y_pred:Q", format=",.3f", title="Predicted Median"),
-                ],
+                color=alt.Color(
+                    "label:N",
+                    scale=alt.Scale(domain=labels, range=list(colors.values())),
+                    legend=alt.Legend(symbolOpacity=1, rowPadding=5),
+                    title=None,
+                ),
+                shape=alt.Shape("label:N", scale=alt.Scale(domain=labels, range=shapes), title=None),
             )
+            .add_params(click)
         )
 
-        # For desired legend ordering.
-        blank = (
-            alt.Chart(pd.DataFrame({"y_area_label": ["Predicted 95% Interval"]}))
-            .mark_area(color="#e0f2ff")
-            .encode(
-                color=alt.Color("y_area_label:N", scale=alt.Scale(range=["#e0f2ff"]), title=None),
-            )
-        )
-
-        # Draw the true median over the predicted median too, where they overlap.
-        line_true_top = line_true.encode(color=alt.value("gray"))
-
-        chart = (
-            (
-                area_pred
-                + circle_test
-                + line_true
-                + line_true_interval
-                + line_pred
-                + line_true_top
-                + blank
-            )
-            .resolve_scale(color="independent")
-            .properties(title="QRF Predictions vs. Ground Truth on Toy Dataset", height=400, width=650)
-        )
+        chart = alt.layer(
+            area_pred, circle_test, line_true_interval, line_pred, line_true, legend
+        ).properties(title="QRF Predictions vs. Ground Truth on Toy Dataset", height=400, width=650)
 
         return chart
 
@@ -289,32 +282,60 @@ conditional median and 95% interval, which are known for this toy dataset.
 
             def plot_predictions_and_intervals(df):
                 """Plot model predictions and prediction intervals with ground truth."""
+                colors = {
+                    "Test Observations": "#f2a619",
+                    "True Median": "gray",
+                    "True 95% Interval": "gray",
+                    "Predicted Median": "#006aff",
+                    "Predicted 95% Interval": "#e0f2ff",
+                }
+                labels = list(colors.keys())
+                # The legend symbols. The lines are drawn as thin bars (dashed for the true
+                # interval) rather than strokes, as stroked symbols would space the legend
+                # entries unevenly.
+                bar = "M-1,-0.2L1,-0.2L1,0.2L-1,0.2Z"
+                dashed_bar = (
+                    "M-1,-0.2L-0.5,-0.2L-0.5,0.2L-1,0.2Z"
+                    "M-0.25,-0.2L0.25,-0.2L0.25,0.2L-0.25,0.2Z"
+                    "M0.5,-0.2L1,-0.2L1,0.2L0.5,0.2Z"
+                )
+                shapes = ["circle", bar, dashed_bar, bar, "circle"]
+
+                # Clicking an entry of the legend highlights its marks (shift-click for more).
+                click = alt.selection_point(name="click", fields=["label"], bind="legend")
+
+                def _opacity(value):
+                    return alt.condition(click, alt.value(value), alt.value(0.1))
+
+                x = alt.X("x:Q", scale=alt.Scale(nice=False), title="X")
+                tooltip = [
+                    alt.Tooltip("x:Q", format=",.3f", title="X"),
+                    alt.Tooltip("y:Q", format=",.3f", title="True Median"),
+                    alt.Tooltip("y_pred:Q", format=",.3f", title="Predicted Median"),
+                    alt.Tooltip("y_pred_low:Q", format=",.3f", title="Predicted Lower Y"),
+                    alt.Tooltip("y_pred_upp:Q", format=",.3f", title="Predicted Upper Y"),
+                ]
+                df_func = df.query("~test")  # the evenly spaced inputs
+
                 area_pred = (
-                    alt.Chart(df)
-                    .transform_filter(~alt.datum["test"])  # filter to non-test data
-                    .mark_area(color="#e0f2ff", opacity=0.8)
+                    alt.Chart(df_func.assign(label=labels[4]))
+                    .mark_area(color=colors[labels[4]])
                     .encode(
-                        x=alt.X("x:Q", scale=alt.Scale(nice=False), title="X"),
-                        y=alt.Y("y_pred_low:Q", title=""),
-                        y2=alt.Y2("y_pred_upp:Q", title=None),
-                        tooltip=[
-                            alt.Tooltip("x:Q", format=",.3f", title="X"),
-                            alt.Tooltip("y:Q", format=",.3f", title="True Median"),
-                            alt.Tooltip("y_pred:Q", format=",.3f", title="Predicted Median"),
-                            alt.Tooltip("y_pred_low:Q", format=",.3f", title="Predicted Lower Y"),
-                            alt.Tooltip("y_pred_upp:Q", format=",.3f", title="Predicted Upper Y"),
-                        ],
+                        x=x,
+                        y=alt.Y("y_pred_low:Q", title="Y"),
+                        y2="y_pred_upp:Q",
+                        opacity=_opacity(0.8),
+                        tooltip=tooltip,
                     )
                 )
 
                 circle_test = (
-                    alt.Chart(df.assign(**{"point_label": "Test Observations"}))
-                    .transform_filter(alt.datum["test"])  # filter to test data
-                    .mark_circle(color="#f2a619")
+                    alt.Chart(df.query("test").assign(label=labels[0]))
+                    .mark_circle(color=colors[labels[0]])
                     .encode(
-                        x=alt.X("x:Q", scale=alt.Scale(nice=False)),
-                        y=alt.Y("y:Q", title=""),
-                        color=alt.Color("point_label:N", scale=alt.Scale(range=["#f2a619"]), title=None),
+                        x=x,
+                        y="y:Q",
+                        opacity=_opacity(0.7),
                         tooltip=[
                             alt.Tooltip("x:Q", format=",.3f", title="X"),
                             alt.Tooltip("y:Q", format=",.3f", title="Y"),
@@ -322,41 +343,15 @@ conditional median and 95% interval, which are known for this toy dataset.
                     )
                 )
 
-                line_true = (
-                    alt.Chart(df.assign(**{"y_true_label": "True Median"}))
-                    .transform_filter(~alt.datum["test"])  # filter to non-test data
-                    .mark_line(color="gray", size=2)
-                    .encode(
-                        x=alt.X("x:Q", scale=alt.Scale(nice=False)),
-                        y=alt.Y("y:Q", title="Y"),
-                        color=alt.Color(
-                            "y_true_label:N",
-                            scale=alt.Scale(range=["gray"]),
-                            legend=alt.Legend(symbolType="stroke", symbolStrokeWidth=2),
-                            title=None,
-                        ),
-                        tooltip=[
-                            alt.Tooltip("x:Q", format=",.3f", title="X"),
-                            alt.Tooltip("y:Q", format=",.3f", title="True Median"),
-                        ],
-                    )
-                )
-
                 line_true_interval = (
-                    alt.Chart(df.assign(**{"y_true_interval_label": "True 95% Interval"}))
-                    .transform_filter(~alt.datum["test"])  # filter to non-test data
+                    alt.Chart(df_func.assign(label=labels[2]))
                     .transform_fold(["y_low", "y_upp"], as_=["bound", "y_bound"])
-                    .mark_line(color="gray", size=2, strokeDash=[4, 4])
+                    .mark_line(color=colors[labels[2]], size=2, strokeDash=[4, 4])
                     .encode(
-                        x=alt.X("x:Q", scale=alt.Scale(nice=False)),
-                        y=alt.Y("y_bound:Q", title=""),
+                        x=x,
+                        y="y_bound:Q",
                         detail="bound:N",
-                        color=alt.Color(
-                            "y_true_interval_label:N",
-                            scale=alt.Scale(range=["gray"]),
-                            legend=alt.Legend(symbolType="stroke", symbolStrokeWidth=2, symbolDash=[4, 4]),
-                            title=None,
-                        ),
+                        opacity=_opacity(1),
                         tooltip=[
                             alt.Tooltip("x:Q", format=",.3f", title="X"),
                             alt.Tooltip("y_low:Q", format=",.3f", title="True Lower Y"),
@@ -366,46 +361,37 @@ conditional median and 95% interval, which are known for this toy dataset.
                 )
 
                 line_pred = (
-                    alt.Chart(df.assign(**{"y_pred_label": "Predicted Median"}))
-                    .transform_filter(~alt.datum["test"])  # filter to non-test data
-                    .mark_line(color="#006aff", size=4)
+                    alt.Chart(df_func.assign(label=labels[3]))
+                    .mark_line(color=colors[labels[3]], size=4)
+                    .encode(x=x, y="y_pred:Q", opacity=_opacity(1), tooltip=tooltip)
+                )
+
+                # Draw the true median over the predicted median, where they overlap.
+                line_true = (
+                    alt.Chart(df_func.assign(label=labels[1]))
+                    .mark_line(color=colors[labels[1]], size=2)
+                    .encode(x=x, y="y:Q", opacity=_opacity(1), tooltip=tooltip)
+                )
+
+                # A legend of all of the marks, drawn by invisible points.
+                legend = (
+                    alt.Chart(pd.DataFrame({"label": labels}))
+                    .mark_point(filled=True, opacity=0)
                     .encode(
-                        x=alt.X("x:Q", scale=alt.Scale(nice=False)),
-                        y=alt.Y("y_pred:Q", title=""),
-                        color=alt.Color("y_pred_label:N", scale=alt.Scale(range=["#006aff"]), title=None),
-                        tooltip=[
-                            alt.Tooltip("x:Q", format=",.3f", title="X"),
-                            alt.Tooltip("y:Q", format=",.3f", title="True Median"),
-                            alt.Tooltip("y_pred:Q", format=",.3f", title="Predicted Median"),
-                        ],
+                        color=alt.Color(
+                            "label:N",
+                            scale=alt.Scale(domain=labels, range=list(colors.values())),
+                            legend=alt.Legend(symbolOpacity=1, rowPadding=5),
+                            title=None,
+                        ),
+                        shape=alt.Shape("label:N", scale=alt.Scale(domain=labels, range=shapes), title=None),
                     )
+                    .add_params(click)
                 )
 
-                # For desired legend ordering.
-                blank = (
-                    alt.Chart(pd.DataFrame({"y_area_label": ["Predicted 95% Interval"]}))
-                    .mark_area(color="#e0f2ff")
-                    .encode(
-                        color=alt.Color("y_area_label:N", scale=alt.Scale(range=["#e0f2ff"]), title=None),
-                    )
-                )
-
-                # Draw the true median over the predicted median too, where they overlap.
-                line_true_top = line_true.encode(color=alt.value("gray"))
-
-                chart = (
-                    (
-                        area_pred
-                        + circle_test
-                        + line_true
-                        + line_true_interval
-                        + line_pred
-                        + line_true_top
-                        + blank
-                    )
-                    .resolve_scale(color="independent")
-                    .properties(title="QRF Predictions vs. Ground Truth on Toy Dataset", height=400, width=650)
-                )
+                chart = alt.layer(
+                    area_pred, circle_test, line_true_interval, line_pred, line_true, legend
+                ).properties(title="QRF Predictions vs. Ground Truth on Toy Dataset", height=400, width=650)
 
                 return chart
 

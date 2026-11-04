@@ -116,6 +116,19 @@ General-purpose, introductory and illustrative examples.
     <span class="image-title">Quantile Regression Forests Prediction Intervals</span>
     </a>
     
+    <a class="imagegroup" href="plot_qrf_vs_gbm_quantiles.html">
+    <span
+        class="image" alt="Quantile Regression Forests vs. Gradient Boosting"
+    
+        data-light-src="url(../_static/plot_qrf_vs_gbm_quantiles-thumb.png)"
+        data-dark-src="url(../_static/plot_qrf_vs_gbm_quantiles-thumb-dark.png)"
+        style="background-image: url(../_static/plot_qrf_vs_gbm_quantiles-thumb.png);"
+    
+    ></span>
+
+    <span class="image-title">Quantile Regression Forests vs. Gradient Boosting</span>
+    </a>
+    
     <a class="imagegroup" href="plot_qrf_vs_rf_predictions.html">
     <span
         class="image" alt="Quantile Regression Forests vs. Random Forests"
