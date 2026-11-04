@@ -90,7 +90,12 @@ def plot_interpolation_predictions(df, legend):
 
     color = alt.condition(
         click,
-        alt.Color("method:N", sort=list(legend.keys()), title=None),
+        alt.Color(
+            "method:N",
+            legend=alt.Legend(rowPadding=5),
+            sort=list(legend.keys()),
+            title=None,
+        ),
         alt.value("lightgray"),
     )
 

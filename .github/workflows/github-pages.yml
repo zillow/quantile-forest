@@ -31,6 +31,17 @@ jobs:
           uv pip install --editable . -c "$PIP_CONSTRAINT"
           uv pip install -r docs/sphinx_requirements.txt -c "$PIP_CONSTRAINT"
 
+      - name: Cache downloaded example data
+        uses: actions/cache@v5
+        with:
+          # The datasets that scikit-learn fetches, and the models that are
+          # downloaded from Hugging Face Hub, for the gallery examples.
+          path: |
+            ~/scikit_learn_data
+            ~/.cache/huggingface/hub
+          key: example-data-${{ hashFiles('examples/*.py') }}
+          restore-keys: example-data-
+
       - name: Build documents
         working-directory: docs
         env:

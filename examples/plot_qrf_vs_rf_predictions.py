@@ -26,6 +26,8 @@ from quantile_forest import RandomForestQuantileRegressor
 random_state = np.random.RandomState(0)
 n_samples = 5000
 quantiles = np.linspace(0, 1, num=101, endpoint=True).round(2).tolist()
+bin_width = 0.25  # the width of the histogram's bins
+max_value = 8  # the largest value shown, omitting the long tail of large values
 
 
 def make_skewed_dataset(n_samples, sigma=1, random_state=None):
@@ -56,12 +58,19 @@ legend = {
     "QRF (Quantile)": "#006aff",
 }
 
-df = pd.DataFrame(
-    {
-        "actual": y_test,
-        "rf": y_pred_rf,
-        **{f"qrf_{q_i:.3g}": y_i.ravel() for q_i, y_i in zip(quantiles, y_pred_qrf.T)},
-    }
+
+def count_bins(label, values, quantile=np.nan):
+    """Count the values in each bin of the histogram, up to the largest value shown."""
+    bins = np.floor(values / bin_width + 0.5) * bin_width  # the nearest bin
+    value, count = np.unique(bins[bins <= max_value], return_counts=True)
+    return pd.DataFrame({"label": label, "quantile": quantile, "value": value, "count": count})
+
+
+# The histogram's counts, for the QRF at each quantile, so that the slider can select one.
+df = pd.concat(
+    [count_bins("Actual", y_test), count_bins("RF (Mean)", y_pred_rf)]
+    + [count_bins("QRF (Quantile)", y_pred_qrf[:, i], q) for i, q in enumerate(quantiles)],
+    ignore_index=True,
 )
 
 # Mean absolute error of the RF mean and of each QRF quantile.
@@ -74,7 +83,7 @@ df_mae = pd.DataFrame(
 )
 
 
-def plot_predictions_and_errors(df, df_mae, legend, max_value=8):
+def plot_predictions_and_errors(df, df_mae, legend):
     """Plot histogram of predictions by model, and the mean absolute errors."""
     # Slider for varying the quantile value used for generating the QRF predictions.
     slider = alt.binding_range(
@@ -90,13 +99,10 @@ def plot_predictions_and_errors(df, df_mae, legend, max_value=8):
     histogram = (
         alt.Chart(df)
         .add_params(click)
-        .transform_calculate(qrf_col="'qrf_' + quantile")
-        .transform_calculate(qrf="datum[datum.qrf_col]")
-        .transform_calculate(calculate="round(datum.actual * 4) / 4", as_="Actual")
-        .transform_calculate(calculate="round(datum.rf * 4) / 4", as_="RF (Mean)")
-        .transform_calculate(calculate="round(datum.qrf * 4) / 4", as_="QRF (Quantile)")
-        .transform_fold(list(legend.keys()), as_=["label", "value"])
-        .transform_filter(f"datum.value <= {max_value}")  # omit the long tail of large values
+        # The actual and RF counts, and the QRF counts at the selected quantile.
+        .transform_filter(
+            "datum.label != 'QRF (Quantile)' || abs(datum.quantile - quantile) < 1e-6"
+        )
         .mark_bar()
         .encode(
             x=alt.X(
@@ -107,10 +113,15 @@ def plot_predictions_and_errors(df, df_mae, legend, max_value=8):
                 ),
                 title=f"Actual and Predicted Target Values (Up to {max_value})",
             ),
-            y=alt.Y("count():Q", axis=alt.Axis(format=",d", title="Counts")),
+            y=alt.Y("count:Q", axis=alt.Axis(format=",d", title="Counts")),
             color=alt.condition(
                 click,
-                alt.Color("label:N", sort=list(legend.keys()), title=None),
+                alt.Color(
+                    "label:N",
+                    legend=alt.Legend(rowPadding=5),
+                    sort=list(legend.keys()),
+                    title=None,
+                ),
                 alt.value("lightgray"),
             ),
             opacity=alt.condition(click, alt.value(1), alt.value(0.5)),
@@ -118,7 +129,7 @@ def plot_predictions_and_errors(df, df_mae, legend, max_value=8):
             tooltip=[
                 alt.Tooltip("label:N", title="Label"),
                 alt.Tooltip("value:Q", title="Value (Binned)"),
-                alt.Tooltip("count():Q", format=",d", title="Counts"),
+                alt.Tooltip("count:Q", format=",d", title="Counts"),
             ],
         )
         .properties(title="Distribution of Actual and Predicted Values", height=300, width=650)

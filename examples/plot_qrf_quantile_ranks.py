@@ -94,18 +94,21 @@ def plot_pred_and_ranks(df):
     # A sample is a potential outlier if its rank falls outside the threshold interval.
     is_outlier = "abs(datum.y_rank - 0.5) > (0.5 - interval / 2)"
 
-    # For desired legend labels.
-    dummy_legend = (
-        base.mark_line(color="#006aff", opacity=1)
+    # A legend of the predicted median, drawn by an invisible point. The line is
+    # drawn as a thin bar rather than a stroke, as in the other legends of this
+    # gallery, and on the opacity channel, as color and shape encode the points.
+    bar = "M-1,-0.2L1,-0.2L1,0.2L-1,0.2Z"
+    legend_median = (
+        alt.Chart(pd.DataFrame({"label": ["Median"]}))
+        .mark_point(filled=True, color="#006aff", shape=bar)
         .encode(
             opacity=alt.Opacity(
-                "model:N",
-                scale=alt.Scale(range=[1, 1], domain=["Median"]),
-                sort=["Median"],
+                "label:N",
+                scale=alt.Scale(domain=["Median"], range=[0]),
+                legend=alt.Legend(symbolOpacity=1, symbolType=bar, symbolFillColor="#006aff"),
                 title="Prediction",
             )
         )
-        .transform_calculate(model="'Median'")
     )
 
     circle = (
@@ -123,6 +126,7 @@ def plot_pred_and_ranks(df):
                 click & click_target,
                 alt.Color(
                     "outlier:N",
+                    legend=alt.Legend(symbolOpacity=1, rowPadding=5),
                     scale=alt.Scale(domain=["Yes", "No"], range=["red", "#f2a619"]),
                     title="Outlier",
                 ),
@@ -130,6 +134,7 @@ def plot_pred_and_ranks(df):
             ),
             shape=alt.Shape(
                 "target:N",
+                legend=alt.Legend(symbolOpacity=1),
                 scale=alt.Scale(
                     domain=["Shifted (Outlier)", "Original"], range=["diamond", "circle"]
                 ),
@@ -185,7 +190,7 @@ def plot_pred_and_ranks(df):
         .encode(x=alt.value(5), y=alt.value(5), text="text:N")
     )
 
-    chart = (dummy_legend + circle + line_pred + text_metrics).properties(
+    chart = (legend_median + circle + line_pred + text_metrics).properties(
         title="QRF Predictions with Quantile Rank Thresholding on Toy Dataset",
         height=400,
         width=650,
