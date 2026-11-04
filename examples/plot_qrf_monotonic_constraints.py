@@ -26,7 +26,7 @@ from sklearn.utils.validation import check_random_state
 from quantile_forest import RandomForestQuantileRegressor
 
 random_state = np.random.RandomState(0)
-n_samples = 3000
+n_samples = 5000
 n_test_samples = 5000
 coverage = 0.8  # the target coverage of the prediction intervals
 quantiles = [(1 - coverage) / 2, 0.5, (1 + coverage) / 2]
@@ -41,7 +41,7 @@ def make_toy_dataset(n_samples, random_state=None):
     """Make a toy dataset whose target increases with the first feature."""
     random_state = check_random_state(random_state)
     X = random_state.uniform(0, 10, size=(n_samples, 2))  # the second feature is noise
-    noise = (0.3 + 0.1 * X[:, 0]) * random_state.normal(size=n_samples)
+    noise = (0.25 + 0.1 * X[:, 0]) * random_state.normal(size=n_samples)
     y = get_true_median(X[:, 0]) + noise
     return X, y
 
@@ -211,7 +211,7 @@ def plot_monotonic_constraints(df, df_test, metrics, coverage):
                     color=alt.Color(
                         "label:N",
                         scale=scale,
-                        legend=alt.Legend(symbolOpacity=1),
+                        legend=alt.Legend(symbolOpacity=1, rowPadding=5),
                         title=None,
                     ),
                     shape=alt.Shape(

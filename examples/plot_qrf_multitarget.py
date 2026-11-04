@@ -20,7 +20,7 @@ from quantile_forest import RandomForestQuantileRegressor
 random_state = np.random.RandomState(0)
 n_samples = 2500
 bounds = [0, 100]
-quantiles = np.linspace(0, 1, num=41, endpoint=True).round(3).tolist()
+quantiles = np.linspace(0, 1, num=201, endpoint=True).round(3).tolist()  # in steps of 0.005
 
 # Define functions that generate targets; each function maps to one target.
 target_funcs = [
@@ -57,24 +57,35 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=random_st
 qrf = RandomForestQuantileRegressor(max_depth=4, max_samples_leaf=None, random_state=random_state)
 qrf.fit(X_train, y_train)  # fit on all of the targets simultaneously
 
-# Get multi-target predictions at specified quantiles.
-y_pred = qrf.predict(X, quantiles=quantiles)  # output shape = (n_samples, n_targets, n_quantiles)
+# Get multi-target predictions at specified quantiles, on evenly spaced inputs.
+X_grid = np.linspace(*bounds, num=200).reshape(-1, 1)
+y_pred = qrf.predict(X_grid, quantiles=quantiles)  # shape = (n_grid, n_targets, n_quantiles)
 
-df = pd.DataFrame(
+# The data are rounded, and the predictions are on fewer inputs than the observations, to
+# keep the chart small, since it includes the predictions at every quantile.
+df_obs = pd.DataFrame(
     {
-        "x": np.tile(X.squeeze(), len(funcs)),
-        "y": y.reshape(-1, order="F"),
-        "y_pred": np.concatenate([y_pred[:, i, len(quantiles) // 2] for i in range(len(funcs))]),
+        "x": np.tile(X.squeeze(), len(funcs)).round(3),
+        "y": y.reshape(-1, order="F").round(3),
         "target": np.concatenate([[str(i)] * len(X) for i in range(len(funcs))]),
-        **{f"q_{q_i:.3g}": y_i.ravel() for q_i, y_i in zip(quantiles, y_pred.T)},
+    }
+)
+df_pred = pd.DataFrame(
+    {
+        "x": np.tile(X_grid.squeeze(), len(funcs)).round(3),
+        "y_pred": (
+            np.concatenate([y_pred[:, i, len(quantiles) // 2] for i in range(len(funcs))]).round(3)
+        ),
+        "target": np.concatenate([[str(i)] * len(X_grid) for i in range(len(funcs))]),
+        **{f"q_{q_i:.3g}": y_i.ravel().round(3) for q_i, y_i in zip(quantiles, y_pred.T)},
     }
 )
 
 
-def plot_multitargets(df, legend):
+def plot_multitargets(df_obs, df_pred, legend):
     """Plot predictions and prediction intervals for multi-target outputs."""
     # Slider for varying the displayed prediction intervals.
-    slider = alt.binding_range(name="Prediction Interval: ", min=0, max=1, step=0.05)
+    slider = alt.binding_range(name="Prediction Interval: ", min=0, max=1, step=0.01)
     interval_val = alt.param(name="interval", value=0.95, bind=slider)
 
     click = alt.selection_point(bind="legend", fields=["target"], on="click")
@@ -95,7 +106,6 @@ def plot_multitargets(df, legend):
     tooltip = [
         alt.Tooltip("target:N", title="Target"),
         alt.Tooltip("x:Q", format=",.3f", title="X"),
-        alt.Tooltip("y:Q", format=",.3f", title="Y"),
         alt.Tooltip("y_pred:Q", format=",.3f", title="Predicted Y"),
         alt.Tooltip("y_pred_low:Q", format=",.3f", title="Predicted Lower Y"),
         alt.Tooltip("y_pred_upp:Q", format=",.3f", title="Predicted Upper Y"),
@@ -104,7 +114,7 @@ def plot_multitargets(df, legend):
     ]
 
     base = (
-        alt.Chart(df)
+        alt.Chart(df_pred)
         .transform_calculate(
             quantile_low="round((0.5 - interval / 2) * 1000) / 1000",
             quantile_upp="round((0.5 + interval / 2) * 1000) / 1000",
@@ -117,11 +127,19 @@ def plot_multitargets(df, legend):
         )
     )
 
-    circle = base.mark_circle(color="black", opacity=0.25, size=25).encode(
-        x=x,
-        y=alt.Y("y:Q"),
-        color=color,
-        tooltip=tooltip,
+    circle = (
+        alt.Chart(df_obs)
+        .mark_circle(color="black", opacity=0.25, size=25)
+        .encode(
+            x=x,
+            y=alt.Y("y:Q"),
+            color=color,
+            tooltip=[
+                alt.Tooltip("target:N", title="Target"),
+                alt.Tooltip("x:Q", format=",.3f", title="X"),
+                alt.Tooltip("y:Q", format=",.3f", title="Y"),
+            ],
+        )
     )
 
     area = base.mark_area(opacity=0.25).encode(
@@ -152,5 +170,5 @@ def plot_multitargets(df, legend):
     return chart
 
 
-chart = plot_multitargets(df, legend)
+chart = plot_multitargets(df_obs, df_pred, legend)
 chart

@@ -25,6 +25,7 @@ from quantile_forest import RandomForestQuantileRegressor
 
 random_state = np.random.RandomState(0)
 n_test_samples = 50
+n_prox = 25  # the number of most similar training samples shown for each test sample
 noise_std = 0.1
 
 pixel_dim = (8, 8)  # pixel dimensions (width and height)
@@ -87,40 +88,40 @@ qrf = RandomForestQuantileRegressor(
 # We fit a single multi-target model, with each pixel treated as a distinct target.
 qrf.fit(X_train_noisy, X_train)
 
-# Get the proximity counts.
-proximities = qrf.proximity_counts(X_test_noisy)  # output is a list of tuples for each sample
+# Get the proximity counts of the most similar training samples.
+proximities = qrf.proximity_counts(X_test_noisy, max_proximities=n_prox)  # a list for each sample
 
-df_prox = pd.DataFrame(
-    {"prox": [[(i, *p) for i, p in enumerate(proximities[x])] for x in range(len(X_test))]}
-)
-
-df = (
-    combine_floats(X_test, X_test_noisy, scale=pixel_scale)  # combine to reduce transmitted data
+# The test samples, with their original and noisy pixels combined (and rounded) to reduce
+# the transmitted data.
+df_test = (
+    combine_floats(X_test, X_test_noisy, scale=pixel_scale)
+    .round(3)
     .join(y_test)
-    .reset_index()
-    .join(df_prox)
-    .explode("prox")
-    .assign(
-        **{
-            "index": lambda x: pd.factorize(x["index"])[0],
-            "prox_idx": lambda x: x["prox"].apply(lambda y: y[0]),
-            "prox_val": lambda x: x["prox"].apply(lambda y: y[1]),
-            "prox_cnt": lambda x: x["prox"].apply(lambda y: y[2]),
-        }
-    )
-    .drop(columns=["prox"])
+    .reset_index(drop=True)
+    .assign(**{"index": lambda x: np.arange(len(x))})
 )
 
-# Create a data frame for looking up training proximities.
+# The proximities of each test sample: the index and count of each similar training sample.
+df_prox = pd.DataFrame(
+    [
+        {"index": i, "prox_idx": j, "prox_val": prox_val, "prox_cnt": prox_cnt}
+        for i, sample_proximities in enumerate(proximities)
+        for j, (prox_val, prox_cnt) in enumerate(sample_proximities)
+    ]
+)
+
+# Create a data frame for looking up the original pixels of the similar training samples.
 df_lookup = (
-    combine_floats(X_train, X_train_noisy, scale=pixel_scale)  # combine to reduce transmitted data
+    X_train.astype(int)
     .join(y_train)
     .assign(**{"index": np.arange(len(X_train))})  # align with proximities, which are zero-indexed
+    .iloc[np.unique(df_prox["prox_val"])]  # only the training samples that are shown
 )
 
 
 def plot_digits_proximities(
-    df,
+    df_test,
+    df_prox,
     df_lookup,
     pixel_dim=(8, 8),
     pixel_scale=1000,
@@ -131,8 +132,6 @@ def plot_digits_proximities(
     width=225,
 ):
     """Plot Digits dataset proximities for test samples."""
-    df = df[df["prox_idx"] < n_prox].copy()
-
     dim_x, dim_y = pixel_dim[0], pixel_dim[1]
     dgt_x, dgt_y = len(str(dim_x)), len(str(dim_y))
 
@@ -140,10 +139,10 @@ def plot_digits_proximities(
     pixel_x = "split(datum.pixel, '_')[2]"
     pixel_y = "split(datum.pixel, '_')[1]"
 
-    x_min = (df[pixel_cols] // pixel_scale).min().min()
-    x_max = (df[pixel_cols] // pixel_scale).max().max()
+    x_min = (df_test[pixel_cols] // pixel_scale).min().min()
+    x_max = (df_test[pixel_cols] // pixel_scale).max().max()
 
-    n_samples = df["index"].nunique()
+    n_samples = len(df_test)
     n_subplot_rows = n_prox // n_prox_per_row
     subplot_dim = (width - subplot_spacing * (n_subplot_rows - 1)) / n_subplot_rows
 
@@ -154,11 +153,10 @@ def plot_digits_proximities(
     scale = alt.Scale(domain=[x_min, x_max], scheme="warmgreys")
     opacity = (alt.value(0), alt.value(0.5))
 
-    base = alt.Chart(df).transform_filter(index_selection)
+    base = alt.Chart(df_test).transform_filter(index_selection)
 
     chart1 = (
-        base.transform_filter("datum.prox_idx == 0")  # filter to one test sample row
-        .transform_fold(fold=pixel_cols, as_=["pixel", "value"])
+        base.transform_fold(fold=pixel_cols, as_=["pixel", "value"])
         .transform_calculate(value_clean=f"floor(datum.value / {pixel_scale})")
         .transform_calculate(value_noisy=f"datum.value - (datum.value_clean * {pixel_scale})")
         .transform_calculate(x=pixel_x, y=pixel_y)
@@ -179,13 +177,13 @@ def plot_digits_proximities(
     )
 
     chart2 = (
-        base.transform_filter(f"datum.prox_idx < {n_prox}")  # filter to the display proximities
+        alt.Chart(df_prox)
+        .transform_filter(index_selection)
         .transform_lookup(
             lookup="prox_val",
             from_=alt.LookupData(df_lookup, key="index", fields=pixel_cols + ["target"]),
         )
-        .transform_fold(fold=pixel_cols, as_=["pixel", "value"])
-        .transform_calculate(value_clean=f"floor(datum.value / {pixel_scale})")
+        .transform_fold(fold=pixel_cols, as_=["pixel", "value_clean"])
         .transform_calculate(x=pixel_x, y=pixel_y)
         .mark_rect()
         .encode(
@@ -211,8 +209,7 @@ def plot_digits_proximities(
     )
 
     chart3 = (
-        base.transform_filter("datum.prox_idx == 0")  # filter to one test sample row
-        .transform_fold(fold=pixel_cols, as_=["pixel", "value"])
+        base.transform_fold(fold=pixel_cols, as_=["pixel", "value"])
         .transform_calculate(value_clean=f"floor(datum.value / {pixel_scale})")
         .transform_calculate(x=pixel_x, y=pixel_y)
         .mark_rect()
@@ -244,5 +241,7 @@ def plot_digits_proximities(
     return chart
 
 
-chart = plot_digits_proximities(df, df_lookup, pixel_dim=pixel_dim, pixel_scale=pixel_scale)
+chart = plot_digits_proximities(
+    df_test, df_prox, df_lookup, pixel_dim=pixel_dim, pixel_scale=pixel_scale, n_prox=n_prox
+)
 chart

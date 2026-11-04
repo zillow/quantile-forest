@@ -34,7 +34,8 @@ from quantile_forest import RandomForestQuantileRegressor
 random_state = np.random.RandomState(0)
 n_samples = 1000
 test_idx = 0
-quantiles = np.linspace(0.1, 0.9, num=9).round(1).tolist()  # in steps of 0.1
+quantile_step = 0.05  # the spacing of the explained quantiles, and the step of the slider
+quantiles = np.arange(quantile_step, 1 - quantile_step / 2, quantile_step).round(6).tolist()
 
 # Load the California Housing dataset.
 X, y = datasets.fetch_california_housing(return_X_y=True, as_frame=True)
@@ -93,11 +94,14 @@ def plot_shap_waterfall_with_quantiles(df, height=300):
     """Plot SHAP waterfall plot by quantile predictions."""
     df = df.copy()
 
-    # Slider for varying the applied quantile estimates.
+    # Slider for varying the applied quantile estimates. The data of a quantile is
+    # selected within half a step of the slider's value, rather than by an exact
+    # match, which floating-point quantiles would not reliably give.
     slider = alt.binding_range(
-        name="Predicted Quantile: ", min=quantiles[0], max=quantiles[-1], step=0.1
+        name="Predicted Quantile: ", min=quantiles[0], max=quantiles[-1], step=quantile_step
     )
-    quantile_val = alt.param(name="quantile", value=0.5, bind=slider)
+    quantile_val = alt.param(name="quantile", value=quantiles[len(quantiles) // 2], bind=slider)
+    is_selected = f"abs(datum.quantile - quantile) < {quantile_step / 2}"
 
     df_grouped = (
         df.groupby("quantile")[df.columns.tolist()]
@@ -141,9 +145,18 @@ def plot_shap_waterfall_with_quantiles(df, height=300):
     y_rule_offset = round(height / df_grouped["feature"].nunique() / 2) - 2
     y_text_offset = round(height / 2)
 
+    # Triangle caps with a short full-height "shoulder" that overlaps the bar end,
+    # hiding the anti-aliasing seam between the bar and the cap.
     triangle_size = round(height / 100)
-    triangle_left = f"M 0,{triangle_size} L -1,0 L 0,-{triangle_size} Z"
-    triangle_right = f"M 0,-{triangle_size} L 1,0 L 0,{triangle_size} Z"
+    overlap = 0.25
+    triangle_left = (
+        f"M {overlap},{triangle_size} L 0,{triangle_size} L -1,0 "
+        f"L 0,-{triangle_size} L {overlap},-{triangle_size} Z"
+    )
+    triangle_right = (
+        f"M -{overlap},-{triangle_size} L 0,-{triangle_size} L 1,0 "
+        f"L 0,{triangle_size} L -{overlap},{triangle_size} Z"
+    )
 
     df_text_labels = (
         df_grouped.groupby("quantile")[df.columns]
@@ -163,9 +176,13 @@ def plot_shap_waterfall_with_quantiles(df, height=300):
         .reset_index(drop=True)
     )
 
+    # Order the rows by the size of their SHAP values at the selected quantile. Unlike the
+    # order of the data, this order is updated when the slider selects another quantile.
+    y_sort = alt.EncodingSortField(field="abs_shap_value", op="max", order="descending")
+
     base = (
         alt.Chart(df_grouped)
-        .transform_filter("round(datum.quantile * 100) == round(quantile * 100)")
+        .transform_filter(is_selected)
         .transform_calculate(
             end_shifted=f"datum.shap_value > 0 ? datum.end - {x_shift} : datum.end + {x_shift}"
         )
@@ -181,7 +198,7 @@ def plot_shap_waterfall_with_quantiles(df, height=300):
             scale=alt.Scale(domain=[x_min - 10 * x_shift, x_max + 10 * x_shift], zero=False),
             title=None,
         ),
-        y=alt.Y("feature:N", sort=None, title=None),
+        y=alt.Y("feature:N", sort=y_sort, title=None),
         color=alt.condition(
             alt.datum["shap_value"] > 0, alt.value("#ff0251"), alt.value("#018bfb")
         ),
@@ -196,7 +213,7 @@ def plot_shap_waterfall_with_quantiles(df, height=300):
 
     point = (
         bar.transform_filter(f"abs(datum.shap_value) > {x_shift}")
-        .mark_point(filled=True, opacity=1, size=125)
+        .mark_point(filled=True, opacity=1, size=125, strokeWidth=0)
         .encode(
             x=alt.X("end_shifted:Q", title=None),
             shape=alt.condition(
@@ -220,14 +237,14 @@ def plot_shap_waterfall_with_quantiles(df, height=300):
     )
     text_label_start = (
         alt.Chart(df_text_labels)
-        .transform_filter("round(datum.quantile * 100) == round(quantile * 100)")
+        .transform_filter(is_selected)
         .transform_filter("datum.type == 'start'")
         .mark_text(align="left", color="gray", dx=-16, dy=y_text_offset + 30)
         .encode(text=alt.Text("label"), x=alt.X("x:Q"))
     )
     text_label_end = (
         alt.Chart(df_text_labels)
-        .transform_filter("round(datum.quantile * 100) == round(quantile * 100)")
+        .transform_filter(is_selected)
         .transform_filter("datum.type == 'end'")
         .mark_text(align="left", color="gray", dx=-8, dy=-y_text_offset - 15)
         .encode(text=alt.Text("label"), x=alt.X("x:Q"))
@@ -245,7 +262,7 @@ def plot_shap_waterfall_with_quantiles(df, height=300):
         )
         .encode(
             x=alt.X("end:Q"),
-            y=alt.Y("feature", sort=None),
+            y=alt.Y("feature", sort=y_sort),
             y2=alt.Y2("feature2"),
         )
     )
@@ -254,14 +271,14 @@ def plot_shap_waterfall_with_quantiles(df, height=300):
     )
     tick_start_rule = (
         alt.Chart(df_text_labels)
-        .transform_filter("round(datum.quantile * 100) == round(quantile * 100)")
+        .transform_filter(is_selected)
         .transform_filter("datum.type == 'start'")
         .mark_rule(color="gray", opacity=1, y=height, y2=height + 6)
         .encode(x=alt.X("x:Q"))
     )
     tick_end_rule = (
         alt.Chart(df_text_labels)
-        .transform_filter("round(datum.quantile * 100) == round(quantile * 100)")
+        .transform_filter(is_selected)
         .transform_filter("datum.type == 'end'")
         .mark_rule(color="gray", opacity=1, y=0, y2=-6)
         .encode(x=alt.X("x:Q"))

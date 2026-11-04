@@ -34,7 +34,8 @@ random_state = np.random.RandomState(random_seed)
 n_samples = 900
 n_folds = 4  # the number of folds of the cross-validation
 n_repeats = 5  # the number of times that the cross-validation is repeated
-coverages = np.linspace(0.1, 0.9, num=9).round(1).tolist()  # the "coverage level"
+coverage_step = 0.1  # the spacing of the "coverage levels" (whole percents), and of the slider
+coverages = np.arange(0.1, 0.9 + coverage_step / 2, coverage_step).round(6).tolist()
 
 # Load the California Housing dataset.
 X, y = datasets.fetch_california_housing(return_X_y=True, as_frame=True)
@@ -143,8 +144,10 @@ def plot_prediction_intervals_by_strategy(df, df_metrics):
     """Plot prediction intervals by interval estimate strategy."""
 
     # Single shared slider for varying the target coverage level.
-    slider = alt.binding_range(name="Coverage Target: ", min=0.1, max=0.9, step=0.1)
-    coverage_val = alt.param(name="coverage", value=0.9, bind=slider)
+    slider = alt.binding_range(
+        name="Coverage Target: ", min=coverages[0], max=coverages[-1], step=coverage_step
+    )
+    coverage_val = alt.param(name="coverage", value=coverages[-1], bind=slider)
 
     # Drop-down menu for choosing the calibration data of the CQR intervals.
     select = alt.binding_select(
@@ -222,6 +225,7 @@ def plot_prediction_intervals_by_strategy(df, df_metrics):
                     click,
                     alt.Color(
                         "y_label:N",
+                        legend=alt.Legend(rowPadding=5),
                         scale=alt.Scale(domain=["Yes", "No"], range=["#f2a619", "red"]),
                         title="Within Interval",
                     ),
