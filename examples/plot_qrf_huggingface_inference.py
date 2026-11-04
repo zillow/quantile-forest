@@ -11,6 +11,8 @@ quantiles for each sample in the dataset. The predictions are aggregated by
 county based on the latitude and longitude of each sample and visualized.
 The trained model is available on Hugging Face Hub
 `here <https://huggingface.co/quantile-forest/california-housing-example>`_.
+The model is stored as a pickle file, and loading a pickle file can run
+arbitrary code, so only load models from sources that you trust.
 """
 
 import os
@@ -219,6 +221,7 @@ model_filename = "model.pkl"
 local_dir = "./local_repo"
 with tempfile.TemporaryDirectory() as local_dir:
     hub_utils.download(repo_id=repo_id, dst=local_dir)
+    # Loading a pickle file can run arbitrary code: only load files that you trust.
     pipeline = CrossValidationPipeline.load(f"{local_dir}/{model_filename}")
 
 # Fetch the California Housing dataset and estimate quantiles.

@@ -145,15 +145,9 @@ class Xtrapolation:
             # Fit tree.
             tree.fit(X[split1, :], Y[split1].flatten())
 
-            # Extract tree weight matrix.
-            y_train_leaves = tree._get_y_train_leaves(X[split2, :], Y.reshape(-1, 1))
-            nrows = X[split2, :].shape[0]
-            matrix = np.zeros((nrows, nrows))
-            for leaf in y_train_leaves[0]:
-                indices = leaf[0]
-                indices = indices[indices != 0] - 1
-                if len(indices) > 0:
-                    matrix[np.ix_(indices, indices)] = 1
+            # Extract the tree weight matrix: whether each pair of samples shares a leaf.
+            leaves = tree.apply(X[split2, :])[:, 0]
+            matrix = (leaves[:, np.newaxis] == leaves[np.newaxis, :]).astype(float)
             weight_mat[np.ix_(split2, split2)] += matrix
 
         # Normalize weights (rows correspond to weights - non-symmetric).
@@ -301,7 +295,7 @@ class Xtrapolation:
         return bounds
 
 
-def train_test_split(train_indices, rng=None, **kwargs):
+def fit_and_extrapolate(train_indices, rng=None, **kwargs):
     """Fit model on training samples and extrapolate on test samples."""
     X_train = X[train_indices, :]
     y_train = y[train_indices]
@@ -370,13 +364,12 @@ def get_coverage_xtr(bounds_list, train_indices, test_indices, y_train, level, *
 # Create a dataset that requires extrapolation.
 X, y = make_func_Xy(func, n_samples, bounds, add_noise=True, random_state=0)
 
-# Fit and extrapolate based on train-test split (depending on X).
+# Fit on the middle of the range of X, and extrapolate to both ends.
 extrap_min_idx = int(n_samples * (extrap_frac / 2))
 extrap_max_idx = int(n_samples - (n_samples * (extrap_frac / 2)))
-sort_X = np.argsort(X.squeeze())
-train_indices = np.repeat(False, len(y))
-train_indices[sort_X[extrap_min_idx] : sort_X[extrap_max_idx]] = True
-res = train_test_split(train_indices, rng=random_state, **qrf_params)
+X_ranks = np.argsort(np.argsort(X.squeeze()))
+train_indices = (X_ranks >= extrap_min_idx) & (X_ranks < extrap_max_idx)
+res = fit_and_extrapolate(train_indices, rng=random_state, **qrf_params)
 
 # Get coverages for extrapolated samples.
 args = (train_indices, ~train_indices, y[train_indices], quantiles[1] - quantiles[0], random_state)
@@ -395,8 +388,8 @@ df = pd.DataFrame(
         "bb_upp": np.min(res["bounds_list"][1][:, :, 1], axis=1),
         "bb_mid": np.median(res["bounds_list"][2][:, :, :2], axis=(1, 2)),
         "train": res["train_indices"],
-        "test_left": [True] * extrap_min_idx + [False] * (len(y) - extrap_min_idx),
-        "test_right": [False] * extrap_max_idx + [True] * (len(y) - extrap_max_idx),
+        "test_left": X_ranks < extrap_min_idx,
+        "test_right": X_ranks >= extrap_max_idx,
         "cov_qrf": cov_qrf,
         "cov_xtr": cov_xtr,
     }
@@ -405,12 +398,31 @@ df = pd.DataFrame(
 
 def plot_qrf_vs_xtrapolation_comparison(df, func_str):
     """Plot comparison of QRF vs. Xtrapolation on extrapolated data."""
+    colors = {
+        "Observations": "#f2a619",
+        func_str: "gray",
+        "Predicted Median": "#006aff",
+        "Predicted 95% Interval": "#e0f2ff",
+        "Extrapolated Median": "red",
+        "Extrapolated 95% Interval": "#ffd8d8",  # how its faint, overlapping red bars look
+    }
+    labels = list(colors.keys())
+    # The legend symbols. The lines are drawn as thin bars rather than strokes, as
+    # stroked symbols would space the legend entries unevenly.
+    bar = "M-1,-0.2L1,-0.2L1,0.2L-1,0.2Z"
+    shapes = ["circle", bar, bar, "circle", bar, "circle"]
+
+    # Clicking an entry of the legend highlights its marks (shift-click for more).
+    click = alt.selection_point(name="click", fields=["label"], bind="legend")
+
+    def _opacity(value, faded=0.1):
+        return alt.condition(click, alt.value(value), alt.value(faded))
 
     def _plot_extrapolations(
         df,
         title="",
         legend=False,
-        func_str="",
+        extrapolate=False,
         x_domain=None,
         y_domain=None,
     ):
@@ -420,16 +432,6 @@ def plot_qrf_vs_xtrapolation_comparison(df, func_str):
         y_scale = None
         if y_domain is not None:
             y_scale = alt.Scale(domain=y_domain, nice=True)
-
-        points_color = alt.value("#f2a619")
-        line_true_color = alt.value("gray")
-        if legend:
-            points_color = alt.Color(
-                "point_label:N", scale=alt.Scale(range=["#f2a619"]), title=None
-            )
-            line_true_color = alt.Color(
-                "line_label:N", scale=alt.Scale(range=["gray"]), title=None
-            )
 
         tooltip_true = [
             alt.Tooltip("X_true:Q", format=",.3f", title="X"),
@@ -442,43 +444,64 @@ def plot_qrf_vs_xtrapolation_comparison(df, func_str):
             alt.Tooltip("y_pred_upp:Q", format=",.3f", title="Predicted Upper Y"),
         ]
 
-        base = alt.Chart(df.assign(**{"point_label": "Observations", "line_label": func_str}))
+        if extrapolate:
+            median_label, interval_label = labels[4], labels[5]
+        else:
+            median_label, interval_label = labels[2], labels[3]
 
-        bar_pred = base.mark_bar(clip=True, width=2).encode(
-            x=alt.X("X_true"),
-            y=alt.Y("y_pred_low"),
-            y2=alt.Y2("y_pred_upp"),
-            color=alt.condition(alt.datum["extrapolate"], alt.value("red"), alt.value("#e0f2ff")),
-            opacity=alt.condition(alt.datum["extrapolate"], alt.value(0.05), alt.value(0.8)),
-            tooltip=tooltip_pred,
+        # The extrapolated intervals are drawn as faint red bars, which overlap.
+        bar_pred = (
+            alt.Chart(df.assign(label=interval_label))
+            .mark_bar(clip=True, width=2, color="red" if extrapolate else colors[interval_label])
+            .encode(
+                x=alt.X("X_true:Q"),
+                y=alt.Y("y_pred_low:Q"),
+                y2=alt.Y2("y_pred_upp:Q"),
+                opacity=_opacity(0.05, faded=0.005) if extrapolate else _opacity(0.8),
+                tooltip=tooltip_pred,
+            )
         )
 
-        circle_true = base.mark_circle(size=20).encode(
-            x=alt.X("X_true:Q", scale=x_scale, title="X"),
-            y=alt.Y("y_true:Q", scale=y_scale, title="Y"),
-            color=points_color,
-            tooltip=tooltip_true,
+        circle_true = (
+            alt.Chart(df.assign(label=labels[0]))
+            .mark_circle(color=colors[labels[0]], size=20)
+            .encode(
+                x=alt.X("X_true:Q", scale=x_scale, title="X"),
+                y=alt.Y("y_true:Q", scale=y_scale, title="Y"),
+                opacity=_opacity(0.7),
+                tooltip=tooltip_true,
+            )
         )
 
-        line_true = base.mark_line().encode(
-            x=alt.X("X_true:Q", scale=x_scale, title=""),
-            y=alt.Y("y_func:Q", scale=y_scale, title=""),
-            color=line_true_color,
-            tooltip=tooltip_true,
+        line_pred = (
+            alt.Chart(df.assign(label=median_label))
+            .mark_line(clip=True, color=colors[median_label], size=4)
+            .encode(
+                x=alt.X("X_true:Q", scale=x_scale, title=""),
+                y=alt.Y("y_pred:Q", scale=y_scale),
+                opacity=_opacity(1),
+                tooltip=tooltip_pred,
+            )
         )
 
-        line_pred = base.mark_line(clip=True).encode(
-            x=alt.X("X_true:Q", title="", scale=x_scale),
-            y=alt.Y("y_pred:Q", scale=y_scale),
-            color=alt.condition(alt.datum["extrapolate"], alt.value("red"), alt.value("#006aff")),
-            tooltip=tooltip_pred,
+        # Draw the true function over the predicted median, where they overlap.
+        line_true = (
+            alt.Chart(df.assign(label=labels[1]))
+            .mark_line(color=colors[labels[1]])
+            .encode(
+                x=alt.X("X_true:Q", scale=x_scale, title=""),
+                y=alt.Y("y_func:Q", scale=y_scale, title=""),
+                opacity=_opacity(1),
+                tooltip=tooltip_true,
+            )
         )
 
-        chart = bar_pred + circle_true + line_true + line_pred
+        chart = bar_pred + circle_true + line_pred + line_true
 
         if "coverage" in df.columns:
             text_coverage = (
-                base.transform_aggregate(coverage="mean(coverage)")
+                alt.Chart(df)
+                .transform_aggregate(coverage="mean(coverage)")
                 .transform_calculate(
                     coverage_text=(
                         "'Extrapolated Coverage: '"
@@ -496,37 +519,28 @@ def plot_qrf_vs_xtrapolation_comparison(df, func_str):
             chart += text_coverage
 
         if legend:
-            # For desired legend ordering.
-            data = {
-                "y_pred_line": {"type": "line", "color": "#006aff", "name": "Predicted Median"},
-                "y_pred_area": {
-                    "type": "area",
-                    "color": "#e0f2ff",
-                    "name": "Predicted 95% Interval",
-                },
-                "y_extrp_line": {"type": "line", "color": "red", "name": "Extrapolated Median"},
-                "y_extrp_area": {
-                    "type": "area",
-                    "color": "red",
-                    "name": "Extrapolated 95% Interval",
-                },
-            }
-            for k, v in data.items():
-                blank = alt.Chart(pd.DataFrame({k: [v["name"]]}))
-                if v["type"] == "line":
-                    blank = blank.mark_line(color=k)
-                elif v["type"] == "area":
-                    blank = blank.mark_area(color=k)
-                blank = blank.encode(
-                    color=alt.Color(f"{k}:N", scale=alt.Scale(range=[v["color"]]), title=None)
+            # A legend of all of the marks, drawn by invisible points.
+            chart += (
+                alt.Chart(pd.DataFrame({"label": labels}))
+                .mark_point(filled=True, opacity=0)
+                .encode(
+                    color=alt.Color(
+                        "label:N",
+                        scale=alt.Scale(domain=labels, range=list(colors.values())),
+                        legend=alt.Legend(symbolOpacity=1, rowPadding=5),
+                        title=None,
+                    ),
+                    shape=alt.Shape(
+                        "label:N", scale=alt.Scale(domain=labels, range=shapes), title=None
+                    ),
                 )
-                chart += blank
-            chart = chart.resolve_scale(color="independent")
+                .add_params(click)
+            )
 
-        chart = chart.properties(title=title, height=200, width=300)
+        chart = chart.properties(title=title, height=250, width=280)
         return chart
 
-    kwargs = {"func_str": func_str, "x_domain": [0, 15], "y_domain": [-15, 20]}
+    kwargs = {"x_domain": [0, 15], "y_domain": [-15, 20]}
     xtra_mapper = {"bb_mid": "y_pred", "bb_low": "y_pred_low", "bb_upp": "y_pred_upp"}
 
     chart1 = alt.layer(
@@ -534,9 +548,9 @@ def plot_qrf_vs_xtrapolation_comparison(df, func_str):
             df.query("~(test_left | test_right)").assign(**{"coverage": lambda x: x["cov_qrf"]}),
             title="Extrapolation with Standard QRF",
             **kwargs,
-        ).resolve_scale(color="independent"),
-        _plot_extrapolations(df.query("test_left").assign(extrapolate=True), **kwargs),
-        _plot_extrapolations(df.query("test_right").assign(extrapolate=True), **kwargs),
+        ),
+        _plot_extrapolations(df.query("test_left"), extrapolate=True, **kwargs),
+        _plot_extrapolations(df.query("test_right"), extrapolate=True, **kwargs),
     )
     chart2 = alt.layer(
         _plot_extrapolations(
@@ -544,19 +558,19 @@ def plot_qrf_vs_xtrapolation_comparison(df, func_str):
             title="Extrapolation with Xtrapolation Procedure",
             legend=True,
             **kwargs,
-        ).resolve_scale(color="independent"),
+        ),
         _plot_extrapolations(
             df.query("test_left")
-            .assign(extrapolate=True)
             .drop(columns=["y_pred", "y_pred_low", "y_pred_upp"])
             .rename(xtra_mapper, axis="columns"),
+            extrapolate=True,
             **kwargs,
         ),
         _plot_extrapolations(
             df.query("test_right")
-            .assign(extrapolate=True)
             .drop(columns=["y_pred", "y_pred_low", "y_pred_upp"])
             .rename(xtra_mapper, axis="columns"),
+            extrapolate=True,
             **kwargs,
         ),
     )
