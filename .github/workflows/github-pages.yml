@@ -9,16 +9,14 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    env:
-      PIP_CONSTRAINT: ${{ github.workspace }}/docs/sphinx_constraints.txt
 
     steps:
       - uses: actions/checkout@v7
 
-      - name: Set up Python 3.14
+      - name: Set up Python 3.15
         uses: actions/setup-python@v7
         with:
-          python-version: '3.14'
+          python-version: '3.15'
 
       - name: Install uv
         run: pip install uv
@@ -28,8 +26,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          uv pip install --editable . -c "$PIP_CONSTRAINT"
-          uv pip install -r docs/sphinx_requirements.txt -c "$PIP_CONSTRAINT"
+          uv pip install --editable .
+          uv pip install -r docs/sphinx_requirements.txt
 
       - name: Cache downloaded example data
         uses: actions/cache@v5
