@@ -5,18 +5,17 @@ Monotonic Constraints with Quantile Regression Forests
 This example demonstrates the use of monotonic constraints with a quantile
 regression forest (QRF) on a toy dataset whose target increases with the first
 of two features. A monotonic constraint (``monotonic_cst``) makes the
-predictions increase (or decrease) with a feature, which here also makes the
-predicted median more accurate. But each tree is kept monotonic by clipping
-the target value that each leaf keeps to bounds derived from the mean targets
-of the leaves, which also clips much of the variation across trees that the
-quantile predictions rely on. As a result, the prediction intervals of a
+predictions increase with a feature, which here also makes the median more
+accurate. But each tree is kept monotonic by clipping the target that each leaf
+keeps to bounds derived from mean targets, which also clips much of the
+variation that the quantiles rely on. As a result, the intervals of a
 constrained QRF can be too narrow. To get both a monotonic median and reliable
 intervals, we center the intervals of an unconstrained QRF on the median of a
-constrained one, and then calibrate them with conformalized quantile
-regression (CQR) on held-out data. The plot on the right shows them, along
-with the constrained QRF's own intervals. Use the slider to set the target
-coverage: at every target, the constrained QRF's intervals fall well short of
-it, whereas the calibrated intervals match it.
+constrained one and calibrate them with conformalized quantile regression (CQR)
+on held-out data. The plot on the right shows them, along with the constrained
+QRF's own intervals. Use the slider to set the target coverage: the constrained
+QRF's intervals fall well short of every target, whereas the calibrated
+intervals match it.
 """
 
 import altair as alt
@@ -67,8 +66,6 @@ qrf_mono.fit(X_train, y_train)
 
 def get_quantiles(coverage):
     """Get the quantiles of the lower bound, median, and upper bound of an interval."""
-    # Round off floating-point error, which would make the lower quantile of an 80%
-    # interval 0.09999999999999998 instead of 0.1.
     return np.round([(1 - coverage) / 2, 0.5, (1 + coverage) / 2], 3).tolist()
 
 
