@@ -3,20 +3,19 @@ Quantile Regression Forests with Sample Weights
 ===============================================
 
 This example demonstrates the use of sample weights with a quantile regression
-forest (QRF). A QRF weights the training samples by their sample weights both
-when fitting the trees and when calculating quantiles from the training
-samples in the leaves, so that a sample with weight 2 counts like two samples
-with weight 1. In this scenario, a population consists of two groups, A and B,
-whose targets differ, but the group of a sample is not one of its features.
-Group B is 20% of the population but half of the training data, as if it had
-been oversampled. Without weights, the QRF predicts the quantiles of the
-oversampled training data. Weighting each training sample by its group's share
-of the population divided by its share of the training data recovers the
-quantiles of the population. Use the slider to set the share of group B that
-the weights assume, while the population stays the same: at 20%, its share of
-the population, the weights recover the population's quantiles; at 50%, its
-share of the training data, the weights are all 1, as without weights; and at
-0%, they leave group B out. The area of each training sample shows its weight.
+forest (QRF), which weights the training samples both when fitting the trees
+and when calculating quantiles from the samples in the leaves, so that a sample
+with weight 2 counts like two with weight 1. Here, a population consists of two
+groups, A and B, whose targets differ, but a sample's group is not one of its
+features. Group B is 20% of the population but half of the training data, as if
+oversampled, so without weights, the QRF predicts the quantiles of the training
+data. Weighting each training sample by its group's share of the population
+divided by its share of the training data recovers the population's quantiles.
+Use the slider to set the share of group B that the weights assume (the
+population stays the same): at 20%, its true share, they recover the
+population's quantiles; at 50%, its share of the training data, they are all 1,
+as without weights; and at 0%, they leave group B out. The area of each
+training sample shows its weight.
 """
 
 import altair as alt
