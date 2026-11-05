@@ -50,3 +50,8 @@ The maximum number of proximity counts output per test sample can be limited by 
 Out-of-bag (OOB) proximity counts can be returned by specifying `oob_score=True`::
 
     >>> proximities = qrf.proximity_counts(X_train, oob_score=True)
+
+.. rubric:: Examples
+
+.. minigallery::
+   :names: plot_qrf_proximity_counts

@@ -10,9 +10,9 @@ from 5% to 95%, shown here as a fan of prediction intervals. Because the
 gradient boosting models are fit independently, their quantiles can cross, with
 a higher quantile predicted below a lower one (marked in red), which no
 distribution allows. The quantiles of a QRF cannot cross, and a QRF can predict
-any other quantile without being fit again. Use the slider to select an X, at
-which the panels below plot each model's predicted quantiles: those of the QRF
-never decrease, whereas those of gradient boosting decrease wherever they cross.
+any other quantile without being refit. Use the slider to select an X, at which
+the panels below plot each model's predicted quantiles: those of the QRF never
+decrease, whereas those of gradient boosting decrease wherever they cross.
 """
 
 import altair as alt
