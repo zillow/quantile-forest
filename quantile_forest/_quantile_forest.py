@@ -1039,6 +1039,9 @@ class BaseForestQuantileRegressor(ForestRegressor):
             quantiles are computed by aggregating sibling samples. When the
             number of training samples relative to siblings is small, weighted
             quantiles can be more efficient to compute than unweighted ones.
+            If the leaf samples are weighted by their sample weights (see the
+            `sample_weight` parameter of `fit`), weighted quantiles are always
+            calculated.
 
         weighted_leaves : bool, default=False
             Weight samples inversely to the size of their leaf node.
