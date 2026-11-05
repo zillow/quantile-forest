@@ -106,22 +106,26 @@ else:
 gallery_groups = [
     (
         "Getting Started",
-        ["plot_qrf_predictions", "plot_qrf_prediction_intervals", "plot_qrf_vs_rf_predictions"],
+        [
+            "plot_qrf_predictions",
+            "plot_qrf_prediction_intervals",
+            "plot_qrf_vs_rf_predictions",
+            "plot_qrf_vs_gbm_quantiles",
+        ],
     ),
     (
         "Intervals and Calibration",
         [
             "plot_qrf_conformalized_intervals",
             "plot_qrf_extrapolation",
-            "plot_qrf_vs_gbm_quantiles",
             "plot_qrf_monotonic_constraints",
+            "plot_qrf_sample_weights",
         ],
     ),
     (
         "Model Details",
         [
             "plot_qrf_interpolation_methods",
-            "plot_qrf_sample_weights",
             "plot_qrf_quantile_ranks",
             "plot_qrf_proximity_counts",
             "plot_qrf_custom_functions",
