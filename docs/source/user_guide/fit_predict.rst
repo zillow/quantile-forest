@@ -79,11 +79,13 @@ The output of the `predict` method is an array with one column for each specifie
     >>> bool((y_pred[:, 0] >= y_pred[:, 1]).all())
     True
 
+.. _user-guide-interpolation:
+
 By default (`interpolation="averaged_inverted_cdf"`), a quantile `q` is the smallest training target such that at least a fraction `q` of the (weighted) training samples are at or below it, or, if exactly that fraction are, its average with the next target, so that the median is the usual median. This is NumPy's method of the same name and how scikit-learn calculates weighted quantiles. Other methods can be specified with `interpolation`, such as linear interpolation between training targets, the default before version 1.5::
 
     >>> y_pred = qrf.predict(X_test, interpolation="linear")
 
-For a comparison of the methods, see :ref:`gallery_plot_qrf_interpolation_methods`.
+With `interpolation="linear"`, a quantile is calculated from the input rank :math:`x` such that :math:`x = (N + 1 - 2C)q + C`, where :math:`N` is the number of samples and :math:`C = 1` is a constant (degree of freedom). For weighted samples, :math:`N` is their total weight instead, with the weights scaled so that a sample of average weight counts as one sample. For a comparison of the methods, see :ref:`gallery_plot_qrf_interpolation_methods`.
 
 Multi-target quantile regression is also supported. If the target values are multi-dimensional, then the second output column will correspond to the number of targets::
 
