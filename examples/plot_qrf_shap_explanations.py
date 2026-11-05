@@ -146,26 +146,29 @@ def plot_shap_waterfall_with_quantiles(df, height=300):
     y_text_offset = round(height / 2)
 
     # Triangle caps with a short full-height "shoulder" that overlaps the bar end,
-    # hiding the anti-aliasing seam between the bar and the cap.
+    # hiding the anti-aliasing seam between the bar and the cap. A bar shorter than a cap
+    # (`x_shift`) is drawn as a cap alone, as long as the bar, and without a shoulder.
     triangle_size = round(height / 100)
     overlap = 0.25
-    triangle_left = (
-        f"M {overlap},{triangle_size} L 0,{triangle_size} L -1,0 "
-        f"L 0,-{triangle_size} L {overlap},-{triangle_size} Z"
-    )
-    triangle_right = (
-        f"M -{overlap},-{triangle_size} L 0,-{triangle_size} L 1,0 "
-        f"L 0,{triangle_size} L -{overlap},{triangle_size} Z"
-    )
+
+    def _triangle(shap_value):
+        tip = np.clip(shap_value / x_shift, -1, 1)  # the length of the cap, in full caps
+        shoulder = -np.sign(shap_value) * overlap if abs(shap_value) > x_shift else 0
+        return (
+            f"M {shoulder},{triangle_size} L 0,{triangle_size} L {tip:.3f},0 "
+            f"L 0,-{triangle_size} L {shoulder},-{triangle_size} Z"
+        )
+
+    df_grouped["triangle"] = df_grouped["shap_value"].map(_triangle)
 
     df_text_labels = (
         df_grouped.groupby("quantile")[df.columns]
         .apply(
             lambda g: pd.DataFrame(
                 {
-                    "label": [
-                        f"f(x) = {g['model_output'].iloc[0]:,.2f}",
-                        f"E[f(X)] = {g['base_value'].iloc[0]:,.2f}",
+                    "value": [
+                        f"= {g['model_output'].iloc[0]:,.2f}",
+                        f"= {g['base_value'].iloc[0]:,.2f}",
                     ],
                     "type": ["end", "start"],
                     "x": [g["model_output"].iloc[0], g["base_value"].iloc[0]],
@@ -180,25 +183,65 @@ def plot_shap_waterfall_with_quantiles(df, height=300):
     # order of the data, this order is updated when the slider selects another quantile.
     y_sort = alt.EncodingSortField(field="abs_shap_value", op="max", order="descending")
 
+    # Each bar ends where its cap begins, a cap's length before its end, or at its start,
+    # if it is shorter than a cap.
     base = (
         alt.Chart(df_grouped)
         .transform_filter(is_selected)
         .transform_calculate(
-            end_shifted=f"datum.shap_value > 0 ? datum.end - {x_shift} : datum.end + {x_shift}"
-        )
-        .transform_calculate(
-            end_shifted=f"abs(datum.shap_value) < {x_shift} ? datum.end : datum.end_shifted"
+            end_shifted=f"datum.end - clamp(datum.shap_value, {-x_shift}, {x_shift})"
         )
     )
+
+    # The axes draw the feature names (as their labels) and the labels of f(x) and E[f(X)]
+    # (as their titles, placed at the selected quantile's values), so that they take the
+    # theme's text color, while the values are drawn in a lighter color.
+    value_color = "#999999"
+    df_label_x = df_text_labels.pivot(index="quantile", columns="type", values="x")
+    i_quantile = f"round((quantile - {quantiles[0]}) / {quantile_step})"
+
+    def _title_x(label_type, dx):
+        # The position of the label of f(x) or E[f(X)] at the selected quantile, in pixels.
+        x_values = df_label_x[label_type].round(2).tolist()
+        return alt.ExprRef(expr=f"scale('x', {x_values}[{i_quantile}]) + {dx}")
+
+    # The labels of E[f(X)] and f(x) end this far right of their ticks, and their values
+    # begin a space further right.
+    dx_start, dx_end = 15, 8
+    title_style = {
+        "titleAlign": "right",
+        "titleBaseline": "middle",
+        "titleFontSize": 11,
+        "titleFontStyle": "italic",
+        "titleFontWeight": "normal",
+    }
 
     bar = base.mark_bar().encode(
         x=alt.X(
             "start:Q",
-            axis=alt.Axis(format=",.2f", grid=False),
+            axis=alt.Axis(
+                format=",.2f",
+                grid=False,
+                titleX=_title_x("start", dx_start),
+                titleY=30,
+                **title_style,
+            ),
             scale=alt.Scale(domain=[x_min - 10 * x_shift, x_max + 10 * x_shift], zero=False),
-            title=None,
+            title="E[f(X)]",
         ),
-        y=alt.Y("feature:N", sort=y_sort, title=None),
+        y=alt.Y(
+            "feature:N",
+            axis=alt.Axis(
+                labelExpr="split(datum.label, ' = ')[1]",  # the name of the feature
+                titleAngle=0,
+                titleX=_title_x("end", dx_end),
+                titleY=-15,
+                zindex=1,  # in front of the labels in the lighter color
+                **title_style,
+            ),
+            sort=y_sort,
+            title="f(x)",
+        ),
         color=alt.condition(
             alt.datum["shap_value"] > 0, alt.value("#ff0251"), alt.value("#018bfb")
         ),
@@ -211,15 +254,9 @@ def plot_shap_waterfall_with_quantiles(df, height=300):
         ],
     )
 
-    point = (
-        bar.transform_filter(f"abs(datum.shap_value) > {x_shift}")
-        .mark_point(filled=True, opacity=1, size=125, strokeWidth=0)
-        .encode(
-            x=alt.X("end_shifted:Q", title=None),
-            shape=alt.condition(
-                alt.datum["shap_value"] > 0, alt.value(triangle_right), alt.value(triangle_left)
-            ),
-        )
+    point = bar.mark_point(filled=True, opacity=1, size=125, strokeWidth=0).encode(
+        x=alt.X("end_shifted:Q"),
+        shape=alt.Shape("triangle:N", scale=None),
     )
 
     text_bar_left = bar.mark_text(
@@ -239,17 +276,24 @@ def plot_shap_waterfall_with_quantiles(df, height=300):
         alt.Chart(df_text_labels)
         .transform_filter(is_selected)
         .transform_filter("datum.type == 'start'")
-        .mark_text(align="left", color="gray", dx=-16, dy=y_text_offset + 30)
-        .encode(text=alt.Text("label"), x=alt.X("x:Q"))
+        .mark_text(align="left", color=value_color, dx=dx_start + 3, dy=y_text_offset + 30)
+        .encode(text=alt.Text("value"), x=alt.X("x:Q"))
     )
     text_label_end = (
         alt.Chart(df_text_labels)
         .transform_filter(is_selected)
         .transform_filter("datum.type == 'end'")
-        .mark_text(align="left", color="gray", dx=-8, dy=-y_text_offset - 15)
-        .encode(text=alt.Text("label"), x=alt.X("x:Q"))
+        .mark_text(align="left", color=value_color, dx=dx_end + 3, dy=-y_text_offset - 15)
+        .encode(text=alt.Text("value"), x=alt.X("x:Q"))
     )
-    text = text_bar_left + text_bar_right + text_label_start + text_label_end
+
+    # The full label of each feature, behind the name drawn by the axis, which leaves its
+    # value showing in the lighter color (as an axis label has one color).
+    text_feature = base.mark_text(
+        align="right", baseline="middle", color=value_color, fontSize=10, x=-6.5
+    ).encode(y=alt.Y("feature:N", sort=y_sort), text="feature:N")
+
+    text = text_bar_left + text_bar_right + text_label_start + text_label_end + text_feature
 
     feature_bar_rule = (
         base.transform_filter("isValid(datum.feature2)")
