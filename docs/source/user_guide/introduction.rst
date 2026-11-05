@@ -7,6 +7,22 @@ Random forests have proven to be very popular and powerful for regression and cl
 
 However random forests provide information about the full conditional distribution of the response variable, not only about the conditional mean. Quantile regression forests, a generalization of random forests, can be used to infer conditional quantiles. That is, they return :math:`y` at :math:`q` for which :math:`F(Y=y|X) = q`, where :math:`q` is the quantile.
 
+.. figure:: ../_images/plot_qrf_prediction_intervals.png
+   :alt: The predicted medians and prediction intervals of a quantile regression forest
+   :figclass: only-light
+   :width: 100%
+   :target: ../gallery/plot_qrf_prediction_intervals.html
+
+   The observed values of houses in California and the 95% prediction intervals that a QRF predicts for them, against the predicted medians (left), and centered and ordered by the width of the interval (right), from :ref:`gallery_plot_qrf_prediction_intervals`.
+
+.. figure:: ../_images/plot_qrf_prediction_intervals-dark.png
+   :alt: The predicted medians and prediction intervals of a quantile regression forest
+   :figclass: only-dark
+   :width: 100%
+   :target: ../gallery/plot_qrf_prediction_intervals.html
+
+   The observed values of houses in California and the 95% prediction intervals that a QRF predicts for them, against the predicted medians (left), and centered and ordered by the width of the interval (right), from :ref:`gallery_plot_qrf_prediction_intervals`.
+
 The quantiles give more complete information about the distribution of :math:`Y` as a function of the predictor variable :math:`X` than the conditional mean alone. They can be useful, for example, to build prediction intervals or to perform outlier detection in a high-dimensional dataset.
 
 In practice, the empirical estimation of quantiles can be calculated in several ways. In this package, a desired quantile is calculated from the input rank :math:`x` such that :math:`x = (N + 1 - 2C)q + C`, where :math:`q` is the quantile, :math:`N` is the number of samples, and :math:`C` is a constant (degree of freedom). In this package, :math:`C = 1`. This package provides methods that calculate quantiles using samples that are weighted and unweighted. In a weighted quantile, :math:`N` is calculated from the fraction of the total weight instead of the total number of samples.

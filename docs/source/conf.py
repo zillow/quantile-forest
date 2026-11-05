@@ -98,6 +98,39 @@ else:
     extensions.append("sphinx.ext.mathjax")
     mathjax_path = "https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"
 
+# -- Options for the example gallery -----------------------------------------
+
+# The sections of the example gallery, each with its examples in order. Examples that no
+# section lists are shown in a final section, and listed examples that are not found are
+# skipped.
+gallery_groups = [
+    (
+        "Getting Started",
+        ["plot_qrf_predictions", "plot_qrf_prediction_intervals", "plot_qrf_vs_rf_predictions"],
+    ),
+    (
+        "Intervals and Calibration",
+        [
+            "plot_qrf_conformalized_intervals",
+            "plot_qrf_extrapolation",
+            "plot_qrf_vs_gbm_quantiles",
+            "plot_qrf_monotonic_constraints",
+        ],
+    ),
+    (
+        "Model Details",
+        [
+            "plot_qrf_interpolation_methods",
+            "plot_qrf_sample_weights",
+            "plot_qrf_quantile_ranks",
+            "plot_qrf_proximity_counts",
+            "plot_qrf_custom_functions",
+            "plot_qrf_multitarget",
+        ],
+    ),
+    ("Integrations", ["plot_qrf_shap_explanations", "plot_qrf_huggingface_inference"]),
+]
+
 # -- Options for bibtex -------------------------------------------------------
 
 bibtex_bibfiles = ["refs.bib"]

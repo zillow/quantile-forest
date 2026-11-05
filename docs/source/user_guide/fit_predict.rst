@@ -85,6 +85,11 @@ Multi-target quantile regression is also supported. If the target values are mul
     >>> y_pred.shape[1] == y.shape[1]  # number of targets
     True
 
+.. rubric:: Examples
+
+.. minigallery::
+   :names: plot_qrf_predictions, plot_qrf_prediction_intervals, plot_qrf_interpolation_methods, plot_qrf_multitarget
+
 Quantile Weighting
 ~~~~~~~~~~~~~~~~~~
 
@@ -119,6 +124,11 @@ By default, when the `predict` method is called with the OOB flag set to True, i
 
 This allows all samples, both from the training and test sets, to be scored with a single call to `predict`, whereby OOB predictions are returned for the training samples and IB (i.e., non-OOB) predictions are returned for the test samples.
 
+.. rubric:: Examples
+
+.. minigallery::
+   :names: plot_qrf_conformalized_intervals
+
 Random Forest Predictions
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -143,10 +153,20 @@ The predictions of a standard random forest can also be recovered from a quantil
     >>> np.allclose(y_pred_rf, y_pred_qrf)
     True
 
+.. rubric:: Examples
+
+.. minigallery::
+   :names: plot_qrf_vs_rf_predictions
+
 User-Specified Functions
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 While a QRF is designed to estimate quantiles from the empirical distribution calculated for each sample, in many cases it may be useful to use the empirical distribution to calculate other quantities of interest. For more details, see :ref:`gallery_plot_qrf_custom_functions`.
+
+.. rubric:: Examples
+
+.. minigallery::
+   :names: plot_qrf_custom_functions
 
 Monotonic Constraints
 ~~~~~~~~~~~~~~~~~~~~~
