@@ -682,6 +682,36 @@
 </span>
 
 <div style='clear:both;'></div></section>
+<section id="monotonic-constraints">
+<h2>Monotonic Constraints<a class="headerlink" href="#monotonic-constraints" title="Link to this heading">#</a></h2>
+<p>Predictions can be constrained to increase (1) or decrease (-1) monotonically with individual features by specifying <code class="docutils literal notranslate"><span class="pre">monotonic_cst</span></code>, which requires <code class="docutils literal notranslate"><span class="pre">max_samples_leaf=1</span></code> (the default):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># Increasing in the first feature, and unconstrained in the others.</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">monotonic_cst</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">X_train</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">qrf</span> <span class="o">=</span> <span class="n">RandomForestQuantileRegressor</span><span class="p">(</span><span class="n">monotonic_cst</span><span class="o">=</span><span class="n">monotonic_cst</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">qrf</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">)</span>
+<span class="go">RandomForestQuantileRegressor(...)</span>
+</pre></div>
+</div>
+<p>Each tree is kept monotonic by clipping the target value that each leaf keeps: a split on a constrained feature bounds the leaves on either side by the midpoint of their mean targets. Because the bounds are derived from means, they also clip much of the variation across trees that quantile predictions rely on, so the predicted distributions may be much narrower than without constraints. Monotonic constraints are therefore best suited to point predictions, such as the median or mean. If prediction intervals are needed, calibrate them on held-out data (e.g., with conformal prediction), or fit without the constraint. For an example that does both, centering the intervals of a model fit without the constraint on the median of a model fit with it and calibrating them, see <a class="reference internal" href="../gallery/plot_qrf_monotonic_constraints.html#gallery-plot-qrf-monotonic-constraints"><span class="std std-ref">Monotonic Constraints with Quantile Regression Forests</span></a>.</p>
+<p class="rubric">Examples</p>
+<span class="gallery">
+
+<a class="imagegroup" href="../gallery/plot_qrf_monotonic_constraints.html">
+<span
+    class="image" alt="Monotonic Constraints with Quantile Regression Forests"
+
+    data-light-src="url(../_static/plot_qrf_monotonic_constraints-thumb.png)"
+    data-dark-src="url(../_static/plot_qrf_monotonic_constraints-thumb-dark.png)"
+    style="background-image: url(../_static/plot_qrf_monotonic_constraints-thumb.png);"
+
+></span>
+
+<span class="image-title">Monotonic Constraints with Quantile Regression Forests</span>
+</a>
+
+</span>
+
+<div style='clear:both;'></div></section>
 <section id="user-specified-functions">
 <h2>User-Specified Functions<a class="headerlink" href="#user-specified-functions" title="Link to this heading">#</a></h2>
 <p>While a QRF is designed to estimate quantiles from the empirical distribution calculated for each sample, in many cases it may be useful to use the empirical distribution to calculate other quantities of interest. For more details, see <a class="reference internal" href="../gallery/plot_qrf_custom_functions.html#gallery-plot-qrf-custom-functions"><span class="std std-ref">Computing User-Specified Functions with QRFs</span></a>.</p>
@@ -704,18 +734,6 @@
 </span>
 
 <div style='clear:both;'></div></section>
-<section id="monotonic-constraints">
-<h2>Monotonic Constraints<a class="headerlink" href="#monotonic-constraints" title="Link to this heading">#</a></h2>
-<p>Predictions can be constrained to increase (1) or decrease (-1) monotonically with individual features by specifying <code class="docutils literal notranslate"><span class="pre">monotonic_cst</span></code>, which requires <code class="docutils literal notranslate"><span class="pre">max_samples_leaf=1</span></code> (the default):</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># Increasing in the first feature, and unconstrained in the others.</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">monotonic_cst</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">X_train</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">qrf</span> <span class="o">=</span> <span class="n">RandomForestQuantileRegressor</span><span class="p">(</span><span class="n">monotonic_cst</span><span class="o">=</span><span class="n">monotonic_cst</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">qrf</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">)</span>
-<span class="go">RandomForestQuantileRegressor(...)</span>
-</pre></div>
-</div>
-<p>Each tree is kept monotonic by clipping the target value that each leaf keeps: a split on a constrained feature bounds the leaves on either side by the midpoint of their mean targets. Because the bounds are derived from means, they also clip much of the variation across trees that quantile predictions rely on, so the predicted distributions are much narrower than without constraints. For example, with 2,000 training samples whose targets equal a feature plus standard normal noise, <code class="docutils literal notranslate"><span class="pre">min_samples_leaf=5</span></code>, and an increasing constraint on that feature, 80% prediction intervals covered 31% of new targets, against 74% without the constraint. Monotonic constraints are therefore best suited to point predictions, such as the median or mean. If prediction intervals are needed, calibrate them on held-out data (e.g., with conformal prediction), or fit without the constraint. For an example that does both, centering the intervals of a model fit without the constraint on the median of a model fit with it and calibrating them, see <a class="reference internal" href="../gallery/plot_qrf_monotonic_constraints.html#gallery-plot-qrf-monotonic-constraints"><span class="std std-ref">Monotonic Constraints with Quantile Regression Forests</span></a>.</p>
-</section>
 </section>
 
 
@@ -770,8 +788,8 @@
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#quantile-weighting">Quantile Weighting</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#out-of-bag-estimation">Out-of-Bag Estimation</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#random-forest-predictions">Random Forest Predictions</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#user-specified-functions">User-Specified Functions</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#monotonic-constraints">Monotonic Constraints</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#user-specified-functions">User-Specified Functions</a></li>
 </ul>
   </nav></div>
 
