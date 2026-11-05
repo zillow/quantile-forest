@@ -16,3 +16,8 @@ The quantile rank is the fraction of scores in a frequency distribution that are
 Out-of-bag (OOB) quantile ranks can be returned by specifying `oob_score=True`::
 
     >>> y_ranks_oob = qrf.quantile_ranks(X_train, y_train, oob_score=True)
+
+.. rubric:: Examples
+
+.. minigallery::
+   :names: plot_qrf_quantile_ranks
