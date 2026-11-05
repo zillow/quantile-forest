@@ -108,6 +108,11 @@ Multi-target quantile regression is also supported. If the target values are mul
     >>> y_pred.shape[1] == y.shape[1]  # number of targets
     True
 
+.. rubric:: Examples
+
+.. minigallery::
+   :names: plot_qrf_predictions, plot_qrf_prediction_intervals, plot_qrf_interpolation_methods, plot_qrf_multitarget
+
 Quantile Weighting
 ~~~~~~~~~~~~~~~~~~
 
@@ -142,6 +147,11 @@ By default, when the `predict` method is called with the OOB flag set to True, i
 
 This allows all samples, both from the training and test sets, to be scored with a single call to `predict`, whereby OOB predictions are returned for the training samples and IB (i.e., non-OOB) predictions are returned for the test samples.
 
+.. rubric:: Examples
+
+.. minigallery::
+   :names: plot_qrf_conformalized_intervals
+
 Random Forest Predictions
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -166,10 +176,10 @@ The predictions of a standard random forest can also be recovered from a quantil
     >>> np.allclose(y_pred_rf, y_pred_qrf)
     True
 
-User-Specified Functions
-~~~~~~~~~~~~~~~~~~~~~~~~
+.. rubric:: Examples
 
-While a QRF is designed to estimate quantiles from the empirical distribution calculated for each sample, in many cases it may be useful to use the empirical distribution to calculate other quantities of interest. For more details, see :ref:`gallery_plot_qrf_custom_functions`.
+.. minigallery::
+   :names: plot_qrf_vs_rf_predictions
 
 Monotonic Constraints
 ~~~~~~~~~~~~~~~~~~~~~
@@ -182,4 +192,19 @@ Predictions can be constrained to increase (1) or decrease (-1) monotonically wi
     >>> qrf.fit(X_train, y_train)
     RandomForestQuantileRegressor(...)
 
-Each tree is kept monotonic by clipping the target value that each leaf keeps: a split on a constrained feature bounds the leaves on either side by the midpoint of their mean targets. Because the bounds are derived from means, they also clip much of the variation across trees that quantile predictions rely on, so the predicted distributions are much narrower than without constraints. For example, with 2,000 training samples whose targets equal a feature plus standard normal noise, `min_samples_leaf=5`, and an increasing constraint on that feature, 80% prediction intervals covered 33% of new targets, against 76% without the constraint. Monotonic constraints are therefore best suited to point predictions, such as the median or mean. If prediction intervals are needed, calibrate them on held-out data (e.g., with conformal prediction), or fit without the constraint. For an example that does both, centering the intervals of a model fit without the constraint on the median of a model fit with it and calibrating them, see :ref:`gallery_plot_qrf_monotonic_constraints`.
+Each tree is kept monotonic by clipping the target value that each leaf keeps: a split on a constrained feature bounds the leaves on either side by the midpoint of their mean targets. Because the bounds are derived from means, they also clip much of the variation across trees that quantile predictions rely on, so the predicted distributions may be much narrower than without constraints. Monotonic constraints are therefore best suited to point predictions, such as the median or mean. If prediction intervals are needed, calibrate them on held-out data (e.g., with conformal prediction), or fit without the constraint. For an example that does both, centering the intervals of a model fit without the constraint on the median of a model fit with it and calibrating them, see :ref:`gallery_plot_qrf_monotonic_constraints`.
+
+.. rubric:: Examples
+
+.. minigallery::
+   :names: plot_qrf_monotonic_constraints
+
+User-Specified Functions
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+While a QRF is designed to estimate quantiles from the empirical distribution calculated for each sample, in many cases it may be useful to use the empirical distribution to calculate other quantities of interest. For more details, see :ref:`gallery_plot_qrf_custom_functions`.
+
+.. rubric:: Examples
+
+.. minigallery::
+   :names: plot_qrf_custom_functions

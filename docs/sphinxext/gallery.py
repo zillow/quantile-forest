@@ -29,22 +29,39 @@ GALLERY_TEMPLATE = jinja2.Template("""
 {% for char in title %}-{% endfor %}
 
 General-purpose, introductory and illustrative examples.
+{% for group in groups %}
+{% if group.title %}
+{{ group.title }}
+{% for char in group.title %}~{% endfor %}
+{% endif %}
+{{ group.grid }}
+{% endfor %}
+.. toctree::
+   :maxdepth: 2
+   :caption: Examples
+   :hidden:
 
+   Gallery <self>
+""")
+
+# A grid of the thumbnails of examples, each linked to its example. The prefixes are the
+# paths to the static files and to the gallery, relative to the page.
+GRID_TEMPLATE = jinja2.Template("""
 .. raw:: html
 
     <span class="gallery">
     {% for example in examples %}
-    <a class="imagegroup" href="{{ example.name }}.html">
+    <a class="imagegroup" href="{{ gallery_prefix }}{{ example.name }}.html">
     <span
         class="image" alt="{{ example.title }}"
     {% if example['use_svg'] %}
-        data-light-src="url(..{{ image_dir }}/{{ example.name }}-thumb.svg)"
-        data-dark-src="url(..{{ image_dir }}/{{ example.name }}-thumb-dark.svg)"
-        style="background-image: url(..{{ image_dir }}/{{ example.name }}-thumb.svg);"
+        data-light-src="url({{ static_prefix }}{{ example.name }}-thumb.svg)"
+        data-dark-src="url({{ static_prefix }}{{ example.name }}-thumb-dark.svg)"
+        style="background-image: url({{ static_prefix }}{{ example.name }}-thumb.svg);"
     {% else %}
-        data-light-src="url(..{{ image_dir }}/{{ example.name }}-thumb.png)"
-        data-dark-src="url(..{{ image_dir }}/{{ example.name }}-thumb-dark.png)"
-        style="background-image: url(..{{ image_dir }}/{{ example.name }}-thumb.png);"
+        data-light-src="url({{ static_prefix }}{{ example.name }}-thumb.png)"
+        data-dark-src="url({{ static_prefix }}{{ example.name }}-thumb-dark.png)"
+        style="background-image: url({{ static_prefix }}{{ example.name }}-thumb.png);"
     {% endif %}
     ></span>
 
@@ -54,32 +71,6 @@ General-purpose, introductory and illustrative examples.
     </span>
 
     <div style='clear:both;'></div>
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Examples
-   :hidden:
-
-   Gallery <self>
-""")
-
-MINIGALLERY_TEMPLATE = jinja2.Template("""
-.. raw:: html
-
-    <div id="showcase">
-      <div class="examples">
-      {% for example in examples %}
-      <a
-        class="preview" href="{{ gallery_dir }}/{{ example.name }}.html"
-{% if example['use_svg'] %}
-        style="background-image: url(.{{ image_dir }}/{{ example.name }}-thumb.svg)"
-{% else %}
-        style="background-image: url(.{{ image_dir }}/{{ example.name }}-thumb.png)"
-{% endif %}
-      ></a>
-      {% endfor %}
-      </div>
-    </div>
 """)
 
 
@@ -208,7 +199,27 @@ def populate_examples(**kwds):
     return examples
 
 
+def group_examples(examples, gallery_groups):
+    """Group the examples into the sections of the gallery, in order.
+
+    Examples that no section lists are put in a final section, and listed examples that are
+    not found are skipped. Without sections, the examples are put in one untitled group.
+    """
+    remaining = {example["name"]: example for example in examples}
+    groups = []
+    for title, names in gallery_groups:
+        group = [remaining.pop(name) for name in names if name in remaining]
+        if group:
+            groups.append({"title": title, "examples": group})
+    if remaining:
+        rest = sorted(remaining.values(), key=itemgetter("title"))
+        groups.append({"title": "Other Examples" if groups else None, "examples": rest})
+    return groups
+
+
 class MiniGalleryDirective(Directive):
+    """A grid of the thumbnails of some examples, each linked to its example."""
+
     has_content = False
 
     option_spec = {
@@ -217,18 +228,14 @@ class MiniGalleryDirective(Directive):
         "indices": lambda x: list(map(int, x.split())),
         "shuffle": flag,
         "seed": int,
-        "titles": bool,
-        "width": str,
     }
 
     def run(self):
-        size = self.options.get("size", 15)
-        names = [name.strip() for name in self.options.get("names", "").split(",")]
+        names = [name.strip() for name in self.options.get("names", "").split(",") if name.strip()]
+        size = self.options.get("size", len(names) or 15)
         indices = self.options.get("indices", [])
         shuffle = "shuffle" in self.options
         seed = self.options.get("seed", 42)
-        titles = self.options.get("titles", False)
-        width = self.options.get("width", None)
 
         env = self.state.document.settings.env
         app = env.app
@@ -254,12 +261,10 @@ class MiniGalleryDirective(Directive):
             if size:
                 examples = examples[:size]
 
-        include = MINIGALLERY_TEMPLATE.render(
-            image_dir="/_static",
-            gallery_dir=gallery_dir,
-            examples=examples,
-            titles=titles,
-            width=width,
+        # The paths to the static files and to the gallery, relative to the page.
+        up = "../" * env.docname.count("/")
+        include = GRID_TEMPLATE.render(
+            examples=examples, static_prefix=f"{up}_static/", gallery_prefix=f"{up}{gallery_dir}/"
         )
 
         # Parse and return documentation.
@@ -285,17 +290,17 @@ def main(app):
     if not os.path.exists(target_dir):
         os.makedirs(target_dir)
 
-    examples = sorted(examples, key=lambda x: x["title"])
+    groups = group_examples(examples, app.builder.config.gallery_groups)
+    examples = [example for group in groups for example in group["examples"]]
 
-    # Write the gallery index file.
+    # Write the gallery index file, with a grid of thumbnails for each group of examples.
+    for group in groups:
+        group["grid"] = GRID_TEMPLATE.render(
+            examples=group["examples"], static_prefix="../_static/", gallery_prefix=""
+        )
     with open(os.path.join(target_dir, "index.rst"), "w") as f:
         f.write(
-            GALLERY_TEMPLATE.render(
-                title=gallery_title,
-                examples=examples,
-                image_dir="/_static",
-                gallery_ref=gallery_ref,
-            )
+            GALLERY_TEMPLATE.render(title=gallery_title, groups=groups, gallery_ref=gallery_ref)
         )
 
     # Save the images to file.
@@ -354,6 +359,7 @@ def setup(app):
     app.add_config_value("gallery_dir", "gallery", "env")
     app.add_config_value("gallery_ref", "example-gallery", "env")
     app.add_config_value("gallery_title", "General Examples", "env")
+    app.add_config_value("gallery_groups", [], "env")
     app.add_directive_to_domain("py", "minigallery", MiniGalleryDirective)
 
     # Injected JS for theme switching.

@@ -7,6 +7,22 @@ Random forests have proven to be very popular and powerful for regression and cl
 
 However random forests provide information about the full conditional distribution of the response variable, not only about the conditional mean. Quantile regression forests, a generalization of random forests, can be used to infer conditional quantiles. That is, they return :math:`y` at :math:`q` for which :math:`F(Y=y|X) = q`, where :math:`q` is the quantile.
 
+.. figure:: ../_images/plot_qrf_prediction_intervals.png
+   :alt: The predicted medians and prediction intervals of a quantile regression forest
+   :figclass: only-light
+   :width: 100%
+   :target: ../gallery/plot_qrf_prediction_intervals.html
+
+   The observed values of houses in California and the 95% prediction intervals that a QRF predicts for them, against the predicted medians (left), and centered and ordered by the width of the interval (right), from :ref:`gallery_plot_qrf_prediction_intervals`.
+
+.. figure:: ../_images/plot_qrf_prediction_intervals-dark.png
+   :alt: The predicted medians and prediction intervals of a quantile regression forest
+   :figclass: only-dark
+   :width: 100%
+   :target: ../gallery/plot_qrf_prediction_intervals.html
+
+   The observed values of houses in California and the 95% prediction intervals that a QRF predicts for them, against the predicted medians (left), and centered and ordered by the width of the interval (right), from :ref:`gallery_plot_qrf_prediction_intervals`.
+
 The quantiles give more complete information about the distribution of :math:`Y` as a function of the predictor variable :math:`X` than the conditional mean alone. They can be useful, for example, to build prediction intervals or to perform outlier detection in a high-dimensional dataset.
 
 In practice, the empirical estimation of quantiles can be calculated in several ways. By default, a quantile :math:`q` is the smallest training response such that at least a fraction :math:`q` of the (weighted) training samples are at or below it, averaged with the next response if exactly that fraction are. Other methods can be specified with the `interpolation` parameter of the `predict` method (see :ref:`the interpolation methods <user-guide-interpolation>`).
