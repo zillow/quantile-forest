@@ -91,6 +91,11 @@ def _check_quantiles(quantiles):
 
 sklearn_version = parse_version(sklearn.__version__)
 
+# Before scikit-learn 1.8, trees fit on data with missing values could put some
+# training samples in other leaves than `apply` does (scikit-learn#32351), which
+# can leave leaves without any of the training samples that they predict from.
+_MISSING_VALUES_SUPPORTED = sklearn_version >= parse_version("1.8.dev0")
+
 
 def _hash_X(X):
     """Hash input samples so that equal data gives equal hashes.
@@ -177,18 +182,20 @@ class BaseForestQuantileRegressor(ForestRegressor):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        # Missing values are not supported, even where the trees support them.
-        tags.input_tags.allow_nan = False
+        if not _MISSING_VALUES_SUPPORTED:
+            # Missing values are not supported, even where the trees support them.
+            tags.input_tags.allow_nan = False
         return tags
 
-    def _more_tags(self):  # scikit-learn < 1.6
+    def _more_tags(self):  # scikit-learn < 1.6, so missing values are not supported
         return {"allow_nan": False}
 
     def _validate_X_predict(self, X):
         """Validate X whenever one tries to predict, apply, or get proximities."""
         X = super()._validate_X_predict(X)
-        # The trees may accept missing values, but the quantile forest does not.
-        assert_all_finite(X, input_name="X", estimator_name=self.__class__.__name__)
+        if not _MISSING_VALUES_SUPPORTED:
+            # The trees may accept missing values, but the quantile forest does not.
+            assert_all_finite(X, input_name="X", estimator_name=self.__class__.__name__)
         return X
 
     def fit(self, X, y, sample_weight=None, sparse_pickle=False):
@@ -238,21 +245,40 @@ class BaseForestQuantileRegressor(ForestRegressor):
                     "To apply monotonicity constraints, set `max_samples_leaf=1`."
                 )
 
-        # The forest accepts missing values, so reject them before fitting it.
-        check_array(
-            X,
-            accept_sparse=True,
-            dtype=[DTYPE, np.float64],  # convert other types (e.g., None to NaN)
-            input_name="X",
-            estimator=self,
-            **{
-                (
-                    "force_all_finite"
-                    if sklearn_version < parse_version("1.6.dev0")
-                    else "ensure_all_finite"
-                ): True
-            },
-        )
+        if not _MISSING_VALUES_SUPPORTED:
+            # The forest accepts missing values, so reject them before fitting it.
+            check_array(
+                X,
+                accept_sparse=True,
+                dtype=[DTYPE, np.float64],  # convert other types (e.g., None to NaN)
+                input_name="X",
+                estimator=self,
+                **{
+                    (
+                        "force_all_finite"
+                        if sklearn_version < parse_version("1.6.dev0")
+                        else "ensure_all_finite"
+                    ): True
+                },
+            )
+        elif self.monotonic_cst is not None:
+            # The forest checks whether its trees support missing values without
+            # their monotonicity constraints, which scikit-learn < 1.9 does not
+            # support together with missing values. Check with the constraints.
+            estimator = type(self.estimator)(
+                criterion=self.criterion, monotonic_cst=self.monotonic_cst
+            )
+            estimator._compute_missing_values_in_feature_mask(
+                check_array(
+                    X,
+                    accept_sparse=True,
+                    dtype=[DTYPE, np.float64],
+                    ensure_all_finite=False,
+                    input_name="X",
+                    estimator=self,
+                ),
+                estimator_name=self.__class__.__name__,
+            )
 
         super(BaseForestQuantileRegressor, self).fit(X, y, sample_weight=sample_weight)
 
@@ -262,11 +288,12 @@ class BaseForestQuantileRegressor(ForestRegressor):
             "multi_output": True,
             "accept_sparse": "csc",
             "dtype": DTYPE,
+            # Any missing values that are not supported have been rejected.
             (
                 "force_all_finite"
                 if sklearn_version < parse_version("1.6.dev0")
                 else "ensure_all_finite"
-            ): True,
+            ): False,
         }
         if validate_data is None:
             X, y = self._validate_data(**validation_params)
@@ -1645,7 +1672,8 @@ class RandomForestQuantileRegressor(BaseForestQuantileRegressor):
 
         Monotonicity constraints are not supported for:
           - multioutput regressions (i.e. when `n_outputs_ > 1`),
-          - regressions trained on data with missing values,
+          - regressions trained on data with missing values, with
+            scikit-learn < 1.9,
           - trees with multi-sample leaves (i.e. when `max_samples_leaf > 1`).
 
         Each tree is kept monotonic by clipping the target value that each
@@ -1986,7 +2014,8 @@ class ExtraTreesQuantileRegressor(BaseForestQuantileRegressor):
 
         Monotonicity constraints are not supported for:
           - multioutput regressions (i.e. when `n_outputs_ > 1`),
-          - regressions trained on data with missing values,
+          - regressions trained on data with missing values, with
+            scikit-learn < 1.9,
           - trees with multi-sample leaves (i.e. when `max_samples_leaf > 1`).
 
         Each tree is kept monotonic by clipping the target value that each
