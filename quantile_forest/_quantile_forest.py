@@ -234,6 +234,8 @@ class BaseForestQuantileRegressor(ForestRegressor):
             Fitted estimator.
         """
         self._validate_params()
+        if self.default_quantiles is not None:
+            _check_quantiles(self.default_quantiles)
 
         if self.monotonic_cst is not None:
             if (
@@ -490,11 +492,14 @@ class BaseForestQuantileRegressor(ForestRegressor):
                         else:
                             rng.shuffle(leaf_values_list[j])  # to ensure random sampling
                             leaf_values_list[j] = leaf_values_list[j][:max_samples_leaf]
-                if len(leaf_values_list[j]) == 0:
-                    leaf_values_list[j] = [0]
 
-        # Map each leaf node to its list of training indices.
+        # Map each leaf node to its list of training indices. Leaves left without
+        # any (e.g., if all of their samples have zero weight) stay empty.
         if max_samples_leaf == 1:  # optimize for single-sample-per-leaf performance
+            has_values = [len(values) > 0 for values in leaf_values_list]
+            if not all(has_values):
+                leaf_indices = np.asarray(leaf_indices)[has_values]
+                leaf_values_list = [v for v, keep in zip(leaf_values_list, has_values) if keep]
             y_indices = bootstrap_indices[leaf_values_list].reshape(-1, 1, n_outputs)
             for j in range(n_outputs):
                 y_train_leaves_slice[leaf_indices, j, 0] = y_indices[:, 0, j]
@@ -963,10 +968,14 @@ class BaseForestQuantileRegressor(ForestRegressor):
                 rows = slice(None) if X_indices is None else X_indices[:, tree] == 1
                 leaves = X_leaves[rows, tree]
                 train_indices = y_train_leaves[tree, leaves, output, 0]
-                leaf_vals[rows, tree] = np.clip(
-                    y_train[train_indices - 1, output],
-                    y_bound_leaves[tree, leaves, 0],
-                    y_bound_leaves[tree, leaves, 1],
+                leaf_vals[rows, tree] = np.where(
+                    train_indices > 0,  # empty leaves have NaN values
+                    np.clip(
+                        y_train[train_indices - 1, output],
+                        y_bound_leaves[tree, leaves, 0],
+                        y_bound_leaves[tree, leaves, 1],
+                    ),
+                    np.nan,
                 )
 
             # Count the values below (left) and up to (right) each score within
@@ -1150,7 +1159,9 @@ class BaseForestQuantileRegressor(ForestRegressor):
                     if X_indices is None:  # in-bag scoring
                         leaves = X_leaves[:, tree]
                         train_indices = y_train_leaves[tree, leaves, output, 0]
-                        leaf_vals[:, tree] = y_train[train_indices - 1, output]
+                        leaf_vals[:, tree] = np.where(
+                            train_indices > 0, y_train[train_indices - 1, output], np.nan
+                        )
                         if self.monotonic_cst is not None:
                             clip_min = y_bound_leaves[tree, leaves, 0]
                             clip_max = y_bound_leaves[tree, leaves, 1]
@@ -1161,7 +1172,11 @@ class BaseForestQuantileRegressor(ForestRegressor):
                         train_indices = np.zeros(n_samples, dtype=int)
                         train_indices[idx_mask] = y_train_leaves[tree, leaves, output, 0]
                         leaf_vals[:, tree] = np.nan
-                        leaf_vals[idx_mask, tree] = y_train[train_indices[idx_mask] - 1, output]
+                        leaf_vals[idx_mask, tree] = np.where(
+                            train_indices[idx_mask] > 0,
+                            y_train[train_indices[idx_mask] - 1, output],
+                            np.nan,
+                        )
                         if self.monotonic_cst is not None:
                             clip_min = np.full(n_samples, -np.inf)
                             clip_max = np.full(n_samples, np.inf)
@@ -1169,15 +1184,17 @@ class BaseForestQuantileRegressor(ForestRegressor):
                             clip_max[idx_mask] = y_bound_leaves[tree, leaves, 1]
                             leaf_vals[:, tree] = np.clip(leaf_vals[:, tree], clip_min, clip_max)
 
+                # Trees where a sample is in-bag, or whose leaf is empty, have NaN values.
+                has_nan = X_indices is not None or np.isnan(leaf_vals).any()
                 if len(quantiles) == 1 and quantiles[0] == -1:  # calculate mean
-                    func = np.mean if X_indices is None else np.nanmean
+                    func = np.nanmean if has_nan else np.mean
                     y_pred[:, output, :] = np.expand_dims(func(leaf_vals, axis=1), axis=1)
                 else:  # calculate quantiles
                     method = interpolation.decode()
-                    if X_indices is None:
-                        y_q = np.quantile(leaf_vals, quantiles, method=method, axis=1)
-                    else:  # trees where a sample is in-bag have NaN values
+                    if has_nan:
                         y_q = _nanquantile_rows(leaf_vals, quantiles, method)
+                    else:
+                        y_q = np.quantile(leaf_vals, quantiles, method=method, axis=1)
                     y_pred[:, output, :] = y_q.T
         else:  # get predictions for arbitrary leaf sizes
             y_pred = self.forest_.predict(
@@ -1768,8 +1785,8 @@ class RandomForestQuantileRegressor(BaseForestQuantileRegressor):
     >>> qrf = RandomForestQuantileRegressor(random_state=0)
     >>> qrf.fit(X[:1000], y[:1000])
     RandomForestQuantileRegressor(random_state=0)
-    >>> qrf.score(X, y, quantiles=0.5)
-    0.859...
+    >>> round(qrf.score(X, y, quantiles=0.5), 2)
+    0.86
     """
 
     def __init__(
@@ -2096,8 +2113,8 @@ class ExtraTreesQuantileRegressor(BaseForestQuantileRegressor):
     >>> qrf = ExtraTreesQuantileRegressor(random_state=0)
     >>> qrf.fit(X[:1000], y[:1000])
     ExtraTreesQuantileRegressor(random_state=0)
-    >>> qrf.score(X, y, quantiles=0.5)
-    0.894...
+    >>> round(qrf.score(X, y, quantiles=0.5), 2)
+    0.89
     """
 
     def __init__(

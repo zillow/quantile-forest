@@ -376,6 +376,23 @@ def test_predict_quantiles_array_like(name, max_samples_leaf):
 
 
 @pytest.mark.parametrize("name", FOREST_REGRESSORS)
+def test_default_quantiles_invalid(name):
+    """Check that invalid default quantiles raise an error when fitting."""
+    X, y = datasets.make_regression(n_samples=50, n_features=2, random_state=0)
+
+    ForestRegressor = FOREST_REGRESSORS[name]
+
+    for default_quantiles in [2.0, -0.5, "median", [0.5, -1], [], [[0.1, 0.5]]]:
+        est = ForestRegressor(n_estimators=2, default_quantiles=default_quantiles)
+        with pytest.raises(ValueError):
+            est.fit(X, y)
+        assert not hasattr(est, "estimators_")  # rejected before fitting the forest
+
+    for default_quantiles in [None, 0.5, [0.1, 0.9], np.array([0.25, 0.75]), "mean"]:
+        ForestRegressor(n_estimators=2, default_quantiles=default_quantiles).fit(X, y)
+
+
+@pytest.mark.parametrize("name", FOREST_REGRESSORS)
 @pytest.mark.parametrize("max_samples_leaf", [1, None])
 @pytest.mark.parametrize("weighted_quantile", [True, False])
 def test_predict_quantiles_invalid(name, max_samples_leaf, weighted_quantile):
@@ -1212,6 +1229,64 @@ def test_max_samples_leaf_above_leaf_sizes(name, max_samples_leaf):
         assert_allclose(
             est.predict(X, quantiles=quantiles, weighted_quantile=weighted_quantile),
             est_none.predict(X, quantiles=quantiles, weighted_quantile=weighted_quantile),
+        )
+
+
+@pytest.mark.parametrize("max_samples_leaf", [1, 2, None])
+def test_empty_leaf_stays_empty(max_samples_leaf):
+    """Check that a leaf whose samples all have zero weight keeps no samples."""
+    bootstrap_indices = np.arange(1, 5).reshape(-1, 1)  # one-based, for one output
+    X_leaves_bootstrap = np.array([1, 1, 2, 2])
+    sample_weight = np.array([[1.0], [1.0], [0.0], [0.0]])
+
+    y_train_leaves_slice = RandomForestQuantileRegressor._get_y_train_leaves_slice(
+        bootstrap_indices,
+        X_leaves_bootstrap,
+        sample_weight,
+        leaf_subsample=max_samples_leaf is not None,
+        max_node_count=3,
+        max_samples_leaf=2 if max_samples_leaf is None else max_samples_leaf,
+        random_state=0,
+    )
+
+    assert np.all(y_train_leaves_slice[2] == 0)
+    assert set(y_train_leaves_slice[1].ravel()) - {0} <= {1, 2}
+
+
+@pytest.mark.parametrize("name", FOREST_REGRESSORS)
+@pytest.mark.parametrize("monotonic", [False, True])
+def test_empty_leaf_has_no_value(name, monotonic):
+    """Check that a tree whose leaf has no samples is left out of predictions."""
+    X, y = datasets.make_regression(n_samples=50, n_features=2, random_state=0)
+
+    ForestRegressor = FOREST_REGRESSORS[name]
+
+    kwargs = {"monotonic_cst": [1, 0]} if monotonic else {}
+    est = ForestRegressor(n_estimators=3, random_state=0, **kwargs).fit(X, y)
+
+    # Empty the leaf that the first sample reaches in the first tree.
+    leaves = est.apply(X[:1])[0]
+    y_train_leaves = np.asarray(est.forest_.y_train_leaves)
+    y_train_leaves[0, leaves[0]] = 0
+
+    # The prediction then comes from the other trees' (clipped) leaf values.
+    y_train = np.asarray(est.forest_.y_train)[0]
+    y_bound_leaves = np.asarray(est.forest_.y_bound_leaves)
+    values = []
+    for tree in [1, 2]:
+        value = y_train[y_train_leaves[tree, leaves[tree], 0, 0] - 1]
+        if monotonic:
+            value = np.clip(value, *y_bound_leaves[tree, leaves[tree]])
+        values.append(value)
+
+    assert_allclose(est.predict(X[:1], quantiles="mean"), np.mean(values))
+    assert_allclose(
+        est.predict(X[:1], quantiles=[0.25, 0.75], interpolation="linear")[0],
+        np.quantile(values, [0.25, 0.75], method="linear"),
+    )
+    for score in [min(values) - 1, np.mean(values), max(values) + 1]:
+        assert_allclose(
+            est.quantile_ranks(X[:1], [score], kind="weak"), np.mean(np.array(values) <= score)
         )
 
 

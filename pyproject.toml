@@ -10,7 +10,7 @@ dynamic = ["version"]
 
 dependencies = [
     "numpy>=1.23",
-    "scipy>=1.4",
+    "scipy>=1.6",
     "scikit-learn>=1.5",
 ]
 
@@ -45,7 +45,7 @@ requires = [
     "wheel",
     "Cython>=3.0a4",
     "numpy>=1.23",
-    "scipy>=1.4",
+    "scipy>=1.6",
     "scikit-learn>=1.5",
 ]
 build-backend = "setuptools.build_meta"
