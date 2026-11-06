@@ -35,6 +35,7 @@ from quantile_forest._quantile_forest_fast import (
     calc_quantile_rank,
     calc_weighted_mean,
     calc_weighted_quantile,
+    calc_weighted_quantile_rank,
 )
 
 sklearn_version = parse_version(sklearn.__version__)
@@ -45,6 +46,9 @@ FOREST_REGRESSORS: dict[str, Any] = {
     "ExtraTreesQuantileRegressor": ExtraTreesQuantileRegressor,
     "RandomForestQuantileRegressor": RandomForestQuantileRegressor,
 }
+
+INVERTED_CDF_INTERPOLATIONS = ["inverted_cdf", "averaged_inverted_cdf"]
+INTERPOLATIONS = ["linear", "lower", "higher", "midpoint", "nearest"] + INVERTED_CDF_INTERPOLATIONS
 
 
 @pytest.mark.parametrize("name", FOREST_REGRESSORS)
@@ -119,11 +123,23 @@ def check_regression_toy(name, weighted_quantile):
     )
     assert_allclose(y_pred, y_true)
 
-    # Check unaggregated quantile predictions.
+    # Check unaggregated quantile predictions. Each tree's leaf for the first
+    # test sample holds the targets 0 and 1, so each tree's quantiles are 0,
+    # 0.5, and 1, or 0.25, 0.5, and 0.75 with linear interpolation.
+    y_true = [[0.0, 0.5, 1.0], [2.0, 2.0, 2.0], [2.0, 2.0, 2.0]]
+    y_pred = est.predict(
+        y_test,
+        quantiles=quantiles,
+        weighted_quantile=weighted_quantile,
+        aggregate_leaves_first=False,
+    )
+    assert_allclose(y_pred, y_true)
+
     y_true = [[0.25, 0.5, 0.75], [2.0, 2.0, 2.0], [2.0, 2.0, 2.0]]
     y_pred = est.predict(
         y_test,
         quantiles=quantiles,
+        interpolation="linear",
         weighted_quantile=weighted_quantile,
         aggregate_leaves_first=False,
     )
@@ -1549,9 +1565,7 @@ def test_predict_oob(
     )
 
 
-@pytest.mark.parametrize(
-    "method", ["linear", "lower", "higher", "midpoint", "nearest", "hazen", "inverted_cdf"]
-)
+@pytest.mark.parametrize("method", INTERPOLATIONS + ["hazen"])
 def test_nanquantile_rows(method):
     """Check that the row quantiles used for OOB predictions match np.nanquantile."""
     rng = np.random.default_rng(0)
@@ -1587,7 +1601,7 @@ def test_predict_oob_single_sample_leaves(name):
     quantiles = [0.1, 0.5, 0.9]
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")  # some samples have no OOB trees
-        expected = np.nanquantile(values, quantiles, axis=1).T
+        expected = np.nanquantile(values, quantiles, axis=1, method="averaged_inverted_cdf").T
         assert_allclose(est.predict(X, quantiles=quantiles, oob_score=True), expected)
 
 
@@ -2145,7 +2159,7 @@ def test_sample_weight_zero_weight_targets(name, bootstrap, multi_target):
 
     indices = est.estimators_samples_[0]
     indices = indices[sample_weight[indices] > 0]
-    expected = np.quantile(y[indices], quantiles, axis=0).T
+    expected = np.quantile(y[indices], quantiles, axis=0, method="averaged_inverted_cdf").T
     assert_allclose(est.predict(X[:1], quantiles=quantiles), expected[np.newaxis])
 
 
@@ -2192,8 +2206,257 @@ def test_sample_weight_bootstrap_more_than_n_samples(name, multi_target):
 
     indices = est.estimators_samples_[0]
     assert len(indices) == 2 * len(X)
-    expected = np.quantile(y[indices], quantiles, axis=0).T
+    expected = np.quantile(y[indices], quantiles, axis=0, method="averaged_inverted_cdf").T
     assert_allclose(est.predict(X[:1], quantiles=quantiles), expected[np.newaxis])
+
+
+@pytest.mark.parametrize("name", FOREST_REGRESSORS)
+@pytest.mark.parametrize("bootstrap", [False, True])
+def test_sample_weight_mean_matches_forest(name, bootstrap):
+    """Check that weighted mean predictions match the scikit-learn forest."""
+    X, y = datasets.make_regression(n_samples=300, n_features=4, noise=10, random_state=0)
+    sample_weight = np.random.default_rng(0).uniform(0.1, 2.0, size=len(y))
+    X_test = np.random.default_rng(1).normal(size=(50, 4))
+    params = {"n_estimators": 10, "bootstrap": bootstrap, "min_samples_leaf": 5, "random_state": 0}
+
+    ForestRegressor = FOREST_REGRESSORS[name]
+    BaseForestRegressor = {
+        "ExtraTreesQuantileRegressor": ExtraTreesRegressor,
+        "RandomForestQuantileRegressor": RandomForestRegressor,
+    }[name]
+
+    est = ForestRegressor(max_samples_leaf=None, **params).fit(X, y, sample_weight=sample_weight)
+    forest = BaseForestRegressor(**params).fit(X, y, sample_weight=sample_weight)
+
+    # The forest averages the trees' leaf values, which are weighted means.
+    for weighted_quantile in [True, False]:
+        y_pred = est.predict(
+            X_test,
+            quantiles="mean",
+            weighted_quantile=weighted_quantile,
+            aggregate_leaves_first=False,
+        )
+        assert_allclose(y_pred, forest.predict(X_test))
+
+
+@pytest.mark.parametrize("name", FOREST_REGRESSORS)
+@pytest.mark.parametrize("bootstrap", [False, True])
+def test_sample_weight_median_matches_forest(name, bootstrap):
+    """Check that weighted medians match the scikit-learn absolute error forest."""
+    X, y = datasets.make_regression(n_samples=300, n_features=3, noise=10, random_state=1)
+    sample_weight = np.random.default_rng(0).uniform(0.1, 2.0, size=len(y))
+    X_test = np.random.default_rng(1).normal(size=(50, 3))
+    params = {
+        "criterion": "absolute_error",
+        "n_estimators": 5,
+        "bootstrap": bootstrap,
+        "min_samples_leaf": 5,
+        "random_state": 0,
+    }
+
+    ForestRegressor = FOREST_REGRESSORS[name]
+    BaseForestRegressor = {
+        "ExtraTreesQuantileRegressor": ExtraTreesRegressor,
+        "RandomForestQuantileRegressor": RandomForestRegressor,
+    }[name]
+
+    est = ForestRegressor(max_samples_leaf=None, **params).fit(X, y, sample_weight=sample_weight)
+    forest = BaseForestRegressor(**params).fit(X, y, sample_weight=sample_weight)
+
+    # Each tree's leaf values are the weighted medians of the leaf samples.
+    kwargs = {"interpolation": "averaged_inverted_cdf", "aggregate_leaves_first": False}
+    assert_allclose(est.predict(X_test, quantiles=0.5, **kwargs), forest.predict(X_test))
+
+
+@pytest.mark.parametrize("aggregate_leaves_first", [True, False])
+def test_sample_weight_repeated_samples(aggregate_leaves_first):
+    """Check that integer weights count like repeated samples."""
+    X, y = datasets.make_regression(n_samples=300, n_features=4, noise=10, random_state=0)
+    sample_weight = np.random.default_rng(0).integers(1, 4, size=len(y))
+    X_repeated = np.repeat(X, sample_weight, axis=0)
+    y_repeated = np.repeat(y, sample_weight)
+    X_test = np.random.default_rng(1).normal(size=(50, 4))
+
+    # Without bootstrapping, shallow trees are the same for both training sets.
+    params = {
+        "n_estimators": 5,
+        "max_samples_leaf": None,
+        "bootstrap": False,
+        "max_depth": 4,
+        "max_features": 2,
+        "random_state": 0,
+    }
+    est = RandomForestQuantileRegressor(**params).fit(X, y, sample_weight=sample_weight)
+    est_repeated = RandomForestQuantileRegressor(**params).fit(X_repeated, y_repeated)
+
+    # Means and ranks depend only on the relative weights, so they are equal.
+    kwargs = {"aggregate_leaves_first": aggregate_leaves_first}
+    for weighted_leaves in [False, True]:
+        kwargs_mean = {"quantiles": "mean", "weighted_leaves": weighted_leaves, **kwargs}
+        assert_allclose(
+            est.predict(X_test, **kwargs_mean), est_repeated.predict(X_test, **kwargs_mean)
+        )
+    y_test = np.random.default_rng(2).choice(y, size=len(X_test))  # scores equal to targets
+    for kind in ["weak", "strict", "mean"]:
+        assert_allclose(
+            est.quantile_ranks(X_test, y_test, kind=kind, **kwargs),
+            est_repeated.quantile_ranks(X_test, y_test, kind=kind, **kwargs),
+        )
+    y_test = y_test + 0.5  # scores between targets
+    assert_allclose(
+        est.quantile_ranks(X_test, y_test, kind="rank", **kwargs),
+        est_repeated.quantile_ranks(X_test, y_test, kind="rank", **kwargs),
+    )
+
+    # Inverted CDF quantiles depend only on the relative weights, so they are
+    # equal too, even at exact fractions of the samples.
+    quantiles = [0.0, 0.1, 0.25, 0.5, 0.75, 0.9, 1.0]
+    for interpolation in INVERTED_CDF_INTERPOLATIONS:
+        kwargs_quantiles = {"quantiles": quantiles, "interpolation": interpolation, **kwargs}
+        assert_array_equal(
+            est.predict(X_test, **kwargs_quantiles),
+            est_repeated.predict(X_test, **kwargs_quantiles),
+        )
+
+
+@pytest.mark.parametrize("name", FOREST_REGRESSORS)
+@pytest.mark.parametrize("bootstrap", [False, True])
+@pytest.mark.parametrize("multi_target", [False, True])
+@pytest.mark.parametrize("interpolation", ["linear", "averaged_inverted_cdf"])
+def test_sample_weight_leaf_quantiles(name, bootstrap, multi_target, interpolation):
+    """Check that predictions are weighted quantiles of the leaf samples."""
+    X, y = datasets.make_regression(n_samples=200, n_features=2, n_targets=2, random_state=0)
+    y = y if multi_target else y[:, :1]
+    rng = np.random.default_rng(0)
+    sample_weight = rng.uniform(0.1, 2.0, size=len(y))
+    sample_weight[:10] = 0
+    X_test = rng.normal(size=(20, 2))
+
+    est = FOREST_REGRESSORS[name](
+        n_estimators=1,
+        bootstrap=bootstrap,
+        max_samples_leaf=None,
+        min_samples_leaf=10,
+        random_state=0,
+    )
+    est.fit(X, y if multi_target else y[:, 0], sample_weight=sample_weight)
+
+    # Each sample counts once for each time it is drawn for the tree and, if
+    # the tree is fit with the weights (unless the bootstrap samples are drawn
+    # in proportion to them), relative to the average positive weight.
+    leaf_weight = np.ones(len(y))
+    if bootstrap:
+        leaf_weight = np.bincount(est.estimators_samples_[0], minlength=len(y)).astype(float)
+    if not bootstrap or sklearn_version < parse_version("1.9"):
+        leaf_weight *= sample_weight / sample_weight[sample_weight > 0].mean()
+
+    quantiles = [0.1, 0.5, 0.9]
+    expected = np.empty((len(X_test), y.shape[1], len(quantiles)))
+    X_train_leaves = est.apply(X)[:, 0]
+    for i, leaf in enumerate(est.apply(X_test)[:, 0]):
+        in_leaf = (X_train_leaves == leaf) & (leaf_weight > 0)
+        for j in range(y.shape[1]):
+            inputs, weights = y[in_leaf, j].tolist(), leaf_weight[in_leaf].tolist()
+            expected[i, j] = calc_weighted_quantile(
+                inputs, weights, quantiles, interpolation.encode()
+            )
+    y_pred = est.predict(X_test, quantiles=quantiles, interpolation=interpolation)
+    assert_allclose(y_pred, expected if multi_target else expected[:, 0])
+
+
+@pytest.mark.parametrize("name", FOREST_REGRESSORS)
+@pytest.mark.parametrize("max_samples_leaf", [1, 5, None])
+@pytest.mark.parametrize("interpolation", ["linear", "averaged_inverted_cdf"])
+def test_sample_weight_scale(name, max_samples_leaf, interpolation):
+    """Check that only relative weights matter, and that equal weights do nothing."""
+    X, y = datasets.make_regression(n_samples=300, n_features=4, noise=10, random_state=0)
+    sample_weight = np.random.default_rng(0).uniform(0.1, 2.0, size=len(y))
+    X_test = np.random.default_rng(1).normal(size=(50, 4))
+    y_test = np.random.default_rng(2).choice(y, size=len(X_test))
+
+    # Leaves of at least 5 samples, so that the trees do not depend on the scale.
+    ForestRegressor = FOREST_REGRESSORS[name]
+    params = {
+        "n_estimators": 5,
+        "bootstrap": False,
+        "max_samples_leaf": max_samples_leaf,
+        "min_samples_leaf": 5,
+        "random_state": 0,
+    }
+
+    def get_predictions(sample_weight):
+        est = ForestRegressor(**params).fit(X, y, sample_weight=sample_weight)
+        y_pred = est.predict(X_test, quantiles=[0.1, 0.5, 0.9], interpolation=interpolation)
+        return np.column_stack([y_pred, est.quantile_ranks(X_test, y_test)])
+
+    # Weights multiplied by a constant give the same predictions.
+    expected = get_predictions(sample_weight)
+    for scale in [0.001, 100]:
+        assert_allclose(get_predictions(scale * sample_weight), expected)
+
+    # Equal weights give the same predictions as no weights.
+    assert_allclose(get_predictions(np.full(len(y), 3.0)), get_predictions(None))
+
+
+@pytest.mark.parametrize("name", FOREST_REGRESSORS)
+@pytest.mark.parametrize("multi_target", [False, True])
+def test_sample_weight_single_sample_leaves(name, multi_target):
+    """Check that a leaf with one sample keeps it in proportion to its weight."""
+    X = np.zeros((2, 1))  # one leaf
+    y = np.array([[0.0, 0.0], [1.0, -1.0]])
+    y = y if multi_target else y[:, 0]
+    est = FOREST_REGRESSORS[name](n_estimators=400, bootstrap=False, random_state=0)
+    est.fit(X, y, sample_weight=[1, 3])
+
+    # The second sample, with weight 3, is kept by about 3/4 of the trees. Its
+    # targets are second when sorted for the first output, and first for the
+    # second output.
+    y_train_leaves = np.asarray(est.forest_.y_train_leaves)
+    kept_second = y_train_leaves[:, 0, 0, 0] == 2
+    assert abs(kept_second.mean() - 0.75) < 0.05
+    if multi_target:
+        assert_array_equal(y_train_leaves[:, 0, 1, 0] == 1, kept_second)
+
+    # The kept samples are not weighted again in predictions.
+    assert np.asarray(est.forest_.sample_weight).size == 0
+    assert_allclose(est.predict(X[:1], quantiles="mean")[0], np.mean(y[1 * kept_second], axis=0))
+
+
+@pytest.mark.parametrize("name", FOREST_REGRESSORS)
+@pytest.mark.parametrize("sparse_pickle", [False, True])
+def test_sample_weight_serialization(name, sparse_pickle, tmp_path):
+    """Check that the leaf weights are pickled and memory-mapped."""
+    X, y = datasets.make_regression(n_samples=200, n_features=4, random_state=0)
+    sample_weight = np.random.default_rng(0).uniform(0.1, 2.0, size=len(y))
+
+    est = FOREST_REGRESSORS[name](
+        n_estimators=5,
+        bootstrap=False,
+        max_samples_leaf=None,
+        min_samples_leaf=5,
+        random_state=0,
+    )
+    est.fit(X, y, sample_weight=sample_weight, sparse_pickle=sparse_pickle)
+    assert np.asarray(est.forest_.sample_weight).shape == (1, len(y))
+
+    path = tmp_path / "est.joblib"
+    joblib.dump(est, path)
+    for est_loaded in [pickle.loads(pickle.dumps(est)), joblib.load(path, mmap_mode="r")]:
+        assert_array_equal(est_loaded.forest_.sample_weight, est.forest_.sample_weight)
+        quantiles = [0.25, 0.5, 0.75]
+        assert_allclose(est_loaded.predict(X, quantiles), est.predict(X, quantiles))
+        assert_allclose(est_loaded.quantile_ranks(X, y), est.quantile_ranks(X, y))
+
+    # Without weights, pickles keep the arguments of versions without weights.
+    est.fit(X, y, sparse_pickle=sparse_pickle)
+    assert len(est.forest_.__reduce__()[1]) == 4
+
+    # Check error if the weights do not have the shape of the targets.
+    QuantileForest = type(est.forest_)
+    y_train = np.asarray(est.forest_.y_train)
+    y_train_leaves = np.asarray(est.forest_.y_train_leaves)
+    with pytest.raises(ValueError, match="sample_weight must have the shape of y_train"):
+        QuantileForest(y_train, y_train_leaves, sample_weight=np.ones((1, len(y) + 1)))
 
 
 def test_calc_quantile():
@@ -2389,7 +2652,7 @@ def test_calc_weighted_quantile():
         calc_weighted_quantile([1, 2], [1, 1], [0.5], interpolation=None)
 
 
-@pytest.mark.parametrize("interpolation", ["linear", "lower", "higher", "midpoint", "nearest"])
+@pytest.mark.parametrize("interpolation", INTERPOLATIONS)
 def test_calc_quantile_matches_numpy(interpolation):
     """Check that quantiles match NumPy, including weights given as repeats."""
     rng = np.random.default_rng(0)
@@ -2400,10 +2663,13 @@ def test_calc_quantile_matches_numpy(interpolation):
         weights[rng.integers(n)] += 1
         repeated = np.repeat(inputs, weights.astype(int))
 
-        # Include quantiles that land exactly on a rank of the repeated values.
+        # Include quantiles that land exactly on a rank of the repeated values,
+        # or on a fraction of the inputs or repeated values (for inverted CDFs).
         quantiles = list(rng.random(3)) + [0.0, 1.0]
         if len(repeated) > 1:
             quantiles += list(rng.integers(0, len(repeated), size=3) / (len(repeated) - 1))
+        quantiles += list(rng.integers(0, n + 1, size=2) / n)
+        quantiles += list(rng.integers(0, len(repeated) + 1, size=2) / len(repeated))
 
         expected = np.quantile(inputs, quantiles, method=interpolation)
         actual = calc_quantile(inputs, quantiles, interpolation.encode(), issorted=True)
@@ -2450,7 +2716,7 @@ def test_calc_quantile_rank_constant(C, method, interpolation):
         assert_allclose(actual, expected, rtol=1e-12, atol=1e-12)
 
 
-@pytest.mark.parametrize("interpolation", ["linear", "lower", "higher", "midpoint", "nearest"])
+@pytest.mark.parametrize("interpolation", INTERPOLATIONS)
 def test_calc_weighted_quantile_ignores_zero_weights(interpolation):
     """Check that zero-weight inputs never affect the weighted quantile."""
     inputs = [-0.7, -0.1, 0.2, 1.1, 1.5]
@@ -2466,7 +2732,7 @@ def test_calc_weighted_quantile_ignores_zero_weights(interpolation):
 
 
 @pytest.mark.parametrize("name", FOREST_REGRESSORS)
-@pytest.mark.parametrize("interpolation", ["linear", "lower", "higher", "midpoint", "nearest"])
+@pytest.mark.parametrize("interpolation", INTERPOLATIONS)
 def test_predict_weighted_matches_unweighted(name, interpolation):
     """Check that weighted and unweighted quantiles agree with count weights."""
     X, y = datasets.make_regression(n_samples=400, n_features=4, noise=10, random_state=2)
@@ -2535,3 +2801,187 @@ def test_calc_quantile_rank():
         calc_quantile_rank([1, 2], [1])
     with pytest.raises(TypeError):
         calc_quantile_rank([1, 2], float(1), kind=None)
+
+
+def test_calc_weighted_quantile_rank():
+    """Check weighted quantile rank calculations."""
+    kinds = [b"rank", b"weak", b"strict", b"mean"]
+
+    # Check that integer weights give the ranks of repeated inputs.
+    rng = np.random.default_rng(0)
+    for _ in range(200):
+        inputs = rng.integers(0, 5, size=rng.integers(1, 8)).astype(np.float64)
+        weights = rng.integers(0, 4, size=len(inputs)).astype(np.float64)
+        weights[0] = max(weights[0], 1)  # a positive total weight
+        repeated = np.repeat(inputs, weights.astype(int))
+        score = float(rng.integers(-1, 6))
+        for kind in kinds:
+            actual = calc_weighted_quantile_rank(inputs, weights, score, kind=kind)
+            expected = calc_quantile_rank(repeated, score, kind=kind)
+            assert_allclose(actual, expected)
+
+    # Check that matching inputs with a total weight below 1 give the "weak" rank.
+    inputs = [1.0, 2.0, 3.0]
+    weights = [0.2, 0.1, 0.7]
+    expected = {b"rank": 0.3, b"weak": 0.3, b"strict": 0.2, b"mean": 0.25}
+    for kind in kinds:
+        assert_allclose(
+            calc_weighted_quantile_rank(inputs, weights, 2.0, kind=kind), expected[kind]
+        )
+    assert_allclose(calc_weighted_quantile_rank(inputs, weights, 3.0, kind=b"rank"), 1.0)
+
+    # Check that -1 is returned for empty inputs or zero total weight.
+    assert calc_weighted_quantile_rank([], [], 1.0) == -1
+    assert calc_weighted_quantile_rank([1.0, 2.0], [0.0, 0.0], 1.0) == -1
+
+
+@pytest.mark.parametrize("name", FOREST_REGRESSORS)
+@pytest.mark.parametrize("max_samples_leaf", [1, None])
+@pytest.mark.parametrize("interpolation", INVERTED_CDF_INTERPOLATIONS)
+def test_predict_inverted_cdf_matches_numpy(name, max_samples_leaf, interpolation):
+    """Check that inverted CDF quantiles match NumPy on the leaf samples."""
+    X, y = datasets.make_regression(n_samples=200, n_features=3, noise=10, random_state=0)
+    y = np.round(y / 10)  # ties
+    X_test = np.random.default_rng(0).normal(size=(30, 3))
+    quantiles = [0.0, 0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 1.0]
+
+    est = FOREST_REGRESSORS[name](
+        n_estimators=7,
+        bootstrap=True,
+        max_samples_leaf=max_samples_leaf,
+        min_samples_leaf=3,
+        random_state=0,
+    )
+    est.fit(X, y)
+
+    # Get each tree's leaf samples for each test sample.
+    y_train_leaves = np.asarray(est.forest_.y_train_leaves)[:, :, 0, :]
+    y_train = np.asarray(est.forest_.y_train)[0]
+
+    def get_leaf_samples(X_leaves, trees):
+        leaf_samples = []
+        for t in trees:
+            indices = y_train_leaves[t, X_leaves[t]]
+            leaf_samples.append(y_train[indices[indices > 0] - 1])
+        return leaf_samples
+
+    trees = range(est.n_estimators)
+    X_test_leaves = est.apply(X_test)
+    kwargs = {"quantiles": quantiles, "interpolation": interpolation}
+    for weighted_quantile in [True, False]:
+        y_pred = est.predict(X_test, weighted_quantile=weighted_quantile, **kwargs)
+        for i in range(len(X_test)):
+            leaf_samples = np.concatenate(get_leaf_samples(X_test_leaves[i], trees))
+            expected = np.quantile(leaf_samples, quantiles, method=interpolation)
+            assert_allclose(y_pred[i], expected, rtol=1e-12, atol=1e-12)
+
+        if max_samples_leaf is None:  # quantiles calculated for each tree and averaged
+            y_pred = est.predict(
+                X_test,
+                weighted_quantile=weighted_quantile,
+                aggregate_leaves_first=False,
+                **kwargs,
+            )
+            for i in range(len(X_test)):
+                leaf_samples = get_leaf_samples(X_test_leaves[i], trees)
+                expected = [np.quantile(v, quantiles, method=interpolation) for v in leaf_samples]
+                assert_allclose(y_pred[i], np.mean(expected, axis=0), rtol=1e-12, atol=1e-12)
+
+    # Check OOB predictions, from the trees that did not draw each sample.
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", UserWarning)  # some samples have no OOB trees
+        y_pred = est.predict(X, oob_score=True, **kwargs)
+    X_leaves = est.apply(X)
+    for i in range(0, len(X), 10):
+        oob_trees = [t for t in trees if i not in est.estimators_samples_[t]]
+        if oob_trees:
+            leaf_samples = np.concatenate(get_leaf_samples(X_leaves[i], oob_trees))
+            expected = np.quantile(leaf_samples, quantiles, method=interpolation)
+            assert_allclose(y_pred[i], expected, rtol=1e-12, atol=1e-12)
+
+
+@pytest.mark.parametrize("name", FOREST_REGRESSORS)
+@pytest.mark.parametrize("max_samples_leaf", [1, None])
+def test_predict_default_interpolation(name, max_samples_leaf):
+    """Check that quantiles default to the averaged inverted CDF."""
+    X, y = datasets.make_regression(n_samples=200, n_features=2, noise=10, random_state=0)
+
+    est = FOREST_REGRESSORS[name](
+        n_estimators=10, bootstrap=True, max_samples_leaf=max_samples_leaf, random_state=0
+    )
+    est.fit(X, y)
+
+    quantiles = [0.1, 0.5, 0.9]
+    for kwargs in [
+        {},
+        {"weighted_quantile": False},
+        {"aggregate_leaves_first": False},
+        {"oob_score": True},
+    ]:
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", UserWarning)  # some samples have no OOB trees
+            y_pred = est.predict(X, quantiles=quantiles, **kwargs)
+            expected = est.predict(
+                X, quantiles=quantiles, interpolation="averaged_inverted_cdf", **kwargs
+            )
+            assert_array_equal(y_pred, expected)
+
+            # Without sample weights, the medians are the usual medians, as
+            # with linear interpolation.
+            y_pred_linear = est.predict(X, quantiles=0.5, interpolation="linear", **kwargs)
+            assert_allclose(y_pred[:, 1], y_pred_linear)
+
+
+@pytest.mark.parametrize("interpolation", INVERTED_CDF_INTERPOLATIONS)
+def test_calc_weighted_quantile_inverted_cdf_scale(interpolation):
+    """Check that inverted CDF quantiles depend only on the relative weights."""
+    rng = np.random.default_rng(0)
+    for _ in range(300):
+        n = int(rng.integers(1, 15))
+        inputs = np.sort(rng.integers(0, 5, size=n).astype(float))
+        weights = rng.integers(0, 4, size=n).astype(float)
+        weights[rng.integers(n)] += 1
+        total = int(weights.sum())
+        quantiles = [0.0, 1.0] + list(rng.integers(0, total + 1, size=4) / total)
+
+        # Rescaling the weights by a power of two, which is exact, gives the
+        # same quantiles, even at exact fractions of the total weight.
+        expected = calc_weighted_quantile(inputs, weights, quantiles, interpolation.encode())
+        for scale in [0.25, 4.0]:
+            actual = calc_weighted_quantile(
+                inputs, scale * weights, quantiles, interpolation.encode()
+            )
+            assert_array_equal(actual, expected)
+
+        # Other rescaling gives the same quantiles away from exact fractions,
+        # where rounding the fraction can move it across a sample.
+        quantiles = list(rng.random(4))
+        expected = calc_weighted_quantile(inputs, weights, quantiles, interpolation.encode())
+        actual = calc_weighted_quantile(inputs, 0.3 * weights, quantiles, interpolation.encode())
+        assert_array_equal(actual, expected)
+
+
+@pytest.mark.skipif(
+    sklearn_version < parse_version("1.8"),
+    reason="_weighted_percentile(average=...) requires scikit-learn >= 1.8",
+)
+@pytest.mark.parametrize("interpolation", INVERTED_CDF_INTERPOLATIONS)
+def test_calc_weighted_quantile_matches_sklearn(interpolation):
+    """Check that inverted CDF quantiles match scikit-learn's weighted percentiles."""
+    from sklearn.utils.stats import _weighted_percentile
+
+    rng = np.random.default_rng(0)
+    for _ in range(300):
+        n = int(rng.integers(1, 15))
+        inputs = rng.normal(size=n).round(1)  # ties
+        weights = rng.uniform(0, 2, size=n)
+        weights[rng.random(n) < 0.2] = 0
+        weights[rng.integers(n)] += 0.5
+        quantiles = [0.0, 1.0] + list(rng.random(4))
+
+        actual = calc_weighted_quantile(inputs, weights, quantiles, interpolation.encode())
+        average = interpolation == "averaged_inverted_cdf"
+        expected = [
+            _weighted_percentile(inputs, weights, 100 * q, average=average) for q in quantiles
+        ]
+        assert_allclose(actual, expected)

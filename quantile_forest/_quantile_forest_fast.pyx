@@ -105,6 +105,37 @@ cdef inline double calc_quantile_index(
     return quantile * (n - (2 * C - 1)) + (C - 1)
 
 
+cdef inline double calc_inverted_cdf_quantile(
+    vector[double]& inputs,
+    double quantile,
+    bint average,
+) noexcept nogil:
+    """Return a quantile of sorted inputs from their inverted CDF.
+
+    The quantile is the smallest input such that a fraction ``q`` of the
+    inputs are at or below it. If `average` and that fraction is exact (that
+    is, ``q`` times the number of inputs is an integer), then the input and
+    the next one are averaged, which makes the median the usual median. These
+    match NumPy's "inverted_cdf" and "averaged_inverted_cdf" methods.
+    """
+    cdef intp_t n_inputs = inputs.size()
+    cdef double target = quantile * n_inputs
+    cdef intp_t k
+
+    if target >= n_inputs:
+        return inputs[n_inputs - 1]
+    if target < 1:
+        return inputs[0]
+
+    k = <intp_t>floor(target)
+    if target == k:  # exactly k inputs are at or below the k-th input
+        if average:
+            # Average the k-th and next inputs, with NumPy's arithmetic.
+            return inputs[k] - (inputs[k] - inputs[k - 1]) * 0.5
+        return inputs[k - 1]
+    return inputs[k]
+
+
 cpdef vector[double] calc_quantile(
     vector[double]& inputs,
     vector[double] quantiles,
@@ -129,8 +160,8 @@ cpdef vector[double] calc_quantile(
     quantiles : list of floats
         Quantiles in the range [0, 1] to compute.
 
-    interpolation : {"linear", "lower", "higher", "midpoint", "nearest"}, \
-            default="linear"
+    interpolation : {"linear", "lower", "higher", "midpoint", "nearest", \
+            "inverted_cdf", "averaged_inverted_cdf"}, default="linear"
         Specifies the interpolation method to use when the desired quantile
         lies between two data points ``i < j``:
 
@@ -140,6 +171,14 @@ cpdef vector[double] calc_quantile(
         - If "higher", then ``j``.
         - If "nearest", then ``i`` or ``j``, whichever is nearest.
         - If "midpoint", then ``(i + j) / 2``.
+
+        Or, instead of the input rank ``x``, use the inverted cumulative
+        distribution function (CDF), as NumPy's methods of the same names do:
+
+        - If "inverted_cdf", then the smallest input such that a fraction
+          ``q`` of the inputs are at or below it.
+        - If "averaged_inverted_cdf", then the same, except that if the
+          fraction is exact, the input and the next one are averaged.
 
     issorted : bool, default=False
         Inputs are sorted in ascending order.
@@ -157,6 +196,7 @@ cpdef vector[double] calc_quantile(
     """
     cdef intp_t n_inputs, n_quantiles
     cdef string s_interpolation
+    cdef bint inverted_cdf, average
     cdef intp_t i
     cdef double quantile
     cdef double idx, v_floor, v_ceil, frac
@@ -166,6 +206,8 @@ cpdef vector[double] calc_quantile(
     n_quantiles = quantiles.size()
 
     s_interpolation = <string>interpolation
+    average = s_interpolation == <char*>b"averaged_inverted_cdf"
+    inverted_cdf = average or s_interpolation == <char*>b"inverted_cdf"
 
     if n_inputs < 1:
         return out
@@ -182,6 +224,10 @@ cpdef vector[double] calc_quantile(
 
     for i in range(n_quantiles):
         quantile = quantiles[i]
+
+        if inverted_cdf:
+            out[i] = calc_inverted_cdf_quantile(inputs, quantile, average)
+            continue
 
         # Calculate the quantile's (potentially fractional) index.
         idx = calc_quantile_index(<double>n_inputs, quantile, C)
@@ -261,8 +307,8 @@ cpdef vector[double] calc_weighted_quantile(
     quantiles : list of floats
         Quantiles in the range [0, 1] to compute.
 
-    interpolation : {"linear", "lower", "higher", "midpoint", "nearest"}, \
-            default="linear"
+    interpolation : {"linear", "lower", "higher", "midpoint", "nearest", \
+            "inverted_cdf", "averaged_inverted_cdf"}, default="linear"
         Specifies the interpolation method to use when the desired quantile
         lies between two data points ``i < j``:
 
@@ -272,6 +318,20 @@ cpdef vector[double] calc_weighted_quantile(
         - If "higher", then ``j``.
         - If "nearest", then ``i`` or ``j``, whichever is nearest.
         - If "midpoint", then ``(i + j) / 2``.
+
+        Or, instead of the input rank ``x``, use the inverted cumulative
+        distribution function (CDF) of the weights, which depends only on the
+        relative weights:
+
+        - If "inverted_cdf", then the first input whose cumulative weight
+          reaches the fraction ``q`` of the total weight.
+        - If "averaged_inverted_cdf", then the same, except that if the
+          cumulative weight equals that fraction exactly, the input and the
+          next one with positive weight are averaged.
+
+        For integer weights, these match NumPy's methods of the same names
+        with each input repeated, as does scikit-learn's
+        ``_weighted_percentile`` (``average=True`` for the averaged method).
 
     issorted : bool, default=False
         Inputs and weights are sorted by inputs in ascending order.
@@ -289,10 +349,11 @@ cpdef vector[double] calc_weighted_quantile(
     """
     cdef intp_t n_inputs, n_quantiles
     cdef string s_interpolation
+    cdef bint inverted_cdf, average
     cdef intp_t i, j, k
-    cdef intp_t idx_floor, idx_ceil
+    cdef intp_t idx_floor, idx_ceil, idx_last
     cdef double total_weight
-    cdef double quantile, pos, pos_floor, frac
+    cdef double quantile, pos, pos_floor, frac, target
     cdef double v_floor, v_ceil
     cdef vector[double] cum_weights, sorted_quantile_indices
     cdef vector[double] out
@@ -301,6 +362,8 @@ cpdef vector[double] calc_weighted_quantile(
     n_quantiles = quantiles.size()
 
     s_interpolation = <string>interpolation
+    average = s_interpolation == <char*>b"averaged_inverted_cdf"
+    inverted_cdf = average or s_interpolation == <char*>b"inverted_cdf"
 
     if n_inputs < 1:
         return out
@@ -336,6 +399,28 @@ cpdef vector[double] calc_weighted_quantile(
     while weights[idx_floor] <= 0:
         idx_floor += 1
     j = idx_floor
+
+    if inverted_cdf:
+        # Find the first input with positive weight whose cumulative weight
+        # reaches the fraction `quantile` of the total weight.
+        idx_last = n_inputs - 1
+        while weights[idx_last] <= 0:
+            idx_last -= 1
+        for i in range(n_quantiles):
+            k = <intp_t>sorted_quantile_indices[i]
+            target = quantiles[i] * total_weight
+            while j < idx_last and (weights[j] <= 0 or cum_weights[j] < target):
+                j += 1
+            out[k] = inputs[j]
+            if average and cum_weights[j] == target:
+                # Average the input and the next one with positive weight,
+                # with NumPy's arithmetic.
+                idx_ceil = j + 1
+                while idx_ceil < idx_last and weights[idx_ceil] <= 0:
+                    idx_ceil += 1
+                if idx_ceil <= idx_last:
+                    out[k] = inputs[idx_ceil] - (inputs[idx_ceil] - inputs[j]) * 0.5
+        return out
 
     for i in range(n_quantiles):
         quantile = quantiles[i]
@@ -483,6 +568,92 @@ cpdef double calc_quantile_rank(
     return out
 
 
+cpdef double calc_weighted_quantile_rank(
+    vector[double]& inputs,
+    vector[double]& weights,
+    double score,
+    char* kind=b"rank",
+) noexcept nogil:
+    """Return quantile rank of score relative to weighted inputs.
+
+    An input with weight ``w`` counts like ``w`` repeated inputs, so that
+    integer weights give the same rank as `calc_quantile_rank` with each
+    input repeated. Inputs with zero weight are ignored.
+
+    Parameters
+    ----------
+    inputs : list of floats
+        List of inputs with which `score` is compared.
+
+    weights : list of floats
+        List of weights for `inputs`.
+
+    score : float
+        Value for which to get quantile rank.
+
+    kind : {"rank", "weak", "strict", "mean"}, default="rank"
+        Specifies the interpretation of the resulting score:
+
+        - If "rank", then average percentage ranking of score. If multiple
+          matches, average the percentage rankings of all matching scores.
+          If the matching inputs have a total weight below 1, then the
+          "weak" rank.
+        - If "weak", then only values that are less than or equal to the
+          provided score are counted. Corresponds to the definition of a
+          cumulative distribution function.
+        - If "strict", then similar to "weak", except that only values that
+          are strictly less than the provided score are counted.
+        - If "mean", then the average of the "weak" and "strict" scores.
+
+    Returns
+    -------
+    out : float
+        Quantile rank for `score` as float. -1 if empty inputs or if the
+        total weight is not positive.
+    """
+    cdef intp_t n_inputs
+    cdef string s_kind
+    cdef intp_t i
+    cdef double left, right, total_weight, tie
+    cdef double out = -1
+
+    n_inputs = inputs.size()
+
+    s_kind = <string>kind
+
+    # Sum the weights of the inputs below (left) and up to (right) the score.
+    left = 0
+    right = 0
+    total_weight = 0
+    for i in range(n_inputs):
+        if weights[i] > 0:
+            total_weight += weights[i]
+            if inputs[i] < score:
+                left += weights[i]
+            if inputs[i] <= score:
+                right += weights[i]
+
+    if total_weight <= 0:
+        return out
+
+    if s_kind == <char*>b"rank":
+        # The matching inputs take the ranks from `left + 1` to `right`, so
+        # their average rank is `(left + 1 + right) / 2`. If their total weight
+        # is below 1, use it in place of 1, which gives the "weak" rank.
+        tie = right - left
+        if tie > 1:
+            tie = 1
+        out = (right + left + tie) * 0.5 / total_weight
+    elif s_kind == <char*>b"weak":
+        out = right / total_weight
+    elif s_kind == <char*>b"strict":
+        out = left / total_weight
+    elif s_kind == <char*>b"mean":
+        out = (left + right) * 0.5 / total_weight
+
+    return out
+
+
 cdef class QuantileForest:
     """Representation of a quantile forest.
 
@@ -508,6 +679,13 @@ cdef class QuantileForest:
 
     sparse_pickle : bool, default=False
         Pickle using a SciPy sparse matrix.
+
+    sample_weight : array-like of shape (n_outputs, n_samples), default=None
+        Weights of the training samples, in the same order as `y_train`. Each
+        training sample in a leaf node counts like that many samples. Where the
+        number of samples matters (e.g., quantiles that interpolate between
+        samples), a sample of average positive weight counts as one sample.
+        None if the samples are not weighted.
     """
 
     def __cinit__(
@@ -516,15 +694,33 @@ cdef class QuantileForest:
         cnp.ndarray[intp_t, ndim=4] y_train_leaves,
         cnp.ndarray[float64_t, ndim=3] y_bound_leaves=None,
         bint sparse_pickle=<bint>False,
+        cnp.ndarray[float64_t, ndim=2] sample_weight=None,
     ):
         """Constructor."""
         if y_bound_leaves is None:
             y_bound_leaves = np.empty(shape=(0, 0, 0), dtype=np.float64)
+        if sample_weight is None:
+            sample_weight = np.empty(shape=(0, 0), dtype=np.float64)
+        elif np.shape(sample_weight) != np.shape(y_train):
+            raise ValueError(
+                f"sample_weight must have the shape of y_train {np.shape(y_train)}, "
+                f"got {np.shape(sample_weight)}."
+            )
 
         self.y_train = np.ascontiguousarray(y_train)
         self.y_train_leaves = np.ascontiguousarray(y_train_leaves)
         self.y_bound_leaves = np.ascontiguousarray(y_bound_leaves)
         self.sparse_pickle = sparse_pickle
+        self.sample_weight = np.ascontiguousarray(sample_weight)
+
+        # The average positive weight, which counts as one sample where the
+        # number of samples matters (e.g., interpolating between them).
+        self.weight_unit = 1
+        if sample_weight.size > 0:
+            positive_weight = np.asarray(sample_weight)[0]
+            positive_weight = positive_weight[positive_weight > 0]
+            if positive_weight.size > 0:
+                self.weight_unit = positive_weight.mean()
 
     def __reduce__(self):
         """Reduce re-implementation, for pickling."""
@@ -540,6 +736,10 @@ cdef class QuantileForest:
             y_bound_leaves = np.asarray(self.y_bound_leaves)
             kwargs = {}
         args = (np.asarray(self.y_train), y_train_leaves, y_bound_leaves, self.sparse_pickle)
+        if self.sample_weight.shape[0] > 0:
+            # Only pass weights if there are any, so that pickles of unweighted
+            # forests stay loadable by versions without weights.
+            args += (np.asarray(self.sample_weight),)
         return (QuantileForest, args, self.__getstate__(**kwargs))
 
     def __getstate__(self, **kwargs):
@@ -592,8 +792,8 @@ cdef class QuantileForest:
             the bootstrapping process. By default, selects all samples across
             all base estimators. 1 if sample should be selected, 0 otherwise.
 
-        interpolation : {"linear", "lower", "higher", "midpoint", "nearest"}, \
-                default="linear"
+        interpolation : {"linear", "lower", "higher", "midpoint", "nearest", \
+                "inverted_cdf", "averaged_inverted_cdf"}, default="linear"
             The interpolation method to use when calculating quantiles.
 
         weighted_quantile : bool, default=True
@@ -624,8 +824,11 @@ cdef class QuantileForest:
         cdef vector[vector[double]] train_weights
         cdef intp_t idx, train_idx
         cdef double train_wgt
-        cdef vector[int] n_leaf_samples
-        cdef int n_total_samples, n_total_trees
+        cdef bint use_sample_weight
+        cdef double weight_scale
+        cdef vector[double] n_leaf_samples
+        cdef double n_total_samples
+        cdef int n_total_trees
         cdef vector[vector[double]] leaf_preds
         cdef vector[double] pred
         cdef cnp.ndarray[float64_t, ndim=3] preds
@@ -638,6 +841,13 @@ cdef class QuantileForest:
         n_trees = X_leaves.shape[1]
         n_train = self.y_train.shape[1]
         max_idx = self.y_train_leaves.shape[3]
+
+        # With sample weights, sum the weights of each training sample, as for
+        # weighted quantiles, since a sample's weight split across entries can
+        # give different quantiles (e.g., if each entry has a weight below 1).
+        use_sample_weight = self.sample_weight.shape[0] > 0
+        if use_sample_weight:
+            weighted_quantile = True
 
         if n_quantiles == 0:
             raise ValueError("Quantiles must not be empty.")
@@ -658,9 +868,24 @@ cdef class QuantileForest:
                     "must be None."
                 )
 
-        interpolations = [b"linear", b"lower", b"higher", b"midpoint", b"nearest"]
+        interpolations = [
+            b"linear",
+            b"lower",
+            b"higher",
+            b"midpoint",
+            b"nearest",
+            b"inverted_cdf",
+            b"averaged_inverted_cdf",
+        ]
         if interpolation not in interpolations:
             raise ValueError(f"Invalid interpolation method {interpolation}.")
+
+        # Quantiles that interpolate between samples count a sample of average
+        # weight as one sample. Inverted CDF quantiles depend only on relative
+        # weights, so they keep the weights unscaled (and exact).
+        weight_scale = 1
+        if use_sample_weight and interpolation not in [b"inverted_cdf", b"averaged_inverted_cdf"]:
+            weight_scale = 1 / self.weight_unit
 
         # Initialize NumPy array with NaN values and get view for nogil.
         preds = np.full((n_samples, n_outputs, n_quantiles), np.nan, dtype=np.float64)
@@ -670,7 +895,7 @@ cdef class QuantileForest:
             idx = 1 if aggregate_leaves_first else n_trees
             train_indices = vector[vector[intp_t]](idx)
 
-            n_leaf_samples = vector[int](n_trees)
+            n_leaf_samples = vector[double](n_trees)
             leaf_preds = vector[vector[double]](n_quantiles)
             for i in range(<intp_t>(leaf_preds.size())):
                 leaf_preds[i].reserve(idx)
@@ -684,12 +909,17 @@ cdef class QuantileForest:
                 n_total_trees = 0
 
                 if weighted_leaves:
+                    # Get the size (total weight) of each leaf.
                     for j in range(n_trees):
                         if X_indices is None or X_indices[i, j] is True:
                             n_leaf_samples[j] = 0
                             for k in range(max_idx):
-                                if self.y_train_leaves[j, X_leaves[i, j], 0, k] != 0:
-                                    n_leaf_samples[j] += 1
+                                train_idx = self.y_train_leaves[j, X_leaves[i, j], 0, k]
+                                if train_idx != 0:
+                                    if use_sample_weight:
+                                        n_leaf_samples[j] += self.sample_weight[0, train_idx - 1]
+                                    else:
+                                        n_leaf_samples[j] += 1
                             n_total_samples += n_leaf_samples[j]
                             n_total_trees += 1
 
@@ -720,8 +950,8 @@ cdef class QuantileForest:
                                 if weighted_leaves:
                                     train_wgt = 0
                                     if n_leaf_samples[k] > 0:
-                                        train_wgt = 1 / <double>n_leaf_samples[k]
-                                        train_wgt *= <double>n_total_samples
+                                        train_wgt = 1 / n_leaf_samples[k]
+                                        train_wgt *= n_total_samples
                                         train_wgt /= <double>n_total_trees
                                 train_weights[idx].insert(
                                     train_weights[idx].end(), max_idx, train_wgt
@@ -740,6 +970,8 @@ cdef class QuantileForest:
                                 train_idx = train_indices[k][l]
                                 train_wgt = train_weights[k][l]
                                 if train_idx != 0:
+                                    if use_sample_weight:
+                                        train_wgt *= self.sample_weight[j, train_idx - 1]
                                     if leaf_weights[train_idx - 1] == 0:
                                         touched_indices.push_back(train_idx - 1)
                                     leaf_weights[train_idx - 1] += train_wgt
@@ -752,7 +984,7 @@ cdef class QuantileForest:
                             for l in range(<intp_t>(touched_indices.size())):
                                 train_idx = touched_indices[l]
                                 leaf_samples[l] = self.y_train[j, train_idx]
-                                touched_weights[l] = leaf_weights[train_idx]
+                                touched_weights[l] = leaf_weights[train_idx] * weight_scale
                                 leaf_weights[train_idx] = 0
 
                             # Calculate quantiles (or mean).
@@ -854,6 +1086,9 @@ cdef class QuantileForest:
         cdef intp_t i, j, k
         cdef list[char*] kinds
         cdef vector[double] leaf_samples
+        cdef bint use_sample_weight
+        cdef double weight_scale
+        cdef vector[double] sample_weights
         cdef vector[vector[intp_t]] train_indices
         cdef intp_t idx, train_idx
         cdef vector[double] leaf_preds
@@ -863,6 +1098,10 @@ cdef class QuantileForest:
 
         n_samples = y_scores.shape[0]
         n_outputs = y_scores.shape[1]
+
+        # Ranks of ties count a sample of average weight as one sample.
+        use_sample_weight = self.sample_weight.shape[0] > 0
+        weight_scale = 1 / self.weight_unit
 
         if n_outputs != self.y_train.shape[0]:
             raise ValueError(
@@ -917,14 +1156,24 @@ cdef class QuantileForest:
 
                         # Clear list of training target values.
                         leaf_samples.clear()
+                        sample_weights.clear()
 
                         # Get training target values associated with indices.
                         for train_idx in train_indices[k]:
                             if train_idx != 0:
                                 leaf_samples.push_back(self.y_train[j, train_idx - 1])
+                                if use_sample_weight:
+                                    sample_weights.push_back(
+                                        self.sample_weight[j, train_idx - 1] * weight_scale
+                                    )
 
                         # Calculate rank.
-                        pred = calc_quantile_rank(leaf_samples, y_scores[i, j], kind=kind)
+                        if use_sample_weight:
+                            pred = calc_weighted_quantile_rank(
+                                leaf_samples, sample_weights, y_scores[i, j], kind=kind
+                            )
+                        else:
+                            pred = calc_quantile_rank(leaf_samples, y_scores[i, j], kind=kind)
                         if pred != -1:
                             leaf_preds.push_back(pred)
 

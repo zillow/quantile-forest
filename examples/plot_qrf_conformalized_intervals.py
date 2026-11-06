@@ -47,6 +47,7 @@ y = y.iloc[perm]
 def predict_intervals(qrf, X, **kwargs):
     """Predict the interval at each coverage level, as an array of shape (n, n_coverages, 2)."""
     quantiles = [q for coverage in coverages for q in [(1 - coverage) / 2, (1 + coverage) / 2]]
+    quantiles = np.round(quantiles, 3).tolist()
     return qrf.predict(X, quantiles=quantiles, **kwargs).reshape(len(X), len(coverages), 2)
 
 
