@@ -1257,21 +1257,11 @@ def check_missing_values(name):
     from sklearn.utils import get_tags
 
     # Check that the estimator tags agree with those of the scikit-learn forest.
-    assert get_tags(est).input_tags.allow_nan == get_tags(sklearn_est).input_tags.allow_nan
+    assert get_tags(est).input_tags.allow_nan
+    assert get_tags(sklearn_est).input_tags.allow_nan
 
-    def fits(estimator, X, y):
-        try:
-            estimator.fit(X, y)
-        except ValueError:
-            return False
-        return True
-
-    # Check that missing values are rejected if the scikit-learn forest rejects them.
-    if not fits(sklearn_est, X_train, y_train):
-        with pytest.raises(ValueError):
-            est.fit(X_train, y_train)
-        return
     est.fit(X_train, y_train)
+    sklearn_est.fit(X_train, y_train)
 
     # Check that the mean predictions match those of the scikit-learn forest, as
     # they do only if samples with missing values reach the same leaves as when
@@ -1296,12 +1286,14 @@ def check_missing_values(name):
     sklearn_est.fit(X_train_complete, y_train)
     assert_allclose(est.predict(X_test, **kwargs), sklearn_est.predict(X_test))
 
-    # Check that missing values are supported with another criterion where the
-    # scikit-learn forest supports them (as with scikit-learn >= 1.9).
+    # Check that missing values are supported with absolute errors where the
+    # scikit-learn forest supports them (with scikit-learn >= 1.9).
     params_criterion = {**params, "n_estimators": 3, "criterion": "absolute_error"}
-    assert fits(ForestRegressor(**params_criterion), X_train, y_train) == fits(
-        SklearnForestRegressor(**params_criterion), X_train, y_train
-    )
+    est_criterion = ForestRegressor(**params_criterion)
+    allow_nan = get_tags(SklearnForestRegressor(**params_criterion)).input_tags.allow_nan
+    assert get_tags(est_criterion).input_tags.allow_nan == allow_nan
+    if allow_nan:
+        est_criterion.fit(X_train, y_train)
 
     # Check that missing values are rejected in sparse inputs and in the targets.
     with pytest.raises(ValueError):
