@@ -1443,15 +1443,19 @@ def test_oob_samples_duplicates(name):
 
 
 @pytest.mark.parametrize("name", FOREST_REGRESSORS)
-def test_oob_samples_unsampled_masks(name):
+@pytest.mark.parametrize("weighted", [False, True])
+def test_oob_samples_unsampled_masks(name, weighted):
     """Check that OOB samples come from masks of each tree's unsampled indices."""
     X, y = datasets.make_regression(n_samples=200, n_features=4, random_state=0)
+    sample_weight = None
+    if weighted:  # scikit-learn 1.9 and later draw the bootstrap samples by weight
+        sample_weight = np.random.default_rng(0).uniform(0.1, 2.0, size=len(y))
 
     ForestRegressor = FOREST_REGRESSORS[name]
 
     est = ForestRegressor(n_estimators=5, bootstrap=True, max_samples=0.7, random_state=0)
     for random_state in [0, 1]:  # check that refitting replaces the masks
-        est.set_params(random_state=random_state).fit(X, y)
+        est.set_params(random_state=random_state).fit(X, y, sample_weight=sample_weight)
         masks = np.unpackbits(est._unsampled_masks, axis=1, count=len(X)).astype(bool)
         for mask, sample_indices in zip(masks, est.estimators_samples_):
             expected = np.setdiff1d(np.arange(len(X)), sample_indices)
@@ -1480,6 +1484,41 @@ def test_oob_samples_unsampled_masks(name):
         _, X_indices = est._oob_samples(X)
     assert any("only exist if bootstrap=True" in str(w.message) for w in record)
     assert not X_indices.any()
+
+
+@pytest.mark.parametrize("name", FOREST_REGRESSORS)
+def test_oob_samples_older_models(name):
+    """Check that the OOB samples of models fit by earlier versions are redrawn."""
+    X, y = datasets.make_regression(n_samples=200, n_features=4, random_state=0)
+
+    ForestRegressor = FOREST_REGRESSORS[name]
+
+    est = ForestRegressor(n_estimators=5, bootstrap=True, max_samples=0.7, random_state=0)
+    est.fit(X, y)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", UserWarning)  # some samples have no OOB trees
+        _, X_indices = est._oob_samples(X)
+        y_pred = est.predict(X, oob_score=True)
+
+        # Models pickled by version 1.4.1 or earlier store neither the masks nor
+        # the sample weights. Forests fit with scikit-learn before 1.9 store no
+        # weights for their bootstrap samples, and before 1.4, not their number.
+        est_old = pickle.loads(pickle.dumps(est))
+        attrs = ["_unsampled_masks", "sample_weight_", "_sample_weight", "_n_samples_bootstrap"]
+        for attr in attrs:
+            if hasattr(est_old, attr):
+                delattr(est_old, attr)
+            assert_array_equal(est_old._oob_samples(X)[1], X_indices)
+            assert_array_equal(est_old.predict(X, oob_score=True), y_pred)
+
+        # Check that the redrawn samples are those drawn when fit, even if their
+        # number would now be computed differently (e.g., by a later version of
+        # scikit-learn).
+        est_new = pickle.loads(pickle.dumps(est))
+        del est_new._unsampled_masks
+        est_new.max_samples = 0.5
+        assert_array_equal(est_new._oob_samples(X)[1], X_indices)
 
 
 def check_predict_oob(
