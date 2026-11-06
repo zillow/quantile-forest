@@ -325,7 +325,7 @@ dependencies = [
 requires-dist = [
     { name = "numpy", specifier = ">=1.23" },
     { name = "scikit-learn", specifier = ">=1.5" },
-    { name = "scipy", specifier = ">=1.4" },
+    { name = "scipy", specifier = ">=1.6" },
 ]
 
 [[package]]
