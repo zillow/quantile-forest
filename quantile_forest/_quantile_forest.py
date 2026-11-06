@@ -869,10 +869,20 @@ class BaseForestQuantileRegressor(ForestRegressor):
         unsampled_mask : array of shape (n_train_samples,)
             True for the training indices excluded from the bootstrap sample.
         """
-        sample_weight = self.sample_weight_
+        # Redraw the bootstrap sample as scikit-learn does (e.g., for its
+        # `estimators_samples_`), from what the forest stored when it was fit,
+        # possibly with an earlier version of scikit-learn (e.g., in a model
+        # pickled by an earlier version): before 1.9, the samples were drawn
+        # without the sample weights, which 1.9 and later store, and before 1.4,
+        # the number of samples drawn was not stored, so it is recomputed.
+        sample_weight = getattr(self, "_sample_weight", None)
         args = () if sklearn_version < parse_version("1.9") else (sample_weight,)
         n_train_samples = self.n_train_samples_
-        n_samples_bootstrap = _get_n_samples_bootstrap(n_train_samples, self.max_samples, *args)
+        n_samples_bootstrap = getattr(self, "_n_samples_bootstrap", None)
+        if n_samples_bootstrap is None:
+            n_samples_bootstrap = _get_n_samples_bootstrap(
+                n_train_samples, self.max_samples, *args
+            )
         sample_indices = _generate_sample_indices(
             estimator.random_state, n_train_samples, n_samples_bootstrap, *args
         )
