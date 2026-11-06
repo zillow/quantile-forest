@@ -1837,11 +1837,16 @@ def test_oob_methods_validate_once(name):
         assert_allclose(est.predict(X_sparse, oob_score=True), y_pred)
         assert_allclose(est.quantile_ranks(X_sparse, y, oob_score=True), y_ranks)
 
-        # Missing values are still rejected.
+        # Missing values are still rejected where they are not supported, and
+        # otherwise only change the ranks of the samples that have them.
         X_nan = X.copy()
         X_nan[0, 0] = np.nan
-        with pytest.raises(ValueError):
-            est.quantile_ranks(X_nan, y, oob_score=True)
+        if sklearn_version < parse_version("1.8"):
+            with pytest.raises(ValueError):
+                est.quantile_ranks(X_nan, y, oob_score=True)
+        else:
+            y_ranks_nan = est.quantile_ranks(X_nan, y, oob_score=True)
+            assert_allclose(y_ranks_nan[1:], y_ranks[1:])
 
 
 def check_monotonic_constraints(name, max_samples_leaf, missing_values):
