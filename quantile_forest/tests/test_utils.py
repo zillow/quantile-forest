@@ -3,11 +3,7 @@
 import numpy as np
 from sklearn.utils._testing import assert_array_equal
 
-from quantile_forest._utils import (
-    generate_unsampled_indices,
-    group_indices_by_value,
-    map_indices_to_leaves,
-)
+from quantile_forest._utils import generate_unsampled_indices, group_indices_by_value
 
 
 def test_generate_unsampled_indices():
@@ -66,20 +62,3 @@ def test_group_indices_by_value_stable():
     assert_array_equal(values, np.unique(inputs))
     for value, group in zip(values, groups):
         assert_array_equal(group, np.flatnonzero(inputs == value))
-
-
-def test_map_indices_to_leaves():
-    """Check mapping of indices to leaf nodes."""
-    y_train_leaves = np.zeros((3, 1, 3), dtype=np.int64)
-    bootstrap_indices = np.array([[1], [2], [3], [4], [5]], dtype=np.int64)
-    leaf_indices = np.array([1, 2])
-    leaf_values_list = [np.array([0, 1, 2]), np.array([3, 4])]
-
-    actual = map_indices_to_leaves(
-        y_train_leaves,
-        bootstrap_indices,
-        leaf_indices,
-        leaf_values_list,
-    )
-    expected = np.array([[[0, 0, 0]], [[1, 2, 3]], [[4, 5, 0]]])
-    assert_array_equal(actual, expected)

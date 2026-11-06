@@ -9,8 +9,6 @@ from libcpp.vector cimport vector
 import numpy as np
 cimport numpy as cnp
 
-from scipy import sparse
-
 from ._utils cimport parallel_qsort_asc
 
 cnp.import_array()
@@ -654,8 +652,51 @@ cpdef double calc_weighted_quantile_rank(
     return out
 
 
+def _compact_from_padded(y_train_leaves, n_outputs):
+    """Return the compact layout of training indices that are padded with 0s.
+
+    Parameters
+    ----------
+    y_train_leaves : array-like of shape \
+            (n_estimators, n_nodes, n_outputs, n_indices)
+        The one-based indices of the training samples of each node, padded to
+        equal length with 0s, as earlier versions stored them.
+
+    n_outputs : int
+        Number of outputs, for an empty `y_train_leaves`.
+
+    Returns
+    -------
+    tree_offsets, leaf_offsets, y_train_indices : arrays
+        The compact layout, as described for `QuantileForest`.
+    """
+    y_train_leaves = np.asarray(y_train_leaves)
+    if y_train_leaves.size > 0 and y_train_leaves.shape[2] != n_outputs:
+        raise ValueError(
+            f"y_train_leaves must have {n_outputs} outputs, got shape {y_train_leaves.shape}."
+        )
+    # A node keeps the same number of samples for every output.
+    is_stored = (y_train_leaves != 0).any(axis=2)
+    n_stored = is_stored.sum(axis=2)
+    leaf_offsets = np.zeros((n_stored.shape[0], n_stored.shape[1] + 1), dtype=np.int64)
+    np.cumsum(n_stored, axis=1, out=leaf_offsets[:, 1:])
+    tree_offsets = np.zeros(n_stored.shape[0] + 1, dtype=np.int64)
+    np.cumsum(leaf_offsets[:, -1], out=tree_offsets[1:])
+    y_train_indices = np.empty((n_outputs, n_stored.sum()), dtype=np.int64)
+    for output in range(y_train_leaves.shape[2]):
+        y_train_indices[output] = y_train_leaves[:, :, output, :][is_stored]
+    return tree_offsets, leaf_offsets, y_train_indices
+
+
 cdef class QuantileForest:
     """Representation of a quantile forest.
+
+    The training samples of each node are stored without padding, so that
+    the memory taken is proportional to the number of samples stored, however
+    unevenly they are spread across the nodes: those of node ``n`` of tree
+    ``t`` are ``y_train_indices[:, start:end]``, where ``start`` is
+    ``tree_offsets[t] + leaf_offsets[t, n]`` and ``end`` is
+    ``tree_offsets[t] + leaf_offsets[t, n + 1]``.
 
     Attributes
     ----------
@@ -664,21 +705,32 @@ cdef class QuantileForest:
         ascending order for each output. The outputs are assigned to the first
         dimension (n_outputs) of the array for ease of indexing.
 
+    tree_offsets : array-like of shape (n_estimators + 1,)
+        Position in `y_train_indices` of the first training sample of each
+        tree, followed by the number of training samples stored.
+
+    leaf_offsets : array-like of shape (n_estimators, n_nodes + 1)
+        Position of the first training sample of each node, relative to the
+        position of its tree, followed by the number of training samples of
+        the tree. Nodes are indexed as by ``est.apply``. Nodes with no samples
+        (e.g., internal nodes) are empty.
+
+    y_train_indices : array-like of shape (n_outputs, n_stored)
+        One-based indices into `y_train` of the training samples of each node,
+        for each output, ordered by tree and node.
+
     y_train_leaves : array-like of shape \
-            (n_estimators, n_leaves, n_outputs, n_indices)
-        List of trees, each with a list of nodes, each with a list of indices
-        of the training samples residing at that node. Nodes with no samples
-        (e.g., internal nodes) are empty. Internal nodes are included so that
-        leaf node indices match their ``est.apply`` outputs. Each node list is
-        padded to equal length with 0s.
+            (n_estimators, n_nodes, n_outputs, n_indices)
+        The indices of the training samples of each node, padded to equal
+        length with 0s, as earlier versions stored them. Built when accessed,
+        so it can take far more memory than the forest. It can be passed in
+        place of the other indices (e.g., by a forest that an earlier version
+        pickled), which are then built from it.
 
     y_bound_leaves : array-like of shape (n_estimators, n_leaves, 2), \
             default=None
         Minimum and maximum bounds for target values for each leaf node. Used
         to enforce monotonicity constraints. None if no constraints.
-
-    sparse_pickle : bool, default=False
-        Pickle using a SciPy sparse matrix.
 
     sample_weight : array-like of shape (n_outputs, n_samples), default=None
         Weights of the training samples, in the same order as `y_train`. Each
@@ -691,12 +743,19 @@ cdef class QuantileForest:
     def __cinit__(
         self,
         cnp.ndarray[float64_t, ndim=2] y_train,
-        cnp.ndarray[intp_t, ndim=4] y_train_leaves,
+        y_train_leaves=None,
         cnp.ndarray[float64_t, ndim=3] y_bound_leaves=None,
-        bint sparse_pickle=<bint>False,
+        _sparse_pickle=None,
         cnp.ndarray[float64_t, ndim=2] sample_weight=None,
+        tree_offsets=None,
+        leaf_offsets=None,
+        y_train_indices=None,
     ):
-        """Constructor."""
+        """Constructor.
+
+        The positional arguments are those that earlier versions pickled, whose
+        fourth one (whether they pickled sparse matrices) is unused.
+        """
         if y_bound_leaves is None:
             y_bound_leaves = np.empty(shape=(0, 0, 0), dtype=np.float64)
         if sample_weight is None:
@@ -708,9 +767,13 @@ cdef class QuantileForest:
             )
 
         self.y_train = np.ascontiguousarray(y_train)
-        self.y_train_leaves = np.ascontiguousarray(y_train_leaves)
+        if y_train_indices is None:
+            if y_train_leaves is None:
+                raise ValueError("Either y_train_indices or y_train_leaves must be given.")
+            self._set_indices(*_compact_from_padded(y_train_leaves, y_train.shape[0]))
+        else:
+            self._set_indices(tree_offsets, leaf_offsets, y_train_indices)
         self.y_bound_leaves = np.ascontiguousarray(y_bound_leaves)
-        self.sparse_pickle = sparse_pickle
         self.sample_weight = np.ascontiguousarray(sample_weight)
 
         # The average positive weight, which counts as one sample where the
@@ -722,48 +785,107 @@ cdef class QuantileForest:
             if positive_weight.size > 0:
                 self.weight_unit = positive_weight.mean()
 
+    def _set_indices(self, tree_offsets, leaf_offsets, y_train_indices):
+        """Set the indices of the training samples of each node."""
+        if tree_offsets is None or leaf_offsets is None:
+            raise ValueError("tree_offsets and leaf_offsets must be given with y_train_indices.")
+
+        # Arrays of the right types are kept as they are (e.g., memory-mapped).
+        tree_offsets = np.ascontiguousarray(tree_offsets, dtype=np.int64)
+        leaf_offsets = np.asarray(leaf_offsets)
+        y_train_indices = np.asarray(y_train_indices)
+        if (
+            tree_offsets.ndim != 1
+            or leaf_offsets.ndim != 2
+            or y_train_indices.ndim != 2
+            or tree_offsets.shape[0] != leaf_offsets.shape[0] + 1
+            or y_train_indices.shape
+            != (self.y_train.shape[0], tree_offsets[tree_offsets.shape[0] - 1])
+        ):
+            raise ValueError(
+                "tree_offsets, leaf_offsets and y_train_indices do not match, with "
+                f"shapes {tree_offsets.shape}, {leaf_offsets.shape} and "
+                f"{y_train_indices.shape} for y_train of shape {np.shape(self.y_train)}."
+            )
+
+        self.tree_offsets = tree_offsets
+        self.leaf_offsets = np.ascontiguousarray(leaf_offsets, dtype=np.int32)
+        self.y_train_indices = np.ascontiguousarray(y_train_indices, dtype=np.int32)
+
     def __reduce__(self):
         """Reduce re-implementation, for pickling."""
-        if self.sparse_pickle:
-            y_train_leaves = np.empty(shape=(0, 0, 0, 0), dtype=np.int64)
-            y_bound_leaves = np.empty(shape=(0, 0, 0), dtype=np.float64)
-            kwargs = {
-                "y_train_leaves": np.asarray(self.y_train_leaves),
-                "y_bound_leaves": np.asarray(self.y_bound_leaves),
-            }
-        else:
-            y_train_leaves = np.asarray(self.y_train_leaves)
-            y_bound_leaves = np.asarray(self.y_bound_leaves)
-            kwargs = {}
-        args = (np.asarray(self.y_train), y_train_leaves, y_bound_leaves, self.sparse_pickle)
+        sample_weight = None
         if self.sample_weight.shape[0] > 0:
-            # Only pass weights if there are any, so that pickles of unweighted
-            # forests stay loadable by versions without weights.
-            args += (np.asarray(self.sample_weight),)
-        return (QuantileForest, args, self.__getstate__(**kwargs))
-
-    def __getstate__(self, **kwargs):
-        """Getstate re-implementation, for pickling."""
-        d = {}
-        if self.sparse_pickle:
-            matrix1 = kwargs["y_train_leaves"]
-            reshape1 = (matrix1.shape[3], matrix1.shape[0] * matrix1.shape[1] * matrix1.shape[2])
-            d["shape1"] = matrix1.shape
-            d["matrix1"] = sparse.csc_matrix(matrix1.reshape(reshape1))
-
-            matrix2 = kwargs["y_bound_leaves"]
-            reshape2 = (matrix2.shape[2], matrix2.shape[0] * matrix2.shape[1])
-            d["shape2"] = matrix2.shape
-            d["matrix2"] = sparse.csc_matrix(matrix2.reshape(reshape2))
-
-        return d
+            sample_weight = np.asarray(self.sample_weight)
+        args = (
+            np.asarray(self.y_train),
+            None,
+            np.asarray(self.y_bound_leaves),
+            None,
+            sample_weight,
+            np.asarray(self.tree_offsets),
+            np.asarray(self.leaf_offsets),
+            np.asarray(self.y_train_indices),
+        )
+        return (QuantileForest, args)
 
     def __setstate__(self, d):
-        """Setstate re-implementation, for unpickling."""
-        if self.sparse_pickle:
+        """Setstate re-implementation, for unpickling forests of earlier versions.
+
+        Earlier versions could pickle the padded training indices and the leaf
+        bounds as sparse matrices (with ``fit(..., sparse_pickle=True)``).
+        """
+        if d and "matrix1" in d:
+            y_train_leaves = d["matrix1"].toarray().reshape(d["shape1"])
+            self._set_indices(*_compact_from_padded(y_train_leaves, self.y_train.shape[0]))
             # Dense arrays from sparse matrices may not be C-contiguous.
-            self.y_train_leaves = np.ascontiguousarray(d["matrix1"].toarray().reshape(d["shape1"]))
             self.y_bound_leaves = np.ascontiguousarray(d["matrix2"].toarray().reshape(d["shape2"]))
+
+    def first_train_indices(self, intp_t tree, const intp_t[:] leaves, intp_t output):
+        """Return the index of the first training sample of each of the leaves.
+
+        For a forest whose leaf nodes keep at most one training sample each.
+
+        Parameters
+        ----------
+        tree : int
+            Index of the tree.
+
+        leaves : array-like of shape (n_leaves,)
+            Indices of leaf nodes of the tree.
+
+        output : int
+            Index of the output.
+
+        Returns
+        -------
+        train_indices : array-like of shape (n_leaves,)
+            The one-based index into `y_train` of the first training sample of
+            each leaf node, or 0 if the leaf node has none.
+        """
+        cdef intp_t i, start
+        cdef cnp.ndarray[intp_t, ndim=1] train_indices = np.zeros(leaves.shape[0], dtype=np.intp)
+
+        for i in range(leaves.shape[0]):
+            start = self.leaf_offsets[tree, leaves[i]]
+            if self.leaf_offsets[tree, leaves[i] + 1] > start:
+                train_indices[i] = self.y_train_indices[output, self.tree_offsets[tree] + start]
+
+        return train_indices
+
+    @property
+    def y_train_leaves(self):
+        """The indices of the training samples of each node, padded with 0s."""
+        n_outputs = self.y_train.shape[0]
+        n_trees = self.leaf_offsets.shape[0]
+        n_nodes = self.leaf_offsets.shape[1] - 1
+        n_stored = np.diff(self.leaf_offsets, axis=1)
+        n_indices = n_stored.max(initial=0)
+        is_stored = np.arange(n_indices) < n_stored[:, :, np.newaxis]
+        y_train_leaves = np.zeros((n_trees, n_nodes, n_outputs, n_indices), dtype=np.int64)
+        for output in range(n_outputs):
+            y_train_leaves[:, :, output, :][is_stored] = np.asarray(self.y_train_indices)[output]
+        return y_train_leaves
 
     cpdef cnp.ndarray predict(
         self,
@@ -811,8 +933,9 @@ cdef class QuantileForest:
             Quantiles or means for samples as floats.
         """
         cdef intp_t n_samples, n_outputs, n_quantiles
-        cdef intp_t n_trees, n_train, max_idx
+        cdef intp_t n_trees, n_train
         cdef intp_t i, j, k, l
+        cdef intp_t start, end
         cdef bint use_mean
         cdef double q
         cdef list[char*] interpolations
@@ -840,7 +963,6 @@ cdef class QuantileForest:
 
         n_trees = X_leaves.shape[1]
         n_train = self.y_train.shape[1]
-        max_idx = self.y_train_leaves.shape[3]
 
         # With sample weights, sum the weights of each training sample, as for
         # weighted quantiles, since a sample's weight split across entries can
@@ -912,9 +1034,11 @@ cdef class QuantileForest:
                     # Get the size (total weight) of each leaf.
                     for j in range(n_trees):
                         if X_indices is None or X_indices[i, j] is True:
+                            start = self.tree_offsets[j] + self.leaf_offsets[j, X_leaves[i, j]]
+                            end = self.tree_offsets[j] + self.leaf_offsets[j, X_leaves[i, j] + 1]
                             n_leaf_samples[j] = 0
-                            for k in range(max_idx):
-                                train_idx = self.y_train_leaves[j, X_leaves[i, j], 0, k]
+                            for k in range(start, end):
+                                train_idx = self.y_train_indices[0, k]
                                 if train_idx != 0:
                                     if use_sample_weight:
                                         n_leaf_samples[j] += self.sample_weight[0, train_idx - 1]
@@ -934,10 +1058,12 @@ cdef class QuantileForest:
                     for k in range(n_trees):
                         if X_indices is None or X_indices[i, k] is True:
                             idx = 0 if aggregate_leaves_first else k
+                            start = self.tree_offsets[k] + self.leaf_offsets[k, X_leaves[i, k]]
+                            end = self.tree_offsets[k] + self.leaf_offsets[k, X_leaves[i, k] + 1]
                             train_indices[idx].insert(
                                 train_indices[idx].end(),
-                                &self.y_train_leaves[k, X_leaves[i, k], j, 0],
-                                &self.y_train_leaves[k, X_leaves[i, k], j, max_idx],
+                                &self.y_train_indices[j, start],
+                                &self.y_train_indices[j, end],
                             )
 
                     if weighted_quantile:
@@ -954,7 +1080,10 @@ cdef class QuantileForest:
                                         train_wgt *= n_total_samples
                                         train_wgt /= <double>n_total_trees
                                 train_weights[idx].insert(
-                                    train_weights[idx].end(), max_idx, train_wgt
+                                    train_weights[idx].end(),
+                                    self.leaf_offsets[k, X_leaves[i, k] + 1]
+                                    - self.leaf_offsets[k, X_leaves[i, k]],
+                                    train_wgt,
                                 )
 
                         # For each list of training indices, calculate output.
@@ -1082,8 +1211,9 @@ cdef class QuantileForest:
             Quantiles ranks in range [0, 1] for samples as floats.
         """
         cdef intp_t n_samples, n_outputs
-        cdef intp_t n_trees, max_idx
+        cdef intp_t n_trees
         cdef intp_t i, j, k
+        cdef intp_t start, end
         cdef list[char*] kinds
         cdef vector[double] leaf_samples
         cdef bint use_sample_weight
@@ -1110,7 +1240,6 @@ cdef class QuantileForest:
             )
 
         n_trees = X_leaves.shape[1]
-        max_idx = self.y_train_leaves.shape[3]
 
         if X_indices is not None:
             if X_indices.shape[1] != X_leaves.shape[1]:
@@ -1143,10 +1272,12 @@ cdef class QuantileForest:
                     for k in range(n_trees):
                         if X_indices is None or X_indices[i, k] is True:
                             idx = 0 if aggregate_leaves_first else k
+                            start = self.tree_offsets[k] + self.leaf_offsets[k, X_leaves[i, k]]
+                            end = self.tree_offsets[k] + self.leaf_offsets[k, X_leaves[i, k] + 1]
                             train_indices[idx].insert(
                                 train_indices[idx].end(),
-                                &self.y_train_leaves[k, X_leaves[i, k], j, 0],
-                                &self.y_train_leaves[k, X_leaves[i, k], j, max_idx],
+                                &self.y_train_indices[j, start],
+                                &self.y_train_indices[j, end],
                             )
 
                     # For each list of training indices, calculate rank.
@@ -1224,8 +1355,9 @@ cdef class QuantileForest:
             List of dicts mapping training sample indices to proximity counts.
         """
         cdef intp_t n_samples
-        cdef intp_t n_trees, n_train, max_idx
+        cdef intp_t n_trees, n_train
         cdef intp_t i, j
+        cdef intp_t start, end
         cdef vector[intp_t] train_indices
         cdef vector[int] leaf_weights
         cdef vector[intp_t] touched_indices
@@ -1239,7 +1371,6 @@ cdef class QuantileForest:
 
         n_trees = X_leaves.shape[1]
         n_train = self.y_train.shape[1]
-        max_idx = self.y_train_leaves.shape[3]
 
         if X_indices is not None:
             if X_indices.shape[1] != X_leaves.shape[1]:
@@ -1265,10 +1396,12 @@ cdef class QuantileForest:
                 # Choose the first target output index, even if multi-output.
                 for j in range(n_trees):
                     if X_indices is None or X_indices[i, j] is True:
+                        start = self.tree_offsets[j] + self.leaf_offsets[j, X_leaves[i, j]]
+                        end = self.tree_offsets[j] + self.leaf_offsets[j, X_leaves[i, j] + 1]
                         train_indices.insert(
                             train_indices.end(),
-                            &self.y_train_leaves[j, X_leaves[i, j], 0, 0],
-                            &self.y_train_leaves[j, X_leaves[i, j], 0, max_idx],
+                            &self.y_train_indices[0, start],
+                            &self.y_train_indices[0, end],
                         )
 
                 # Sum the weights/counts for each training index, and record

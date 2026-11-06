@@ -1,3 +1,4 @@
+from libc.stdint cimport int32_t, int64_t
 from libcpp.map cimport map
 from libcpp.vector cimport vector
 
@@ -17,10 +18,12 @@ cdef class QuantileForest:
     # C-contiguous, since each leaf's indices are read as one block of memory.
     # Python reads them as arrays without copying (e.g., `y_train` in predict).
     cdef public const float64_t[:, ::1] y_train
-    cdef public const intp_t[:, :, :, ::1] y_train_leaves
+    # The training samples of each node, stored without padding.
+    cdef public const int64_t[::1] tree_offsets
+    cdef public const int32_t[:, ::1] leaf_offsets
+    cdef public const int32_t[:, ::1] y_train_indices
     cdef public const float64_t[:, :, ::1] y_bound_leaves
     cdef public const float64_t[:, ::1] sample_weight
-    cdef public bint sparse_pickle
     cdef double weight_unit
 
     # Methods.
