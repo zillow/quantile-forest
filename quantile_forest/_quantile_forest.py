@@ -54,7 +54,7 @@ except ImportError:
     validate_data = None
 
 from ._quantile_forest_fast import QuantileForest
-from ._utils import group_indices_by_value, map_indices_to_leaves
+from ._utils import group_indices_by_value
 
 
 def _check_quantiles(quantiles):
@@ -95,6 +95,9 @@ sklearn_version = parse_version(sklearn.__version__)
 # training samples in other leaves than `apply` does (scikit-learn#32351), which
 # can leave leaves without any of the training samples that they predict from.
 _MISSING_VALUES_SUPPORTED = sklearn_version >= parse_version("1.8.dev0")
+
+# The training indices of the leaf nodes are stored as 32-bit integers.
+_MAX_SAMPLES = np.iinfo(np.int32).max
 
 
 def _hash_X(X):
@@ -198,7 +201,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
             assert_all_finite(X, input_name="X", estimator_name=self.__class__.__name__)
         return X
 
-    def fit(self, X, y, sample_weight=None, sparse_pickle=False):
+    def fit(self, X, y, sample_weight=None):
         """Build a forest from the training set (X, y).
 
         Parameters
@@ -224,9 +227,6 @@ class BaseForestQuantileRegressor(ForestRegressor):
             weight counts as one sample. Samples with zero or negative weight
             are excluded from the leaf samples. See
             :ref:`user-guide-fit-predict`.
-
-        sparse_pickle : bool, default=False
-            Pickle the underlying data structure using a SciPy sparse matrix.
 
         Returns
         -------
@@ -333,8 +333,8 @@ class BaseForestQuantileRegressor(ForestRegressor):
         if weighted_subsample:
             leaf_weight = None
 
-        # Get map of tree leaf nodes to training indices.
-        y_train_leaves = self._get_y_train_leaves(
+        # Get the training indices of the leaf nodes of each tree.
+        tree_offsets, leaf_offsets, y_train_indices = self._get_y_train_leaves(
             X,
             y_sorted,
             sorter=sorter,
@@ -343,15 +343,18 @@ class BaseForestQuantileRegressor(ForestRegressor):
         )
 
         # Get map of tree leaf nodes to target value bounds (for monotonicity constraints).
-        y_bound_leaves = self._get_y_bound_leaves(y_sorted, y_train_leaves)
+        y_bound_leaves = self._get_y_bound_leaves(
+            y_sorted, tree_offsets, leaf_offsets, y_train_indices
+        )
 
         # Create quantile forest object.
         self.forest_ = QuantileForest(
             y_sorted.astype(np.float64).T,
-            y_train_leaves,
-            y_bound_leaves,
-            sparse_pickle=sparse_pickle,
+            y_bound_leaves=y_bound_leaves,
             sample_weight=None if leaf_weight is None else leaf_weight[sorter].T,
+            tree_offsets=tree_offsets,
+            leaf_offsets=leaf_offsets,
+            y_train_indices=y_train_indices,
         )
 
         self.sorter_ = sorter
@@ -414,7 +417,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
         random_state,
         weighted_subsample=False,
     ):
-        """Return a mapping of training sample indices to a tree's leaf nodes.
+        """Return the training sample indices of a tree's leaf nodes.
 
         Parameters
         ----------
@@ -436,7 +439,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
             `max_samples_leaf`.
 
         max_node_count : int
-            Maximum number of leaf nodes across all trees.
+            Maximum number of nodes (internal + leaves) across all trees.
 
         max_samples_leaf : int
             Maximum number of samples per leaf node.
@@ -450,18 +453,15 @@ class BaseForestQuantileRegressor(ForestRegressor):
 
         Returns
         -------
-        y_train_leaves_slice : array-like of shape \
-                (n_leaves, n_outputs, n_indices)
-            Mapping of training sample indices to tree's leaf nodes. Nodes with
-            no samples (e.g., internal nodes) are empty. Internal nodes are
-            included so that leaf node indices match their ``est.apply``
-            outputs. Each node list is padded to equal length with 0s.
+        leaf_counts : array-like of shape (max_node_count,)
+            Number of training samples of each node. Nodes with no samples
+            (e.g., internal nodes) are included, so that node indices match
+            their ``est.apply`` outputs.
+
+        y_train_indices : array-like of shape (n_outputs, n_stored)
+            One-based indices of the training samples of each node, ordered
+            by node.
         """
-        n_outputs = bootstrap_indices.shape[1]
-
-        shape = (max_node_count, n_outputs, max_samples_leaf)
-        y_train_leaves_slice = np.zeros(shape, dtype=np.int64)
-
         # Group training indices by leaf node.
         leaf_indices, leaf_values_list = group_indices_by_value(X_leaves_bootstrap)
 
@@ -493,28 +493,18 @@ class BaseForestQuantileRegressor(ForestRegressor):
                             rng.shuffle(leaf_values_list[j])  # to ensure random sampling
                             leaf_values_list[j] = leaf_values_list[j][:max_samples_leaf]
 
-        # Map each leaf node to its list of training indices. Leaves left without
-        # any (e.g., if all of their samples have zero weight) stay empty.
-        if max_samples_leaf == 1:  # optimize for single-sample-per-leaf performance
-            has_values = [len(values) > 0 for values in leaf_values_list]
-            if not all(has_values):
-                leaf_indices = np.asarray(leaf_indices)[has_values]
-                leaf_values_list = [v for v, keep in zip(leaf_values_list, has_values) if keep]
-            y_indices = bootstrap_indices[leaf_values_list].reshape(-1, 1, n_outputs)
-            for j in range(n_outputs):
-                y_train_leaves_slice[leaf_indices, j, 0] = y_indices[:, 0, j]
-        else:  # get mapping for arbitrary leaf sizes
-            y_train_leaves_slice = map_indices_to_leaves(
-                y_train_leaves_slice=y_train_leaves_slice,
-                bootstrap_indices=bootstrap_indices,
-                leaf_indices=leaf_indices,
-                leaf_values_list=leaf_values_list,
-            )
+        # Count the training indices of each node, and list them in node order.
+        # Leaves left without any (e.g., if all of their samples have zero
+        # weight) stay empty.
+        leaf_counts = np.zeros(max_node_count, dtype=np.int64)
+        leaf_counts[leaf_indices] = [len(values) for values in leaf_values_list]
+        leaf_values = np.concatenate(leaf_values_list)
+        y_train_indices = np.ascontiguousarray(bootstrap_indices[leaf_values].T, dtype=np.int32)
 
-        return y_train_leaves_slice
+        return leaf_counts, y_train_indices
 
     def _get_y_train_leaves(self, X, y, sorter=None, sample_weight=None, weighted_subsample=False):
-        """Return a mapping of each leaf node to its list of training indices.
+        """Return the training indices of the leaf nodes of each tree.
 
         The ``apply`` function is used on the ``X`` values to obtain the leaf
         indices for the appropriate training indices, as sorted by ``sorter``.
@@ -546,13 +536,22 @@ class BaseForestQuantileRegressor(ForestRegressor):
 
         Returns
         -------
-        y_train_leaves : array-like of shape \
-                (n_estimators, n_leaves, n_outputs, n_indices)
-            List of trees, each with a list of nodes, each with a list of
-            indices of the training samples residing at that node. Nodes with
-            no samples (e.g., internal nodes) are empty. Internal nodes are
-            included so that leaf node indices match their ``est.apply``
-            outputs. Each node list is padded to equal length with 0s.
+        tree_offsets : array-like of shape (n_estimators + 1,)
+            Position in `y_train_indices` of the first training sample of
+            each tree, followed by the number of training samples stored.
+
+        leaf_offsets : array-like of shape (n_estimators, n_nodes + 1)
+            Position of the first training sample of each node, relative to
+            the position of its tree, followed by the number of training
+            samples of the tree. Nodes with no samples (e.g., internal nodes)
+            are empty. Internal nodes are included so that node indices match
+            their ``est.apply`` outputs.
+
+        y_train_indices : array-like of shape (n_outputs, n_stored)
+            One-based indices of the training samples of each node, ordered
+            by tree and node. Those of node ``n`` of tree ``t`` are at
+            positions ``tree_offsets[t] + leaf_offsets[t, n]`` up to (but
+            excluding) ``tree_offsets[t] + leaf_offsets[t, n + 1]``.
         """
         n_samples = X.shape[0]
         n_outputs = y.shape[-1]
@@ -584,6 +583,15 @@ class BaseForestQuantileRegressor(ForestRegressor):
 
         n_estimators = len(self.estimators_)
         shape = (n_samples if not self.bootstrap else n_samples_bootstrap, n_estimators)
+
+        # The training indices, and the offsets within each tree (which count
+        # its bootstrap samples), are stored as 32-bit integers.
+        if max(shape[0], n_samples) > _MAX_SAMPLES:
+            raise ValueError(
+                f"At most {_MAX_SAMPLES} training samples, and bootstrap samples per tree, "
+                f"are supported, got {n_samples} and {shape[0]}."
+            )
+
         bootstrap_indices = np.empty(shape, dtype=np.int64)
         X_leaves_bootstrap = np.empty(shape, dtype=np.int64)
         for i, estimator in enumerate(self.estimators_):
@@ -604,27 +612,15 @@ class BaseForestQuantileRegressor(ForestRegressor):
             bootstrap_indices = np.argsort(sorter, axis=0)[bootstrap_indices]
 
         bootstrap_indices = bootstrap_indices.reshape(-1, n_estimators, n_outputs)
-        bootstrap_indices += 1  # for sparse matrix (0s as empty)
+        bootstrap_indices += 1  # one-based
 
         # Get the maximum number of nodes (internal + leaves) across trees.
-        # Get the maximum number of samples per leaf across trees.
-        max_node_count = 0
-        max_leaf_count = 0
+        max_node_count = max(estimator.tree_.node_count for estimator in self.estimators_)
+
+        leaf_offsets = np.zeros((n_estimators, max_node_count + 1), dtype=np.int32)
+        y_train_indices = []
         for i, estimator in enumerate(self.estimators_):
-            node_count = estimator.tree_.node_count
-            max_node_count = max(max_node_count, node_count)
-            sample_count = np.max(np.bincount(X_leaves_bootstrap[:, i]))
-            max_leaf_count = max(max_leaf_count, sample_count)
-
-        # Pad leaves to the largest leaf, not to the requested maximum, which
-        # can be far larger (e.g., a float `max_samples_leaf` near 1).
-        if leaf_subsample:
-            max_samples_leaf = min(max_samples_leaf, max_leaf_count)
-        else:
-            max_samples_leaf = max_leaf_count
-
-        y_train_leaves = [
-            self._get_y_train_leaves_slice(
+            leaf_counts, tree_indices = self._get_y_train_leaves_slice(
                 bootstrap_indices[:, i],
                 X_leaves_bootstrap[:, i],
                 sample_weight,
@@ -634,12 +630,15 @@ class BaseForestQuantileRegressor(ForestRegressor):
                 estimator.random_state,
                 weighted_subsample=weighted_subsample,
             )
-            for i, estimator in enumerate(self.estimators_)
-        ]
+            np.cumsum(leaf_counts, out=leaf_offsets[i, 1:])
+            y_train_indices.append(tree_indices)
 
-        return np.array(y_train_leaves)
+        tree_offsets = np.zeros(n_estimators + 1, dtype=np.int64)
+        np.cumsum(leaf_offsets[:, -1], out=tree_offsets[1:])
 
-    def _get_y_bound_leaves(self, y, y_train_leaves):
+        return tree_offsets, leaf_offsets, np.concatenate(y_train_indices, axis=1)
+
+    def _get_y_bound_leaves(self, y, tree_offsets, leaf_offsets, y_train_indices):
         """Return the bounds for target values for each leaf node.
 
         The target value bounds are used to enforce monotonicity constraints.
@@ -649,13 +648,9 @@ class BaseForestQuantileRegressor(ForestRegressor):
         y : array-like of shape (n_samples, n_outputs)
             The target outputs for each y value.
 
-        y_train_leaves : array-like of shape \
-                (n_estimators, n_leaves, n_outputs, n_indices)
-            List of trees, each with a list of nodes, each with a list of
-            indices of the training samples residing at that node. Nodes with
-            no samples (e.g., internal nodes) are empty. Internal nodes are
-            included so that leaf node indices match their ``est.apply``
-            outputs. Each node list is padded to equal length with 0s.
+        tree_offsets, leaf_offsets, y_train_indices : array-like
+            The training indices of the leaf nodes of each tree, as returned
+            by `_get_y_train_leaves`.
 
         Returns
         -------
@@ -667,7 +662,8 @@ class BaseForestQuantileRegressor(ForestRegressor):
             return None
 
         monotonic_cst = np.asarray(self.monotonic_cst)
-        y_bound_leaves = np.full((*y_train_leaves.shape[:2], 2), [-np.inf, np.inf])
+        n_nodes = leaf_offsets.shape[1] - 1
+        y_bound_leaves = np.full((len(self.estimators_), n_nodes, 2), [-np.inf, np.inf])
 
         # Process each tree one depth level at a time, rather than node by node.
         for i, estimator in enumerate(self.estimators_):
@@ -684,13 +680,14 @@ class BaseForestQuantileRegressor(ForestRegressor):
                     break
                 levels.append(np.concatenate([children_left[parents], children_right[parents]]))
 
-            # Count and sum the stored targets of the leaves, then of the
+            # Count and sum the stored targets of the leaves (of the only output,
+            # as constraints do not support multiple outputs), then of the
             # non-leaf nodes from their children, from the deepest level up.
-            leaf_indices = y_train_leaves[i, : tree.node_count].reshape(tree.node_count, -1)
-            is_stored = leaf_indices != 0
-            num_values = is_stored.sum(axis=1).astype(np.float64)
-            leaf_targets = y[leaf_indices - 1].sum(axis=-1)
-            sum_values = np.where(is_stored, leaf_targets, 0).sum(axis=1)
+            leaf_counts = np.diff(leaf_offsets[i, : tree.node_count + 1])
+            stored_nodes = np.repeat(np.arange(tree.node_count), leaf_counts)
+            stored_values = y[y_train_indices[0, tree_offsets[i] : tree_offsets[i + 1]] - 1, 0]
+            num_values = leaf_counts.astype(np.float64)
+            sum_values = np.bincount(stored_nodes, stored_values, minlength=tree.node_count)
             for nodes in reversed(levels):
                 nodes = nodes[~is_leaf[nodes]]
                 left, right = children_left[nodes], children_right[nodes]
@@ -955,7 +952,6 @@ class BaseForestQuantileRegressor(ForestRegressor):
         y_ranks : array of shape (n_samples, n_outputs)
             Quantile ranks in range [0, 1]. NaN if a sample has no trees.
         """
-        y_train_leaves = np.asarray(self.forest_.y_train_leaves)
         y_bound_leaves = np.asarray(self.forest_.y_bound_leaves)
         y_train = np.asarray(self.forest_.y_train).T
         n_samples, n_trees = X_leaves.shape
@@ -977,7 +973,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
             for tree in range(n_trees):
                 rows = slice(None) if X_indices is None else X_indices[:, tree] == 1
                 leaves = X_leaves[rows, tree]
-                train_indices = y_train_leaves[tree, leaves, output, 0]
+                train_indices = self.forest_.first_train_indices(tree, leaves, output)
                 leaf_vals[rows, tree] = np.where(
                     train_indices > 0,  # empty leaves have NaN values
                     np.clip(
@@ -1157,7 +1153,6 @@ class BaseForestQuantileRegressor(ForestRegressor):
             isinstance(self.max_samples_leaf, (Integral, np.integer))
             and self.max_samples_leaf == 1
         ):
-            y_train_leaves = np.asarray(self.forest_.y_train_leaves)
             y_bound_leaves = np.asarray(self.forest_.y_bound_leaves)
             y_train = np.asarray(self.forest_.y_train).T
             n_samples = X.shape[0]  # X may be sparse, so avoid len(X)
@@ -1168,7 +1163,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
                 for tree in range(n_trees):
                     if X_indices is None:  # in-bag scoring
                         leaves = X_leaves[:, tree]
-                        train_indices = y_train_leaves[tree, leaves, output, 0]
+                        train_indices = self.forest_.first_train_indices(tree, leaves, output)
                         leaf_vals[:, tree] = np.where(
                             train_indices > 0, y_train[train_indices - 1, output], np.nan
                         )
@@ -1180,7 +1175,9 @@ class BaseForestQuantileRegressor(ForestRegressor):
                         idx_mask = X_indices[:, tree] == 1
                         leaves = X_leaves[idx_mask, tree]
                         train_indices = np.zeros(n_samples, dtype=int)
-                        train_indices[idx_mask] = y_train_leaves[tree, leaves, output, 0]
+                        train_indices[idx_mask] = self.forest_.first_train_indices(
+                            tree, leaves, output
+                        )
                         leaf_vals[:, tree] = np.nan
                         leaf_vals[idx_mask, tree] = np.where(
                             train_indices[idx_mask] > 0,

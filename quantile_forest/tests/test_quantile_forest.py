@@ -79,7 +79,7 @@ def test_leaf_subsampling_keeps_seeded_selection():
     expected = np.asarray(indices[:3]) + 1
     original_state = random.getstate()
     try:
-        actual = RandomForestQuantileRegressor._get_y_train_leaves_slice(
+        leaf_counts, y_train_indices = RandomForestQuantileRegressor._get_y_train_leaves_slice(
             bootstrap_indices=np.arange(1, 11).reshape(-1, 1),
             X_leaves_bootstrap=np.ones(10, dtype=np.intp),
             sample_weight=None,
@@ -88,7 +88,8 @@ def test_leaf_subsampling_keeps_seeded_selection():
             max_samples_leaf=3,
             random_state=17,
         )
-        assert_array_equal(actual[1, 0], expected)
+        assert_array_equal(leaf_counts, [0, 3])
+        assert_array_equal(y_train_indices[0], expected)
         assert random.getstate() == original_state
     finally:
         random.setstate(original_state)
@@ -1168,20 +1169,17 @@ def check_max_samples_leaf(name):
         est.fit(X, y)
 
         max_leaf_size = 0
-        y_train_leaves = est._get_y_train_leaves(X, y[:1])
-        for i in range(len(y_train_leaves)):
-            tree_lookup = y_train_leaves[i]
-            for leaf_samples in np.squeeze(tree_lookup, -2):
-                n_leaf_samples = len([x for x in leaf_samples if x != 0])
-                if n_leaf_samples > max_leaf_size:
-                    max_leaf_size = n_leaf_samples
+        _, leaf_offsets, _ = est._get_y_train_leaves(X, y[:1])
+        for n_leaf_samples in np.diff(leaf_offsets, axis=1).ravel():
+            if n_leaf_samples > max_leaf_size:
+                max_leaf_size = n_leaf_samples
 
-                # Check that ints and floats correctly sample leaves.
-                if isinstance(max_samples_leaf, int):
-                    assert n_leaf_samples <= max_samples_leaf
-                elif isinstance(max_samples_leaf, float):
-                    max_int = math.ceil(max_samples_leaf * len(X))
-                    assert n_leaf_samples <= max_int
+            # Check that ints and floats correctly sample leaves.
+            if isinstance(max_samples_leaf, int):
+                assert n_leaf_samples <= max_samples_leaf
+            elif isinstance(max_samples_leaf, float):
+                max_int = math.ceil(max_samples_leaf * len(X))
+                assert n_leaf_samples <= max_int
 
         max_leaf_sizes.append(max_leaf_size)
 
@@ -1218,10 +1216,11 @@ def test_max_samples_leaf_above_leaf_sizes(name, max_samples_leaf):
     est = ForestRegressor(max_samples_leaf=max_samples_leaf, **params).fit(X, y)
     est_none = ForestRegressor(max_samples_leaf=None, **params).fit(X, y)
 
-    # Leaves are padded to the largest leaf, not to the requested maximum.
-    assert_array_equal(
-        np.asarray(est.forest_.y_train_leaves), np.asarray(est_none.forest_.y_train_leaves)
-    )
+    # The leaves keep all of their samples, as with None.
+    for attr in ["tree_offsets", "leaf_offsets", "y_train_indices"]:
+        assert_array_equal(
+            np.asarray(getattr(est.forest_, attr)), np.asarray(getattr(est_none.forest_, attr))
+        )
 
     # A float of 1.0 means all samples, so it must not use the 1-sample path.
     quantiles = [0.1, 0.5, 0.9]
@@ -1232,6 +1231,48 @@ def test_max_samples_leaf_above_leaf_sizes(name, max_samples_leaf):
         )
 
 
+@pytest.mark.parametrize("name", FOREST_REGRESSORS)
+def test_leaf_samples_memory(name):
+    """Check that the leaf samples take memory in proportion to their number."""
+    rng = np.random.default_rng(0)
+    X = rng.normal(size=(1000, 2))
+    X[:500] = 0  # samples with the same features share a leaf, however deep the tree
+    y = rng.normal(size=len(X))
+
+    ForestRegressor = FOREST_REGRESSORS[name]
+
+    est = ForestRegressor(n_estimators=5, bootstrap=False, max_samples_leaf=None, random_state=0)
+    est.fit(X, y)
+
+    # Each tree stores each training sample once, as 32-bit integers.
+    forest = est.forest_
+    tree_offsets = np.asarray(forest.tree_offsets)
+    leaf_offsets = np.asarray(forest.leaf_offsets)
+    y_train_indices = np.asarray(forest.y_train_indices)
+    assert_array_equal(tree_offsets, np.arange(6) * len(X))
+    assert_array_equal(leaf_offsets[:, -1], len(X))
+    assert y_train_indices.shape == (1, 5 * len(X))
+    assert leaf_offsets.dtype == y_train_indices.dtype == np.int32
+    nbytes = tree_offsets.nbytes + leaf_offsets.nbytes + y_train_indices.nbytes
+
+    # Padding the samples of each node to those of the largest leaf would take
+    # far more memory, and pickles take as little as the forest.
+    assert np.asarray(forest.y_train_leaves).nbytes > 100 * nbytes
+    assert len(pickle.dumps(forest)) < nbytes + np.asarray(forest.y_train).nbytes + 1000
+
+
+@pytest.mark.parametrize("name", FOREST_REGRESSORS)
+def test_max_samples(name, monkeypatch):
+    """Check error if there are too many training samples to store."""
+    X, y = datasets.make_regression(n_samples=50, n_features=2, random_state=0)
+
+    ForestRegressor = FOREST_REGRESSORS[name]
+
+    monkeypatch.setattr("quantile_forest._quantile_forest._MAX_SAMPLES", 49)
+    with pytest.raises(ValueError, match="At most 49 training samples, and bootstrap"):
+        ForestRegressor(n_estimators=1).fit(X, y)
+
+
 @pytest.mark.parametrize("max_samples_leaf", [1, 2, None])
 def test_empty_leaf_stays_empty(max_samples_leaf):
     """Check that a leaf whose samples all have zero weight keeps no samples."""
@@ -1239,7 +1280,7 @@ def test_empty_leaf_stays_empty(max_samples_leaf):
     X_leaves_bootstrap = np.array([1, 1, 2, 2])
     sample_weight = np.array([[1.0], [1.0], [0.0], [0.0]])
 
-    y_train_leaves_slice = RandomForestQuantileRegressor._get_y_train_leaves_slice(
+    leaf_counts, y_train_indices = RandomForestQuantileRegressor._get_y_train_leaves_slice(
         bootstrap_indices,
         X_leaves_bootstrap,
         sample_weight,
@@ -1249,8 +1290,8 @@ def test_empty_leaf_stays_empty(max_samples_leaf):
         random_state=0,
     )
 
-    assert np.all(y_train_leaves_slice[2] == 0)
-    assert set(y_train_leaves_slice[1].ravel()) - {0} <= {1, 2}
+    assert_array_equal(leaf_counts, [0, 1 if max_samples_leaf == 1 else 2, 0])
+    assert set(y_train_indices[0]) <= {1, 2}
 
 
 @pytest.mark.parametrize("name", FOREST_REGRESSORS)
@@ -1266,8 +1307,12 @@ def test_empty_leaf_has_no_value(name, monotonic):
 
     # Empty the leaf that the first sample reaches in the first tree.
     leaves = est.apply(X[:1])[0]
-    y_train_leaves = np.asarray(est.forest_.y_train_leaves)
+    forest = est.forest_
+    y_train_leaves = np.asarray(forest.y_train_leaves)
     y_train_leaves[0, leaves[0]] = 0
+    est.forest_ = type(forest)(
+        np.asarray(forest.y_train), y_train_leaves, np.asarray(forest.y_bound_leaves)
+    )
 
     # The prediction then comes from the other trees' (clipped) leaf values.
     y_train = np.asarray(est.forest_.y_train)[0]
@@ -2089,7 +2134,7 @@ def test_monotonic_bounds(name):
                 stack += [(left, mid, upper), (right, lower, mid)]
 
 
-def check_serialization(name, sparse_pickle, monotonic_cst, multi_target):
+def check_serialization(name, monotonic_cst, multi_target):
     """Check model serialization/deserialization."""
     X, y = datasets.make_regression(n_samples=500, n_features=8, noise=0.1, random_state=0)
 
@@ -2104,7 +2149,7 @@ def check_serialization(name, sparse_pickle, monotonic_cst, multi_target):
     ForestRegressor = FOREST_REGRESSORS[name]
 
     est = ForestRegressor(n_estimators=10, monotonic_cst=monotonic_cst, random_state=0)
-    est.fit(X, y, sparse_pickle=sparse_pickle)
+    est.fit(X, y)
 
     dumped = pickle.dumps(est)
     est_loaded = pickle.loads(dumped)
@@ -2114,43 +2159,129 @@ def check_serialization(name, sparse_pickle, monotonic_cst, multi_target):
 
 
 @pytest.mark.parametrize("name", FOREST_REGRESSORS)
-@pytest.mark.parametrize("sparse_pickle", [False, True])
 @pytest.mark.parametrize("monotonic_cst", [False, True])
 @pytest.mark.parametrize("multi_target", [False, True])
-def test_serialization(name, sparse_pickle, monotonic_cst, multi_target):
-    check_serialization(name, sparse_pickle, monotonic_cst, multi_target)
+def test_serialization(name, monotonic_cst, multi_target):
+    check_serialization(name, monotonic_cst, multi_target)
+
+
+class _LegacyForestPickle:
+    """Pickle a forest as earlier versions did, with padded training indices."""
+
+    def __init__(self, forest, sparse_pickle):
+        self.forest = forest
+        self.sparse_pickle = sparse_pickle
+
+    def __reduce__(self):
+        forest = self.forest
+        y_train_leaves = np.asarray(forest.y_train_leaves)
+        y_bound_leaves = np.asarray(forest.y_bound_leaves)
+        state = {}
+        if self.sparse_pickle:
+            shape1, shape2 = y_train_leaves.shape, y_bound_leaves.shape
+            state["shape1"] = shape1
+            state["matrix1"] = sparse.csc_matrix(
+                y_train_leaves.reshape(shape1[3], shape1[0] * shape1[1] * shape1[2])
+            )
+            state["shape2"] = shape2
+            state["matrix2"] = sparse.csc_matrix(
+                y_bound_leaves.reshape(shape2[2], shape2[0] * shape2[1])
+            )
+            y_train_leaves = np.empty(shape=(0, 0, 0, 0), dtype=np.int64)
+            y_bound_leaves = np.empty(shape=(0, 0, 0), dtype=np.float64)
+        args = (np.asarray(forest.y_train), y_train_leaves, y_bound_leaves, self.sparse_pickle)
+        if np.asarray(forest.sample_weight).size > 0:
+            args += (np.asarray(forest.sample_weight),)
+        return (type(forest), args, state)
 
 
 @pytest.mark.parametrize("name", FOREST_REGRESSORS)
-@pytest.mark.parametrize("max_samples_leaf", [1, None])
-@pytest.mark.parametrize("multi_target", [False, True])
-def test_serialization_sparse_pickle(name, max_samples_leaf, multi_target):
-    """Check that a model pickled as sparse matrices predicts as before."""
+@pytest.mark.parametrize("sparse_pickle", [False, True])
+@pytest.mark.parametrize(
+    "params",
+    [
+        {"max_samples_leaf": 1},
+        {"max_samples_leaf": None},
+        {"max_samples_leaf": None, "multi_target": True},
+        {"max_samples_leaf": None, "bootstrap": False, "weighted": True},
+        {"max_samples_leaf": 1, "monotonic": True},
+    ],
+)
+def test_serialization_legacy(name, sparse_pickle, params):
+    """Check that a model pickled by an earlier version predicts as before."""
+    params = params.copy()
     X, y = datasets.make_regression(
-        n_samples=100, n_features=2, n_targets=2 if multi_target else 1, random_state=0
+        n_samples=100,
+        n_features=2,
+        n_targets=2 if params.pop("multi_target", False) else 1,
+        random_state=0,
     )
+    sample_weight = None
+    if params.pop("weighted", False):
+        sample_weight = np.random.default_rng(0).uniform(0.1, 2.0, size=len(y))
+    if params.pop("monotonic", False):
+        params["monotonic_cst"] = [1, -1]
+    params.setdefault("bootstrap", True)
 
     ForestRegressor = FOREST_REGRESSORS[name]
 
-    est = ForestRegressor(
-        n_estimators=5, max_samples_leaf=max_samples_leaf, bootstrap=True, random_state=0
-    )
-    est.fit(X, y, sparse_pickle=True)
+    est = ForestRegressor(n_estimators=5, random_state=0, **params)
+    est.fit(X, y, sample_weight=sample_weight)
+    assert np.asarray(est.forest_.sample_weight).size == (0 if sample_weight is None else len(y))
+
+    # Earlier versions padded the training indices of each node with 0s.
+    forest = est.forest_
+    forest_loaded = pickle.loads(pickle.dumps(_LegacyForestPickle(forest, sparse_pickle)))
+    assert isinstance(forest_loaded, type(forest))
+    for attr in ["tree_offsets", "leaf_offsets", "y_train_indices", "y_bound_leaves"]:
+        assert_array_equal(getattr(forest_loaded, attr), getattr(forest, attr))
+    assert_array_equal(forest_loaded.sample_weight, forest.sample_weight)
+
     est_loaded = pickle.loads(pickle.dumps(est))
-
-    # The leaf arrays are restored in C order, which predictions rely on.
-    assert np.asarray(est_loaded.forest_.y_train_leaves).flags.c_contiguous
-
+    est_loaded.forest_ = forest_loaded
     quantiles = [0.25, 0.5, 0.75]
-    assert_allclose(est_loaded.predict(X, quantiles), est.predict(X, quantiles))
-    assert_allclose(est_loaded.quantile_ranks(X, y), est.quantile_ranks(X, y))
+    assert_array_equal(est_loaded.predict(X, quantiles), est.predict(X, quantiles))
+    assert_array_equal(est_loaded.quantile_ranks(X, y), est.quantile_ranks(X, y))
     assert est_loaded.proximity_counts(X[:5]) == est.proximity_counts(X[:5])
+
+
+def test_quantile_forest_validates_indices():
+    """Check that the forest checks that its training indices match."""
+    X, y = datasets.make_regression(n_samples=50, n_features=2, random_state=0)
+    forest = RandomForestQuantileRegressor(n_estimators=3, random_state=0).fit(X, y).forest_
+
+    QuantileForest = type(forest)
+    y_train = np.asarray(forest.y_train)
+    indices = {
+        "tree_offsets": np.asarray(forest.tree_offsets),
+        "leaf_offsets": np.asarray(forest.leaf_offsets),
+        "y_train_indices": np.asarray(forest.y_train_indices),
+    }
+
+    # The padded indices of earlier versions are converted.
+    forest_padded = QuantileForest(y_train, np.asarray(forest.y_train_leaves))
+    for attr, values in indices.items():
+        assert_array_equal(getattr(forest_padded, attr), values)
+
+    with pytest.raises(ValueError, match="Either y_train_indices or y_train_leaves"):
+        QuantileForest(y_train)
+    with pytest.raises(ValueError, match="must be given with y_train_indices"):
+        QuantileForest(y_train, y_train_indices=indices["y_train_indices"])
+    with pytest.raises(ValueError, match="do not match"):
+        QuantileForest(y_train, **{**indices, "tree_offsets": indices["tree_offsets"][1:]})
+    with pytest.raises(ValueError, match="do not match"):
+        QuantileForest(
+            y_train, **{**indices, "y_train_indices": indices["y_train_indices"][:, 1:]}
+        )
+    with pytest.raises(ValueError, match="do not match"):
+        QuantileForest(np.vstack([y_train, y_train]), **indices)
+    with pytest.raises(ValueError, match="must have 2 outputs"):
+        QuantileForest(np.vstack([y_train, y_train]), np.asarray(forest.y_train_leaves))
 
 
 @pytest.mark.parametrize("name", FOREST_REGRESSORS)
 @pytest.mark.parametrize("max_samples_leaf", [1, None])
-@pytest.mark.parametrize("sparse_pickle", [False, True])
-def test_serialization_memory_mapped(name, max_samples_leaf, sparse_pickle, tmp_path):
+def test_serialization_memory_mapped(name, max_samples_leaf, tmp_path):
     """Check that a model loaded with read-only memory mapping works."""
     X, y = datasets.make_regression(n_samples=100, n_features=2, random_state=0)
 
@@ -2159,10 +2290,14 @@ def test_serialization_memory_mapped(name, max_samples_leaf, sparse_pickle, tmp_
     est = ForestRegressor(
         n_estimators=5, max_samples_leaf=max_samples_leaf, bootstrap=True, random_state=0
     )
-    est.fit(X, y, sparse_pickle=sparse_pickle)
+    est.fit(X, y)
 
     joblib.dump(est, tmp_path / "model.joblib")
     est_loaded = joblib.load(tmp_path / "model.joblib", mmap_mode="r")
+
+    # The training indices are used as loaded, without being copied.
+    for attr in ["tree_offsets", "leaf_offsets", "y_train_indices"]:
+        assert not np.asarray(getattr(est_loaded.forest_, attr)).flags.writeable
 
     quantiles = [0.25, 0.5, 0.75]
     assert_allclose(est_loaded.predict(X, quantiles), est.predict(X, quantiles))
@@ -2615,8 +2750,7 @@ def test_sample_weight_single_sample_leaves(name, multi_target):
 
 
 @pytest.mark.parametrize("name", FOREST_REGRESSORS)
-@pytest.mark.parametrize("sparse_pickle", [False, True])
-def test_sample_weight_serialization(name, sparse_pickle, tmp_path):
+def test_sample_weight_serialization(name, tmp_path):
     """Check that the leaf weights are pickled and memory-mapped."""
     X, y = datasets.make_regression(n_samples=200, n_features=4, random_state=0)
     sample_weight = np.random.default_rng(0).uniform(0.1, 2.0, size=len(y))
@@ -2628,7 +2762,7 @@ def test_sample_weight_serialization(name, sparse_pickle, tmp_path):
         min_samples_leaf=5,
         random_state=0,
     )
-    est.fit(X, y, sample_weight=sample_weight, sparse_pickle=sparse_pickle)
+    est.fit(X, y, sample_weight=sample_weight)
     assert np.asarray(est.forest_.sample_weight).shape == (1, len(y))
 
     path = tmp_path / "est.joblib"
@@ -2639,9 +2773,9 @@ def test_sample_weight_serialization(name, sparse_pickle, tmp_path):
         assert_allclose(est_loaded.predict(X, quantiles), est.predict(X, quantiles))
         assert_allclose(est_loaded.quantile_ranks(X, y), est.quantile_ranks(X, y))
 
-    # Without weights, pickles keep the arguments of versions without weights.
-    est.fit(X, y, sparse_pickle=sparse_pickle)
-    assert len(est.forest_.__reduce__()[1]) == 4
+    # Without weights, pickles carry no weights.
+    est.fit(X, y)
+    assert np.asarray(pickle.loads(pickle.dumps(est.forest_)).sample_weight).size == 0
 
     # Check error if the weights do not have the shape of the targets.
     QuantileForest = type(est.forest_)
