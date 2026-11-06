@@ -3,11 +3,33 @@ name: build
 on: [push, pull_request]
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.x'
+
+      - name: Cache pre-commit environments
+        uses: actions/cache@v5
+        with:
+          path: ~/.cache/pre-commit
+          key: pre-commit-${{ env.pythonLocation }}-${{ hashFiles('.pre-commit-config.yaml') }}
+
+      - name: Run the pre-commit hooks
+        run: |
+          pip install pre-commit
+          pre-commit run --all-files --show-diff-on-failure --color=always
+
   build:
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13', '3.14', '3.15']
+        os: [ubuntu-latest, ubuntu-24.04-arm, windows-latest, macos-latest]
+        python-version: ['3.11', '3.12', '3.13', '3.14', '3.15']
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -28,27 +50,9 @@ jobs:
 
       - name: Install dependencies
         run: |
-          uv pip install black cython-lint flake8 isort pytest pytest-cov
+          uv pip install pytest pytest-cov
           uv pip install -r ./docs/sphinx_requirements.txt
           uv pip install --verbose --editable .
-
-      - name: Check Python formatting with black
-        run: |
-          uv run black --diff --color .
-          uv run black --check .
-
-      - name: Check Cython formatting with cython-lint
-        run: |
-          uv run cython-lint .
-
-      - name: Check import order with isort
-        run: |
-          uv run isort --profile=black --check .
-
-      - name: Lint with flake8
-        run: |
-          uv run flake8 . --exclude=.venv --count --select=E9,F7,F63,F82 --show-source --statistics || exit 1
-          uv run flake8 . --exclude=.venv --count --exit-zero --statistics
 
       - name: Test with pytest
         run: |

@@ -2,11 +2,10 @@
 SHAP Explanations with Quantile Regression Forests
 ==================================================
 
-This example demonstrates the use of SHAP (SHapley Additive exPlanations) to
-explain the predictions of a quantile regression forest (QRF) model. SHAP
-values offer insight into the contribution of each feature to the predicted
-value. We generate a waterfall plot to visualize the explanations for a single
-sample across multiple quantiles. The `Tree SHAP
+This example uses SHAP (SHapley Additive exPlanations) to explain the
+predictions of a quantile regression forest (QRF) model of house prices in the
+California Housing dataset. A waterfall plot shows the contribution of each
+feature to the prediction for one sample, at multiple quantiles. The `Tree SHAP
 <https://shap.readthedocs.io/en/latest/generated/shap.TreeExplainer.html>`_
 method explains predictions that are sums over the trees of a model, which the
 quantile predictions of a QRF generally are not; by default, a quantile is
@@ -14,12 +13,12 @@ calculated from the training samples pooled across the trees. Instead, we use
 the `exact explainer
 <https://shap.readthedocs.io/en/latest/generated/shap.ExactExplainer.html>`_,
 which explains any model from its predictions. The SHAP values add up to the
-predicted quantile, and this plot allows us to observe how the feature
-contributions vary with the quantile, since a feature can change the spread of
-the predicted distribution, not just its location. With fully grown trees (the
-default), the low and high quantiles come from few training samples, which
-makes their SHAP values noisy, so the leaves here keep at least 10 samples,
-and there are 300 trees.
+predicted quantile; use the slider to see how the contributions vary with the
+quantile, since a feature can change the spread of the predicted distribution,
+not just its location. With fully grown trees (the default), the low and high
+quantiles come from few training samples, which makes their SHAP values noisy,
+so the leaves here keep at least 10 samples, and there are 300 trees. Click a
+bar or a feature name to highlight it.
 """
 
 import altair as alt
@@ -90,9 +89,15 @@ df = pd.concat(
 )
 
 
-def plot_shap_waterfall_with_quantiles(df, height=300):
-    """Plot SHAP waterfall plot by quantile predictions."""
+def plot_shap_waterfall_with_quantiles(df, height=None, width=600):
+    """Plot SHAP waterfall plot by quantile predictions.
+
+    The plot is `height` pixels high, or by default 37.5 pixels for each feature.
+    """
     df = df.copy()
+    n_features = df["feature_name"].nunique()
+    if height is None:
+        height = round(37.5 * n_features)
 
     # Slider for varying the applied quantile estimates. The data of a quantile is
     # selected within half a step of the slider's value, rather than by an exact
@@ -121,11 +126,6 @@ def plot_shap_waterfall_with_quantiles(df, height=300):
                         lambda g: g["shap_value"].cumsum() + g["base_value"], include_groups=False
                     )
                 ),
-                "value_label": (
-                    lambda df: df["shap_value"].apply(
-                        lambda x: ("+" if x >= 0 else "-") + "{0:,.2f}".format(abs(x))
-                    )
-                ),
                 "feature2": (
                     lambda df: df.groupby("quantile", group_keys=False).apply(
                         lambda g: g["feature"].shift(-1), include_groups=False
@@ -133,7 +133,7 @@ def plot_shap_waterfall_with_quantiles(df, height=300):
                 ),
             }
         )
-        .groupby("quantile")[df.columns.tolist() + ["start", "end", "value_label", "feature2"]]
+        .groupby("quantile")[df.columns.tolist() + ["start", "end", "feature2"]]
         .apply(lambda g: g.sort_values("abs_shap_value", ascending=False))
         .reset_index(drop=True)
     )
@@ -141,25 +141,44 @@ def plot_shap_waterfall_with_quantiles(df, height=300):
     x_min = df_grouped[["base_value", "model_output", "start", "end"]].min().min()
     x_max = df_grouped[["base_value", "model_output", "start", "end"]].max().max()
     x_shift = (x_max - x_min) / 100
+    x_domain = [x_min - 10 * x_shift, x_max + 10 * x_shift]
+    px_per_unit = width / np.ptp(x_domain)  # pixels per unit on the x axis, which spans x_domain
 
-    y_rule_offset = round(height / df_grouped["feature"].nunique() / 2) - 2
+    # Show the values to about a hundredth of the range of the plot, with at least 2 decimals.
+    decimals = max(2, int(np.ceil(-np.log10((x_max - x_min) / 100))))
+    value_format = f",.{decimals}f"
+    df_grouped["value_label"] = [
+        ("+" if v >= 0 else "-") + format(abs(v), value_format) for v in df_grouped["shap_value"]
+    ]
+
+    # As in SHAP's waterfall plots, a value is drawn in white inside its bar if it fits, and
+    # beside the bar otherwise. It fits if the bar, without its cap, is wider than the value
+    # (at about 7 pixels a character, a little more than most fonts take) and a margin.
+    body_px = (df_grouped["shap_value"].abs() - x_shift).clip(lower=0) * px_per_unit
+    df_grouped["inside"] = body_px >= 7 * df_grouped["value_label"].str.len() + 8
+
+    row_px = height / n_features
+    bar_px = 0.9 * row_px  # the height of a bar, which leaves a gap between the rows
+    y_rule_offset = round(row_px / 2) - 2
     y_text_offset = round(height / 2)
 
-    # Triangle caps with a short full-height "shoulder" that overlaps the bar end,
-    # hiding the anti-aliasing seam between the bar and the cap. A bar shorter than a cap
-    # (`x_shift`) is drawn as a cap alone, as long as the bar, and without a shoulder.
-    triangle_size = round(height / 100)
-    overlap = 0.25
+    # Each bar is drawn as one shape from its start, in pixels (a symbol of size 4 is drawn
+    # at a scale of 1): a body with a triangular cap as long as `x_shift`, or a cap alone,
+    # as long as the bar, if the bar is shorter. A body and a cap drawn as two shapes would
+    # leave a seam where they meet, or darker edges where they overlap.
+    cap_px = x_shift * px_per_unit
+    half = bar_px / 2
 
-    def _triangle(shap_value):
-        tip = np.clip(shap_value / x_shift, -1, 1)  # the length of the cap, in full caps
-        shoulder = -np.sign(shap_value) * overlap if abs(shap_value) > x_shift else 0
+    def _arrow(shap_value):
+        sign = np.sign(shap_value)
+        body = max(abs(shap_value) - x_shift, 0) * px_per_unit  # the length of the body
+        tip = body + min(abs(shap_value) / x_shift, 1) * cap_px  # the length of the bar
         return (
-            f"M {shoulder},{triangle_size} L 0,{triangle_size} L {tip:.3f},0 "
-            f"L 0,-{triangle_size} L {shoulder},-{triangle_size} Z"
+            f"M 0,{-half:.2f} L {sign * body:.2f},{-half:.2f} L {sign * tip:.2f},0 "
+            f"L {sign * body:.2f},{half:.2f} L 0,{half:.2f} Z"
         )
 
-    df_grouped["triangle"] = df_grouped["shap_value"].map(_triangle)
+    df_grouped["arrow"] = df_grouped["shap_value"].map(_arrow)
 
     df_text_labels = (
         df_grouped.groupby("quantile")[df.columns]
@@ -167,8 +186,8 @@ def plot_shap_waterfall_with_quantiles(df, height=300):
             lambda g: pd.DataFrame(
                 {
                     "value": [
-                        f"= {g['model_output'].iloc[0]:,.2f}",
-                        f"= {g['base_value'].iloc[0]:,.2f}",
+                        f"= {format(g['model_output'].iloc[0], value_format)}",
+                        f"= {format(g['base_value'].iloc[0], value_format)}",
                     ],
                     "type": ["end", "start"],
                     "x": [g["model_output"].iloc[0], g["base_value"].iloc[0]],
@@ -183,8 +202,8 @@ def plot_shap_waterfall_with_quantiles(df, height=300):
     # order of the data, this order is updated when the slider selects another quantile.
     y_sort = alt.EncodingSortField(field="abs_shap_value", op="max", order="descending")
 
-    # Each bar ends where its cap begins, a cap's length before its end, or at its start,
-    # if it is shorter than a cap.
+    # The body of each bar ends where its cap begins, a cap's length before the end of the
+    # bar, or at its start, if the bar is shorter than a cap.
     base = (
         alt.Chart(df_grouped)
         .transform_filter(is_selected)
@@ -195,14 +214,16 @@ def plot_shap_waterfall_with_quantiles(df, height=300):
 
     # The axes draw the feature names (as their labels) and the labels of f(x) and E[f(X)]
     # (as their titles, placed at the selected quantile's values), so that they take the
-    # theme's text color, while the values are drawn in a lighter color.
+    # theme's text color, while the values are drawn in a lighter color. The labels are
+    # written in mathematical italic letters, which italicize the letters but not the
+    # brackets, as in SHAP's plots.
     value_color = "#999999"
     df_label_x = df_text_labels.pivot(index="quantile", columns="type", values="x")
     i_quantile = f"round((quantile - {quantiles[0]}) / {quantile_step})"
 
     def _title_x(label_type, dx):
         # The position of the label of f(x) or E[f(X)] at the selected quantile, in pixels.
-        x_values = df_label_x[label_type].round(2).tolist()
+        x_values = df_label_x[label_type].round(decimals + 2).tolist()
         return alt.ExprRef(expr=f"scale('x', {x_values}[{i_quantile}]) + {dx}")
 
     # The labels of E[f(X)] and f(x) end this far right of their ticks, and their values
@@ -212,27 +233,54 @@ def plot_shap_waterfall_with_quantiles(df, height=300):
         "titleAlign": "right",
         "titleBaseline": "middle",
         "titleFontSize": 11,
-        "titleFontStyle": "italic",
         "titleFontWeight": "normal",
     }
 
-    bar = base.mark_bar().encode(
+    # Clicking a bar or the name of a feature highlights the feature and fades the others
+    # (shift-click for more). The labels of the axis are not data, so they are tested by
+    # their values, the features, against those selected.
+    click = alt.selection_point(name="click", fields=["feature"])
+    opacity = alt.condition(click, alt.value(1), alt.value(0.2))
+    label_opacity = alt.condition(
+        "!isValid(click.feature) || indexof(click.feature, datum.value) >= 0",
+        alt.value(1),
+        alt.value(0.2),
+    )
+
+    tooltip = [
+        alt.Tooltip("feature_name:N", title="Feature Name"),
+        alt.Tooltip("feature_value:Q", title="Feature Value"),
+        alt.Tooltip("shap_value:Q", format=value_format, title="SHAP Value"),
+        alt.Tooltip("start:Q", format=value_format, title="SHAP Start"),
+        alt.Tooltip("end:Q", format=value_format, title="SHAP End"),
+    ]
+
+    # The encodings of the bars, which their values share.
+    bar = base.encode(
         x=alt.X(
             "start:Q",
             axis=alt.Axis(
-                format=",.2f",
+                format=value_format,
                 grid=False,
+                labelSeparation=8,  # leave out labels that would touch
                 titleX=_title_x("start", dx_start),
                 titleY=30,
                 **title_style,
             ),
-            scale=alt.Scale(domain=[x_min - 10 * x_shift, x_max + 10 * x_shift], zero=False),
-            title="E[f(X)]",
+            # The domain is not extended to round values, which Vega-Lite would otherwise do
+            # (as the other layers do not set it), so that the bars are drawn to scale.
+            scale=alt.Scale(domain=x_domain, nice=False, zero=False),
+            title="𝐸[𝑓(𝑋)]",
         ),
         y=alt.Y(
             "feature:N",
             axis=alt.Axis(
-                labelExpr="split(datum.label, ' = ')[1]",  # the name of the feature
+                domain=False,  # no axis line or ticks, as in SHAP's waterfall plots
+                labelExpr="slice(datum.label, indexof(datum.label, ' = ') + 3)",  # the name
+                labelLimit=0,  # not truncated, so as to cover the name in the lighter color
+                labelOpacity=label_opacity,
+                labelPadding=7,  # where the labels would be with ticks
+                ticks=False,
                 titleAngle=0,
                 titleX=_title_x("end", dx_end),
                 titleY=-15,
@@ -240,37 +288,36 @@ def plot_shap_waterfall_with_quantiles(df, height=300):
                 **title_style,
             ),
             sort=y_sort,
-            title="f(x)",
+            title="𝑓(𝑥)",
         ),
         color=alt.condition(
             alt.datum["shap_value"] > 0, alt.value("#ff0251"), alt.value("#018bfb")
         ),
-        tooltip=[
-            alt.Tooltip("feature_name:N", title="Feature Name"),
-            alt.Tooltip("feature_value:Q", title="Feature Value"),
-            alt.Tooltip("shap_value:Q", format=",.2f", title="SHAP Value"),
-            alt.Tooltip("start:Q", format=",.2f", title="SHAP Start"),
-            alt.Tooltip("end:Q", format=",.2f", title="SHAP End"),
-        ],
+        opacity=opacity,
+        tooltip=tooltip,
     )
 
-    point = bar.mark_point(filled=True, opacity=1, size=125, strokeWidth=0).encode(
-        x=alt.X("end_shifted:Q"),
-        shape=alt.Shape("triangle:N", scale=None),
+    arrow = (
+        bar.mark_point(filled=True, size=4, strokeWidth=0)
+        .encode(shape=alt.Shape("arrow:N", scale=None))
+        .add_params(click)
     )
 
-    text_bar_left = bar.mark_text(
-        align="left",
-        baseline="middle",
-        dx=5,
-        color="gray",
-    ).encode(
-        text="value_label",
-        opacity=alt.condition(alt.datum["shap_value"] > 0, alt.value(0), alt.value(1)),
+    text_bar_left = (
+        bar.transform_filter("datum.shap_value < 0 && !datum.inside")
+        .mark_text(align="left", baseline="middle", cursor="pointer", dx=5)
+        .encode(text="value_label")
     )
-    text_bar_right = bar.mark_text(align="right", baseline="middle", dx=-5, color="gray").encode(
-        text="value_label",
-        opacity=alt.condition(alt.datum["shap_value"] > 0, alt.value(1), alt.value(0)),
+    text_bar_right = (
+        bar.transform_filter("datum.shap_value > 0 && !datum.inside")
+        .mark_text(align="right", baseline="middle", cursor="pointer", dx=-5)
+        .encode(text="value_label")
+    )
+    text_bar_inside = (
+        bar.transform_filter("datum.inside")
+        .transform_calculate(middle="(datum.start + datum.end_shifted) / 2")
+        .mark_text(align="center", baseline="middle", cursor="pointer")
+        .encode(x=alt.X("middle:Q"), color=alt.value("white"), text="value_label")
     )
     text_label_start = (
         alt.Chart(df_text_labels)
@@ -288,31 +335,52 @@ def plot_shap_waterfall_with_quantiles(df, height=300):
     )
 
     # The full label of each feature, behind the name drawn by the axis, which leaves its
-    # value showing in the lighter color (as an axis label has one color).
+    # value showing in the lighter color (as an axis label has one color). Clicks on the name
+    # pass through the axis label to this label, which takes them as it has a tooltip.
     text_feature = base.mark_text(
-        align="right", baseline="middle", color=value_color, fontSize=10, x=-6.5
-    ).encode(y=alt.Y("feature:N", sort=y_sort), text="feature:N")
+        align="right", baseline="middle", color=value_color, cursor="pointer", fontSize=10, x=-6.5
+    ).encode(y=alt.Y("feature:N", sort=y_sort), text="feature:N", opacity=opacity, tooltip=tooltip)
 
-    text = text_bar_left + text_bar_right + text_label_start + text_label_end + text_feature
+    text = (
+        text_bar_left
+        + text_bar_right
+        + text_bar_inside
+        + text_label_start
+        + text_label_end
+        + text_feature
+    )
 
+    # As in SHAP's waterfall plots, thin dashed lines join the bars and mark f(x) and
+    # E[f(X)], and dotted lines run across the rows, all behind the bars. They are gray and
+    # partly transparent, which gives SHAP's colors (#bbbbbb and #cccccc) on a white
+    # background, and lines as faint on a dark one.
+    dashed = {"color": "gray", "opacity": 0.52, "strokeDash": [2.5, 1], "strokeWidth": 0.7}
     feature_bar_rule = (
         base.transform_filter("isValid(datum.feature2)")
-        .mark_rule(
-            color="gray",
-            yOffset=y_rule_offset,
-            y2Offset=-y_rule_offset,
-            opacity=0.8,
-            strokeDash=[1, 1],
-        )
+        .mark_rule(yOffset=y_rule_offset, y2Offset=-y_rule_offset, **dashed)
         .encode(
             x=alt.X("end:Q"),
             y=alt.Y("feature", sort=y_sort),
             y2=alt.Y2("feature2"),
         )
     )
-    end_bar_rule = base.mark_rule(color="gray", opacity=0.8, strokeDash=[1, 1]).encode(
-        x=alt.X("model_output:Q")
+    end_bar_rule = (
+        alt.Chart(df_text_labels)
+        .transform_filter(is_selected)
+        .transform_filter("datum.type == 'end'")
+        .mark_rule(**dashed)
+        .encode(x=alt.X("x:Q"))
     )
+    start_bar_rule = (
+        alt.Chart(df_text_labels)
+        .transform_filter(is_selected)
+        .transform_filter("datum.type == 'start'")
+        .mark_rule(y=height - row_px / 2, y2=height, **dashed)
+        .encode(x=alt.X("x:Q"))
+    )
+    row_rule = base.mark_rule(
+        color="gray", opacity=0.4, strokeDash=[0.7, 3.3], strokeWidth=0.7
+    ).encode(x=alt.value(0), x2=alt.value(width), y=alt.Y("feature:N", sort=y_sort))
     tick_start_rule = (
         alt.Chart(df_text_labels)
         .transform_filter(is_selected)
@@ -327,16 +395,21 @@ def plot_shap_waterfall_with_quantiles(df, height=300):
         .mark_rule(color="gray", opacity=1, y=0, y2=-6)
         .encode(x=alt.X("x:Q"))
     )
-    rule = feature_bar_rule + end_bar_rule + tick_start_rule + tick_end_rule
-
-    bar = bar.encode(x2=alt.X2("end_shifted:Q"))
+    rule = (
+        row_rule
+        + feature_bar_rule
+        + end_bar_rule
+        + start_bar_rule
+        + tick_start_rule
+        + tick_end_rule
+    )
 
     chart = (
-        (bar + point + text + rule)
+        (rule + arrow + text)
         .add_params(quantile_val)
         .configure_view(strokeOpacity=0)
         .properties(
-            title="Waterfall Plot of SHAP Values for QRF Predictions", height=height, width=600
+            title="Waterfall Plot of SHAP Values for QRF Predictions", height=height, width=width
         )
     )
 

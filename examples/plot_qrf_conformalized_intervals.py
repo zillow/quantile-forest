@@ -2,19 +2,19 @@
 QRFs for Conformalized Quantile Regression
 ==========================================
 
-This example demonstrates the use of a quantile regression forest (QRF) to
-construct reliable prediction intervals using conformalized quantile
-regression (CQR). While QRFs can estimate quantiles, they may require
-additional calibration to provide reliable interval estimates. CQR calibrates
-the intervals on data held out from training, which guarantees that their
-coverage (i.e., the percentage of samples that actually fall within their
-prediction interval) is at least the target level, on average. We also
-calibrate them with the out-of-bag (OOB) predictions of the training samples,
-which lets the QRF fit on all of the training data and gives narrower
-intervals, but does not guarantee the coverage. Since the coverage on one
-split of the data varies by chance, the plots show each sample's interval from
-one repetition of 4-fold cross-validation, and the mean coverage and interval
-width over five repetitions (20 splits). This example is adapted from
+This example uses a quantile regression forest (QRF) to construct reliable
+prediction intervals on the California Housing dataset, using conformalized
+quantile regression (CQR). While QRFs can estimate quantiles, their intervals
+may need calibration to be reliable. CQR calibrates the intervals on data held
+out from training, which guarantees that their coverage (the percentage of
+samples within their intervals) is at least the target level, on average. We
+also calibrate them with the out-of-bag (OOB) predictions of the training
+samples, which lets the QRF fit on all the training data and gives narrower
+intervals, but without the guarantee. Since the coverage of one split varies
+by chance, the plots show each sample's interval from one repetition of 4-fold
+cross-validation, and the mean coverage and width over five repetitions (20
+splits). Use the slider to set the target coverage, and the menu to choose the
+calibration data. This example is adapted from
 `"Prediction intervals: Quantile Regression Forests"
 <https://www.kaggle.com/code/carlmcbrideellis/prediction-intervals-quantile-regression-forests>`_
 by Carl McBride Ellis.

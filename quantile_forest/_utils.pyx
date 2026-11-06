@@ -1,5 +1,4 @@
 from libc.stdlib cimport free, malloc
-from libcpp.set cimport set
 from libcpp.vector cimport vector
 
 import numpy as np
@@ -56,55 +55,6 @@ cdef void parallel_qsort_asc(
         parallel_qsort_asc(a, b, left, j)
     if i < right:
         parallel_qsort_asc(a, b, i, right)
-
-
-cpdef vector[intp_t] generate_unsampled_indices(
-    vector[intp_t] sample_indices,
-    intp_t n_total_samples,
-    vector[set[intp_t]] duplicates,
-) noexcept nogil:
-    """Return a list of every unsampled index, accounting for duplicates.
-
-    Parameters
-    ----------
-    sample_indices : array-like of shape (n_samples,)
-        Sampled indices.
-
-    n_total_samples : int
-        Number of total samples, sampled and unsampled.
-
-    duplicates : list of sets of ints
-        List of sets of functionally identical indices.
-
-    Returns
-    -------
-    unsampled_indices : array-like
-        List of unsampled indices.
-    """
-    cdef intp_t n_samples, n_duplicates
-    cdef intp_t i
-    cdef intp_t sampled_idx
-    cdef set[intp_t] sampled_set
-    cdef vector[intp_t] unsampled_indices
-
-    n_samples = sample_indices.size()
-    n_duplicates = duplicates.size()
-
-    for i in range(n_samples):
-        sampled_set.insert(sample_indices[i])
-
-    # Account for duplicates of sampled indices.
-    for i in range(n_duplicates):
-        for sampled_idx in duplicates[i]:
-            if sampled_set.count(sampled_idx):
-                sampled_set.insert(duplicates[i].begin(), duplicates[i].end())
-
-    # If the index is not in `sampled_set`, it is unsampled.
-    for i in range(n_total_samples):
-        if not sampled_set.count(i):
-            unsampled_indices.push_back(i)
-
-    return unsampled_indices
 
 
 cpdef group_indices_by_value(cnp.ndarray[intp_t, ndim=1] a):

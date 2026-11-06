@@ -6,15 +6,15 @@ from collections import defaultdict
 CYTHON_MIN_VERSION = "3.0a4"
 NUMPY_MIN_VERSION = "1.23"
 SCIPY_MIN_VERSION = "1.6"
-SKLEARN_MIN_VERSION = "1.5"
+SKLEARN_MIN_VERSION = "1.9"
 
 # 'build' and 'install' is included to have structured metadata for CI.
 # The values are (version_spec, comma separated tags).
 dependent_packages = {
     "cython": (CYTHON_MIN_VERSION, "build"),
     "numpy": (NUMPY_MIN_VERSION, "build, install"),
-    "scipy": (SCIPY_MIN_VERSION, "build, install"),
-    "scikit-learn": (SKLEARN_MIN_VERSION, "build, install"),
+    "scipy": (SCIPY_MIN_VERSION, "install"),
+    "scikit-learn": (SKLEARN_MIN_VERSION, "install"),
 }
 
 # Create inverse mapping for setuptools.

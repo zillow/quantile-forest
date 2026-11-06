@@ -32,14 +32,19 @@ Sample weights can be specified when fitting the model, as for a scikit-learn fo
     >>> qrf_weighted.fit(X_train, y_train, sample_weight=sample_weight)
     RandomForestQuantileRegressor(...)
 
-The training samples used for prediction are weighted too: a sample with weight 2 counts like two samples with weight 1, and samples with zero weight are left out. With bootstrapping (`bootstrap=True`), scikit-learn 1.9 and later draw the bootstrap samples in proportion to the weights, so each sample counts once for each time it is drawn. Otherwise, the samples in each leaf node are weighted, except that if each leaf node keeps one sample (`max_samples_leaf=1`), the sample is picked with probability proportional to its weight. With `weighted_leaves=True`, the size of a leaf node is the total weight of its samples. Either way, as without weights, the mean predictions of a model fit with `max_samples_leaf=None` equal those of a scikit-learn forest if `aggregate_leaves_first=False` (see below), and so do the medians of a model fit with `criterion="absolute_error"` (with the default `interpolation="averaged_inverted_cdf"`). Proximity counts do not include the weights.
+The training samples used for prediction are weighted too: a sample with weight 2 counts like two samples with weight 1, and samples with zero weight are left out. With bootstrapping (`bootstrap=True`), scikit-learn draws the bootstrap samples in proportion to the weights, so each sample counts once for each time it is drawn. Otherwise, the samples in each leaf node are weighted, except that if each leaf node keeps one sample (`max_samples_leaf=1`), the sample is picked with probability proportional to its weight. With `weighted_leaves=True`, the size of a leaf node is the total weight of its samples. Either way, as without weights, the mean predictions of a model fit with `max_samples_leaf=None` equal those of a scikit-learn forest if `aggregate_leaves_first=False` (see below), and so do the medians of a model fit with `criterion="absolute_error"` (with the default `interpolation="averaged_inverted_cdf"`). Proximity counts do not include the weights.
 
 Only the relative weights matter. The quantiles of `interpolation="inverted_cdf"` and `interpolation="averaged_inverted_cdf"` depend on nothing else, so integer weights give the same quantiles as repeating each sample that number of times. The other interpolation methods also depend on the number of samples, for which a sample of average (positive) weight counts as one sample. For an example that uses sample weights to correct for oversampling, see :ref:`gallery_plot_qrf_sample_weights`.
+
+.. rubric:: Examples
+
+.. minigallery::
+   :names: plot_qrf_sample_weights
 
 Missing Values
 ~~~~~~~~~~~~~~
 
-With scikit-learn 1.8 or later, the quantile forests accept missing values (NaN) in `X` wherever a scikit-learn forest does. When the trees are fit, each split learns whether samples missing its feature go to the left or the right child, and samples with missing values follow the same splits when predicting. If none of the training samples at a split were missing its feature, samples missing it go to the child with more training samples. A sample's predicted quantiles then come from the training samples in the leaves that it reaches, as for any other sample::
+The quantile forests accept missing values (NaN) in `X` wherever a scikit-learn forest does. When the trees are fit, each split learns whether samples missing its feature go to the left or the right child, and samples with missing values follow the same splits when predicting. If none of the training samples at a split were missing its feature, samples missing it go to the child with more training samples. A sample's predicted quantiles then come from the training samples in the leaves that it reaches, as for any other sample::
 
     X_train_missing = X_train.copy()
     X_train_missing[::10, 0] = np.nan  # every tenth sample is missing the first feature
@@ -47,7 +52,7 @@ With scikit-learn 1.8 or later, the quantile forests accept missing values (NaN)
     qrf_missing.fit(X_train_missing, y_train)
     y_pred = qrf_missing.predict(X_test, quantiles=[0.25, 0.5, 0.75])
 
-As with scikit-learn, missing values are not supported in sparse inputs, and they need scikit-learn 1.9 or later with `criterion="absolute_error"` or with monotonicity constraints. With earlier versions of scikit-learn, trees fit on data with missing values could put some training samples in other leaves than the ones they reach when predicting, so the quantile forests reject missing values with them.
+As with scikit-learn, missing values are not supported in sparse inputs.
 
 Making Predictions
 ~~~~~~~~~~~~~~~~~~

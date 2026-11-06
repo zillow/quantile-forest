@@ -3,36 +3,7 @@
 import numpy as np
 from sklearn.utils._testing import assert_array_equal
 
-from quantile_forest._utils import generate_unsampled_indices, group_indices_by_value
-
-
-def test_generate_unsampled_indices():
-    """Check unsampled indices generation."""
-    max_index = 20
-    duplicates = [[1, 4], [19, 10], [2, 3, 5], [6, 13]]
-
-    def _generate_unsampled_indices(sample_indices, n_total_samples):
-        return generate_unsampled_indices(
-            np.array(sample_indices, dtype=np.int64),
-            n_total_samples=n_total_samples,
-            duplicates=duplicates,
-        )
-
-    # If all indices are sampled, there are no unsampled indices.
-    indices = [idx for idx in range(max_index)]
-    expected = np.array([], dtype=np.int64)
-    assert_array_equal(_generate_unsampled_indices(indices, max_index), expected)
-
-    # Index 7 has no duplicates, and thus should be the only unsampled index.
-    indices = [7 for _ in range(max_index)]
-    expected = np.array([idx for idx in range(max_index) if idx != 7])
-    assert_array_equal(_generate_unsampled_indices(indices, max_index), expected)
-
-    # Check sample indices [0, 1, 2] with duplicates set(1, 4) + set(2, 3, 5),
-    # which excludes [0, 1, 2, 3, 4, 5] (i.e., range(6)) from unsampled.
-    indices = [idx % 3 for idx in range(max_index)]
-    expected = [x for x in range(max_index) if x not in range(6)]
-    assert_array_equal(_generate_unsampled_indices(indices, max_index), expected)
+from quantile_forest._utils import group_indices_by_value
 
 
 def test_group_indices_by_value():

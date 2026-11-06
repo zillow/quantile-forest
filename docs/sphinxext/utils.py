@@ -1,9 +1,7 @@
 """Adapted from Vega-Altair. BSD-3-Clause License. https://github.com/altair-viz/altair"""
 
 import ast
-import hashlib
 import itertools
-import json
 import re
 
 
@@ -177,15 +175,3 @@ def prev_this_next(it, sentinel=None):
     i1, i2, i3 = itertools.tee(it, 3)
     next(i3, None)
     return zip(itertools.chain([sentinel], i1), i2, itertools.chain(i3, [sentinel]))
-
-
-def dict_hash(dct):
-    """Return a hash of the contents of a dictionary."""
-    serialized = json.dumps(dct, sort_keys=True)
-
-    try:
-        m = hashlib.sha256(serialized)[:32]
-    except TypeError:
-        m = hashlib.sha256(serialized.encode())[:32]
-
-    return m.hexdigest()

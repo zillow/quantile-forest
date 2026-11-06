@@ -1,6 +1,7 @@
-# quantile-forest <a href="https://zillow.github.io/quantile-forest/"><img align="right" src="https://zillow.github.io/quantile-forest/_static/quantile-forest-logo.svg" height="50"></img></a>
+# quantile-forest <a href="https://zillow.github.io/quantile-forest/"><img align="right" src="https://zillow.github.io/quantile-forest/_static/quantile-forest-logo.svg" height="50"></a>
 
 [![PyPI - Version](https://img.shields.io/pypi/v/quantile-forest)](https://pypi.org/project/quantile-forest)
+[![Python Version](https://img.shields.io/python/required-version-toml?tomlFilePath=https%3A%2F%2Fraw.githubusercontent.com%2Fzillow%2Fquantile-forest%2Fmain%2Fpyproject.toml)](https://zillow.github.io/quantile-forest/getting_started/installation.html)
 [![License](https://img.shields.io/github/license/zillow/quantile-forest)](https://github.com/zillow/quantile-forest/blob/main/LICENSE)
 [![GitHub Actions](https://github.com/zillow/quantile-forest/actions/workflows/build.yml/badge.svg)](https://github.com/zillow/quantile-forest/actions/workflows/build.yml)
 [![Codecov](https://codecov.io/gh/zillow/quantile-forest/branch/main/graph/badge.svg?token=STRT8T67YP)](https://codecov.io/gh/zillow/quantile-forest)
@@ -9,7 +10,7 @@
 
 **quantile-forest** offers a Python implementation of quantile regression forests compatible with scikit-learn.
 
-Quantile regression forests (QRF) are a non-parametric, tree-based ensemble method for estimating conditional quantiles, with application to high-dimensional data and uncertainty estimation [[1]](#1). The estimators in this package are performant, Cython-optimized QRF implementations that extend the forest estimators available in scikit-learn to estimate conditional quantiles. The estimators can estimate arbitrary quantiles at prediction time without retraining and provide methods for out-of-bag estimation, calculating quantile ranks, and computing proximity counts. They are compatible with and can serve as drop-in replacements for the scikit-learn forest regressors.
+Quantile regression forests (QRF) are a non-parametric, tree-based ensemble method for estimating conditional quantiles, with application to high-dimensional data and uncertainty estimation [[1]](#1). The estimators in this package are performant, Cython-optimized QRF implementations that extend the forest estimators available in scikit-learn to estimate conditional quantiles. The estimators can estimate arbitrary quantiles at prediction time without retraining and provide methods for out-of-bag estimation, calculating quantile ranks, and computing proximity counts. They support sample weights, multiple targets, monotonic constraints, and missing values. They are compatible with and can serve as drop-in replacements for the scikit-learn forest regressors.
 
 #### Example of fitted model predictions and prediction intervals on California housing data ([code](https://zillow.github.io/quantile-forest/gallery/plot_qrf_prediction_intervals.html))
 <img src="https://zillow.github.io/quantile-forest/_static/plot_qrf_prediction_intervals.png"/>
@@ -32,25 +33,28 @@ conda install quantile-forest -c conda-forge
 Usage
 -----
 
+A quantile forest is fit like a scikit-learn regressor, and predicts any quantiles of the target without being fit again. For example, to predict the median and a 95% prediction interval:
+
 ```python
-from quantile_forest import RandomForestQuantileRegressor
 from sklearn import datasets
-X, y = datasets.fetch_california_housing(return_X_y=True)
-qrf = RandomForestQuantileRegressor()
-qrf.fit(X, y)
-y_pred = qrf.predict(X, quantiles=[0.025, 0.5, 0.975])
+from sklearn.model_selection import train_test_split
+from quantile_forest import RandomForestQuantileRegressor
+
+X, y = datasets.load_diabetes(return_X_y=True)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25)
+qrf = RandomForestQuantileRegressor().fit(X_train, y_train)
+y_pred = qrf.predict(X_test, quantiles=[0.025, 0.5, 0.975])  # one column per quantile
 ```
 
 Documentation
 -------------
 
-An installation guide, API documentation, and examples can be found in the [documentation](https://zillow.github.io/quantile-forest).
-
+An installation guide, API documentation, and examples can be found in the [documentation](https://zillow.github.io/quantile-forest). The [release notes](https://zillow.github.io/quantile-forest/releases/changes.html) list the changes in each version.
 
 References
 ----------
 
-<a id="1">[1]</a> N. Meinshausen, "Quantile Regression Forests", Journal of Machine Learning Research, 7(Jun), 983-999, 2006. http://www.jmlr.org/papers/volume7/meinshausen06a/meinshausen06a.pdf
+<a id="1">[1]</a> N. Meinshausen, "Quantile Regression Forests", Journal of Machine Learning Research, 7(Jun), 983-999, 2006. https://www.jmlr.org/papers/volume7/meinshausen06a/meinshausen06a.pdf
 
 Citation
 --------
