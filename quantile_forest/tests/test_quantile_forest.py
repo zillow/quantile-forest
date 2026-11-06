@@ -1216,35 +1216,92 @@ def test_max_samples_leaf_above_leaf_sizes(name, max_samples_leaf):
 
 
 def check_missing_values(name):
-    X = np.array(
-        [
-            [0, 1, 1, np.nan, np.nan, 0, 0, 0, 0, 0],
-            [2, 2, 0, 1, 0, 0, 0, 0, 2, 2],
-        ]
-    ).T
-    y = [2, 4, 5, 6, 7, 1, 1, 0, 1, 2]
-
+    """Check that missing values are supported where the scikit-learn forest supports them."""
     ForestRegressor = FOREST_REGRESSORS[name]
+    SklearnForestRegressor = {
+        "ExtraTreesQuantileRegressor": ExtraTreesRegressor,
+        "RandomForestQuantileRegressor": RandomForestRegressor,
+    }[name]
 
-    est = ForestRegressor(n_estimators=1, max_samples_leaf=None, random_state=0)
-    with pytest.raises(ValueError):
-        est.fit(X, y)
-    assert not hasattr(est, "estimators_")  # rejected before fitting the forest
+    rng = np.random.default_rng(0)
+    X, y = datasets.make_regression(n_samples=500, n_features=4, noise=10.0, random_state=0)
+    X[rng.random(X.shape) < 0.2] = np.nan
+    X_train, X_test, y_train, y_test = X[:400], X[400:], y[:400], y[400:]
+    X_train_complete = np.nan_to_num(X_train)
 
-    # Check that missing values are rejected when predicting too.
-    est.fit(np.nan_to_num(X), y)
-    for method in ["predict", "apply", "proximity_counts"]:
+    params = {"n_estimators": 10, "bootstrap": True, "random_state": 0}
+    est = ForestRegressor(max_samples_leaf=None, **params)
+    sklearn_est = SklearnForestRegressor(oob_score=True, **params)
+
+    if sklearn_version < parse_version("1.8"):
+        # Check that missing values are rejected, as trees fit on data with missing
+        # values may put some training samples in other leaves than `apply` does.
         with pytest.raises(ValueError):
-            getattr(est, method)(X)
+            est.fit(X_train, y_train)
+        assert not hasattr(est, "estimators_")  # rejected before fitting the forest
+        est.fit(X_train_complete, y_train)
+        for method in ["predict", "apply", "proximity_counts"]:
+            with pytest.raises(ValueError):
+                getattr(est, method)(X_test)
+        with pytest.raises(ValueError):
+            est.quantile_ranks(X_test, y_test)
+
+        # Check that the estimator tags agree that missing values are not supported.
+        assert not est._more_tags()["allow_nan"]  # the tags of scikit-learn < 1.6
+        if sklearn_version >= parse_version("1.6"):
+            from sklearn.utils import get_tags
+
+            assert not get_tags(est).input_tags.allow_nan
+        return
+
+    from sklearn.utils import get_tags
+
+    # Check that the estimator tags agree with those of the scikit-learn forest.
+    assert get_tags(est).input_tags.allow_nan
+    assert get_tags(sklearn_est).input_tags.allow_nan
+
+    est.fit(X_train, y_train)
+    sklearn_est.fit(X_train, y_train)
+
+    # Check that the mean predictions match those of the scikit-learn forest, as
+    # they do only if samples with missing values reach the same leaves as when
+    # the trees were fit.
+    kwargs = {"quantiles": "mean", "aggregate_leaves_first": False}
+    assert_allclose(est.predict(X_test, **kwargs), sklearn_est.predict(X_test))
+    y_pred_oob = est.predict(X_train, oob_score=True, **kwargs)
+    has_oob = ~np.isnan(y_pred_oob)  # samples in-bag for every tree have no OOB value
+    assert has_oob.mean() > 0.9
+    assert_allclose(y_pred_oob[has_oob], sklearn_est.oob_prediction_[has_oob])
+
+    # Check the quantiles, quantile ranks, and proximity counts.
+    y_pred = est.predict(X_test, quantiles=[0.1, 0.5, 0.9])
+    assert np.all(np.isfinite(y_pred))
+    assert np.all(np.diff(y_pred, axis=1) >= 0)
+    y_ranks = est.quantile_ranks(X_test, y_test)
+    assert np.all((y_ranks >= 0) & (y_ranks <= 1))
+    assert len(est.proximity_counts(X_test)) == len(X_test)
+
+    # Check that a forest fit without missing values accepts them when predicting.
+    est.fit(X_train_complete, y_train)
+    sklearn_est.fit(X_train_complete, y_train)
+    assert_allclose(est.predict(X_test, **kwargs), sklearn_est.predict(X_test))
+
+    # Check that missing values are supported with absolute errors where the
+    # scikit-learn forest supports them (with scikit-learn >= 1.9).
+    params_criterion = {**params, "n_estimators": 3, "criterion": "absolute_error"}
+    est_criterion = ForestRegressor(**params_criterion)
+    allow_nan = get_tags(SklearnForestRegressor(**params_criterion)).input_tags.allow_nan
+    assert get_tags(est_criterion).input_tags.allow_nan == allow_nan
+    if allow_nan:
+        est_criterion.fit(X_train, y_train)
+
+    # Check that missing values are rejected in sparse inputs and in the targets.
     with pytest.raises(ValueError):
-        est.quantile_ranks(X, y)
-
-    # Check that the estimator tags agree that missing values are not supported.
-    assert not est._more_tags()["allow_nan"]  # the tags of scikit-learn < 1.6
-    if sklearn_version >= parse_version("1.6"):
-        from sklearn.utils import get_tags
-
-        assert not get_tags(est).input_tags.allow_nan
+        est.fit(sparse.csr_matrix(X_train), y_train)
+    y_train_missing = y_train.copy()
+    y_train_missing[0] = np.nan
+    with pytest.raises(ValueError):
+        est.fit(X_train_complete, y_train_missing)
 
 
 @pytest.mark.parametrize("name", FOREST_REGRESSORS)
@@ -1772,14 +1829,19 @@ def test_oob_methods_validate_once(name):
         assert_allclose(est.predict(X_sparse, oob_score=True), y_pred)
         assert_allclose(est.quantile_ranks(X_sparse, y, oob_score=True), y_ranks)
 
-        # Missing values are still rejected.
+        # Missing values are still rejected where they are not supported, and
+        # otherwise only change the ranks of the samples that have them.
         X_nan = X.copy()
         X_nan[0, 0] = np.nan
-        with pytest.raises(ValueError):
-            est.quantile_ranks(X_nan, y, oob_score=True)
+        if sklearn_version < parse_version("1.8"):
+            with pytest.raises(ValueError):
+                est.quantile_ranks(X_nan, y, oob_score=True)
+        else:
+            y_ranks_nan = est.quantile_ranks(X_nan, y, oob_score=True)
+            assert_allclose(y_ranks_nan[1:], y_ranks[1:])
 
 
-def check_monotonic_constraints(name, max_samples_leaf):
+def check_monotonic_constraints(name, max_samples_leaf, missing_values):
     """Check monotonic constraints."""
     ForestRegressor = FOREST_REGRESSORS[name]
 
@@ -1793,6 +1855,8 @@ def check_monotonic_constraints(name, max_samples_leaf):
         n_informative=5,
         random_state=0,
     )
+    if missing_values:
+        X[np.random.default_rng(0).random(X.shape) < 0.1] = np.nan
     train = np.arange(n_samples_train)
     test = np.arange(n_samples_train, n_samples)
     X_train = X[train]
@@ -1814,6 +1878,19 @@ def check_monotonic_constraints(name, max_samples_leaf):
         bootstrap=True,
     )
 
+    if missing_values:
+        # Check that missing values are rejected if they are not supported, or if
+        # the trees reject them with monotonicity constraints (scikit-learn < 1.9).
+        try:
+            type(est.estimator)(monotonic_cst=monotonic_cst).fit(X_train, y_train)
+            supported = sklearn_version >= parse_version("1.8")
+        except ValueError:
+            supported = False
+        if not supported:
+            with pytest.raises(ValueError):
+                est.fit(X_train, y_train)
+            return
+
     for oob_score in [False, True]:
         if not oob_score:
             est.fit(X_train, y_train)
@@ -1823,7 +1900,7 @@ def check_monotonic_constraints(name, max_samples_leaf):
         y = est.predict(X_test, oob_score=oob_score)
 
         score = est.score(X_test, y_test, quantiles=0.5)
-        assert score > 0.75
+        assert score > (0.6 if missing_values else 0.75)
 
         # Check the monotonic increase constraint.
         with warnings.catch_warnings():
@@ -1850,8 +1927,9 @@ def check_monotonic_constraints(name, max_samples_leaf):
 
 @pytest.mark.parametrize("name", FOREST_REGRESSORS)
 @pytest.mark.parametrize("max_samples_leaf", [1])
-def test_monotonic_constraints(name, max_samples_leaf):
-    check_monotonic_constraints(name, max_samples_leaf)
+@pytest.mark.parametrize("missing_values", [False, True])
+def test_monotonic_constraints(name, max_samples_leaf, missing_values):
+    check_monotonic_constraints(name, max_samples_leaf, missing_values)
 
 
 @pytest.mark.parametrize("name", FOREST_REGRESSORS)
