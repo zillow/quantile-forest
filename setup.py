@@ -69,7 +69,9 @@ def configure_extension_modules():
 
 def setup_package():
     metadata = dict(
-        packages=find_packages(),
+        # Only the package, as examples/ (which has an __init__.py) would otherwise be
+        # installed as a top-level package.
+        packages=find_packages(include=["quantile_forest", "quantile_forest.*"]),
         zip_safe=False,
     )
 
