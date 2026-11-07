@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Release Notes &#8212; quantile-forest 1.4.2 documentation</title>
+    <title>Release Notes &#8212; quantile-forest 1.5.0 documentation</title>
   
   
   
@@ -31,7 +31,7 @@
 
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
-    <link rel="stylesheet" type="text/css" href="../_static/altair-plot.css?v=a673d9d3" />
+    <link rel="stylesheet" type="text/css" href="../_static/altair-plot.css?v=2c4d29ee" />
     <link rel="stylesheet" type="text/css" href="../_static/gallery.css?v=8f271e45" />
     <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="../_static/documentation_options.js?v=02f2166e"></script>
+    <script src="../_static/documentation_options.js?v=e0a75244"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -88,7 +88,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="1.4.2" />
+  <meta name="docsearch:version" content="1.5.0" />
   
     
     <script src="../_static/searchtools.js"></script>
@@ -158,8 +158,8 @@
     
     
     
-    <img src="../_static/quantile-forest-logo.svg" class="logo__image only-light" alt="quantile-forest 1.4.2 documentation - Home"/>
-    <img src="../_static/quantile-forest-logo-white.svg" class="logo__image only-dark pst-js-only" alt="quantile-forest 1.4.2 documentation - Home"/>
+    <img src="../_static/quantile-forest-logo.svg" class="logo__image only-light" alt="quantile-forest 1.5.0 documentation - Home"/>
+    <img src="../_static/quantile-forest-logo-white.svg" class="logo__image only-dark pst-js-only" alt="quantile-forest 1.5.0 documentation - Home"/>
   
   
 </a></div>
@@ -428,6 +428,72 @@
                   
   <section id="release-notes">
 <span id="changes"></span><h1>Release Notes<a class="headerlink" href="#release-notes" title="Link to this heading">#</a></h1>
+<section id="version-1-5-0-released-nov-06-2026">
+<h2>Version 1.5.0 (released Nov 06, 2026)<a class="headerlink" href="#version-1-5-0-released-nov-06-2026" title="Link to this heading">#</a></h2>
+<p>This version adds support for Python version 3.15 and for missing values, and adds wheels for arm64 Linux. It drops support for Python 3.9 and 3.10 and now requires scikit-learn 1.9 or later. The leaf samples are now weighted by their sample weights, and the default <code class="docutils literal notranslate"><span class="pre">interpolation</span></code> is now <code class="docutils literal notranslate"><span class="pre">&quot;averaged_inverted_cdf&quot;</span></code>, which matches scikit-learn’s quantile definition, so predictions can change. The training samples of each leaf are now stored without padding, which can greatly reduce the memory taken by a model and its pickle. The <code class="docutils literal notranslate"><span class="pre">sparse_pickle</span></code> parameter of <code class="docutils literal notranslate"><span class="pre">fit</span></code> is removed. Models pickled by earlier versions still load, but earlier versions cannot load models pickled by this version.</p>
+<p><strong>Breaking changes</strong></p>
+<ul class="simple">
+<li><p>Weight leaf samples by their sample weights, and default to scikit-learn’s quantile definition by <a class="reference external" href="https://github.com/reidjohnson">&#64;reidjohnson</a> in <a class="reference external" href="https://github.com/zillow/quantile-forest/pull/190">#190</a></p></li>
+<li><p>Store the training samples of each leaf without padding by <a class="reference external" href="https://github.com/reidjohnson">&#64;reidjohnson</a> in <a class="reference external" href="https://github.com/zillow/quantile-forest/pull/201">#201</a></p></li>
+<li><p>Prepare 1.5.0: release notes, nightly scikit-learn tests, cleanups by <a class="reference external" href="https://github.com/reidjohnson">&#64;reidjohnson</a> in <a class="reference external" href="https://github.com/zillow/quantile-forest/pull/202">#202</a></p></li>
+</ul>
+<p><strong>New features</strong></p>
+<ul class="simple">
+<li><p>Add arm64 Linux wheel builds to CI/CD by <a class="reference external" href="https://github.com/bezineb5">&#64;bezineb5</a> in <a class="reference external" href="https://github.com/zillow/quantile-forest/pull/158">#158</a></p></li>
+<li><p>Python 3.15 Support by <a class="reference external" href="https://github.com/reidjohnson">&#64;reidjohnson</a> in <a class="reference external" href="https://github.com/zillow/quantile-forest/pull/197">#197</a></p></li>
+<li><p>Support missing values as scikit-learn’s forests do by <a class="reference external" href="https://github.com/reidjohnson">&#64;reidjohnson</a> in <a class="reference external" href="https://github.com/zillow/quantile-forest/pull/198">#198</a></p></li>
+</ul>
+<p><strong>Performance</strong></p>
+<ul class="simple">
+<li><p>Make weighted predictions and proximity counts independent of training size by <a class="reference external" href="https://github.com/reidjohnson">&#64;reidjohnson</a> in <a class="reference external" href="https://github.com/zillow/quantile-forest/pull/179">#179</a></p></li>
+<li><p>Speed up out-of-bag sample lookups by <a class="reference external" href="https://github.com/reidjohnson">&#64;reidjohnson</a> in <a class="reference external" href="https://github.com/zillow/quantile-forest/pull/178">#178</a></p></li>
+<li><p>Store training targets as an array, so predict doesn’t copy them by <a class="reference external" href="https://github.com/reidjohnson">&#64;reidjohnson</a> in <a class="reference external" href="https://github.com/zillow/quantile-forest/pull/184">#184</a></p></li>
+<li><p>Compute OOB quantiles without a Python loop over rows by <a class="reference external" href="https://github.com/reidjohnson">&#64;reidjohnson</a> in <a class="reference external" href="https://github.com/zillow/quantile-forest/pull/185">#185</a></p></li>
+<li><p>Compute monotonic bounds one tree level at a time by <a class="reference external" href="https://github.com/reidjohnson">&#64;reidjohnson</a> in <a class="reference external" href="https://github.com/zillow/quantile-forest/pull/186">#186</a></p></li>
+</ul>
+<p><strong>Bug fixes</strong></p>
+<ul class="simple">
+<li><p>Avoid changing global random state during leaf subsampling by <a class="reference external" href="https://github.com/Ra1nhy">&#64;Ra1nhy</a> in <a class="reference external" href="https://github.com/zillow/quantile-forest/pull/167">#167</a></p></li>
+<li><p>Fix sample weight indexing when collecting leaf samples by <a class="reference external" href="https://github.com/AryanRG">&#64;AryanRG</a> in <a class="reference external" href="https://github.com/zillow/quantile-forest/pull/168">#168</a></p></li>
+<li><p>Fix float max_samples_leaf in predict and leaf padding by <a class="reference external" href="https://github.com/reidjohnson">&#64;reidjohnson</a> in <a class="reference external" href="https://github.com/zillow/quantile-forest/pull/170">#170</a></p></li>
+<li><p>Stop quantile_ranks from resetting fitted feature attributes by <a class="reference external" href="https://github.com/reidjohnson">&#64;reidjohnson</a> in <a class="reference external" href="https://github.com/zillow/quantile-forest/pull/172">#172</a></p></li>
+<li><p>Validate sample weights before storing them in fit by <a class="reference external" href="https://github.com/reidjohnson">&#64;reidjohnson</a> in <a class="reference external" href="https://github.com/zillow/quantile-forest/pull/174">#174</a></p></li>
+<li><p>Fix proximity_counts argument checks and return types, and docstrings by <a class="reference external" href="https://github.com/reidjohnson">&#64;reidjohnson</a> in <a class="reference external" href="https://github.com/zillow/quantile-forest/pull/177">#177</a></p></li>
+<li><p>Fix models loaded from sparse pickles or read-only memory maps by <a class="reference external" href="https://github.com/reidjohnson">&#64;reidjohnson</a> in <a class="reference external" href="https://github.com/zillow/quantile-forest/pull/180">#180</a></p></li>
+<li><p>Fix sparse inputs in predict by <a class="reference external" href="https://github.com/reidjohnson">&#64;reidjohnson</a> in <a class="reference external" href="https://github.com/zillow/quantile-forest/pull/173">#173</a></p></li>
+<li><p>Validate quantiles as array-likes and reject NaN or empty quantiles by <a class="reference external" href="https://github.com/reidjohnson">&#64;reidjohnson</a> in <a class="reference external" href="https://github.com/zillow/quantile-forest/pull/175">#175</a></p></li>
+<li><p>Declare that missing values are not supported, and reject them up front by <a class="reference external" href="https://github.com/reidjohnson">&#64;reidjohnson</a> in <a class="reference external" href="https://github.com/zillow/quantile-forest/pull/176">#176</a></p></li>
+<li><p>Fix weighted quantiles that use zero-weight inputs or miss exact ranks by <a class="reference external" href="https://github.com/reidjohnson">&#64;reidjohnson</a> in <a class="reference external" href="https://github.com/zillow/quantile-forest/pull/171">#171</a></p></li>
+<li><p>Group leaf samples with a stable sort, so results don’t depend on the CPU by <a class="reference external" href="https://github.com/reidjohnson">&#64;reidjohnson</a> in <a class="reference external" href="https://github.com/zillow/quantile-forest/pull/181">#181</a></p></li>
+<li><p>Validate inputs once for OOB samples, without a warning per tree by <a class="reference external" href="https://github.com/reidjohnson">&#64;reidjohnson</a> in <a class="reference external" href="https://github.com/zillow/quantile-forest/pull/182">#182</a></p></li>
+<li><p>Use the fitted trees, not n_estimators, in predict by <a class="reference external" href="https://github.com/reidjohnson">&#64;reidjohnson</a> in <a class="reference external" href="https://github.com/zillow/quantile-forest/pull/183">#183</a></p></li>
+<li><p>Rank among the clipped leaf values in quantile_ranks with monotonic constraints by <a class="reference external" href="https://github.com/reidjohnson">&#64;reidjohnson</a> in <a class="reference external" href="https://github.com/zillow/quantile-forest/pull/188">#188</a></p></li>
+<li><p>Fix small issues found in a review of main by <a class="reference external" href="https://github.com/reidjohnson">&#64;reidjohnson</a> in <a class="reference external" href="https://github.com/zillow/quantile-forest/pull/199">#199</a></p></li>
+<li><p>Redraw OOB samples as the forest drew them, for older models by <a class="reference external" href="https://github.com/reidjohnson">&#64;reidjohnson</a> in <a class="reference external" href="https://github.com/zillow/quantile-forest/pull/200">#200</a></p></li>
+</ul>
+<p><strong>Documentation</strong></p>
+<ul class="simple">
+<li><p>Document that monotonic constraints narrow prediction intervals by <a class="reference external" href="https://github.com/reidjohnson">&#64;reidjohnson</a> in <a class="reference external" href="https://github.com/zillow/quantile-forest/pull/187">#187</a></p></li>
+<li><p>Document what proximity counts count by <a class="reference external" href="https://github.com/reidjohnson">&#64;reidjohnson</a> in <a class="reference external" href="https://github.com/zillow/quantile-forest/pull/189">#189</a></p></li>
+<li><p>Fix the gallery examples, and add an example of monotonic constraints by <a class="reference external" href="https://github.com/reidjohnson">&#64;reidjohnson</a> in <a class="reference external" href="https://github.com/zillow/quantile-forest/pull/191">#191</a></p></li>
+<li><p>Add a QRF vs. gradient boosting example and tidy up the gallery by <a class="reference external" href="https://github.com/reidjohnson">&#64;reidjohnson</a> in <a class="reference external" href="https://github.com/zillow/quantile-forest/pull/194">#194</a></p></li>
+<li><p>Add gallery sliders by <a class="reference external" href="https://github.com/reidjohnson">&#64;reidjohnson</a> in <a class="reference external" href="https://github.com/zillow/quantile-forest/pull/195">#195</a></p></li>
+<li><p>Add docs navigation by <a class="reference external" href="https://github.com/reidjohnson">&#64;reidjohnson</a> in <a class="reference external" href="https://github.com/zillow/quantile-forest/pull/196">#196</a></p></li>
+</ul>
+<p><strong>Maintenance</strong></p>
+<ul class="simple">
+<li><p>Bump actions/checkout from 6 to 7 by <a class="reference external" href="https://github.com/dependabot">&#64;dependabot</a> in <a class="reference external" href="https://github.com/zillow/quantile-forest/pull/157">#157</a></p></li>
+<li><p>Bump docker/setup-qemu-action from 3 to 4 by <a class="reference external" href="https://github.com/dependabot">&#64;dependabot</a> in <a class="reference external" href="https://github.com/zillow/quantile-forest/pull/161">#161</a></p></li>
+<li><p>Bump actions/setup-python from 6 to 7 by <a class="reference external" href="https://github.com/dependabot">&#64;dependabot</a> in <a class="reference external" href="https://github.com/zillow/quantile-forest/pull/159">#159</a></p></li>
+<li><p>Bump pypa/gh-action-pypi-publish from 1.14.0 to 1.14.1 by <a class="reference external" href="https://github.com/dependabot">&#64;dependabot</a> in <a class="reference external" href="https://github.com/zillow/quantile-forest/pull/160">#160</a></p></li>
+<li><p>Bump pypa/gh-action-pypi-publish from 1.14.1 to 1.14.2 by <a class="reference external" href="https://github.com/dependabot">&#64;dependabot</a> in <a class="reference external" href="https://github.com/zillow/quantile-forest/pull/163">#163</a></p></li>
+<li><p>Remove inline from pyx by <a class="reference external" href="https://github.com/reidjohnson">&#64;reidjohnson</a> in <a class="reference external" href="https://github.com/zillow/quantile-forest/pull/169">#169</a></p></li>
+<li><p>Bump pypa/cibuildwheel from 4.1.0 to 4.3.4 by <a class="reference external" href="https://github.com/dependabot">&#64;dependabot</a> in <a class="reference external" href="https://github.com/zillow/quantile-forest/pull/166">#166</a></p></li>
+<li><p>Bump pypa/cibuildwheel from 4.3.4 to 4.3.5 by <a class="reference external" href="https://github.com/dependabot">&#64;dependabot</a> in <a class="reference external" href="https://github.com/zillow/quantile-forest/pull/192">#192</a></p></li>
+<li><p>Bump pypa/gh-action-pypi-publish from 1.14.2 to 1.14.3 by <a class="reference external" href="https://github.com/dependabot">&#64;dependabot</a> in <a class="reference external" href="https://github.com/zillow/quantile-forest/pull/193">#193</a></p></li>
+</ul>
+<p><strong>Full Changelog</strong>: <a class="reference external" href="https://github.com/zillow/quantile-forest/compare/v1.4.2...v1.5.0">https://github.com/zillow/quantile-forest/compare/v1.4.2…v1.5.0</a></p>
+</section>
 <section id="version-1-4-2-released-jun-21-2026">
 <h2>Version 1.4.2 (released Jun 21, 2026)<a class="headerlink" href="#version-1-4-2-released-jun-21-2026" title="Link to this heading">#</a></h2>
 <ul class="simple">

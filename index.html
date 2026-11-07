@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>quantile-forest &#8212; quantile-forest 1.4.2 documentation</title>
+    <title>quantile-forest &#8212; quantile-forest 1.5.0 documentation</title>
   
   
   
@@ -31,7 +31,7 @@
 
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
-    <link rel="stylesheet" type="text/css" href="_static/altair-plot.css?v=a673d9d3" />
+    <link rel="stylesheet" type="text/css" href="_static/altair-plot.css?v=2c4d29ee" />
     <link rel="stylesheet" type="text/css" href="_static/gallery.css?v=8f271e45" />
     <link rel="stylesheet" type="text/css" href="_static/sphinx-design.min.css?v=95c83b7e" />
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="_static/documentation_options.js?v=02f2166e"></script>
+    <script src="_static/documentation_options.js?v=e0a75244"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/clipboard.min.js?v=a7894cd8"></script>
@@ -88,7 +88,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="1.4.2" />
+  <meta name="docsearch:version" content="1.5.0" />
   
     
     <script src="_static/searchtools.js"></script>
@@ -158,8 +158,8 @@
     
     
     
-    <img src="_static/quantile-forest-logo.svg" class="logo__image only-light" alt="quantile-forest 1.4.2 documentation - Home"/>
-    <img src="_static/quantile-forest-logo-white.svg" class="logo__image only-dark pst-js-only" alt="quantile-forest 1.4.2 documentation - Home"/>
+    <img src="_static/quantile-forest-logo.svg" class="logo__image only-light" alt="quantile-forest 1.5.0 documentation - Home"/>
+    <img src="_static/quantile-forest-logo-white.svg" class="logo__image only-dark pst-js-only" alt="quantile-forest 1.5.0 documentation - Home"/>
   
   
 </a></div>
@@ -406,9 +406,9 @@
                   
   <section id="quantile-forest">
 <h1>quantile-forest<a class="headerlink" href="#quantile-forest" title="Link to this heading">#</a></h1>
-<p><strong>Version</strong>: 1.4.2</p>
+<p><strong>Version</strong>: 1.5.0</p>
 <p class="lead"><strong>quantile-forest</strong> is an implementation of scikit-learn compatible quantile regression forests.</p>
-<p class="lead">Quantile regression forests (QRF) are a non-parametric, tree-based ensemble method for estimating conditional quantiles, with application to high-dimensional data and uncertainty estimation. The estimators in this package are performant, Cython-optimized QRF implementations that extend the forest estimators available in scikit-learn to estimate conditional quantiles, as described by <span class="bibtex-citation" id="id1">Meinshausen [<a class="reference internal" href="references.html#id3" title="Nicolai Meinshausen. Quantile Regression Forests. Journal of Machine Learning Research, 7(6), 983-999, 2006. URL: https://www.jmlr.org/papers/volume7/meinshausen06a/meinshausen06a.pdf.">Mei06</a>]</span>. The estimators can estimate arbitrary quantiles at prediction time without retraining and provide methods for out-of-bag estimation, calculating quantile ranks, and computing proximity counts. They are compatible with and can serve as drop-in replacements for the scikit-learn forest regressors.</p>
+<p class="lead">Quantile regression forests (QRF) are a non-parametric, tree-based ensemble method for estimating conditional quantiles, with application to high-dimensional data and uncertainty estimation. The estimators in this package are performant, Cython-optimized QRF implementations that extend the forest estimators available in scikit-learn to estimate conditional quantiles, as described by <span class="bibtex-citation" id="id1">Meinshausen [<a class="reference internal" href="references.html#id3" title="Nicolai Meinshausen. Quantile Regression Forests. Journal of Machine Learning Research, 7(6), 983-999, 2006. URL: https://www.jmlr.org/papers/volume7/meinshausen06a/meinshausen06a.pdf.">Mei06</a>]</span>. The estimators can estimate arbitrary quantiles at prediction time without retraining and provide methods for out-of-bag estimation, calculating quantile ranks, and computing proximity counts. They support sample weights, multiple targets, monotonic constraints, and missing values. They are compatible with and can serve as drop-in replacements for the scikit-learn forest regressors.</p>
 <div class="sd-container-fluid sd-sphinx-override sd-mb-4 sd-pt-0 sd-pb-2 sd-pl-3 sd-pr-5 startpage-grid docutils">
 <div class="sd-row sd-row-cols-1 sd-row-cols-xs-1 sd-row-cols-sm-1 sd-row-cols-md-2 sd-row-cols-lg-2 sd-g-2 sd-g-xs-2 sd-g-sm-2 sd-g-md-3 sd-g-lg-3 docutils">
 <div class="sd-col sd-d-flex-row docutils">

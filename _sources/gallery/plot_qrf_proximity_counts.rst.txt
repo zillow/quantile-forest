@@ -12,13 +12,15 @@ Using Proximity Counts to Identify Similar Samples
 
 This example demonstrates the use of quantile regression forest (QRF)
 proximity counts to identify similar samples. In this scenario, we train a QRF
-on a noisy dataset to predict individual pixel values in an unsupervised
-manner for denoising purposes; the target labels are not used during training.
-We then retrieve the proximity values for the noisy test samples. We visualize
-each test sample alongside a set of similar (non-noisy) training samples
-determined by their proximity counts. These similar samples are ordered from
-the highest to the lowest proximity count. This illustrates how proximity
-counts can effectively identify similar samples even in noisy conditions.
+on noisy copies of the 8x8 images of handwritten digits in the digits dataset
+to predict individual pixel values in an unsupervised manner for denoising
+purposes; the target labels (the digits) are not used during training. We then
+retrieve the proximity values for the noisy test samples. We visualize each
+test sample alongside a set of similar (non-noisy) training samples determined
+by their proximity counts. These similar samples are ordered from the highest
+to the lowest proximity count. This illustrates how proximity counts can
+effectively identify similar samples even in noisy conditions. Use the slider
+to select a test sample.
 
 
 .. dynamic-altair-plot::
@@ -74,13 +76,6 @@ counts can effectively identify similar samples even in noisy conditions.
         """Combine two floats from separate data frames into a single number."""
         combined_df = df1 * scale + df2
         return combined_df
-
-
-    def extract_floats(combined_df, scale=1000):
-        """Extract the original floats from the combined data frame."""
-        df1 = np.floor(combined_df / scale)
-        df2 = combined_df - (df1 * scale)
-        return df1, df2
 
 
     # Randomly add Gaussian noise to the training and test data.
@@ -311,13 +306,6 @@ counts can effectively identify similar samples even in noisy conditions.
                 """Combine two floats from separate data frames into a single number."""
                 combined_df = df1 * scale + df2
                 return combined_df
-
-
-            def extract_floats(combined_df, scale=1000):
-                """Extract the original floats from the combined data frame."""
-                df1 = np.floor(combined_df / scale)
-                df2 = combined_df - (df1 * scale)
-                return df1, df2
 
 
             # Randomly add Gaussian noise to the training and test data.

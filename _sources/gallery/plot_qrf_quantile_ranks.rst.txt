@@ -15,14 +15,14 @@ ranks to identify potential outliers in a dataset. In this scenario, we train
 a QRF model on a toy dataset, in which some of the targets have been shifted
 to make outliers, and use quantile ranks to highlight values that deviate
 significantly from the expected range. Potential outliers are defined as
-points whose quantile rank falls outside the specified threshold interval
-around the median. Since the ranked samples are also the training samples, we
-calculate out-of-bag (OOB) quantile ranks: each sample is ranked among the
-training samples of the trees that did not draw it, so that an outlier is not
-ranked against itself, which would hide it. The plot shows the precision (the
-percentage of potential outliers whose targets were shifted) and the recall
-(the percentage of shifted targets flagged as potential outliers) at the
-selected threshold.
+points whose quantile rank falls outside a threshold interval around the
+median; use the slider to set the interval. Since the ranked samples are also
+the training samples, we calculate out-of-bag (OOB) quantile ranks: each
+sample is ranked among the training samples of the trees that did not draw it,
+so that an outlier is not ranked against itself, which would hide it. The plot
+shows the precision (the percentage of potential outliers whose targets were
+shifted) and the recall (the percentage of shifted targets flagged as
+potential outliers) at the selected threshold.
 
 
 .. dynamic-altair-plot::

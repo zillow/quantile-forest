@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Fitting and Predicting &#8212; quantile-forest 1.4.2 documentation</title>
+    <title>Fitting and Predicting &#8212; quantile-forest 1.5.0 documentation</title>
   
   
   
@@ -31,7 +31,7 @@
 
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
-    <link rel="stylesheet" type="text/css" href="../_static/altair-plot.css?v=a673d9d3" />
+    <link rel="stylesheet" type="text/css" href="../_static/altair-plot.css?v=2c4d29ee" />
     <link rel="stylesheet" type="text/css" href="../_static/gallery.css?v=8f271e45" />
     <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="../_static/documentation_options.js?v=02f2166e"></script>
+    <script src="../_static/documentation_options.js?v=e0a75244"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -79,6 +79,7 @@
     <script src="https://cdn.jsdelivr.net/npm/vega@6"></script>
     <script src="https://cdn.jsdelivr.net/npm/vega-lite@6.4.1"></script>
     <script src="https://cdn.jsdelivr.net/npm/vega-embed@7"></script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'user_guide/fit_predict';</script>
     <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
     <link rel="icon" href="../_static/favicon.ico"/>
@@ -89,7 +90,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="1.4.2" />
+  <meta name="docsearch:version" content="1.5.0" />
   
     
     <script src="../_static/searchtools.js"></script>
@@ -159,8 +160,8 @@
     
     
     
-    <img src="../_static/quantile-forest-logo.svg" class="logo__image only-light" alt="quantile-forest 1.4.2 documentation - Home"/>
-    <img src="../_static/quantile-forest-logo-white.svg" class="logo__image only-dark pst-js-only" alt="quantile-forest 1.4.2 documentation - Home"/>
+    <img src="../_static/quantile-forest-logo.svg" class="logo__image only-light" alt="quantile-forest 1.5.0 documentation - Home"/>
+    <img src="../_static/quantile-forest-logo-white.svg" class="logo__image only-dark pst-js-only" alt="quantile-forest 1.5.0 documentation - Home"/>
   
   
 </a></div>
@@ -469,6 +470,49 @@
 </div>
 <p>During model initialization, the parameter <code class="docutils literal notranslate"><span class="pre">max_samples_leaf</span></code> can be specified, which determines the maximum number of samples per leaf node to retain. If <code class="docutils literal notranslate"><span class="pre">max_samples_leaf</span></code> is smaller than the number of samples in a given leaf node, then a subset of values are randomly selected. By default, the model retains one randomly selected sample per leaf node (<code class="docutils literal notranslate"><span class="pre">max_samples_leaf=1</span></code>), which enables the use of optimizations at prediction time that are not available when a variable number of samples may be retained per leaf. All samples can be retained by specifying <code class="docutils literal notranslate"><span class="pre">max_samples_leaf=None</span></code>. Note that the number of retained samples can materially impact the size of the model object.</p>
 </section>
+<section id="sample-weights">
+<h2>Sample Weights<a class="headerlink" href="#sample-weights" title="Link to this heading">#</a></h2>
+<p>Sample weights can be specified when fitting the model, as for a scikit-learn forest, which uses them to fit the trees:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sample_weight</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">y_train</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">qrf_weighted</span> <span class="o">=</span> <span class="n">RandomForestQuantileRegressor</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">qrf_weighted</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">sample_weight</span><span class="o">=</span><span class="n">sample_weight</span><span class="p">)</span>
+<span class="go">RandomForestQuantileRegressor(...)</span>
+</pre></div>
+</div>
+<p>The training samples used for prediction are weighted too: a sample with weight 2 counts like two samples with weight 1, and samples with zero weight are left out. With bootstrapping (<code class="docutils literal notranslate"><span class="pre">bootstrap=True</span></code>), scikit-learn draws the bootstrap samples in proportion to the weights, so each sample counts once for each time it is drawn. Otherwise, the samples in each leaf node are weighted, except that if each leaf node keeps one sample (<code class="docutils literal notranslate"><span class="pre">max_samples_leaf=1</span></code>), the sample is picked with probability proportional to its weight. With <code class="docutils literal notranslate"><span class="pre">weighted_leaves=True</span></code>, the size of a leaf node is the total weight of its samples. Either way, as without weights, the mean predictions of a model fit with <code class="docutils literal notranslate"><span class="pre">max_samples_leaf=None</span></code> equal those of a scikit-learn forest if <code class="docutils literal notranslate"><span class="pre">aggregate_leaves_first=False</span></code> (see below), and so do the medians of a model fit with <code class="docutils literal notranslate"><span class="pre">criterion=&quot;absolute_error&quot;</span></code> (with the default <code class="docutils literal notranslate"><span class="pre">interpolation=&quot;averaged_inverted_cdf&quot;</span></code>). Proximity counts do not include the weights.</p>
+<p>Only the relative weights matter. The quantiles of <code class="docutils literal notranslate"><span class="pre">interpolation=&quot;inverted_cdf&quot;</span></code> and <code class="docutils literal notranslate"><span class="pre">interpolation=&quot;averaged_inverted_cdf&quot;</span></code> depend on nothing else, so integer weights give the same quantiles as repeating each sample that number of times. The other interpolation methods also depend on the number of samples, for which a sample of average (positive) weight counts as one sample. For an example that uses sample weights to correct for oversampling, see <a class="reference internal" href="../gallery/plot_qrf_sample_weights.html#gallery-plot-qrf-sample-weights"><span class="std std-ref">Quantile Regression Forests with Sample Weights</span></a>.</p>
+<p class="rubric">Examples</p>
+<span class="gallery">
+
+<a class="imagegroup" href="../gallery/plot_qrf_sample_weights.html">
+<span
+    class="image" alt="Quantile Regression Forests with Sample Weights"
+
+    data-light-src="url(../_static/plot_qrf_sample_weights-thumb.png)"
+    data-dark-src="url(../_static/plot_qrf_sample_weights-thumb-dark.png)"
+    style="background-image: url(../_static/plot_qrf_sample_weights-thumb.png);"
+
+></span>
+
+<span class="image-title">Quantile Regression Forests with Sample Weights</span>
+</a>
+
+</span>
+
+<div style='clear:both;'></div></section>
+<section id="missing-values">
+<h2>Missing Values<a class="headerlink" href="#missing-values" title="Link to this heading">#</a></h2>
+<p>The quantile forests accept missing values (NaN) in <code class="docutils literal notranslate"><span class="pre">X</span></code> wherever a scikit-learn forest does. When the trees are fit, each split learns whether samples missing its feature go to the left or the right child, and samples with missing values follow the same splits when predicting. If none of the training samples at a split were missing its feature, samples missing it go to the child with more training samples. A sample’s predicted quantiles then come from the training samples in the leaves that it reaches, as for any other sample:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">X_train_missing</span> <span class="o">=</span> <span class="n">X_train</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+<span class="n">X_train_missing</span><span class="p">[::</span><span class="mi">10</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>  <span class="c1"># every tenth sample is missing the first feature</span>
+<span class="n">qrf_missing</span> <span class="o">=</span> <span class="n">RandomForestQuantileRegressor</span><span class="p">()</span>
+<span class="n">qrf_missing</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train_missing</span><span class="p">,</span> <span class="n">y_train</span><span class="p">)</span>
+<span class="n">y_pred</span> <span class="o">=</span> <span class="n">qrf_missing</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">,</span> <span class="n">quantiles</span><span class="o">=</span><span class="p">[</span><span class="mf">0.25</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.75</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>As with scikit-learn, missing values are not supported in sparse inputs.</p>
+</section>
 <section id="making-predictions">
 <h2>Making Predictions<a class="headerlink" href="#making-predictions" title="Link to this heading">#</a></h2>
 <p>A notable advantage of quantile forests is that they can be fit once, while arbitrary quantiles can be estimated at prediction time. Accordingly, since the quantiles can be specified at prediction time, the model accepts an optional parameter during the call to the <code class="docutils literal notranslate"><span class="pre">predict</span></code> method, which can be a float or list of floats that specify the empirical quantiles to return:</p>
@@ -511,6 +555,11 @@
 <span class="go">True</span>
 </pre></div>
 </div>
+<p id="user-guide-interpolation">By default (<code class="docutils literal notranslate"><span class="pre">interpolation=&quot;averaged_inverted_cdf&quot;</span></code>), a quantile <code class="docutils literal notranslate"><span class="pre">q</span></code> is the smallest training target such that at least a fraction <code class="docutils literal notranslate"><span class="pre">q</span></code> of the (weighted) training samples are at or below it, or, if exactly that fraction are, its average with the next target, so that the median is the usual median. This is NumPy’s method of the same name and how scikit-learn calculates weighted quantiles. Other methods can be specified with <code class="docutils literal notranslate"><span class="pre">interpolation</span></code>, such as linear interpolation between training targets, the default before version 1.5:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">y_pred</span> <span class="o">=</span> <span class="n">qrf</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">,</span> <span class="n">interpolation</span><span class="o">=</span><span class="s2">"linear"</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>With <code class="docutils literal notranslate"><span class="pre">interpolation=&quot;linear&quot;</span></code>, a quantile is calculated from the input rank <span class="math notranslate nohighlight">\(x\)</span> such that <span class="math notranslate nohighlight">\(x = (N + 1 - 2C)q + C\)</span>, where <span class="math notranslate nohighlight">\(N\)</span> is the number of samples and <span class="math notranslate nohighlight">\(C = 1\)</span> is a constant (degree of freedom). For weighted samples, <span class="math notranslate nohighlight">\(N\)</span> is their total weight instead, with the weights scaled so that a sample of average weight counts as one sample. For a comparison of the methods, see <a class="reference internal" href="../gallery/plot_qrf_interpolation_methods.html#gallery-plot-qrf-interpolation-methods"><span class="std std-ref">Comparing Quantile Interpolation Methods</span></a>.</p>
 <p>Multi-target quantile regression is also supported. If the target values are multi-dimensional, then the second output column will correspond to the number of targets:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">sklearn</span><span class="w"> </span><span class="kn">import</span> <span class="n">datasets</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">quantile_forest</span><span class="w"> </span><span class="kn">import</span> <span class="n">RandomForestQuantileRegressor</span>
@@ -784,6 +833,8 @@
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#fitting-a-model">Fitting a Model</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#sample-weights">Sample Weights</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#missing-values">Missing Values</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#making-predictions">Making Predictions</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#quantile-weighting">Quantile Weighting</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#out-of-bag-estimation">Out-of-Bag Estimation</a></li>

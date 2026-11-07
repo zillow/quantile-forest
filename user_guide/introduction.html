@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Introduction &#8212; quantile-forest 1.4.2 documentation</title>
+    <title>Introduction &#8212; quantile-forest 1.5.0 documentation</title>
   
   
   
@@ -31,7 +31,7 @@
 
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
-    <link rel="stylesheet" type="text/css" href="../_static/altair-plot.css?v=a673d9d3" />
+    <link rel="stylesheet" type="text/css" href="../_static/altair-plot.css?v=2c4d29ee" />
     <link rel="stylesheet" type="text/css" href="../_static/gallery.css?v=8f271e45" />
     <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="../_static/documentation_options.js?v=02f2166e"></script>
+    <script src="../_static/documentation_options.js?v=e0a75244"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -90,7 +90,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="1.4.2" />
+  <meta name="docsearch:version" content="1.5.0" />
   
     
     <script src="../_static/searchtools.js"></script>
@@ -160,8 +160,8 @@
     
     
     
-    <img src="../_static/quantile-forest-logo.svg" class="logo__image only-light" alt="quantile-forest 1.4.2 documentation - Home"/>
-    <img src="../_static/quantile-forest-logo-white.svg" class="logo__image only-dark pst-js-only" alt="quantile-forest 1.4.2 documentation - Home"/>
+    <img src="../_static/quantile-forest-logo.svg" class="logo__image only-light" alt="quantile-forest 1.5.0 documentation - Home"/>
+    <img src="../_static/quantile-forest-logo-white.svg" class="logo__image only-dark pst-js-only" alt="quantile-forest 1.5.0 documentation - Home"/>
   
   
 </a></div>
@@ -468,7 +468,7 @@
 </figcaption>
 </figure>
 <p>The quantiles give more complete information about the distribution of <span class="math notranslate nohighlight">\(Y\)</span> as a function of the predictor variable <span class="math notranslate nohighlight">\(X\)</span> than the conditional mean alone. They can be useful, for example, to build prediction intervals or to perform outlier detection in a high-dimensional dataset.</p>
-<p>In practice, the empirical estimation of quantiles can be calculated in several ways. In this package, a desired quantile is calculated from the input rank <span class="math notranslate nohighlight">\(x\)</span> such that <span class="math notranslate nohighlight">\(x = (N + 1 - 2C)q + C\)</span>, where <span class="math notranslate nohighlight">\(q\)</span> is the quantile, <span class="math notranslate nohighlight">\(N\)</span> is the number of samples, and <span class="math notranslate nohighlight">\(C\)</span> is a constant (degree of freedom). In this package, <span class="math notranslate nohighlight">\(C = 1\)</span>. This package provides methods that calculate quantiles using samples that are weighted and unweighted. In a weighted quantile, <span class="math notranslate nohighlight">\(N\)</span> is calculated from the fraction of the total weight instead of the total number of samples.</p>
+<p>In practice, the empirical estimation of quantiles can be calculated in several ways. By default, a quantile <span class="math notranslate nohighlight">\(q\)</span> is the smallest training response such that at least a fraction <span class="math notranslate nohighlight">\(q\)</span> of the (weighted) training samples are at or below it, averaged with the next response if exactly that fraction are. Other methods can be specified with the <code class="docutils literal notranslate"><span class="pre">interpolation</span></code> parameter of the <code class="docutils literal notranslate"><span class="pre">predict</span></code> method (see <a class="reference internal" href="fit_predict.html#user-guide-interpolation"><span class="std std-ref">the interpolation methods</span></a>).</p>
 </section>
 <section id="quantile-regression-forests">
 <h1>Quantile Regression Forests<a class="headerlink" href="#quantile-regression-forests" title="Link to this heading">#</a></h1>
@@ -478,7 +478,7 @@
 \[\frac{1}{T} \sum_{t=1}^{T} \frac{\mathbb{1}(y_j \in L(x))}{\sum_{i=1}^N \mathbb{1}(y_i \in L(x))},\]</div>
 <p>where <span class="math notranslate nohighlight">\(L(x)\)</span> denotes the leaf that <span class="math notranslate nohighlight">\(x\)</span> falls into.</p>
 <p>Informally, this means that given a new unknown sample, we first find the leaf that it falls into for each tree in the ensemble. Each training sample <span class="math notranslate nohighlight">\(y_j\)</span> that falls into the same leaf as the new sample is given a weight that equals the fraction of samples in the leaf. Each <span class="math notranslate nohighlight">\(y_j\)</span> that does not fall into the same leaf as the new sample is given a weight or frequency of zero. The weights or frequencies for each <span class="math notranslate nohighlight">\(y_j\)</span> are then summed or aggregated across all of the trees in the ensemble. This information can then be used to calculate the empirical quantile estimates.</p>
-<p>This approach was first proposed by <span class="bibtex-citation" id="id1">Meinshausen [<a class="reference internal" href="../references.html#id3" title="Nicolai Meinshausen. Quantile Regression Forests. Journal of Machine Learning Research, 7(6), 983-999, 2006. URL: https://www.jmlr.org/papers/volume7/meinshausen06a/meinshausen06a.pdf.">Mei06</a>]</span>.</p>
+<p>This approach was first proposed by <span class="bibtex-citation" id="id1">Meinshausen [<a class="reference internal" href="../references.html#id3" title="Nicolai Meinshausen. Quantile Regression Forests. Journal of Machine Learning Research, 7(6), 983-999, 2006. URL: https://www.jmlr.org/papers/volume7/meinshausen06a/meinshausen06a.pdf.">Mei06</a>]</span>. This package uses these weights if each leaf keeps all of its training samples (<code class="docutils literal notranslate"><span class="pre">max_samples_leaf=None</span></code>) and <code class="docutils literal notranslate"><span class="pre">weighted_leaves=True</span></code> (see <a class="reference internal" href="fit_predict.html#user-guide-fit-predict"><span class="std std-ref">Fitting and Predicting</span></a>). By default, each leaf keeps one randomly selected sample (<code class="docutils literal notranslate"><span class="pre">max_samples_leaf=1</span></code>), so that each tree contributes one response value, and if leaves keep more samples, each sample in a leaf counts once, whatever the size of the leaf (<code class="docutils literal notranslate"><span class="pre">weighted_leaves=False</span></code>).</p>
 <div class="toctree-wrapper compound">
 </div>
 </section>

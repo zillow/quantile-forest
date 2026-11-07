@@ -14,8 +14,11 @@ This example demonstrates how to extract the empirical distribution from a
 quantile regression forest (QRF) to calculate user-specified functions of
 interest. While a QRF is designed to estimate quantiles, their empirical
 distributions can also be used to calculate other statistical quantities. In
-this scenario, we compute the empirical cumulative distribution function
-(ECDF) for test samples.
+this scenario, we fit a QRF on the diabetes dataset, whose target is a
+quantitative measure of disease progression one year after baseline, and
+compute the empirical cumulative distribution function (ECDF) of the target
+(the response value) for each of 100 test samples. Use the slider, or click a
+curve, to highlight the ECDF of a test sample.
 
 
 .. dynamic-altair-plot::

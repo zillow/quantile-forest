@@ -11,16 +11,18 @@ Quantile Regression Forests vs. Gradient Boosting
 =================================================
 
 This example compares the quantiles predicted by a quantile regression forest
-(QRF) with those predicted by gradient boosting. Gradient boosting fits a
-separate model for each quantile, whereas a QRF fits one model and predicts
-every quantile from the same estimated distribution. Both predict 19 quantiles,
-from 5% to 95%, shown here as a fan of prediction intervals. Because the
-gradient boosting models are fit independently, their quantiles can cross, with
-a higher quantile predicted below a lower one (marked in red), which no
-distribution allows. The quantiles of a QRF cannot cross, and a QRF can predict
-any other quantile without being refit. Use the slider to select an X, at which
-the panels below plot each model's predicted quantiles: those of the QRF never
-decrease, whereas those of gradient boosting decrease wherever they cross.
+(QRF) with those predicted by gradient boosting, on a toy dataset whose target
+is 3 sin(X) plus right-skewed noise that grows with X. Gradient boosting fits
+a separate model for each quantile, whereas a QRF fits one model and predicts
+every quantile from the same estimated distribution. Both predict 19
+quantiles, from 5% to 95%, shown here as a fan of prediction intervals.
+Because the gradient boosting models are fit independently, their quantiles
+can cross, with a higher quantile predicted below a lower one (marked in red),
+which no distribution allows. The quantiles of a QRF cannot cross, and a QRF
+can predict any other quantile without being refit. Use the slider to select
+an X, at which the panels below plot each model's predicted quantiles: those
+of the QRF never decrease, whereas those of gradient boosting decrease
+wherever they cross.
 
 
 .. dynamic-altair-plot::
@@ -104,9 +106,9 @@ decrease, whereas those of gradient boosting decrease wherever they cross.
 
 
     # Evaluate the predictions on the test data, predict on evenly spaced inputs,
-    # and predict on the inputs that can be selected, in steps of 0.2.
+    # and predict on the inputs that can be selected, in steps of 0.1.
     X_grid = np.linspace(*bounds, num=300).reshape(-1, 1)
-    X_select = np.linspace(*bounds, num=51).round(1).reshape(-1, 1)
+    X_select = np.linspace(*bounds, num=101).round(1).reshape(-1, 1)
     metrics, dfs_intervals, dfs_median, dfs_crossed = {}, [], [], []
     dfs_quantiles, dfs_crossed_select = [], []
     for name, predict in models.items():
@@ -192,10 +194,10 @@ decrease, whereas those of gradient boosting decrease wherever they cross.
         shapes = ["circle", bar, "circle", vertical_bar]
 
         # Slider for selecting the input at which the predicted quantiles are plotted.
-        slider = alt.binding_range(name="Selected X: ", min=bounds[0], max=bounds[1], step=0.2)
+        slider = alt.binding_range(name="Selected X: ", min=bounds[0], max=bounds[1], step=0.1)
         x_val = alt.param(name="x_value", value=x_start, bind=slider)
 
-        filter_x = "round(datum.x * 5) == round(x_value * 5)"
+        filter_x = "round(datum.x * 10) == round(x_value * 10)"
 
         # Clicking an entry of the legend highlights its marks (shift-click for more).
         click = alt.selection_point(name="click", fields=["label"], bind="legend")
@@ -498,9 +500,9 @@ decrease, whereas those of gradient boosting decrease wherever they cross.
 
 
             # Evaluate the predictions on the test data, predict on evenly spaced inputs,
-            # and predict on the inputs that can be selected, in steps of 0.2.
+            # and predict on the inputs that can be selected, in steps of 0.1.
             X_grid = np.linspace(*bounds, num=300).reshape(-1, 1)
-            X_select = np.linspace(*bounds, num=51).round(1).reshape(-1, 1)
+            X_select = np.linspace(*bounds, num=101).round(1).reshape(-1, 1)
             metrics, dfs_intervals, dfs_median, dfs_crossed = {}, [], [], []
             dfs_quantiles, dfs_crossed_select = [], []
             for name, predict in models.items():
@@ -586,10 +588,10 @@ decrease, whereas those of gradient boosting decrease wherever they cross.
                 shapes = ["circle", bar, "circle", vertical_bar]
 
                 # Slider for selecting the input at which the predicted quantiles are plotted.
-                slider = alt.binding_range(name="Selected X: ", min=bounds[0], max=bounds[1], step=0.2)
+                slider = alt.binding_range(name="Selected X: ", min=bounds[0], max=bounds[1], step=0.1)
                 x_val = alt.param(name="x_value", value=x_start, bind=slider)
 
-                filter_x = "round(datum.x * 5) == round(x_value * 5)"
+                filter_x = "round(datum.x * 10) == round(x_value * 10)"
 
                 # Clicking an entry of the legend highlights its marks (shift-click for more).
                 click = alt.selection_point(name="click", fields=["label"], bind="legend")

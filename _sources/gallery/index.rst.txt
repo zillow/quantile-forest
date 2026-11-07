@@ -121,6 +121,19 @@ Intervals and Calibration
     <span class="image-title">Monotonic Constraints with Quantile Regression Forests</span>
     </a>
     
+    <a class="imagegroup" href="plot_qrf_sample_weights.html">
+    <span
+        class="image" alt="Quantile Regression Forests with Sample Weights"
+    
+        data-light-src="url(../_static/plot_qrf_sample_weights-thumb.png)"
+        data-dark-src="url(../_static/plot_qrf_sample_weights-thumb-dark.png)"
+        style="background-image: url(../_static/plot_qrf_sample_weights-thumb.png);"
+    
+    ></span>
+
+    <span class="image-title">Quantile Regression Forests with Sample Weights</span>
+    </a>
+    
     </span>
 
     <div style='clear:both;'></div>
