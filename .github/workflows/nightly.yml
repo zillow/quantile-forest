@@ -1,0 +1,48 @@
+name: nightly
+
+# Test against the nightly build of scikit-learn, to catch changes to it that
+# break this package before they are released.
+on:
+  schedule:
+    - cron: '37 8 * * 1'  # weekly, on Mondays
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sklearn-nightly:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Python 3.15
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.15'
+
+      - name: Install uv
+        run: pip install uv
+
+      - name: Create virtual environment
+        run: uv venv
+
+      - name: Install dependencies
+        run: |
+          uv pip install pytest
+          uv pip install -r ./docs/sphinx_requirements.txt
+          uv pip install --verbose --editable .
+
+      - name: Install the nightly build of scikit-learn
+        run: |
+          uv pip install --prerelease=allow --upgrade-package scikit-learn \
+            --extra-index-url https://pypi.anaconda.org/scientific-python-nightly-wheels/simple \
+            scikit-learn
+          uv run --no-sync python -c "import sklearn; print(sklearn.__version__); assert 'dev' in sklearn.__version__"
+
+      # Without syncing, which would reinstall the locked version of scikit-learn.
+      - name: Test with pytest
+        run: |
+          uv run --no-sync pytest --doctest-glob="*.rst" --doctest-modules docs
+          uv run --no-sync pytest --pyargs quantile_forest

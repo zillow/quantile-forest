@@ -30,7 +30,6 @@ from warnings import warn
 
 import joblib
 import numpy as np
-import sklearn
 from scipy.sparse import issparse
 from sklearn.ensemble._forest import (
     ForestRegressor,
@@ -38,20 +37,8 @@ from sklearn.ensemble._forest import (
     _get_n_samples_bootstrap,
 )
 from sklearn.tree import DecisionTreeRegressor, ExtraTreeRegressor
-
-try:
-    from sklearn.tree._tree import DTYPE
-except ImportError:  # scikit-learn >= 1.9 no longer re-exports DTYPE here
-    DTYPE = np.float32  # the value DTYPE has always held
-from sklearn.utils import assert_all_finite, check_array
 from sklearn.utils._param_validation import Interval, RealNotInt
-from sklearn.utils.fixes import parse_version
-from sklearn.utils.validation import _check_sample_weight, check_is_fitted
-
-try:
-    from sklearn.utils.validation import validate_data
-except ImportError:
-    validate_data = None
+from sklearn.utils.validation import _check_sample_weight, check_is_fitted, validate_data
 
 from ._quantile_forest_fast import QuantileForest
 from ._utils import group_indices_by_value
@@ -89,12 +76,8 @@ def _check_quantiles(quantiles):
     return quantiles
 
 
-sklearn_version = parse_version(sklearn.__version__)
-
-# Before scikit-learn 1.8, trees fit on data with missing values could put some
-# training samples in other leaves than `apply` does (scikit-learn#32351), which
-# can leave leaves without any of the training samples that they predict from.
-_MISSING_VALUES_SUPPORTED = sklearn_version >= parse_version("1.8.dev0")
+# The dtype of the samples that scikit-learn's trees are fit on.
+DTYPE = np.float32
 
 # The training indices of the leaf nodes are stored as 32-bit integers.
 _MAX_SAMPLES = np.iinfo(np.int32).max
@@ -183,24 +166,6 @@ class BaseForestQuantileRegressor(ForestRegressor):
         }
         super().__init__(**init_dict)
 
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        if not _MISSING_VALUES_SUPPORTED:
-            # Missing values are not supported, even where the trees support them.
-            tags.input_tags.allow_nan = False
-        return tags
-
-    def _more_tags(self):  # scikit-learn < 1.6, so missing values are not supported
-        return {"allow_nan": False}
-
-    def _validate_X_predict(self, X):
-        """Validate X whenever one tries to predict, apply, or get proximities."""
-        X = super()._validate_X_predict(X)
-        if not _MISSING_VALUES_SUPPORTED:
-            # The trees may accept missing values, but the quantile forest does not.
-            assert_all_finite(X, input_name="X", estimator_name=self.__class__.__name__)
-        return X
-
     def fit(self, X, y, sample_weight=None):
         """Build a forest from the training set (X, y).
 
@@ -209,7 +174,12 @@ class BaseForestQuantileRegressor(ForestRegressor):
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The training input samples. Internally, its dtype will be converted
             to ``dtype=np.float32``. If a sparse matrix is provided, it will be
-            converted into a sparse ``csc_matrix``.
+            converted into a sparse ``csc_matrix``. It can contain missing
+            values (NaN) wherever a scikit-learn forest accepts them. See
+            :ref:`user-guide-fit-predict`.
+
+            .. versionadded:: 1.5
+                Support for missing values.
 
         y : array-like of shape (n_samples,) or (n_samples, n_outputs)
             The target values (real numbers).
@@ -219,14 +189,17 @@ class BaseForestQuantileRegressor(ForestRegressor):
             that would create child nodes with net zero or negative weight are
             ignored while searching for a split in each node. The leaf samples
             used for prediction are weighted too, so that a sample with weight
-            2 counts like two samples with weight 1. (With bootstrapping on
-            scikit-learn 1.9 or later, the bootstrap samples are drawn in
-            proportion to the weights instead.) Only the relative weights
-            matter: where the number of samples does too (e.g., for quantiles
-            that interpolate between samples), a sample of average positive
-            weight counts as one sample. Samples with zero or negative weight
-            are excluded from the leaf samples. See
-            :ref:`user-guide-fit-predict`.
+            2 counts like two samples with weight 1. (With bootstrapping, the
+            bootstrap samples are drawn in proportion to the weights instead.)
+            Only the relative weights matter: where the number of samples does
+            too (e.g., for quantiles that interpolate between samples), a
+            sample of average positive weight counts as one sample. Samples
+            with zero or negative weight are excluded from the leaf samples.
+            See :ref:`user-guide-fit-predict`.
+
+            .. versionchanged:: 1.5
+                The leaf samples are weighted as described above. Earlier
+                versions only left out the leaf samples with zero weight.
 
         Returns
         -------
@@ -247,60 +220,18 @@ class BaseForestQuantileRegressor(ForestRegressor):
                     "To apply monotonicity constraints, set `max_samples_leaf=1`."
                 )
 
-        if not _MISSING_VALUES_SUPPORTED:
-            # The forest accepts missing values, so reject them before fitting it.
-            check_array(
-                X,
-                accept_sparse=True,
-                dtype=[DTYPE, np.float64],  # convert other types (e.g., None to NaN)
-                input_name="X",
-                estimator=self,
-                **{
-                    (
-                        "force_all_finite"
-                        if sklearn_version < parse_version("1.6.dev0")
-                        else "ensure_all_finite"
-                    ): True
-                },
-            )
-        elif self.monotonic_cst is not None:
-            # The forest checks whether its trees support missing values without
-            # their monotonicity constraints, which scikit-learn < 1.9 does not
-            # support together with missing values. Check with the constraints.
-            estimator = type(self.estimator)(
-                criterion=self.criterion, monotonic_cst=self.monotonic_cst
-            )
-            estimator._compute_missing_values_in_feature_mask(
-                check_array(
-                    X,
-                    accept_sparse=True,
-                    dtype=[DTYPE, np.float64],
-                    ensure_all_finite=False,
-                    input_name="X",
-                    estimator=self,
-                ),
-                estimator_name=self.__class__.__name__,
-            )
-
         super(BaseForestQuantileRegressor, self).fit(X, y, sample_weight=sample_weight)
 
-        validation_params = {
-            "X": X,
-            "y": y,
-            "multi_output": True,
-            "accept_sparse": "csc",
-            "dtype": DTYPE,
+        X, y = validate_data(
+            self,
+            X=X,
+            y=y,
+            multi_output=True,
+            accept_sparse="csc",
+            dtype=DTYPE,
             # Any missing values that are not supported have been rejected.
-            (
-                "force_all_finite"
-                if sklearn_version < parse_version("1.6.dev0")
-                else "ensure_all_finite"
-            ): False,
-        }
-        if validate_data is None:
-            X, y = self._validate_data(**validation_params)
-        else:
-            X, y = validate_data(self, **validation_params)
+            ensure_all_finite=False,
+        )
 
         if y.ndim == 1:
             y = np.expand_dims(y, axis=1)
@@ -373,11 +304,11 @@ class BaseForestQuantileRegressor(ForestRegressor):
         """Return the weights of the training samples in the leaf nodes.
 
         Scikit-learn fits each tree with the sample weights, except that with
-        bootstrapping, scikit-learn 1.9 and later draw the bootstrap samples in
-        proportion to the weights and fit each tree with the counts of the
-        samples drawn. So the leaf samples are weighted only if the trees are
-        fit with the weights, so that a sample with weight 2 counts like two
-        samples with weight 1.
+        bootstrapping, it draws the bootstrap samples in proportion to the
+        weights and fits each tree with the counts of the samples drawn. So
+        the leaf samples are weighted only if the trees are fit with the
+        weights, so that a sample with weight 2 counts like two samples with
+        weight 1.
 
         Parameters
         ----------
@@ -394,7 +325,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
         if sample_weight is None:
             return None
 
-        if self.bootstrap and sklearn_version >= parse_version("1.9.0"):
+        if self.bootstrap:
             return None  # the bootstrap samples are drawn in proportion to the weights
 
         positive = sample_weight > 0
@@ -576,10 +507,9 @@ class BaseForestQuantileRegressor(ForestRegressor):
             X_leaves = self.apply(X)
 
         if self.bootstrap:
-            args = (n_samples, self.max_samples)
-            if sklearn_version >= parse_version("1.9.0"):
-                args += (self.sample_weight_,)
-            n_samples_bootstrap = _get_n_samples_bootstrap(*args)
+            n_samples_bootstrap = _get_n_samples_bootstrap(
+                n_samples, self.max_samples, self.sample_weight_
+            )
 
         n_estimators = len(self.estimators_)
         shape = (n_samples if not self.bootstrap else n_samples_bootstrap, n_estimators)
@@ -597,10 +527,9 @@ class BaseForestQuantileRegressor(ForestRegressor):
         for i, estimator in enumerate(self.estimators_):
             # Get bootstrap indices.
             if self.bootstrap:
-                args = (estimator.random_state, n_samples, n_samples_bootstrap)
-                if sklearn_version >= parse_version("1.9.0"):
-                    args += (self.sample_weight_,)
-                bootstrap_indices[:, i] = _generate_sample_indices(*args)
+                bootstrap_indices[:, i] = _generate_sample_indices(
+                    estimator.random_state, n_samples, n_samples_bootstrap, self.sample_weight_
+                )
             else:
                 bootstrap_indices[:, i] = np.arange(n_samples)
 
@@ -873,15 +802,14 @@ class BaseForestQuantileRegressor(ForestRegressor):
         # without the sample weights, which 1.9 and later store, and before 1.4,
         # the number of samples drawn was not stored, so it is recomputed.
         sample_weight = getattr(self, "_sample_weight", None)
-        args = () if sklearn_version < parse_version("1.9") else (sample_weight,)
         n_train_samples = self.n_train_samples_
         n_samples_bootstrap = getattr(self, "_n_samples_bootstrap", None)
         if n_samples_bootstrap is None:
             n_samples_bootstrap = _get_n_samples_bootstrap(
-                n_train_samples, self.max_samples, *args
+                n_train_samples, self.max_samples, sample_weight
             )
         sample_indices = _generate_sample_indices(
-            estimator.random_state, n_train_samples, n_samples_bootstrap, *args
+            estimator.random_state, n_train_samples, n_samples_bootstrap, sample_weight
         )
         sampled_mask = np.bincount(sample_indices, minlength=n_train_samples) > 0
 
@@ -892,34 +820,6 @@ class BaseForestQuantileRegressor(ForestRegressor):
                 sampled_mask[group] = True
 
         return ~sampled_mask
-
-    def _get_unsampled_indices(self, estimator, duplicates=None, sample_weight=None):
-        """Get the unsampled indices for a base estimator.
-
-        Parameters
-        ----------
-        estimator : object
-            Base estimator.
-
-        duplicates : list of lists, default=None
-            List of sets of functionally identical indices.
-
-        sample_weight : array-like of shape (n_samples, n_outputs), \
-                default=None
-            Sample weights. If None, then samples are equally weighted. Splits
-            that would create child nodes with net zero or negative weight are
-            ignored while searching for a split in each node. For each output,
-            the ordering of the weights correspond to the sorted samples.
-
-        Returns
-        -------
-        unsampled_indices : array of shape (n_unsampled,)
-            Unsampled indices.
-        """
-        if not self.bootstrap:
-            warn("Unsampled indices only exist if bootstrap=True.")
-            return np.array([])
-        return np.flatnonzero(self._get_unsampled_mask(estimator, duplicates))
 
     def _clipped_quantile_ranks(self, y, X_leaves, X_indices, kind, aggregate_leaves_first):
         """Return quantile ranks among the clipped leaf values.
@@ -1289,24 +1189,17 @@ class BaseForestQuantileRegressor(ForestRegressor):
         """
         check_is_fitted(self)
 
-        validation_params = {
-            "X": X,
-            "y": y,
-            "multi_output": True,
-            "accept_sparse": "csc",
-            "dtype": DTYPE,
-            (
-                "force_all_finite"
-                if sklearn_version < parse_version("1.6.dev0")
-                else "ensure_all_finite"
-            ): False,
+        X, y = validate_data(
+            self,
+            X=X,
+            y=y,
+            multi_output=True,
+            accept_sparse="csc",
+            dtype=DTYPE,
+            ensure_all_finite=False,
             # Check X against the fitted features instead of resetting them.
-            "reset": False,
-        }
-        if validate_data is None:
-            X, y = self._validate_data(**validation_params)
-        else:
-            X, y = validate_data(self, **validation_params)
+            reset=False,
+        )
 
         if not isinstance(kind, (bytes, bytearray)):
             kind = kind.encode()
@@ -1696,8 +1589,6 @@ class RandomForestQuantileRegressor(BaseForestQuantileRegressor):
 
         Monotonicity constraints are not supported for:
           - multioutput regressions (i.e. when `n_outputs_ > 1`),
-          - regressions trained on data with missing values, with
-            scikit-learn < 1.9,
           - trees with multi-sample leaves (i.e. when `max_samples_leaf > 1`).
 
         Each tree is kept monotonic by clipping the target value that each
@@ -2038,8 +1929,6 @@ class ExtraTreesQuantileRegressor(BaseForestQuantileRegressor):
 
         Monotonicity constraints are not supported for:
           - multioutput regressions (i.e. when `n_outputs_ > 1`),
-          - regressions trained on data with missing values, with
-            scikit-learn < 1.9,
           - trees with multi-sample leaves (i.e. when `max_samples_leaf > 1`).
 
         Each tree is kept monotonic by clipping the target value that each

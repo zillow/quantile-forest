@@ -10,3 +10,17 @@
     margin-top: 20px;
 }
 
+/* Center the sliders of the charts on their labels and values, which they would otherwise
+   sit above, and leave some space between them. */
+.vega-bind label:has(input[type="range"]) {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4em;
+}
+
+/* Keep shift-clicks on the charts, which highlight more of their marks, from also selecting
+   the text of the charts. */
+.vega-embed svg {
+    -webkit-user-select: none;
+    user-select: none;
+}

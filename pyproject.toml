@@ -2,7 +2,7 @@
 name = "quantile-forest"
 description = "Quantile regression forests compatible with scikit-learn."
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.11"
 license = "Apache-2.0"
 authors = [{ name = "Zillow Group AI Team" }]
 maintainers = [{ name = "Zillow Group AI Team" }]
@@ -11,7 +11,7 @@ dynamic = ["version"]
 dependencies = [
     "numpy>=1.23",
     "scipy>=1.6",
-    "scikit-learn>=1.5",
+    "scikit-learn>=1.9",
 ]
 
 classifiers = [
@@ -24,8 +24,6 @@ classifiers = [
     "Operating System :: POSIX",
     "Operating System :: Unix",
     "Operating System :: MacOS",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
@@ -45,8 +43,6 @@ requires = [
     "wheel",
     "Cython>=3.0a4",
     "numpy>=1.23",
-    "scipy>=1.6",
-    "scikit-learn>=1.5",
 ]
 build-backend = "setuptools.build_meta"
 
@@ -56,7 +52,6 @@ version = { attr = "quantile_forest.__version__" }
 [tool.black]
 line-length = 99
 preview = true
-target_version = ["py39", "py310", "py311", "py312", "py313", "py314"]
 
 [tool.cython-lint]
 ignore = ["E741"]

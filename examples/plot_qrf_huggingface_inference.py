@@ -8,11 +8,15 @@ scenario, a QRF has been trained with default parameters on the California
 Housing dataset using k-fold cross-validation and uploaded to Hugging Face
 Hub. The model is downloaded and used to perform inference across multiple
 quantiles for each sample in the dataset. The predictions are aggregated by
-county based on the latitude and longitude of each sample and visualized.
-The trained model is available on Hugging Face Hub
-`here <https://huggingface.co/quantile-forest/california-housing-example>`_.
-The model is stored as a pickle file, and loading a pickle file can run
-arbitrary code, so only load models from sources that you trust.
+county based on the latitude and longitude of each sample and visualized. Use
+the slider to select the quantile that the map shows. The trained model is
+available on Hugging Face Hub `here
+<https://huggingface.co/quantile-forest/california-housing-example>`_. The
+model is stored as a pickle file, and loading a pickle file can run arbitrary
+code, so only load models from sources that you trust. A pickled model may
+also not work with versions of quantile-forest or scikit-learn other than
+those that saved it, so if the model cannot be downloaded or used, the example
+fits a new one in the same way.
 """
 
 import os
@@ -29,6 +33,8 @@ from sklearn import datasets
 from sklearn.base import BaseEstimator, RegressorMixin, clone
 from sklearn.model_selection import KFold
 from vega_datasets import data
+
+from quantile_forest import RandomForestQuantileRegressor
 
 try:
     from examples import hub_utils
@@ -94,6 +100,12 @@ class CrossValidationPipeline(BaseEstimator, RegressorMixin):
         return obj
 
 
+def fit_model(X, y, random_state=None):
+    """Function used to fit the model with 5-fold cross-validation."""
+    qrf = RandomForestQuantileRegressor(random_state=random_state)
+    return CrossValidationPipeline(qrf, n_splits=5, random_state=random_state).fit(X, y)
+
+
 def fit_and_upload_model(token, repo_id, local_dir="./local_repo", random_state=None):
     """Function used to fit the model and upload it to Hugging Face Hub."""
     from pathlib import Path
@@ -104,27 +116,19 @@ def fit_and_upload_model(token, repo_id, local_dir="./local_repo", random_state=
         median_absolute_error,
         r2_score,
     )
-    from sklearn.pipeline import Pipeline
     from skops import card
 
     import quantile_forest
-    from quantile_forest import RandomForestQuantileRegressor
 
     # Load the California Housing dataset.
     X, y = datasets.fetch_california_housing(as_frame=True, return_X_y=True)
 
-    # Define the model pipeline.
-    qrf = RandomForestQuantileRegressor(random_state=random_state)
-    pipeline = Pipeline(
-        [("cv_model", CrossValidationPipeline(qrf, n_splits=5, random_state=random_state))]
-    )
-
     # Fit the model pipeline.
-    pipeline.fit(X, y)
+    pipeline = fit_model(X, y, random_state=random_state)
 
     # Save the pipeline (with all models) to a file.
     model_filename = "model.pkl"
-    pipeline.named_steps["cv_model"].save(model_filename)
+    pipeline.save(model_filename)
 
     # Prepare model repository.
     if os.path.exists(local_dir):
@@ -141,7 +145,9 @@ def fit_and_upload_model(token, repo_id, local_dir="./local_repo", random_state=
     )
 
     # Create a model card.
-    model_card = card.Card(qrf, metadata=card.metadata_from_config(Path(local_dir)))
+    model_card = card.Card(
+        pipeline.base_model, metadata=card.metadata_from_config(Path(local_dir))
+    )
     model_card.metadata.library_name = "quantile-forest"
     model_card.metadata.license = "apache-2.0"
     model_card.metadata.tags = [
@@ -216,17 +222,22 @@ pipeline = CrossValidationPipeline.load(qrf_pkl_filename)
 if not load_existing:
     fit_and_upload_model(token, repo_id, random_state=random_state)
 
-# Download the repository locally and load the fitted model.
-model_filename = "model.pkl"
-local_dir = "./local_repo"
-with tempfile.TemporaryDirectory() as local_dir:
-    hub_utils.download(repo_id=repo_id, dst=local_dir)
-    # Loading a pickle file can run arbitrary code: only load files that you trust.
-    pipeline = CrossValidationPipeline.load(f"{local_dir}/{model_filename}")
-
-# Fetch the California Housing dataset and estimate quantiles.
+# Fetch the California Housing dataset.
 X, y = datasets.fetch_california_housing(as_frame=True, return_X_y=True)
-y_pred = pipeline.predict(X, quantiles=quantiles) * 100_000  # predict in dollars
+
+# Download the repository locally, load the fitted model and estimate quantiles.
+# If the model cannot be downloaded, loaded or used, fit a new one in the same way.
+try:
+    with tempfile.TemporaryDirectory() as local_dir:
+        hub_utils.download(repo_id=repo_id, dst=local_dir)
+        # Loading a pickle file can run arbitrary code: only load files that you trust.
+        pipeline = CrossValidationPipeline.load(f"{local_dir}/model.pkl")
+    y_pred = pipeline.predict(X, quantiles=quantiles)
+except Exception as e:
+    print(f"Fitting a new model, since the model from Hugging Face Hub failed: {e!r}")
+    pipeline = fit_model(X, y, random_state=random_state)
+    y_pred = pipeline.predict(X, quantiles=quantiles)
+y_pred *= 100_000  # convert to dollars
 
 df = (
     pd.DataFrame(y_pred, columns=quantiles)

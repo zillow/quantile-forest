@@ -8,6 +8,7 @@ estimated simultaneously. In this example, the target variable has two output
 values for each sample, with a single regressor used to estimate multiple
 quantiles simultaneously. Three of these quantiles are visualized concurrently
 for each target: the median line and the area defined by the interval points.
+Use the slider to set the coverage of the interval.
 """
 
 import altair as alt

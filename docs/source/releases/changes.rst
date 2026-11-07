@@ -5,6 +5,74 @@
 Release Notes
 =============
 
+Version 1.5.0 (released Nov 06, 2026)
+-------------------------------------
+
+This version adds support for Python version 3.15 and for missing values, and adds wheels for arm64 Linux. It drops support for Python 3.9 and 3.10 and now requires scikit-learn 1.9 or later. The leaf samples are now weighted by their sample weights, and the default `interpolation` is now `"averaged_inverted_cdf"`, which matches scikit-learn's quantile definition, so predictions can change. The training samples of each leaf are now stored without padding, which can greatly reduce the memory taken by a model and its pickle. The `sparse_pickle` parameter of `fit` is removed. Models pickled by earlier versions still load, but earlier versions cannot load models pickled by this version.
+
+**Breaking changes**
+
+* Weight leaf samples by their sample weights, and default to scikit-learn's quantile definition by `@reidjohnson <https://github.com/reidjohnson>`_ in `#190 <https://github.com/zillow/quantile-forest/pull/190>`_
+* Store the training samples of each leaf without padding by `@reidjohnson <https://github.com/reidjohnson>`_ in `#201 <https://github.com/zillow/quantile-forest/pull/201>`_
+* Prepare 1.5.0: release notes, nightly scikit-learn tests, cleanups by `@reidjohnson <https://github.com/reidjohnson>`_ in `#202 <https://github.com/zillow/quantile-forest/pull/202>`_
+
+**New features**
+
+* Add arm64 Linux wheel builds to CI/CD by `@bezineb5 <https://github.com/bezineb5>`_ in `#158 <https://github.com/zillow/quantile-forest/pull/158>`_
+* Python 3.15 Support by `@reidjohnson <https://github.com/reidjohnson>`_ in `#197 <https://github.com/zillow/quantile-forest/pull/197>`_
+* Support missing values as scikit-learn's forests do by `@reidjohnson <https://github.com/reidjohnson>`_ in `#198 <https://github.com/zillow/quantile-forest/pull/198>`_
+
+**Performance**
+
+* Make weighted predictions and proximity counts independent of training size by `@reidjohnson <https://github.com/reidjohnson>`_ in `#179 <https://github.com/zillow/quantile-forest/pull/179>`_
+* Speed up out-of-bag sample lookups by `@reidjohnson <https://github.com/reidjohnson>`_ in `#178 <https://github.com/zillow/quantile-forest/pull/178>`_
+* Store training targets as an array, so predict doesn't copy them by `@reidjohnson <https://github.com/reidjohnson>`_ in `#184 <https://github.com/zillow/quantile-forest/pull/184>`_
+* Compute OOB quantiles without a Python loop over rows by `@reidjohnson <https://github.com/reidjohnson>`_ in `#185 <https://github.com/zillow/quantile-forest/pull/185>`_
+* Compute monotonic bounds one tree level at a time by `@reidjohnson <https://github.com/reidjohnson>`_ in `#186 <https://github.com/zillow/quantile-forest/pull/186>`_
+
+**Bug fixes**
+
+* Avoid changing global random state during leaf subsampling by `@Ra1nhy <https://github.com/Ra1nhy>`_ in `#167 <https://github.com/zillow/quantile-forest/pull/167>`_
+* Fix sample weight indexing when collecting leaf samples by `@AryanRG <https://github.com/AryanRG>`_ in `#168 <https://github.com/zillow/quantile-forest/pull/168>`_
+* Fix float max_samples_leaf in predict and leaf padding by `@reidjohnson <https://github.com/reidjohnson>`_ in `#170 <https://github.com/zillow/quantile-forest/pull/170>`_
+* Stop quantile_ranks from resetting fitted feature attributes by `@reidjohnson <https://github.com/reidjohnson>`_ in `#172 <https://github.com/zillow/quantile-forest/pull/172>`_
+* Validate sample weights before storing them in fit by `@reidjohnson <https://github.com/reidjohnson>`_ in `#174 <https://github.com/zillow/quantile-forest/pull/174>`_
+* Fix proximity_counts argument checks and return types, and docstrings by `@reidjohnson <https://github.com/reidjohnson>`_ in `#177 <https://github.com/zillow/quantile-forest/pull/177>`_
+* Fix models loaded from sparse pickles or read-only memory maps by `@reidjohnson <https://github.com/reidjohnson>`_ in `#180 <https://github.com/zillow/quantile-forest/pull/180>`_
+* Fix sparse inputs in predict by `@reidjohnson <https://github.com/reidjohnson>`_ in `#173 <https://github.com/zillow/quantile-forest/pull/173>`_
+* Validate quantiles as array-likes and reject NaN or empty quantiles by `@reidjohnson <https://github.com/reidjohnson>`_ in `#175 <https://github.com/zillow/quantile-forest/pull/175>`_
+* Declare that missing values are not supported, and reject them up front by `@reidjohnson <https://github.com/reidjohnson>`_ in `#176 <https://github.com/zillow/quantile-forest/pull/176>`_
+* Fix weighted quantiles that use zero-weight inputs or miss exact ranks by `@reidjohnson <https://github.com/reidjohnson>`_ in `#171 <https://github.com/zillow/quantile-forest/pull/171>`_
+* Group leaf samples with a stable sort, so results don't depend on the CPU by `@reidjohnson <https://github.com/reidjohnson>`_ in `#181 <https://github.com/zillow/quantile-forest/pull/181>`_
+* Validate inputs once for OOB samples, without a warning per tree by `@reidjohnson <https://github.com/reidjohnson>`_ in `#182 <https://github.com/zillow/quantile-forest/pull/182>`_
+* Use the fitted trees, not n_estimators, in predict by `@reidjohnson <https://github.com/reidjohnson>`_ in `#183 <https://github.com/zillow/quantile-forest/pull/183>`_
+* Rank among the clipped leaf values in quantile_ranks with monotonic constraints by `@reidjohnson <https://github.com/reidjohnson>`_ in `#188 <https://github.com/zillow/quantile-forest/pull/188>`_
+* Fix small issues found in a review of main by `@reidjohnson <https://github.com/reidjohnson>`_ in `#199 <https://github.com/zillow/quantile-forest/pull/199>`_
+* Redraw OOB samples as the forest drew them, for older models by `@reidjohnson <https://github.com/reidjohnson>`_ in `#200 <https://github.com/zillow/quantile-forest/pull/200>`_
+
+**Documentation**
+
+* Document that monotonic constraints narrow prediction intervals by `@reidjohnson <https://github.com/reidjohnson>`_ in `#187 <https://github.com/zillow/quantile-forest/pull/187>`_
+* Document what proximity counts count by `@reidjohnson <https://github.com/reidjohnson>`_ in `#189 <https://github.com/zillow/quantile-forest/pull/189>`_
+* Fix the gallery examples, and add an example of monotonic constraints by `@reidjohnson <https://github.com/reidjohnson>`_ in `#191 <https://github.com/zillow/quantile-forest/pull/191>`_
+* Add a QRF vs. gradient boosting example and tidy up the gallery by `@reidjohnson <https://github.com/reidjohnson>`_ in `#194 <https://github.com/zillow/quantile-forest/pull/194>`_
+* Add gallery sliders by `@reidjohnson <https://github.com/reidjohnson>`_ in `#195 <https://github.com/zillow/quantile-forest/pull/195>`_
+* Add docs navigation by `@reidjohnson <https://github.com/reidjohnson>`_ in `#196 <https://github.com/zillow/quantile-forest/pull/196>`_
+
+**Maintenance**
+
+* Bump actions/checkout from 6 to 7 by `@dependabot <https://github.com/dependabot>`_ in `#157 <https://github.com/zillow/quantile-forest/pull/157>`_
+* Bump docker/setup-qemu-action from 3 to 4 by `@dependabot <https://github.com/dependabot>`_ in `#161 <https://github.com/zillow/quantile-forest/pull/161>`_
+* Bump actions/setup-python from 6 to 7 by `@dependabot <https://github.com/dependabot>`_ in `#159 <https://github.com/zillow/quantile-forest/pull/159>`_
+* Bump pypa/gh-action-pypi-publish from 1.14.0 to 1.14.1 by `@dependabot <https://github.com/dependabot>`_ in `#160 <https://github.com/zillow/quantile-forest/pull/160>`_
+* Bump pypa/gh-action-pypi-publish from 1.14.1 to 1.14.2 by `@dependabot <https://github.com/dependabot>`_ in `#163 <https://github.com/zillow/quantile-forest/pull/163>`_
+* Remove inline from pyx by `@reidjohnson <https://github.com/reidjohnson>`_ in `#169 <https://github.com/zillow/quantile-forest/pull/169>`_
+* Bump pypa/cibuildwheel from 4.1.0 to 4.3.4 by `@dependabot <https://github.com/dependabot>`_ in `#166 <https://github.com/zillow/quantile-forest/pull/166>`_
+* Bump pypa/cibuildwheel from 4.3.4 to 4.3.5 by `@dependabot <https://github.com/dependabot>`_ in `#192 <https://github.com/zillow/quantile-forest/pull/192>`_
+* Bump pypa/gh-action-pypi-publish from 1.14.2 to 1.14.3 by `@dependabot <https://github.com/dependabot>`_ in `#193 <https://github.com/zillow/quantile-forest/pull/193>`_
+
+**Full Changelog**: https://github.com/zillow/quantile-forest/compare/v1.4.2...v1.5.0
+
 Version 1.4.2 (released Jun 21, 2026)
 -------------------------------------
 

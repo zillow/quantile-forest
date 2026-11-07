@@ -9,7 +9,6 @@ from typing import Any
 import joblib
 import numpy as np
 import pytest
-import sklearn
 from scipy import sparse
 from scipy.stats import percentileofscore
 from sklearn import datasets
@@ -17,6 +16,7 @@ from sklearn.ensemble import ExtraTreesRegressor, RandomForestRegressor
 from sklearn.ensemble._forest import _generate_sample_indices
 from sklearn.metrics import r2_score
 from sklearn.model_selection import train_test_split
+from sklearn.utils import get_tags
 from sklearn.utils._testing import (
     assert_allclose,
     assert_almost_equal,
@@ -24,7 +24,6 @@ from sklearn.utils._testing import (
     assert_array_equal,
 )
 from sklearn.utils.estimator_checks import check_sample_weights_not_an_array
-from sklearn.utils.fixes import parse_version
 from sklearn.utils.validation import check_is_fitted
 
 from quantile_forest import ExtraTreesQuantileRegressor, RandomForestQuantileRegressor
@@ -38,8 +37,6 @@ from quantile_forest._quantile_forest_fast import (
     calc_weighted_quantile_rank,
 )
 
-sklearn_version = parse_version(sklearn.__version__)
-
 np.random.seed(0)
 
 FOREST_REGRESSORS: dict[str, Any] = {
@@ -49,6 +46,11 @@ FOREST_REGRESSORS: dict[str, Any] = {
 
 INVERTED_CDF_INTERPOLATIONS = ["inverted_cdf", "averaged_inverted_cdf"]
 INTERPOLATIONS = ["linear", "lower", "higher", "midpoint", "nearest"] + INVERTED_CDF_INTERPOLATIONS
+
+
+def get_unsampled_indices(est, estimator):
+    """Return the training indices left out of the bootstrap sample of a tree."""
+    return np.flatnonzero(est._get_unsampled_mask(estimator))
 
 
 @pytest.mark.parametrize("name", FOREST_REGRESSORS)
@@ -1101,10 +1103,11 @@ def check_proximity_counts(name):
     n_samples = len(X)
     proximities = est.proximity_counts(X)
     X_leaves = est.apply(X)
-    args = (n_samples, n_samples)
-    args = args if sklearn_version < parse_version("1.9") else args + (None,)
     bootstrap_indices = np.array(
-        [_generate_sample_indices(e.random_state, *args) for e in est.estimators_]
+        [
+            _generate_sample_indices(e.random_state, n_samples, n_samples, None)
+            for e in est.estimators_
+        ]
     )
     for train_idx, train_idx_prox in enumerate(proximities):
         for proximity_idx, proximity_count in train_idx_prox:
@@ -1353,29 +1356,6 @@ def check_missing_values(name):
     est = ForestRegressor(max_samples_leaf=None, **params)
     sklearn_est = SklearnForestRegressor(oob_score=True, **params)
 
-    if sklearn_version < parse_version("1.8"):
-        # Check that missing values are rejected, as trees fit on data with missing
-        # values may put some training samples in other leaves than `apply` does.
-        with pytest.raises(ValueError):
-            est.fit(X_train, y_train)
-        assert not hasattr(est, "estimators_")  # rejected before fitting the forest
-        est.fit(X_train_complete, y_train)
-        for method in ["predict", "apply", "proximity_counts"]:
-            with pytest.raises(ValueError):
-                getattr(est, method)(X_test)
-        with pytest.raises(ValueError):
-            est.quantile_ranks(X_test, y_test)
-
-        # Check that the estimator tags agree that missing values are not supported.
-        assert not est._more_tags()["allow_nan"]  # the tags of scikit-learn < 1.6
-        if sklearn_version >= parse_version("1.6"):
-            from sklearn.utils import get_tags
-
-            assert not get_tags(est).input_tags.allow_nan
-        return
-
-    from sklearn.utils import get_tags
-
     # Check that the estimator tags agree with those of the scikit-learn forest.
     assert get_tags(est).input_tags.allow_nan
     assert get_tags(sklearn_est).input_tags.allow_nan
@@ -1406,14 +1386,12 @@ def check_missing_values(name):
     sklearn_est.fit(X_train_complete, y_train)
     assert_allclose(est.predict(X_test, **kwargs), sklearn_est.predict(X_test))
 
-    # Check that missing values are supported with absolute errors where the
-    # scikit-learn forest supports them (with scikit-learn >= 1.9).
+    # Check that missing values are supported with absolute errors too.
     params_criterion = {**params, "n_estimators": 3, "criterion": "absolute_error"}
     est_criterion = ForestRegressor(**params_criterion)
-    allow_nan = get_tags(SklearnForestRegressor(**params_criterion)).input_tags.allow_nan
-    assert get_tags(est_criterion).input_tags.allow_nan == allow_nan
-    if allow_nan:
-        est_criterion.fit(X_train, y_train)
+    assert get_tags(est_criterion).input_tags.allow_nan
+    assert get_tags(SklearnForestRegressor(**params_criterion)).input_tags.allow_nan
+    est_criterion.fit(X_train, y_train)
 
     # Check that missing values are rejected in sparse inputs and in the targets.
     with pytest.raises(ValueError):
@@ -1493,7 +1471,7 @@ def test_oob_samples_unsampled_masks(name, weighted):
     """Check that OOB samples come from masks of each tree's unsampled indices."""
     X, y = datasets.make_regression(n_samples=200, n_features=4, random_state=0)
     sample_weight = None
-    if weighted:  # scikit-learn 1.9 and later draw the bootstrap samples by weight
+    if weighted:  # the bootstrap samples are drawn by weight
         sample_weight = np.random.default_rng(0).uniform(0.1, 2.0, size=len(y))
 
     ForestRegressor = FOREST_REGRESSORS[name]
@@ -1642,7 +1620,7 @@ def check_predict_oob(
     # Check precomputed unsampled indices for OOB scoring.
     unsampled_indices = [None] * est.n_estimators
     for i, estimator in enumerate(est.estimators_):
-        unsampled_indices[i] = est._get_unsampled_indices(estimator)
+        unsampled_indices[i] = get_unsampled_indices(est, estimator)
     est.unsampled_indices_ = unsampled_indices
     y_pred_precomputed_indices = est.predict(
         X,
@@ -1740,9 +1718,8 @@ def check_predict_oob(
             aggregate_leaves_first=aggregate_leaves_first,
             oob_score=True,
         )
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", UserWarning)
-        assert np.all(est._get_unsampled_indices(est.estimators_[0]) == np.array([]))
+    with pytest.warns(UserWarning, match="bootstrap=True"):
+        assert not est._get_unsampled_masks().any()
 
     # Check error if number of scoring and training samples are different.
     est = ForestRegressor(n_estimators=1, bootstrap=True)
@@ -1899,10 +1876,11 @@ def check_proximity_counts_oob(name):
     # Check that OOB proximity counts match OOB bootstrap counts.
     X_leaves = est.apply(X)
     n_samples = len(X)
-    args = (n_samples, n_samples)
-    args = args if sklearn_version < parse_version("1.9") else args + (None,)
     bootstrap_indices = np.array(
-        [_generate_sample_indices(e.random_state, *args) for e in est.estimators_]
+        [
+            _generate_sample_indices(e.random_state, n_samples, n_samples, None)
+            for e in est.estimators_
+        ]
     )
     for train_idx, train_idx_prox in enumerate(proximities):
         for proximity_idx, proximity_count in train_idx_prox:
@@ -1988,16 +1966,11 @@ def test_oob_methods_validate_once(name):
         assert_allclose(est.predict(X_sparse, oob_score=True), y_pred)
         assert_allclose(est.quantile_ranks(X_sparse, y, oob_score=True), y_ranks)
 
-        # Missing values are still rejected where they are not supported, and
-        # otherwise only change the ranks of the samples that have them.
+        # Missing values only change the ranks of the samples that have them.
         X_nan = X.copy()
         X_nan[0, 0] = np.nan
-        if sklearn_version < parse_version("1.8"):
-            with pytest.raises(ValueError):
-                est.quantile_ranks(X_nan, y, oob_score=True)
-        else:
-            y_ranks_nan = est.quantile_ranks(X_nan, y, oob_score=True)
-            assert_allclose(y_ranks_nan[1:], y_ranks[1:])
+        y_ranks_nan = est.quantile_ranks(X_nan, y, oob_score=True)
+        assert_allclose(y_ranks_nan[1:], y_ranks[1:])
 
 
 def check_monotonic_constraints(name, max_samples_leaf, missing_values):
@@ -2036,19 +2009,6 @@ def check_monotonic_constraints(name, max_samples_leaf, missing_values):
         max_leaf_nodes=n_samples_train,
         bootstrap=True,
     )
-
-    if missing_values:
-        # Check that missing values are rejected if they are not supported, or if
-        # the trees reject them with monotonicity constraints (scikit-learn < 1.9).
-        try:
-            type(est.estimator)(monotonic_cst=monotonic_cst).fit(X_train, y_train)
-            supported = sklearn_version >= parse_version("1.8")
-        except ValueError:
-            supported = False
-        if not supported:
-            with pytest.raises(ValueError):
-                est.fit(X_train, y_train)
-            return
 
     for oob_score in [False, True]:
         if not oob_score:
@@ -2326,10 +2286,6 @@ def test_y_train_is_array(name):
     assert np.shares_memory(y_train, np.asarray(est.forest_.y_train))  # not a copy
 
 
-@pytest.mark.skipif(
-    sklearn_version < parse_version("1.9"),
-    reason="sample_weight in bootstrap functions requires scikit-learn >= 1.9",
-)
 @pytest.mark.parametrize("name", FOREST_REGRESSORS)
 def test_sample_weight_stored_on_fit(name):
     """Check that sample_weight is stored during fit."""
@@ -2356,7 +2312,7 @@ def test_sample_weight_validation(name, bootstrap):
     sample_weight = np.random.default_rng(0).uniform(0.1, 2.0, size=len(y))
     params = {"n_estimators": 5, "bootstrap": bootstrap, "random_state": 0}
     if bootstrap:
-        params["max_samples"] = 0.5  # draws relative to the weights on sklearn 1.9+
+        params["max_samples"] = 0.5  # draws relative to the weights
     quantiles = [0.25, 0.5, 0.75]
 
     ForestRegressor = FOREST_REGRESSORS[name]
@@ -2381,13 +2337,9 @@ def test_sample_weight_validation(name, bootstrap):
     check_sample_weights_not_an_array(name, est)
 
 
-@pytest.mark.skipif(
-    sklearn_version < parse_version("1.9"),
-    reason="sample_weight in bootstrap functions requires scikit-learn >= 1.9",
-)
 @pytest.mark.parametrize("name", FOREST_REGRESSORS)
 def test_sample_weight_predict(name):
-    """Check that predictions work with sample_weight on sklearn 1.9+."""
+    """Check that predictions work with sample_weight."""
     X, y = datasets.make_regression(n_samples=200, n_features=4, random_state=0)
     sample_weight = np.random.default_rng(0).uniform(0.1, 2.0, size=len(y))
 
@@ -2407,13 +2359,9 @@ def test_sample_weight_predict(name):
     assert not np.allclose(y_pred, y_pred_uniform)
 
 
-@pytest.mark.skipif(
-    sklearn_version < parse_version("1.9"),
-    reason="sample_weight in bootstrap functions requires scikit-learn >= 1.9",
-)
 @pytest.mark.parametrize("name", FOREST_REGRESSORS)
 def test_sample_weight_oob(name):
-    """Check that OOB predictions work with sample_weight on sklearn 1.9+."""
+    """Check that OOB predictions work with sample_weight."""
     X, y = datasets.make_regression(n_samples=500, n_features=8, noise=0.1, random_state=0)
     sample_weight = np.random.default_rng(0).uniform(0.1, 2.0, size=len(y))
 
@@ -2426,13 +2374,9 @@ def test_sample_weight_oob(name):
     assert y_pred.shape == (len(X), 3)
 
 
-@pytest.mark.skipif(
-    sklearn_version < parse_version("1.9"),
-    reason="sample_weight in bootstrap functions requires scikit-learn >= 1.9",
-)
 @pytest.mark.parametrize("name", FOREST_REGRESSORS)
 def test_sample_weight_unsampled_indices(name):
-    """Check that _get_unsampled_indices uses sample_weight on sklearn 1.9+."""
+    """Check that the unsampled indices use sample_weight."""
     X, y = datasets.make_regression(n_samples=200, n_features=4, random_state=0)
     sample_weight = np.random.default_rng(0).uniform(0.1, 2.0, size=len(y))
 
@@ -2441,21 +2385,17 @@ def test_sample_weight_unsampled_indices(name):
     est = ForestRegressor(n_estimators=5, bootstrap=True, random_state=0)
     est.fit(X, y, sample_weight=sample_weight)
 
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", UserWarning)
-        unsampled = est._get_unsampled_indices(est.estimators_[0])
+    unsampled = get_unsampled_indices(est, est.estimators_[0])
 
+    # The samples left out of the bootstrap sample that scikit-learn drew by weight.
+    expected = np.setdiff1d(np.arange(len(X)), est.estimators_samples_[0])
     assert len(unsampled) > 0
-    assert all(idx < len(y) for idx in unsampled)
+    assert_array_equal(unsampled, expected)
 
 
-@pytest.mark.skipif(
-    sklearn_version < parse_version("1.9"),
-    reason="sample_weight in bootstrap functions requires scikit-learn >= 1.9",
-)
 @pytest.mark.parametrize("name", FOREST_REGRESSORS)
 def test_sample_weight_proximity_counts(name):
-    """Check that proximity_counts works with sample_weight on sklearn 1.9+."""
+    """Check that proximity_counts works with sample_weight."""
     X, y = datasets.make_regression(n_samples=100, n_features=4, random_state=0)
     sample_weight = np.random.default_rng(0).uniform(0.1, 2.0, size=len(y))
 
@@ -2508,10 +2448,6 @@ def test_sample_weight_single_sample(name, bootstrap, multi_target, max_samples_
     assert_allclose(est.predict(X), y)
 
 
-@pytest.mark.skipif(
-    sklearn_version < parse_version("1.9"),
-    reason="sample_weight in bootstrap functions requires scikit-learn >= 1.9",
-)
 @pytest.mark.parametrize("name", FOREST_REGRESSORS)
 @pytest.mark.parametrize("multi_target", [False, True])
 def test_sample_weight_bootstrap_more_than_n_samples(name, multi_target):
@@ -2674,7 +2610,7 @@ def test_sample_weight_leaf_quantiles(name, bootstrap, multi_target, interpolati
     leaf_weight = np.ones(len(y))
     if bootstrap:
         leaf_weight = np.bincount(est.estimators_samples_[0], minlength=len(y)).astype(float)
-    if not bootstrap or sklearn_version < parse_version("1.9"):
+    if not bootstrap:
         leaf_weight *= sample_weight / sample_weight[sample_weight > 0].mean()
 
     quantiles = [0.1, 0.5, 0.9]
@@ -3287,10 +3223,6 @@ def test_calc_weighted_quantile_inverted_cdf_scale(interpolation):
         assert_array_equal(actual, expected)
 
 
-@pytest.mark.skipif(
-    sklearn_version < parse_version("1.8"),
-    reason="_weighted_percentile(average=...) requires scikit-learn >= 1.8",
-)
 @pytest.mark.parametrize("interpolation", INVERTED_CDF_INTERPOLATIONS)
 def test_calc_weighted_quantile_matches_sklearn(interpolation):
     """Check that inverted CDF quantiles match scikit-learn's weighted percentiles."""

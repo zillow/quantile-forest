@@ -17,6 +17,10 @@ repos:
   - id: isort
     name: isort (cython)
     types: [cython]
+- repo: https://github.com/pycqa/flake8
+  rev: 7.5.0
+  hooks:
+  - id: flake8
 - repo: https://github.com/MarcoGorelli/cython-lint
   rev: v0.22.0
   hooks:

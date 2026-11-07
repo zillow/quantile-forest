@@ -8,6 +8,7 @@ samples are generated from the function f(x) = x sin(x) plus right-skewed
 noise that grows with x, so the conditional median lies below f(x) and the
 intervals are asymmetric. The QRF predictions are compared to the true
 conditional median and 95% interval, which are known for this toy dataset.
+Click a legend entry to highlight its marks (shift-click for more).
 """
 
 import altair as alt

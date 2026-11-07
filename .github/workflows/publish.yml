@@ -6,6 +6,11 @@ on:
       - main
     tags:
       - 'v*.*.*'
+  pull_request:
+    paths:
+      - '.github/workflows/publish.yml'
+      - 'pyproject.toml'
+      - 'setup.py'
 
 jobs:
   build_wheels:
@@ -13,25 +18,18 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [ubuntu-latest, ubuntu-24.04-arm, windows-latest, macos-latest]
 
     steps:
       - uses: actions/checkout@v7
 
-      - name: Set up QEMU
-        if: runner.os == 'Linux'
-        uses: docker/setup-qemu-action@v4
-        with:
-          platforms: arm64
-
       - name: Build wheels
         uses: pypa/cibuildwheel@v4.3.5
         env:
-          CIBW_BUILD: cp39-* cp310-* cp311-* cp312-* cp313-* cp314-* cp315-*
-          CIBW_SKIP: pp* *i686* *win32 *musllinux*
-          CIBW_PROJECT_REQUIRES_PYTHON: '>=3.9,<3.16'
-          CIBW_BEFORE_BUILD: pip install --verbose --editable .
-          CIBW_ARCHS_LINUX: auto64 aarch64
+          CIBW_BUILD: cp311-* cp312-* cp313-* cp314-* cp315-*
+          CIBW_SKIP: '*i686* *win32 *musllinux*'
+          CIBW_PROJECT_REQUIRES_PYTHON: '>=3.11,<3.16'
+          CIBW_ARCHS_LINUX: auto64
           CIBW_ARCHS_MACOS: x86_64 universal2 arm64
           CIBW_ARCHS_WINDOWS: auto64
           CIBW_TEST_COMMAND: python -c "import quantile_forest; print(quantile_forest.__version__)"
