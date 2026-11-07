@@ -24,3 +24,16 @@
     -webkit-user-select: none;
     user-select: none;
 }
+
+/* Shrink the charts to fit narrow screens, such as phones, as images do, instead of letting
+   them run off the right edge of the page. (An interaction that uses the position of the
+   pointer, such as an interval selection, would be off by the scale, but the examples have
+   none.) */
+.vega-embed {
+    max-width: 100%;
+}
+
+.vega-embed svg.marks {
+    max-width: 100%;
+    height: auto;
+}
