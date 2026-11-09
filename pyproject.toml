@@ -1,6 +1,6 @@
 [project]
 name = "quantile-forest"
-description = "Quantile regression forests compatible with scikit-learn."
+description = "Fast, scikit-learn-compatible quantile regression forests for prediction intervals and uncertainty estimation."
 readme = "README.md"
 requires-python = ">=3.11"
 license = "Apache-2.0"
@@ -12,6 +12,23 @@ dependencies = [
     "numpy>=1.23",
     "scipy>=1.6",
     "scikit-learn>=1.9",
+]
+
+keywords = [
+    "quantile regression forests",
+    "quantile regression",
+    "random forest",
+    "prediction intervals",
+    "uncertainty quantification",
+    "uncertainty estimation",
+    "conformal prediction",
+    "probabilistic forecasting",
+    "distributional regression",
+    "multi-target regression",
+    "regression",
+    "machine learning",
+    "scikit-learn",
+    "sklearn",
 ]
 
 classifiers = [
