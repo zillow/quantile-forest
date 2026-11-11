@@ -236,6 +236,51 @@ def test_predict_weighted_rows_independent(name, weighted_leaves, aggregate_leav
         assert est.proximity_counts(X[[i]]) == proximities[i : i + 1]
 
 
+@pytest.mark.parametrize("name", FOREST_REGRESSORS)
+@pytest.mark.parametrize("interpolation", INTERPOLATIONS)
+@pytest.mark.parametrize("weighted", [False, True])
+def test_predict_weighted_leaves_per_tree(name, interpolation, weighted):
+    """Check that leaf weights do nothing unless leaves are aggregated across trees.
+
+    The samples of a leaf all have the same leaf weight, so the weights can
+    only change predictions that aggregate the leaves of different trees.
+    """
+    X, y = datasets.make_regression(n_samples=200, n_features=2, noise=10, random_state=0)
+
+    ForestRegressor = FOREST_REGRESSORS[name]
+
+    # Trees that differ, with leaves of several samples and of different sizes.
+    # Without bootstrapping, the leaf samples are weighted by their sample
+    # weights too.
+    sample_weight = np.random.default_rng(0).uniform(0.5, 2, size=len(y)) if weighted else None
+    est = ForestRegressor(
+        n_estimators=10,
+        max_samples_leaf=None,
+        min_samples_leaf=5,
+        max_features=1,
+        bootstrap=not weighted,
+        random_state=0,
+    )
+    est.fit(X, y, sample_weight=sample_weight)
+
+    for quantiles in [[0.1, 0.5, 0.9], "mean"]:
+        kwargs = {"quantiles": quantiles, "interpolation": interpolation}
+
+        # For each tree, the predictions are those without leaf weights.
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")  # some samples have no OOB trees
+            for oob_score in [False, True] if est.bootstrap else [False]:
+                kwargs_tree = {"aggregate_leaves_first": False, "oob_score": oob_score, **kwargs}
+                y_pred = est.predict(X, weighted_leaves=False, **kwargs_tree)
+                y_pred_leaves = est.predict(X, weighted_leaves=True, **kwargs_tree)
+                assert_array_equal(y_pred_leaves, y_pred)
+
+        # Aggregated across trees, the leaf weights do change predictions.
+        y_pred = est.predict(X, weighted_leaves=False, **kwargs)
+        y_pred_leaves = est.predict(X, weighted_leaves=True, **kwargs)
+        assert np.any(y_pred_leaves != y_pred)
+
+
 def check_predict_quantiles_toy(name):
     """Check quantile predictions on toy data."""
     quantiles = [0.25, 0.5, 0.75]

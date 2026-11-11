@@ -142,7 +142,7 @@ By default, the predict method calculates quantiles using a weighted quantile me
     >>> np.allclose(y_pred_weighted, y_pred_unweighted)
     True
 
-By default, the predict method calculates quantiles by giving each sample in a leaf (including repeated bootstrap samples) equal weight (`weighted_leaves=False`). If `weighted_leaves=True`, each sample will be weighted inversely according to the size of its leaf node. Note that this leaf-based weighting can only be used with weighted quantiles.
+By default, the predict method calculates quantiles by giving each sample in a leaf (including repeated bootstrap samples) equal weight (`weighted_leaves=False`). If `weighted_leaves=True`, each sample will be weighted inversely according to the size of its leaf node. Note that this leaf-based weighting can only be used with weighted quantiles, and only matters if the leaves are aggregated across trees (`aggregate_leaves_first=True`, the default), as the samples of a leaf all have the same weight.
 
 Out-of-Bag Estimation
 ~~~~~~~~~~~~~~~~~~~~~
