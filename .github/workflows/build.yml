@@ -66,3 +66,37 @@ jobs:
         uses: codecov/codecov-action@v7
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+
+  # Test with the minimum versions of the dependencies, which the other jobs
+  # never install.
+  min-dependencies:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      # The minimum versions of NumPy and SciPy only have wheels for Python 3.11.
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+
+      - name: Install uv
+        run: pip install uv
+
+      - name: Create virtual environment
+        run: uv venv
+
+      # Without build isolation, which would build with the newest versions.
+      - name: Install the minimum versions of the dependencies
+        run: |
+          uv pip install pytest setuptools wheel \
+            "cython==$(python quantile_forest/_min_dependencies.py cython)" \
+            "numpy==$(python quantile_forest/_min_dependencies.py numpy)" \
+            "scipy==$(python quantile_forest/_min_dependencies.py scipy)" \
+            "scikit-learn==$(python quantile_forest/_min_dependencies.py scikit-learn)"
+          uv pip install --verbose --no-build-isolation --no-deps --editable .
+
+      # Without syncing, which would install the locked versions.
+      - name: Test with pytest
+        run: uv run --no-sync pytest --pyargs quantile_forest

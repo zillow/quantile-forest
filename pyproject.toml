@@ -9,8 +9,8 @@ maintainers = [{ name = "Zillow Group AI Team" }]
 dynamic = ["version"]
 
 dependencies = [
-    "numpy>=1.23",
-    "scipy>=1.6",
+    "numpy>=1.24.1",
+    "scipy>=1.10.0",
     "scikit-learn>=1.9",
 ]
 
@@ -58,8 +58,8 @@ Tracker = "https://github.com/zillow/quantile-forest/issues"
 requires = [
     "setuptools",
     "wheel",
-    "Cython>=3.0a4",
-    "numpy>=1.23",
+    "Cython>=3.1",
+    "numpy>=1.24.1",
 ]
 build-backend = "setuptools.build_meta"
 

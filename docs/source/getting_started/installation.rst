@@ -9,9 +9,9 @@ Prerequisites
 The quantile-forest package requires the following dependencies:
 
 * python (>=3.11)
-* numpy (>=1.23)
+* numpy (>=1.24.1)
 * scikit-learn (>=1.9)
-* scipy (>=1.6)
+* scipy (>=1.10.0)
 
 Installation
 ~~~~~~~~~~~~

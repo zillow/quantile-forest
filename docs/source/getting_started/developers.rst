@@ -8,7 +8,7 @@ Development Dependencies
 
 Building the package from source additionally requires the following dependencies:
 
-* cython (>=3.0a4)
+* cython (>=3.1)
 
 We also use pre-commit hooks to identify simple issues before submission.
 

@@ -3,9 +3,9 @@
 import argparse
 from collections import defaultdict
 
-CYTHON_MIN_VERSION = "3.0a4"
-NUMPY_MIN_VERSION = "1.23"
-SCIPY_MIN_VERSION = "1.6"
+CYTHON_MIN_VERSION = "3.1"
+NUMPY_MIN_VERSION = "1.24.1"
+SCIPY_MIN_VERSION = "1.10.0"
 SKLEARN_MIN_VERSION = "1.9"
 
 # 'build' and 'install' is included to have structured metadata for CI.
