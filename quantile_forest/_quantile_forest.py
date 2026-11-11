@@ -21,6 +21,7 @@ The module structure is the following:
 Single- and multi-output problems are both handled.
 """
 
+import hashlib
 import random
 import warnings
 from abc import abstractmethod
@@ -82,6 +83,9 @@ DTYPE = np.float32
 # The training indices of the leaf nodes are stored as 32-bit integers.
 _MAX_SAMPLES = np.iinfo(np.int32).max
 
+# Dense input samples are hashed in blocks of rows of about this many bytes.
+_HASH_BLOCK_BYTES = 2**22
+
 
 def _hash_X(X):
     """Hash input samples so that equal data gives equal hashes.
@@ -89,6 +93,11 @@ def _hash_X(X):
     Fit validates sparse inputs as CSC and predict validates them as CSR, so
     sparse inputs are hashed in canonical CSC form, independent of the format
     and container they were passed in.
+
+    Dense inputs are hashed row by row, independent of their memory layout
+    (e.g., the values of a pandas DataFrame are stored column by column, and
+    those of a NumPy array usually row by row), a block of rows at a time so
+    that the input is not copied.
     """
     if issparse(X):
         X = X.tocsc()  # no copy if already CSC, as it is during fit
@@ -96,7 +105,26 @@ def _hash_X(X):
             X = X.copy()
             X.sum_duplicates()  # also sorts the indices
         return joblib.hash((X.shape, X.data, X.indices, X.indptr))
-    return joblib.hash(X)
+
+    X = np.asarray(X)
+    hasher = hashlib.md5(usedforsecurity=False)
+    hasher.update(repr((X.shape, X.dtype.str)).encode())
+    n_rows = max(1, _HASH_BLOCK_BYTES // max(1, X[:1].nbytes))
+    for start in range(0, X.shape[0], n_rows):
+        # No copy if the rows are already contiguous.
+        hasher.update(np.ascontiguousarray(X[start : start + n_rows]))
+    return hasher.hexdigest()
+
+
+def _matches_hash_X(X, X_hash):
+    """Return whether input samples match the hash of other input samples.
+
+    Models fit by version 1.5.0 or earlier hashed dense inputs with joblib,
+    in their memory layout, so their hashes are matched in that way too.
+    """
+    if _hash_X(X) == X_hash:
+        return True
+    return not issparse(X) and joblib.hash(X) == X_hash
 
 
 def _nanquantile_rows(a, quantiles, method):
@@ -687,7 +715,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
                 raise ValueError(
                     "If `indices` are None, OOB samples must be same length as training samples."
                 )
-            elif _hash_X(X) != self.X_train_hash_:
+            elif not _matches_hash_X(X, self.X_train_hash_):
                 warn("OOB samples are not identical to training samples.")
 
         if indices is not None and n_samples != len(indices):

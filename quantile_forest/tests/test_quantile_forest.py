@@ -865,6 +865,56 @@ def test_hash_X_sparse():
     assert_array_equal(X_noncanonical.data, [2, 0.5, 1.5, 1, 2])
 
 
+def test_hash_X_memory_layout(monkeypatch):
+    """Check that dense inputs hash equally whatever their memory layout."""
+    X = np.random.default_rng(0).normal(size=(100, 3)).astype(np.float32)
+
+    # The same values stored column by column (like those of a pandas
+    # DataFrame), and in every other column or row of a larger array.
+    X_fortran = np.asfortranarray(X)
+    X_columns = np.repeat(X, 2, axis=1)[:, ::2]
+    X_rows = np.repeat(X, 2, axis=0)[::2]
+    for X_same in [X_fortran, X_columns, X_rows]:
+        assert not X_same.flags.c_contiguous
+        assert_array_equal(X_same, X)
+        assert _hash_X(X_same) == _hash_X(X)
+
+    for X_other in [2 * X, X[::-1], X.reshape(150, 2), X.astype(np.float64)]:
+        assert _hash_X(X_other) != _hash_X(X)
+
+    # The hash does not depend on the number of rows that are hashed at a time.
+    X_hash = _hash_X(X)
+    monkeypatch.setattr("quantile_forest._quantile_forest._HASH_BLOCK_BYTES", 7 * X[:1].nbytes)
+    assert _hash_X(X) == _hash_X(X_fortran) == X_hash
+
+
+@pytest.mark.parametrize("name", FOREST_REGRESSORS)
+def test_oob_samples_memory_layout(name):
+    """Check that the training samples are recognized in any memory layout."""
+    X, y = datasets.make_regression(n_samples=100, n_features=3, random_state=0)
+    X_fortran = np.asfortranarray(X)
+
+    ForestRegressor = FOREST_REGRESSORS[name]
+
+    def warns_not_identical(est, X):
+        with warnings.catch_warnings(record=True) as record:
+            warnings.simplefilter("always")
+            est.predict(X, oob_score=True)
+        return any("not identical" in str(w.message) for w in record)
+
+    for X_train, X_oob in [(X, X_fortran), (X_fortran, X)]:
+        est = ForestRegressor(n_estimators=5, bootstrap=True, random_state=0).fit(X_train, y)
+        assert not warns_not_identical(est, X_train)
+        assert not warns_not_identical(est, X_oob)
+        assert warns_not_identical(est, X_oob + 1)
+
+    # A model fit by an earlier version, which hashed the training samples as
+    # they were laid out in memory, still recognizes them in that layout.
+    est.X_train_hash_ = joblib.hash(X_fortran.astype(np.float32))
+    assert not warns_not_identical(est, X_fortran)
+    assert warns_not_identical(est, X)
+
+
 def check_quantile_ranks_toy(name):
     """Check quantile ranks on toy data."""
     ForestRegressor = FOREST_REGRESSORS[name]
