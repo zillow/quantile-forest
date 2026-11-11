@@ -72,6 +72,9 @@ def setup_package():
         # Only the package, as examples/ (which has an __init__.py) would otherwise be
         # installed as a top-level package.
         packages=find_packages(include=["quantile_forest", "quantile_forest.*"]),
+        # Keep the C++ files that Cython generates (which are listed as sources
+        # of the extension modules) out of the wheels.
+        exclude_package_data={"quantile_forest": ["*.cpp"]},
         zip_safe=False,
     )
 

@@ -1,5 +1,5 @@
 recursive-include docs *
 recursive-include examples *
-recursive-include quantile_forest *.cpp *.pyx *.pxd
+recursive-include quantile_forest *.pyx *.pxd
 include README.md
 include quantile_forest/version.txt

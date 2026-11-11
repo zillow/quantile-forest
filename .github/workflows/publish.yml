@@ -30,6 +30,8 @@ jobs:
           CIBW_SKIP: '*i686* *win32 *musllinux*'
           CIBW_PROJECT_REQUIRES_PYTHON: '>=3.11,<3.16'
           CIBW_ARCHS_LINUX: auto64
+          # Leave out the debug info, which is most of the size of the Linux wheels.
+          CIBW_ENVIRONMENT_LINUX: CFLAGS="-g0" CXXFLAGS="-g0"
           CIBW_ARCHS_MACOS: x86_64 universal2 arm64
           CIBW_ARCHS_WINDOWS: auto64
           CIBW_TEST_REQUIRES: pytest
@@ -61,8 +63,18 @@ jobs:
         - name: Install build
           run: uv pip install build
 
+        # Without syncing, which would build the package in place first, and
+        # leave the C++ files that Cython generates where the sdist picks them up.
         - name: Build sdist
-          run: uv run python -m build --sdist
+          run: uv run --no-sync python -m build --sdist
+
+        - name: Check that the sdist has no generated files
+          run: |
+            tar -tzf dist/*.tar.gz
+            if tar -tzf dist/*.tar.gz | grep -E '\.(c|cpp|so|pyd)$'; then
+              echo "The sdist has generated files."
+              exit 1
+            fi
 
         - uses: actions/upload-artifact@v7
           with:
