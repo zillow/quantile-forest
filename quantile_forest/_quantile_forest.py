@@ -23,7 +23,6 @@ Single- and multi-output problems are both handled.
 
 import hashlib
 import random
-import warnings
 from abc import abstractmethod
 from math import ceil
 from numbers import Integral, Real
@@ -39,7 +38,13 @@ from sklearn.ensemble._forest import (
 )
 from sklearn.tree import DecisionTreeRegressor, ExtraTreeRegressor
 from sklearn.utils._param_validation import Interval, RealNotInt
-from sklearn.utils.validation import _check_sample_weight, check_is_fitted, validate_data
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.validation import (
+    _check_sample_weight,
+    check_array,
+    check_is_fitted,
+    validate_data,
+)
 
 from ._quantile_forest_fast import QuantileForest
 from ._utils import group_indices_by_value
@@ -349,6 +354,63 @@ class BaseForestQuantileRegressor(ForestRegressor):
 
         return self
 
+    def _check_X_for_trees(self, X):
+        """Check input samples as ``apply`` does, except for their feature names.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            The input samples, which have already been validated against the
+            fitted features (e.g., by ``_validate_X_predict``), so that they
+            have no feature names left to check.
+
+        Returns
+        -------
+        X : {ndarray, sparse matrix} of shape (n_samples, n_features)
+            The input samples as the trees expect them, with
+            ``dtype=np.float32`` and sparse matrices as ``csr_matrix``.
+        """
+        # Missing values are only valid where the trees support them.
+        allow_nan = self.estimators_[0]._support_missing_values(X)
+        X = check_array(
+            X,
+            accept_sparse="csr",
+            dtype=DTYPE,
+            ensure_all_finite="allow-nan" if allow_nan else True,
+            estimator=self,
+            input_name="X",
+        )
+        if issparse(X) and (X.indices.dtype != np.intc or X.indptr.dtype != np.intc):
+            raise ValueError("No support for np.int64 index based sparse matrices")
+        return X
+
+    def _apply_validated(self, X):
+        """Apply the trees to X and return the leaf indices, as ``apply`` does.
+
+        Unlike ``apply``, this does not validate X against the fitted features.
+        The callers have already validated X, so that it has no feature names,
+        and ``apply`` would warn that it has none. Ignoring that warning would
+        change the warning filters of the whole process, which is not
+        thread-safe: concurrent calls could leave the warnings ignored.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            The input samples, which have already been validated.
+
+        Returns
+        -------
+        X_leaves : ndarray of shape (n_samples, n_estimators)
+            For each sample and each tree, the index of the leaf that the
+            sample ends up in.
+        """
+        check_is_fitted(self)
+        X = self._check_X_for_trees(X)
+        results = Parallel(n_jobs=self.n_jobs, verbose=self.verbose, prefer="threads")(
+            delayed(tree.apply)(X, check_input=False) for tree in self.estimators_
+        )
+        return np.array(results).T
+
     def _get_leaf_weight(self, sample_weight):
         """Return the weights of the training samples in the leaf nodes.
 
@@ -551,9 +613,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
                 f"got {type(self.max_samples_leaf)}."
             )
 
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", UserWarning)
-            X_leaves = self.apply(X)
+        X_leaves = self._apply_validated(X)
 
         if self.bootstrap:
             n_samples_bootstrap = _get_n_samples_bootstrap(
@@ -783,9 +843,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
 
         # Check data once for all trees, as `apply` does. Callers pass arrays
         # they have already validated, which have no feature names to check.
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", UserWarning)
-            X = self._validate_X_predict(X)
+        X = self._check_X_for_trees(X)
 
         X_leaves = np.empty((n_samples, n_estimators), dtype=np.intp)
         for i, estimator in enumerate(self.estimators_):
@@ -1109,9 +1167,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
                     "to compute any reliable OOB estimates."
                 )
         else:
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore", UserWarning)
-                X_leaves = self.apply(X)
+            X_leaves = self._apply_validated(X)
             X_indices = None
 
         # Optimize for single-sample-per-leaf performance. A float of 1.0 means
@@ -1286,9 +1342,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
                     "to compute any reliable OOB estimates."
                 )
         else:
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore", UserWarning)
-                X_leaves = self.apply(X)
+            X_leaves = self._apply_validated(X)
             X_indices = None
 
         if y.ndim == 1:
@@ -1418,9 +1472,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
                     "to compute any reliable OOB estimates."
                 )
         else:
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore", UserWarning)
-                X_leaves = self.apply(X)
+            X_leaves = self._apply_validated(X)
             X_indices = None
 
         proximities = self.forest_.proximity_counts(
