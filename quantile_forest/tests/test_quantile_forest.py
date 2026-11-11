@@ -2662,6 +2662,52 @@ def test_sample_weight_scale(name, max_samples_leaf, interpolation):
 
 
 @pytest.mark.parametrize("name", FOREST_REGRESSORS)
+@pytest.mark.parametrize("weighted_leaves", [False, True])
+def test_sample_weight_scale_exact_fractions(name, weighted_leaves):
+    """Check that only relative weights matter at exact fractions of the total weight."""
+    X, y = datasets.make_regression(n_samples=300, n_features=4, noise=10, random_state=0)
+    sample_weight = np.random.default_rng(0).integers(1, 5, size=len(y)).astype(float)
+    X_test = np.random.default_rng(1).normal(size=(200, 4))
+
+    # Leaves of at least 10 samples, so that the trees do not depend on the scale.
+    ForestRegressor = FOREST_REGRESSORS[name]
+    params = {
+        "n_estimators": 10,
+        "bootstrap": False,
+        "max_samples_leaf": None,
+        "min_samples_leaf": 10,
+        "random_state": 0,
+    }
+
+    def get_predictions(sample_weight):
+        est = ForestRegressor(**params).fit(X, y, sample_weight=sample_weight)
+        y_pred = [
+            est.predict(
+                X_test,
+                quantiles=[0.1, 0.25, 0.5, 0.75, 0.9],
+                interpolation=interpolation,
+                weighted_leaves=weighted_leaves,
+            )
+            for interpolation in INVERTED_CDF_INTERPOLATIONS
+        ]
+        return np.stack(y_pred), [estimator.tree_.threshold for estimator in est.estimators_]
+
+    # With integer weights, some of the quantiles are exact fractions of the
+    # total weight, which is where the two interpolations differ.
+    expected, expected_thresholds = get_predictions(sample_weight)
+    if not weighted_leaves:
+        assert (expected[0] != expected[1]).any()
+
+    # Weights multiplied by a constant that floats round give the same trees,
+    # and the same predictions.
+    for scale in [0.1, 1 / 3, 0.7]:
+        actual, thresholds = get_predictions(scale * sample_weight)
+        for tree_thresholds, expected_tree_thresholds in zip(thresholds, expected_thresholds):
+            assert_array_equal(tree_thresholds, expected_tree_thresholds)
+        assert_array_equal(actual, expected)
+
+
+@pytest.mark.parametrize("name", FOREST_REGRESSORS)
 @pytest.mark.parametrize("multi_target", [False, True])
 def test_sample_weight_single_sample_leaves(name, multi_target):
     """Check that a leaf with one sample keeps it in proportion to its weight."""
@@ -3215,12 +3261,55 @@ def test_calc_weighted_quantile_inverted_cdf_scale(interpolation):
             )
             assert_array_equal(actual, expected)
 
-        # Other rescaling gives the same quantiles away from exact fractions,
-        # where rounding the fraction can move it across a sample.
+        # Other rescaling, which rounds the weights, gives the same quantiles
+        # away from exact fractions.
         quantiles = list(rng.random(4))
         expected = calc_weighted_quantile(inputs, weights, quantiles, interpolation.encode())
         actual = calc_weighted_quantile(inputs, 0.3 * weights, quantiles, interpolation.encode())
         assert_array_equal(actual, expected)
+
+        # It gives the same quantiles at the exact fractions that the integer
+        # weights reach too, since the cumulative weights are compared with the
+        # fraction of the total weight up to their rounding error.
+        fractions = np.arange(total + 1) / total
+        quantiles = list(fractions[fractions * total == np.arange(total + 1)])
+        expected = calc_weighted_quantile(inputs, weights, quantiles, interpolation.encode())
+        for scale in [0.1, 0.3, 1 / 3, 0.7, 1e-3, 1e9 / 7]:
+            actual = calc_weighted_quantile(
+                inputs, scale * weights, quantiles, interpolation.encode()
+            )
+            assert_array_equal(actual, expected)
+
+
+def test_calc_weighted_quantile_inverted_cdf_rounding():
+    """Check that rounded weights reach exact fractions of their total weight."""
+    inputs = [1.0, 2.0]
+
+    # Weights of two and three parts of the total weight, some of which floats
+    # round (as are the sums of 30 of them, as for a training sample that is in
+    # the leaves of 30 trees).
+    weights_list = [
+        [2.0, 3.0],
+        [0.5, 0.75],
+        [0.6, 0.9],
+        [0.2, 0.3],
+        [2 / 3, 1.0],
+        [2e9 / 7, 3e9 / 7],
+    ]
+    weights_list.append(list(np.cumsum(np.tile([0.2, 0.3], (30, 1)), axis=0)[-1]))
+    assert weights_list[-1] != [6.0, 9.0]  # the sums are rounded
+
+    for weights in weights_list:
+        # Two of the five parts are at or below the first input, exactly.
+        assert calc_weighted_quantile(inputs, weights, [0.4], b"inverted_cdf") == [1.0]
+        assert calc_weighted_quantile(inputs, weights, [0.4], b"averaged_inverted_cdf") == [1.5]
+
+        # Other fractions are not exact, even if they are close.
+        for interpolation in INVERTED_CDF_INTERPOLATIONS:
+            actual = calc_weighted_quantile(
+                inputs, weights, [0.4 - 1e-9, 0.4 + 1e-9], interpolation.encode()
+            )
+            assert actual == [1.0, 2.0]
 
 
 @pytest.mark.parametrize("interpolation", INVERTED_CDF_INTERPOLATIONS)

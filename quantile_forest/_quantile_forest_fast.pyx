@@ -1,3 +1,4 @@
+from libc.float cimport DBL_EPSILON
 from libc.math cimport NAN, ceil, fabs, floor, round
 from libcpp.algorithm cimport sort as sort_cpp
 from libcpp.map cimport map
@@ -331,6 +332,11 @@ cpdef vector[double] calc_weighted_quantile(
         with each input repeated, as does scikit-learn's
         ``_weighted_percentile`` (``average=True`` for the averaged method).
 
+        Cumulative weights that floats cannot represent exactly (e.g., those
+        of weights of 0.1) are compared with that fraction up to a rounding
+        error, so that these weights give the same quantiles as the same
+        weights scaled to integers do.
+
     issorted : bool, default=False
         Inputs and weights are sorted by inputs in ascending order.
 
@@ -347,11 +353,11 @@ cpdef vector[double] calc_weighted_quantile(
     """
     cdef intp_t n_inputs, n_quantiles
     cdef string s_interpolation
-    cdef bint inverted_cdf, average
+    cdef bint inverted_cdf, average, exact
     cdef intp_t i, j, k
     cdef intp_t idx_floor, idx_ceil, idx_last
     cdef double total_weight
-    cdef double quantile, pos, pos_floor, frac, target
+    cdef double quantile, pos, pos_floor, frac, target, tol
     cdef double v_floor, v_ceil
     cdef vector[double] cum_weights, sorted_quantile_indices
     cdef vector[double] out
@@ -371,14 +377,21 @@ cpdef vector[double] calc_weighted_quantile(
 
     cum_weights = vector[double](n_inputs)
 
-    # Calculate the empirical cumulative distribution function (ECDF).
+    # Calculate the empirical cumulative distribution function (ECDF), and
+    # check whether it is exact: weights that are multiples of 2 ** -20 (e.g.,
+    # integers or halves) are added without rounding, up to a total of 2 ** 32.
     cum_weights[0] = weights[0]
+    exact = weights[0] * 1048576.0 == floor(weights[0] * 1048576.0)
     for i in range(1, n_inputs):
         cum_weights[i] = cum_weights[i - 1] + weights[i]
+        if exact and weights[i] * 1048576.0 != floor(weights[i] * 1048576.0):
+            exact = False
 
     total_weight = cum_weights[n_inputs - 1]
     if total_weight <= 0:
         return out
+    if total_weight > 4294967296.0:
+        exact = False
 
     # Get the indices that would sort the quantiles in ascending order.
     sorted_quantile_indices = vector[double](n_quantiles)
@@ -404,13 +417,25 @@ cpdef vector[double] calc_weighted_quantile(
         idx_last = n_inputs - 1
         while weights[idx_last] <= 0:
             idx_last -= 1
+
+        # Exact cumulative weights (e.g., those of integer weights) are
+        # compared with the fraction of the total weight exactly, as NumPy
+        # compares the ranks of unweighted inputs. Other weights (e.g., 0.1,
+        # or sums of thirds) are rounded, so their cumulative weights can miss
+        # a fraction that they would reach exactly, or the other way around,
+        # and give another quantile than the same weights scaled to integers
+        # do. So compare them up to a relative error that is far larger than
+        # that of adding thousands of weights, and far smaller than the weight
+        # of an input.
+        tol = 0 if exact else 4096 * DBL_EPSILON * total_weight
+
         for i in range(n_quantiles):
             k = <intp_t>sorted_quantile_indices[i]
             target = quantiles[i] * total_weight
-            while j < idx_last and (weights[j] <= 0 or cum_weights[j] < target):
+            while j < idx_last and (weights[j] <= 0 or cum_weights[j] < target - tol):
                 j += 1
             out[k] = inputs[j]
-            if average and cum_weights[j] == target:
+            if average and fabs(cum_weights[j] - target) <= tol:
                 # Average the input and the next one with positive weight,
                 # with NumPy's arithmetic.
                 idx_ceil = j + 1
