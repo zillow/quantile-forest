@@ -32,7 +32,8 @@ jobs:
           CIBW_ARCHS_LINUX: auto64
           CIBW_ARCHS_MACOS: x86_64 universal2 arm64
           CIBW_ARCHS_WINDOWS: auto64
-          CIBW_TEST_COMMAND: python -c "import quantile_forest; print(quantile_forest.__version__)"
+          CIBW_TEST_REQUIRES: pytest
+          CIBW_TEST_COMMAND: pytest --pyargs quantile_forest
 
       - uses: actions/upload-artifact@v7
         with:
