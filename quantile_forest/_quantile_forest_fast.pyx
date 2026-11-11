@@ -1000,7 +1000,10 @@ cdef class QuantileForest:
             b"averaged_inverted_cdf",
         ]
         if interpolation not in interpolations:
-            raise ValueError(f"Invalid interpolation method {interpolation}.")
+            raise ValueError(
+                f"Invalid interpolation method {interpolation.decode('utf-8', 'replace')!r}, "
+                f"which must be one of: {b', '.join(interpolations).decode()}."
+            )
 
         # Quantiles that interpolate between samples count a sample of average
         # weight as one sample. Inverted CDF quantiles depend only on relative
@@ -1251,7 +1254,10 @@ cdef class QuantileForest:
 
         kinds = [b"rank", b"weak", b"strict", b"mean"]
         if kind not in kinds:
-            raise ValueError(f"Invalid kind {kind}.")
+            raise ValueError(
+                f"Invalid kind {kind.decode('utf-8', 'replace')!r}, which must be one of: "
+                f"{b', '.join(kinds).decode()}."
+            )
 
         # Initialize NumPy array with NaN values and get view for nogil.
         ranks = np.full((n_samples, n_outputs), np.nan, dtype=np.float64)

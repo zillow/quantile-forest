@@ -693,12 +693,17 @@ class BaseForestQuantileRegressor(ForestRegressor):
         if indices is not None and n_samples != len(indices):
             raise ValueError("If `indices` are not None, X and indices must be the same length.")
 
-        # Get the training index of each sample, if it has a valid one.
+        # Get the training index of each sample, unless it is omitted (-1).
         if indices is None:
             train_indices = np.arange(n_samples)
             has_index = np.ones(n_samples, dtype=bool)
         else:
             indices = np.asarray(indices)
+            if indices.ndim != 1 or indices.dtype.kind not in "iuf":  # integers or floats
+                raise ValueError(
+                    "`indices` must be a one-dimensional array-like of integers, "
+                    f"got an array of shape {indices.shape} and dtype {indices.dtype}."
+                )
             with np.errstate(invalid="ignore"):
                 train_indices = indices.astype(np.intp)
             has_index = (
@@ -706,6 +711,13 @@ class BaseForestQuantileRegressor(ForestRegressor):
                 & (train_indices >= 0)
                 & (train_indices < self.n_train_samples_)
             )
+            is_invalid = ~has_index & (indices != -1)
+            if is_invalid.any():
+                raise ValueError(
+                    "`indices` must be training indices, from 0 up to (but excluding) "
+                    f"{self.n_train_samples_}, or -1 for samples omitted from the training "
+                    f"set, got {indices[is_invalid][0]}."
+                )
 
         # Look up the bits of the training indices excluded from each tree's
         # bootstrap sample.
@@ -863,8 +875,12 @@ class BaseForestQuantileRegressor(ForestRegressor):
                 f"match the number of outputs in test data being scored ({y.shape[1]})."
             )
 
-        if kind not in [b"rank", b"weak", b"strict", b"mean"]:
-            raise ValueError(f"Invalid kind {kind}.")
+        kinds = [b"rank", b"weak", b"strict", b"mean"]
+        if kind not in kinds:
+            raise ValueError(
+                f"Invalid kind {bytes(kind).decode(errors='replace')!r}, which must be one of: "
+                f"{b', '.join(kinds).decode()}."
+            )
 
         y_ranks = np.full((n_samples, n_outputs), np.nan)
         for output in range(n_outputs):
@@ -1026,8 +1042,10 @@ class BaseForestQuantileRegressor(ForestRegressor):
             quantiles = "mean" if self.default_quantiles is None else self.default_quantiles
         quantiles = _check_quantiles(quantiles)
 
-        if not isinstance(interpolation, (bytes, bytearray)):
+        if isinstance(interpolation, str):
             interpolation = interpolation.encode()
+        elif not isinstance(interpolation, (bytes, bytearray)):
+            raise ValueError(f"`interpolation` must be a string, got {interpolation!r}.")
 
         if oob_score:
             if not self.bootstrap:
@@ -1201,8 +1219,10 @@ class BaseForestQuantileRegressor(ForestRegressor):
             reset=False,
         )
 
-        if not isinstance(kind, (bytes, bytearray)):
+        if isinstance(kind, str):
             kind = kind.encode()
+        elif not isinstance(kind, (bytes, bytearray)):
+            raise ValueError(f"`kind` must be a string, got {kind!r}.")
 
         if oob_score:
             if not self.bootstrap:

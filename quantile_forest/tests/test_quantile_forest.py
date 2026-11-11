@@ -430,6 +430,45 @@ def test_predict_quantiles_invalid(name, max_samples_leaf, weighted_quantile):
 
 @pytest.mark.parametrize("name", FOREST_REGRESSORS)
 @pytest.mark.parametrize("max_samples_leaf", [1, None])
+def test_predict_options_invalid(name, max_samples_leaf):
+    """Check that invalid interpolation methods and kinds of ranks raise clear errors."""
+    X, y = datasets.make_regression(n_samples=100, n_features=2, random_state=0)
+
+    ForestRegressor = FOREST_REGRESSORS[name]
+
+    est = ForestRegressor(n_estimators=5, max_samples_leaf=max_samples_leaf, random_state=0)
+    est.fit(X, y)
+
+    # Options that are not strings.
+    for interpolation in [None, 1, ["linear"]]:
+        with pytest.raises(ValueError, match="`interpolation` must be a string"):
+            est.predict(X, quantiles=0.5, interpolation=interpolation)
+    for kind in [None, 1, ["rank"]]:
+        with pytest.raises(ValueError, match="`kind` must be a string"):
+            est.quantile_ranks(X, y, kind=kind)
+
+    # Unknown options are named as they were passed.
+    with pytest.raises(ValueError, match="'median'"):
+        est.predict(X, quantiles=0.5, interpolation="median")
+    with pytest.raises(ValueError, match="Invalid kind 'median', which must be one of: rank,"):
+        est.quantile_ranks(X, y, kind="median")
+    if max_samples_leaf is None:
+        expected = "Invalid interpolation method 'median', which must be one of: linear,"
+        with pytest.raises(ValueError, match=expected):
+            est.predict(X, quantiles=0.5, interpolation="median")
+
+    # Bytes are still accepted.
+    assert_array_equal(
+        est.predict(X, quantiles=0.5, interpolation=b"linear"),
+        est.predict(X, quantiles=0.5, interpolation="linear"),
+    )
+    assert_array_equal(
+        est.quantile_ranks(X, y, kind=b"weak"), est.quantile_ranks(X, y, kind="weak")
+    )
+
+
+@pytest.mark.parametrize("name", FOREST_REGRESSORS)
+@pytest.mark.parametrize("max_samples_leaf", [1, None])
 def test_predict_uses_fitted_trees(name, max_samples_leaf):
     """Check that predictions use the fitted trees, even if n_estimators changes."""
     X, y = datasets.make_regression(n_samples=120, n_features=2, random_state=0)
@@ -1429,6 +1468,47 @@ def check_oob_samples(name):
 @pytest.mark.parametrize("name", FOREST_REGRESSORS)
 def test_oob_samples(name):
     check_oob_samples(name)
+
+
+@pytest.mark.parametrize("name", FOREST_REGRESSORS)
+@pytest.mark.parametrize("max_samples_leaf", [1, None])
+def test_oob_samples_indices_invalid(name, max_samples_leaf):
+    """Check that invalid training indices raise an error, instead of predicting NaN."""
+    X, y = datasets.make_regression(n_samples=100, n_features=3, random_state=0)
+
+    ForestRegressor = FOREST_REGRESSORS[name]
+
+    est = ForestRegressor(
+        n_estimators=20, max_samples_leaf=max_samples_leaf, bootstrap=True, random_state=0
+    )
+    est.fit(X, y)
+
+    def call_methods(indices):
+        # Call the methods that take indices of OOB samples, on as many samples.
+        X_oob, y_oob = X[: len(indices)], y[: len(indices)]
+        est.proximity_counts(X_oob, oob_score=True, indices=indices)
+        y_ranks = est.quantile_ranks(X_oob, y_oob, oob_score=True, indices=indices)
+        return est.predict(X_oob, quantiles=0.5, oob_score=True, indices=indices), y_ranks
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", UserWarning)  # samples without OOB trees
+
+        # Training indices, or -1 for samples that are not training samples, as
+        # integers or as floats.
+        expected = call_methods(np.array([0, 1, 99, -1, 3]))
+        for indices in [[0, 1, 99, -1, 3], np.array([0.0, 1.0, 99.0, -1.0, 3.0])]:
+            for actual, expected_values in zip(call_methods(indices), expected):
+                assert_array_equal(actual, expected_values)
+
+        # Indices that are not training indices.
+        for indices in [[0, 1, 100], [0, 1, -2], [0, 1, 0.5], [0, 1, np.nan], [0, 1, np.inf]]:
+            with pytest.raises(ValueError, match="`indices` must be training indices"):
+                call_methods(indices)
+
+        # Indices that are not a one-dimensional array of numbers.
+        for indices in [[[0], [1], [2]], ["0", "1", "2"], [True, False, True], [0, None, 2]]:
+            with pytest.raises(ValueError, match="`indices` must be a one-dimensional"):
+                call_methods(indices)
 
 
 def check_oob_samples_duplicates(name):
