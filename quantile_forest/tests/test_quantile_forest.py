@@ -516,6 +516,88 @@ def test_predict_uses_fitted_trees(name, max_samples_leaf):
             assert_allclose(est.predict(X_train, quantiles=quantiles, oob_score=True), y_pred_oob)
 
 
+@pytest.mark.parametrize("name", FOREST_REGRESSORS)
+@pytest.mark.parametrize("max_samples_leaf", [1, 3, None])
+def test_predict_uses_fitted_leaves(name, max_samples_leaf):
+    """Check that predictions use the fitted leaves, even if max_samples_leaf changes."""
+    X, y = datasets.make_regression(n_samples=120, n_features=2, noise=10, random_state=0)
+    X_train, y_train, X_test = X[:100], y[:100], X[100:]
+
+    ForestRegressor = FOREST_REGRESSORS[name]
+
+    # Leaves of several samples, so that it matters how many of them each keeps.
+    est = ForestRegressor(
+        n_estimators=10,
+        max_samples_leaf=max_samples_leaf,
+        min_samples_leaf=5,
+        bootstrap=True,
+        random_state=0,
+    )
+    est.fit(X_train, y_train)
+
+    def predict():
+        """Return predictions from leaves aggregated across trees or not, and OOB ones."""
+        quantiles = [0.1, 0.5, 0.9]
+        return [
+            est.predict(X_test, quantiles=quantiles),
+            est.predict(X_test, quantiles=quantiles, aggregate_leaves_first=False),
+            est.predict(X_train, quantiles=quantiles, oob_score=True),
+        ]
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")  # some samples have no OOB trees
+        expected = predict()
+
+        for changed in [1, 3, None]:  # e.g., set before a warm-start refit
+            est.set_params(max_samples_leaf=changed)
+            for actual_pred, expected_pred in zip(predict(), expected):
+                assert_array_equal(actual_pred, expected_pred)
+
+        # Forests fit by version 1.5.0 or earlier did not record how many samples
+        # their leaves keep, so their predictions go by the parameter.
+        est.set_params(max_samples_leaf=max_samples_leaf)
+        del est._single_sample_leaves
+        for actual_pred, expected_pred in zip(predict(), expected):
+            assert_array_equal(actual_pred, expected_pred)
+
+
+@pytest.mark.parametrize("name", FOREST_REGRESSORS)
+@pytest.mark.parametrize("monotonic_cst, changed", [([1, -1], None), (None, [1, -1])])
+def test_predict_uses_fitted_leaf_bounds(name, monotonic_cst, changed):
+    """Check that the methods use the fitted leaf bounds, even if monotonic_cst changes."""
+    X, y = datasets.make_regression(n_samples=120, n_features=2, noise=10, random_state=0)
+    X_train, y_train, X_test, y_test = X[:100], y[:100], X[100:], y[100:]
+
+    ForestRegressor = FOREST_REGRESSORS[name]
+
+    est = ForestRegressor(
+        n_estimators=10, monotonic_cst=monotonic_cst, bootstrap=True, random_state=0
+    )
+    est.fit(X_train, y_train)
+
+    def predict_and_rank():
+        """Return predictions and quantile ranks, and OOB ones."""
+        quantiles = [0.1, 0.5, 0.9]
+        return [
+            est.predict(X_test, quantiles=quantiles),
+            est.predict(X_train, quantiles=quantiles, oob_score=True),
+            est.quantile_ranks(X_test, y_test),
+            est.quantile_ranks(X_train, y_train, oob_score=True),
+        ]
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")  # some samples have no OOB trees
+        expected = predict_and_rank()
+
+        # The leaves are clipped to their bounds if the forest was fit with
+        # constraints, which need one sample per leaf, whatever is set after
+        # (e.g., before a warm-start refit).
+        for params in [{"monotonic_cst": changed}, {"max_samples_leaf": None}]:
+            est.set_params(**params)
+            for actual, expected_output in zip(predict_and_rank(), expected):
+                assert_array_equal(actual, expected_output)
+
+
 def check_predict_quantiles(
     name,
     max_samples,
