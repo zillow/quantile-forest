@@ -1973,6 +1973,63 @@ def test_oob_methods_validate_once(name):
         assert_allclose(y_ranks_nan[1:], y_ranks[1:])
 
 
+@pytest.mark.parametrize("name", FOREST_REGRESSORS)
+@pytest.mark.parametrize("max_samples_leaf", [1, None])
+def test_methods_keep_warning_filters(name, max_samples_leaf, monkeypatch):
+    """Check that the methods do not change the warning filters.
+
+    The filters apply to the whole process, so changing them (e.g., to ignore
+    the warnings of the trees) is not thread-safe: concurrent calls, such as
+    those of a model that is served from several threads, could leave warnings
+    ignored after they return.
+    """
+    pd = pytest.importorskip("pandas")
+
+    X, y = datasets.make_regression(n_samples=100, n_features=3, random_state=0)
+    X_df = pd.DataFrame(X, columns=["a", "b", "c"])
+
+    ForestRegressor = FOREST_REGRESSORS[name]
+
+    est = ForestRegressor(
+        n_estimators=5, max_samples_leaf=max_samples_leaf, bootstrap=True, random_state=0
+    )
+
+    def get_filters():
+        # The action and category of each warning filter, in order.
+        return [(action, category) for action, _, category, _, _ in warnings.filters]
+
+    # Record the warning filters whenever a tree is applied.
+    filters = []
+    tree_class = type(est.estimator)
+    tree_apply = tree_class.apply
+
+    def apply(self, *args, **kwargs):
+        filters.append(get_filters())
+        return tree_apply(self, *args, **kwargs)
+
+    monkeypatch.setattr(tree_class, "apply", apply)
+
+    with warnings.catch_warnings(record=True) as record:
+        warnings.simplefilter("always")
+        expected = get_filters()
+
+        est.fit(X_df, y)
+        n_fit = len(filters)
+        est.predict(X_df)
+        est.predict(X_df, oob_score=True)
+        est.quantile_ranks(X_df, y)
+        est.quantile_ranks(X_df, y, oob_score=True)
+        est.proximity_counts(X_df)
+        est.proximity_counts(X_df, oob_score=True)
+
+    # Fit and each of the methods apply the trees, with the filters unchanged.
+    assert 0 < n_fit < len(filters)
+    assert all(tree_filters == expected for tree_filters in filters)
+
+    # A model fitted with feature names does not warn about them either.
+    assert not any("feature names" in str(w.message) for w in record)
+
+
 def check_monotonic_constraints(name, max_samples_leaf, missing_values):
     """Check monotonic constraints."""
     ForestRegressor = FOREST_REGRESSORS[name]
