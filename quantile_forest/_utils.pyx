@@ -34,6 +34,9 @@ cdef void parallel_qsort_asc(
     cdef intp_t i, j
     cdef double pivot
 
+    if left >= right:  # fewer than two elements to sort (e.g., of empty lists)
+        return
+
     i = left
     j = right
     pivot = a[(left + right) / 2]

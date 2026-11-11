@@ -2899,6 +2899,14 @@ def test_calc_weighted_quantile():
     expected = []
     assert_array_equal(actual, expected)
 
+    # Check that empty array is returned for empty quantiles.
+    for interpolation in INTERPOLATIONS:
+        for issorted in [True, False]:
+            actual = calc_weighted_quantile(
+                [2, 4, 3], [1, 0, 1], [], interpolation.encode(), issorted=issorted
+            )
+            assert_array_equal(actual, [])
+
     inputs = [2, 4, 3]
     weights = [1, 1, 1]
 
