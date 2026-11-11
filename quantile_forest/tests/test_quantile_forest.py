@@ -186,6 +186,29 @@ def test_regression_params(name):
 
 
 @pytest.mark.parametrize("name", FOREST_REGRESSORS)
+def test_criterion_friedman_mse(name):
+    """Check that "friedman_mse" is replaced with "squared_error", as in scikit-learn.
+
+    Scikit-learn 1.9 deprecated the criterion, and its forests still accept it
+    (with a warning) when they are initialized.
+    """
+    X, y = datasets.make_regression(n_samples=100, n_features=4, random_state=0)
+
+    ForestRegressor = FOREST_REGRESSORS[name]
+
+    with pytest.warns(FutureWarning, match="friedman_mse"):
+        est = ForestRegressor(n_estimators=5, criterion="friedman_mse", random_state=0)
+    assert est.criterion == "squared_error"
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")  # no more warnings
+        est.fit(X, y)
+        expected = ForestRegressor(n_estimators=5, criterion="squared_error", random_state=0)
+        expected.fit(X, y)
+    assert_array_equal(est.predict(X), expected.predict(X))
+
+
+@pytest.mark.parametrize("name", FOREST_REGRESSORS)
 @pytest.mark.parametrize("weighted_leaves", [False, True])
 @pytest.mark.parametrize("aggregate_leaves_first", [True, False])
 def test_predict_weighted_rows_independent(name, weighted_leaves, aggregate_leaves_first):

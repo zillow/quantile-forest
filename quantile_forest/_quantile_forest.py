@@ -76,6 +76,27 @@ def _check_quantiles(quantiles):
     return quantiles
 
 
+def _check_criterion(criterion):
+    """Return the criterion, with the deprecated "friedman_mse" replaced.
+
+    Scikit-learn 1.9 deprecated "friedman_mse", which was always equivalent
+    to "squared_error" for forests. Its forests replace it (with a warning)
+    when they are initialized, so do the same.
+    """
+    # TODO: Remove when scikit-learn removes "friedman_mse" (in version 1.11).
+    if isinstance(criterion, str) and criterion == "friedman_mse":
+        warn(
+            'Value `"friedman_mse"` for `criterion` is deprecated and will be '
+            "removed when scikit-learn removes it (in version 1.11). It maps to "
+            '`"squared_error"` as both were always equivalent. Use '
+            '`criterion="squared_error"` to remove this warning.',
+            FutureWarning,
+            stacklevel=3,
+        )
+        return "squared_error"
+    return criterion
+
+
 # The dtype of the samples that scikit-learn's trees are fit on.
 DTYPE = np.float32
 
@@ -1438,18 +1459,21 @@ class RandomForestQuantileRegressor(BaseForestQuantileRegressor):
 
         .. versionadded:: 1.2
 
-    criterion : {"squared_error", "absolute_error", "friedman_mse", "poisson"}, \
+    criterion : {"squared_error", "absolute_error", "poisson"}, \
             default="squared_error"
         The function to measure the quality of a split. Supported criteria
         are "squared_error" for the mean squared error, which is equal to
         variance reduction as feature selection criterion and minimizes the L2
-        loss using the mean of each terminal node, "friedman_mse", which uses
-        mean squared error with Friedman's improvement score for potential
-        splits, "absolute_error" for the mean absolute error, which minimizes
-        the L1 loss using the median of each terminal node, and "poisson" which
-        uses reduction in Poisson deviance to find splits.
+        loss using the mean of each terminal node, "absolute_error" for the
+        mean absolute error, which minimizes the L1 loss using the median of
+        each terminal node, and "poisson" which uses reduction in Poisson
+        deviance to find splits.
         Training using "absolute_error" is significantly slower
         than when using "squared_error".
+
+        .. sklearn-versionchanged:: 1.9
+            Criterion `"friedman_mse"` was deprecated. It is replaced with
+            `"squared_error"`, as both were always equivalent, with a warning.
 
     max_depth : int, default=None
         The maximum depth of the tree. If None, then nodes are expanded until
@@ -1574,10 +1598,15 @@ class RandomForestQuantileRegressor(BaseForestQuantileRegressor):
         If bootstrap is True, the number of samples to draw from X
         to train each base estimator.
 
-        - If None (default), then draw `X.shape[0]` samples.
+        - If None (default), then draw `X.shape[0]` samples irrespective of
+          `sample_weight`.
         - If int, then draw `max_samples` samples.
-        - If float, then draw `max(round(n_samples * max_samples), 1)` samples.
-          Thus, `max_samples` should be in the interval `(0.0, 1.0]`.
+        - If float, then draw `max_samples * X.shape[0]` unweighted samples
+          or `max_samples * sample_weight.sum()` weighted samples.
+
+        .. sklearn-versionchanged:: 1.9
+            Float `max_samples` is relative to `sample_weight.sum()` instead of
+            `X.shape[0]` for weighted samples.
 
     monotonic_cst : array-like of int of shape (n_features), default=None
         Indicates the monotonicity constraint to enforce on each feature.
@@ -1740,7 +1769,7 @@ class RandomForestQuantileRegressor(BaseForestQuantileRegressor):
         super(RandomForestQuantileRegressor, self).__init__(**init_dict)
 
         self.default_quantiles = default_quantiles
-        self.criterion = criterion
+        self.criterion = _check_criterion(criterion)
         self.max_depth = max_depth
         self.min_samples_split = min_samples_split
         self.min_samples_leaf = min_samples_leaf
@@ -1774,18 +1803,21 @@ class ExtraTreesQuantileRegressor(BaseForestQuantileRegressor):
 
         .. versionadded:: 1.2
 
-    criterion : {"squared_error", "absolute_error", "friedman_mse", "poisson"}, \
+    criterion : {"squared_error", "absolute_error", "poisson"}, \
             default="squared_error"
         The function to measure the quality of a split. Supported criteria
         are "squared_error" for the mean squared error, which is equal to
         variance reduction as feature selection criterion and minimizes the L2
-        loss using the mean of each terminal node, "friedman_mse", which uses
-        mean squared error with Friedman's improvement score for potential
-        splits, "absolute_error" for the mean absolute error, which minimizes
-        the L1 loss using the median of each terminal node, and "poisson" which
-        uses reduction in Poisson deviance to find splits.
+        loss using the mean of each terminal node, "absolute_error" for the
+        mean absolute error, which minimizes the L1 loss using the median of
+        each terminal node, and "poisson" which uses reduction in Poisson
+        deviance to find splits.
         Training using "absolute_error" is significantly slower
         than when using "squared_error".
+
+        .. sklearn-versionchanged:: 1.9
+            Criterion `"friedman_mse"` was deprecated. It is replaced with
+            `"squared_error"`, as both were always equivalent, with a warning.
 
     max_depth : int, default=None
         The maximum depth of the tree. If None, then nodes are expanded until
@@ -1914,10 +1946,15 @@ class ExtraTreesQuantileRegressor(BaseForestQuantileRegressor):
         If bootstrap is True, the number of samples to draw from X
         to train each base estimator.
 
-        - If None (default), then draw `X.shape[0]` samples.
+        - If None (default), then draw `X.shape[0]` samples irrespective of
+          `sample_weight`.
         - If int, then draw `max_samples` samples.
-        - If float, then draw `max_samples * X.shape[0]` samples. Thus,
-          `max_samples` should be in the interval `(0.0, 1.0]`.
+        - If float, then draw `max_samples * X.shape[0]` unweighted samples
+          or `max_samples * sample_weight.sum()` weighted samples.
+
+        .. sklearn-versionchanged:: 1.9
+            Float `max_samples` is relative to `sample_weight.sum()` instead of
+            `X.shape[0]` for weighted samples.
 
     monotonic_cst : array-like of int of shape (n_features), default=None
         Indicates the monotonicity constraint to enforce on each feature.
@@ -2066,7 +2103,7 @@ class ExtraTreesQuantileRegressor(BaseForestQuantileRegressor):
         super(ExtraTreesQuantileRegressor, self).__init__(**init_dict)
 
         self.default_quantiles = default_quantiles
-        self.criterion = criterion
+        self.criterion = _check_criterion(criterion)
         self.max_depth = max_depth
         self.min_samples_split = min_samples_split
         self.min_samples_leaf = min_samples_leaf
