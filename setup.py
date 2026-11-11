@@ -60,6 +60,8 @@ def configure_extension_modules():
             "language_level": "3",
             "boundscheck": False,
             "cdivision": True,
+            # The modules share no state between calls, so do not need the GIL.
+            "freethreading_compatible": True,
             "initializedcheck": False,
             "nonecheck": False,
             "wraparound": False,
