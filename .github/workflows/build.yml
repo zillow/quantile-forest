@@ -25,6 +25,45 @@ jobs:
           pip install pre-commit
           pre-commit run --all-files --show-diff-on-failure --color=always
 
+  # Test with free-threaded Python, without the requirements of the
+  # documentation, which do not all have wheels for it.
+  free-threaded:
+    strategy:
+      matrix:
+        python-version: ['3.14t', '3.15t']
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install uv
+        run: pip install uv
+
+      - name: Create virtual environment
+        run: uv venv --python ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          uv pip install pytest pytest-cov
+          uv pip install --verbose --editable .
+
+      - name: Test with pytest
+        run: uv run pytest --pyargs quantile_forest --cov=quantile_forest
+
+      # The coverage of the tests that only run with free-threaded Python.
+      - name: Generate coverage report
+        run: uv run coverage xml
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v7
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+
   build:
     strategy:
       matrix:
