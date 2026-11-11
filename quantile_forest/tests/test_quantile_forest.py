@@ -2030,6 +2030,52 @@ def test_methods_keep_warning_filters(name, max_samples_leaf, monkeypatch):
     assert not any("feature names" in str(w.message) for w in record)
 
 
+@pytest.mark.parametrize("name", FOREST_REGRESSORS)
+def test_methods_inputs_invalid(name):
+    """Check that the methods reject the inputs that `apply` rejects.
+
+    The methods apply the trees themselves, to inputs that they have validated,
+    so they have to check what `apply` checks before it applies the trees.
+    """
+    X, y = datasets.make_regression(n_samples=100, n_features=3, random_state=0)
+
+    ForestRegressor = FOREST_REGRESSORS[name]
+
+    est = ForestRegressor(n_estimators=5, bootstrap=True, random_state=0).fit(X, y)
+
+    # Infinite values, and missing values in a sparse matrix.
+    X_inf = X.copy()
+    X_inf[0, 0] = np.inf
+    X_nan = X.copy()
+    X_nan[0, 0] = np.nan
+    X_nan = sparse.csr_matrix(X_nan)
+    invalid_inputs = [(X_inf, "Input X contains infinity"), (X_nan, "Input X contains NaN")]
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")  # OOB samples that are not the training samples
+
+        for X_invalid, message in invalid_inputs:
+            with pytest.raises(ValueError, match=message):
+                est.apply(X_invalid)
+            for oob_score in [False, True]:
+                with pytest.raises(ValueError, match=message):
+                    est.predict(X_invalid, oob_score=oob_score)
+                with pytest.raises(ValueError, match=message):
+                    est.quantile_ranks(X_invalid, y, oob_score=oob_score)
+                with pytest.raises(ValueError, match=message):
+                    est.proximity_counts(X_invalid, oob_score=oob_score)
+
+    # A sparse matrix with 64-bit indices, if no method has converted it before.
+    X_int64 = sparse.csr_matrix(X.astype(np.float32))
+    X_int64.indices = X_int64.indices.astype(np.int64)
+    X_int64.indptr = X_int64.indptr.astype(np.int64)
+
+    message = "No support for np.int64 index based sparse matrices"
+    for apply in [est.apply, est._apply_validated]:
+        with pytest.raises(ValueError, match=message):
+            apply(X_int64)
+
+
 def check_monotonic_constraints(name, max_samples_leaf, missing_values):
     """Check monotonic constraints."""
     ForestRegressor = FOREST_REGRESSORS[name]

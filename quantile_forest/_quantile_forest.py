@@ -305,9 +305,8 @@ class BaseForestQuantileRegressor(ForestRegressor):
 
         return self
 
-    @staticmethod
-    def _check_X_for_trees(X):
-        """Check input samples for the trees, without checking feature names.
+    def _check_X_for_trees(self, X):
+        """Check input samples as ``apply`` does, except for their feature names.
 
         Parameters
         ----------
@@ -322,7 +321,16 @@ class BaseForestQuantileRegressor(ForestRegressor):
             The input samples as the trees expect them, with
             ``dtype=np.float32`` and sparse matrices as ``csr_matrix``.
         """
-        X = check_array(X, accept_sparse="csr", dtype=DTYPE, ensure_all_finite=False)
+        # Missing values are only valid where the trees support them.
+        allow_nan = self.estimators_[0]._support_missing_values(X)
+        X = check_array(
+            X,
+            accept_sparse="csr",
+            dtype=DTYPE,
+            ensure_all_finite="allow-nan" if allow_nan else True,
+            estimator=self,
+            input_name="X",
+        )
         if issparse(X) and (X.indices.dtype != np.intc or X.indptr.dtype != np.intc):
             raise ValueError("No support for np.int64 index based sparse matrices")
         return X
