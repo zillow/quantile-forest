@@ -9,3 +9,16 @@ updates:
     directory: '/' # Location of package manifests
     schedule:
       interval: 'weekly'
+
+  # The versions in uv.lock, which the workflows install to run the tests.
+  - package-ecosystem: 'uv'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+    # Leave the minimum versions in pyproject.toml as they are.
+    versioning-strategy: 'lockfile-only'
+    # Update all of the packages in one pull request.
+    groups:
+      uv-lock:
+        patterns:
+          - '*'
