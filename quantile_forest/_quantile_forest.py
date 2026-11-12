@@ -307,14 +307,17 @@ class BaseForestQuantileRegressor(ForestRegressor):
 
         self.sample_weight_ = sample_weight
 
-        # Get the weights of the leaf samples, if they are weighted. With an
-        # integer `max_samples_leaf=1`, each leaf keeps one sample, so pick it
-        # in proportion to its weight instead.
-        leaf_weight = self._get_leaf_weight(sample_weight)
-        weighted_subsample = leaf_weight is not None and (
+        # Whether each leaf keeps one sample. A float of 1.0 means "keep all
+        # samples" (100%), so only an integer 1 qualifies.
+        single_sample_leaves = (
             isinstance(self.max_samples_leaf, (Integral, np.integer))
             and self.max_samples_leaf == 1
         )
+
+        # Get the weights of the leaf samples, if they are weighted. If each
+        # leaf keeps one sample, pick it in proportion to its weight instead.
+        leaf_weight = self._get_leaf_weight(sample_weight)
+        weighted_subsample = leaf_weight is not None and single_sample_leaves
         if weighted_subsample:
             leaf_weight = None
 
@@ -346,6 +349,10 @@ class BaseForestQuantileRegressor(ForestRegressor):
         self.n_train_samples_ = len(y_sorted)
         self.X_train_hash_ = _hash_X(X)
         self.unsampled_indices_ = None
+
+        # Record whether each leaf keeps one sample, for the methods that read
+        # the leaves, as `max_samples_leaf` can change after the forest is fit.
+        self._single_sample_leaves = single_sample_leaves
 
         # Record the samples left out of each tree, for out-of-bag estimation.
         self._unsampled_masks = None
@@ -940,6 +947,42 @@ class BaseForestQuantileRegressor(ForestRegressor):
 
         return ~sampled_mask
 
+    def _has_single_sample_leaves(self):
+        """Return whether the forest was fit to keep one sample per leaf.
+
+        The forest records it when it is fit, so that the methods read the
+        leaves as they were filled, even if `max_samples_leaf` changes after
+        (e.g., if it is set before a warm-start refit).
+
+        Returns
+        -------
+        single_sample_leaves : bool
+            True if the forest was fit with an integer `max_samples_leaf=1`.
+        """
+        single_sample_leaves = getattr(self, "_single_sample_leaves", None)
+        if single_sample_leaves is None:
+            # Forests fit by version 1.5.0 or earlier did not record it, so take
+            # it from the parameter. A float of 1.0 means "keep all samples"
+            # (100%), so only an integer 1 qualifies.
+            single_sample_leaves = (
+                isinstance(self.max_samples_leaf, (Integral, np.integer))
+                and self.max_samples_leaf == 1
+            )
+        return single_sample_leaves
+
+    def _has_leaf_bounds(self):
+        """Return whether the forest was fit with monotonicity constraints.
+
+        If it was, each leaf has bounds for the target value that it keeps,
+        which the methods apply even if `monotonic_cst` changes after.
+
+        Returns
+        -------
+        leaf_bounds : bool
+            True if the leaves have bounds for their target values.
+        """
+        return np.asarray(self.forest_.y_bound_leaves).size > 0
+
     def _clipped_quantile_ranks(self, y, X_leaves, X_indices, kind, aggregate_leaves_first):
         """Return quantile ranks among the clipped leaf values.
 
@@ -1172,12 +1215,9 @@ class BaseForestQuantileRegressor(ForestRegressor):
             X_leaves = self._apply_validated(X)
             X_indices = None
 
-        # Optimize for single-sample-per-leaf performance. A float of 1.0 means
-        # "keep all samples" (100%), so only an integer 1 qualifies.
-        if (
-            isinstance(self.max_samples_leaf, (Integral, np.integer))
-            and self.max_samples_leaf == 1
-        ):
+        # Optimize for single-sample-per-leaf performance.
+        if self._has_single_sample_leaves():
+            has_leaf_bounds = self._has_leaf_bounds()
             y_bound_leaves = np.asarray(self.forest_.y_bound_leaves)
             y_train = np.asarray(self.forest_.y_train).T
             n_samples = X.shape[0]  # X may be sparse, so avoid len(X)
@@ -1192,7 +1232,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
                         leaf_vals[:, tree] = np.where(
                             train_indices > 0, y_train[train_indices - 1, output], np.nan
                         )
-                        if self.monotonic_cst is not None:
+                        if has_leaf_bounds:
                             clip_min = y_bound_leaves[tree, leaves, 0]
                             clip_max = y_bound_leaves[tree, leaves, 1]
                             leaf_vals[:, tree] = np.clip(leaf_vals[:, tree], clip_min, clip_max)
@@ -1209,7 +1249,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
                             y_train[train_indices[idx_mask] - 1, output],
                             np.nan,
                         )
-                        if self.monotonic_cst is not None:
+                        if has_leaf_bounds:
                             clip_min = np.full(n_samples, -np.inf)
                             clip_max = np.full(n_samples, np.inf)
                             clip_min[idx_mask] = y_bound_leaves[tree, leaves, 0]
@@ -1350,7 +1390,7 @@ class BaseForestQuantileRegressor(ForestRegressor):
         if y.ndim == 1:
             y = np.expand_dims(y, axis=1)
 
-        if self.monotonic_cst is not None:
+        if self._has_leaf_bounds():
             # Rank among the clipped leaf values that predict uses.
             y_ranks = self._clipped_quantile_ranks(
                 y.astype(np.float64),
