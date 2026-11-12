@@ -1110,7 +1110,9 @@ class BaseForestQuantileRegressor(ForestRegressor):
 
         weighted_leaves : bool, default=False
             Weight samples inversely to the size of their leaf node.
-            Only used if `weighted_quantile=True` and `max_samples_leaf!=1`.
+            Only used if `weighted_quantile=True`, `max_samples_leaf!=1` and
+            `aggregate_leaves_first=True`, as the samples of a leaf all have
+            the same weight.
 
         aggregate_leaves_first : bool, default=True
             Calculate predictions using aggregated leaf values. If True, a

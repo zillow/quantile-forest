@@ -922,7 +922,8 @@ cdef class QuantileForest:
             Calculate weighted quantiles.
 
         weighted_leaves : bool, default=False
-            Weight samples inversely to the size of their leaf node.
+            Weight samples inversely to the size of their leaf node. Only used
+            for weighted quantiles of leaf values aggregated across trees.
 
         aggregate_leaves_first : bool, default=True
             Calculate predictions using leaf values aggregated across trees.
@@ -970,6 +971,14 @@ cdef class QuantileForest:
         use_sample_weight = self.sample_weight.shape[0] > 0
         if use_sample_weight:
             weighted_quantile = True
+
+        # The samples of a leaf all have the same leaf weight, so the weights
+        # only matter for leaves that are aggregated across trees. Applied to
+        # the leaf of a single tree, they would still change its quantiles:
+        # methods that interpolate count the weights as numbers of samples,
+        # and sums of the weights round at exact fractions of their total.
+        if not aggregate_leaves_first:
+            weighted_leaves = False
 
         if n_quantiles == 0:
             raise ValueError("Quantiles must not be empty.")
