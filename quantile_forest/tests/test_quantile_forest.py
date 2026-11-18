@@ -281,6 +281,42 @@ def test_predict_weighted_leaves_per_tree(name, interpolation, weighted):
         assert np.any(y_pred_leaves != y_pred)
 
 
+@pytest.mark.parametrize("name", FOREST_REGRESSORS)
+@pytest.mark.parametrize("interpolation", ["linear", "lower", "higher", "midpoint", "nearest"])
+@pytest.mark.parametrize("weighted", [False, True])
+def test_predict_weights_below_one_ends(name, interpolation, weighted):
+    """Check that the 0 and 1 quantiles are the smallest and largest leaf samples.
+
+    Leaf weights and sample weights can give leaf samples weights below 1,
+    which must not move the ends of the quantiles.
+    """
+    X, y = datasets.make_regression(n_samples=200, n_features=2, noise=10, random_state=0)
+
+    ForestRegressor = FOREST_REGRESSORS[name]
+
+    sample_weight = np.random.default_rng(0).uniform(0.5, 2, size=len(y)) if weighted else None
+    est = ForestRegressor(
+        n_estimators=10,
+        max_samples_leaf=None,
+        min_samples_leaf=5,
+        bootstrap=not weighted,
+        random_state=0,
+    )
+    est.fit(X, y, sample_weight=sample_weight)
+
+    for aggregate_leaves_first in [True, False]:
+        kwargs = {
+            "quantiles": [0.0, 1.0],
+            "weighted_leaves": True,
+            "aggregate_leaves_first": aggregate_leaves_first,
+        }
+
+        # The inverted CDF gives the smallest and largest samples (of positive
+        # weight) at q=0 and q=1.
+        expected = est.predict(X, interpolation="inverted_cdf", **kwargs)
+        assert_allclose(est.predict(X, interpolation=interpolation, **kwargs), expected)
+
+
 def check_predict_quantiles_toy(name):
     """Check quantile predictions on toy data."""
     quantiles = [0.25, 0.5, 0.75]
@@ -3045,6 +3081,28 @@ def test_sample_weight_scale(name, max_samples_leaf, interpolation):
 
 
 @pytest.mark.parametrize("name", FOREST_REGRESSORS)
+@pytest.mark.parametrize("interpolation", ["linear", "lower", "higher", "midpoint", "nearest"])
+def test_sample_weight_leaf_below_average(name, interpolation):
+    """Check a leaf whose samples all have below-average weights.
+
+    A sample of average weight counts as one sample, so such a leaf's samples
+    have weights below 1 (e.g., 1/50.5 each). Equal weights must still give the
+    quantiles of no weights, not the largest sample for every quantile.
+    """
+    X = [[0.0], [0.0], [1.0], [1.0]]
+    y = [0.0, 10.0, 100.0, 100.0]
+    kwargs = {"quantiles": [0.0, 0.1, 0.5, 0.9, 1.0], "interpolation": interpolation}
+
+    ForestRegressor = FOREST_REGRESSORS[name]
+    est = ForestRegressor(n_estimators=1, bootstrap=False, max_samples_leaf=None, random_state=0)
+
+    expected = est.fit(X, y).predict([[0.0]], **kwargs)
+    for sample_weight in [[1, 1, 100, 100], [1, 1, 7, 7], [1, 1, 3, 3]]:
+        y_pred = est.fit(X, y, sample_weight=sample_weight).predict([[0.0]], **kwargs)
+        assert_allclose(y_pred, expected)
+
+
+@pytest.mark.parametrize("name", FOREST_REGRESSORS)
 @pytest.mark.parametrize("multi_target", [False, True])
 def test_sample_weight_single_sample_leaves(name, multi_target):
     """Check that a leaf with one sample keeps it in proportion to its weight."""
@@ -3382,6 +3440,96 @@ def test_calc_weighted_quantile_ignores_zero_weights(interpolation):
     # Fractional weights: q=1 must reach the last input with positive weight.
     actual = calc_weighted_quantile([0.0, 1.0], [1.0, 0.05], [1.0], interpolation.encode())
     assert_allclose(actual, [1.0])
+
+
+@pytest.mark.parametrize("interpolation", ["linear", "lower", "higher", "midpoint", "nearest"])
+def test_calc_weighted_quantile_weights_below_one(interpolation):
+    """Check quantiles of inputs with weights below 1.
+
+    An input with weight below 1 occupies a single rank, so the quantiles still
+    run from the first input to the last, without jumps.
+    """
+    quantiles = [0.0, 0.1, 0.5, 0.9, 1.0]
+
+    # Equal weights give the unweighted quantiles at any scale, such as weights
+    # of 1/50.5, which once gave the last input for every quantile.
+    expected = np.quantile([0.0, 10.0], quantiles, method=interpolation)
+    for weight in [1.0, 0.5, 0.25, 1 / 50.5, 1e-200]:
+        actual = calc_weighted_quantile(
+            [0.0, 10.0], [weight, weight], quantiles, interpolation.encode()
+        )
+        assert_allclose(actual, expected)
+
+    # The first and last inputs are the 0 and 1 quantiles, whatever their weights.
+    for weights in [[0.5, 5.0], [5.0, 0.5], [0.01, 0.02], [1e-18, 1e-18, 2.0]]:
+        inputs = [0.0, 1.0, 2.0][: len(weights)]
+        actual = calc_weighted_quantile(inputs, weights, [0.0, 1.0], interpolation.encode())
+        assert_array_equal(actual, [inputs[0], inputs[-1]])
+
+    # An input with weight 1/2 between inputs with weight 1 is halfway between
+    # them, so the quantiles are those of three evenly spaced inputs (and
+    # linear interpolation no longer jumps from 2.5 to 5 at q=1/3).
+    quantiles = [0.0, 0.2, 1 / 3, 0.5, 0.6, 2 / 3, 0.9, 1.0]
+    actual = calc_weighted_quantile(
+        [0.0, 5.0, 10.0], [1.0, 0.5, 1.0], quantiles, interpolation.encode()
+    )
+    expected = np.quantile([0.0, 5.0, 10.0], quantiles, method=interpolation)
+    assert_allclose(actual, expected)
+
+    # Exact ties for "nearest" go to the even index, as for unweighted inputs:
+    # weights of 1/2, 1, 1/2 also space the inputs evenly, with exact ranks.
+    actual = calc_weighted_quantile(
+        [0.0, 10.0, 20.0], [0.5, 1.0, 0.5], [0.25, 0.75], interpolation.encode()
+    )
+    expected = np.quantile([0.0, 10.0, 20.0], [0.25, 0.75], method=interpolation)
+    assert_array_equal(actual, expected)
+
+    # An input with weight below 1 still bends the interpolation, however small
+    # its weight.
+    if interpolation == "linear":
+        actual = calc_weighted_quantile([0.0, 9.0, 10.0], [1.0, 1e-6, 1.0], [0.5], b"linear")
+        assert_allclose(actual, [9.0])
+
+
+@pytest.mark.parametrize("C", [0, 0.5, 1])
+@pytest.mark.parametrize("interpolation", ["linear", "lower", "higher", "midpoint", "nearest"])
+def test_calc_weighted_quantile_fractional_weights(C, interpolation):
+    """Check weighted quantiles of fractional weights, including weights below 1.
+
+    The quantiles never decrease, stay between the first and last inputs (which
+    they reach at q=0 and q=1 for C=1), and only depend on the relative weights
+    if those are all at most 1, so that equal weights at most 1 give unweighted
+    quantiles.
+    """
+    rng = np.random.default_rng(0)
+    for _ in range(300):
+        n = int(rng.integers(1, 10))
+        inputs = np.sort(rng.integers(0, 5, size=n).astype(float))  # many ties
+        weights = rng.choice([0, 1e-12, 0.05, 0.3, 0.5, 1, 1.5, 3], size=n)
+        weights[rng.integers(n)] += 0.2
+        kwargs = {"interpolation": interpolation.encode(), "issorted": True, "C": C}
+
+        quantiles = list(np.linspace(0, 1, 201))
+        actual = np.asarray(calc_weighted_quantile(inputs, weights, quantiles, **kwargs))
+        positive = inputs[weights > 0]
+        assert np.all(np.diff(actual) >= 0)
+        assert positive.min() <= actual.min() and actual.max() <= positive.max()
+        if C == 1:
+            assert actual[0] == positive.min() and actual[-1] == positive.max()
+
+        # Scaling weights that are all at most 1 does not change the quantiles.
+        quantiles = [0.0, 1.0] + list(rng.random(6))
+        weights = weights / (2 * weights.max())
+        expected = calc_weighted_quantile(inputs, weights, quantiles, **kwargs)
+        for scale in [0.5, 1e-6, 1e-200]:
+            actual = calc_weighted_quantile(inputs, scale * weights, quantiles, **kwargs)
+            assert_allclose(actual, expected, rtol=1e-12, atol=1e-12)
+
+        # Equal weights at most 1 give the unweighted quantiles.
+        expected = calc_quantile(inputs, quantiles, **kwargs)
+        for weight in [1.0, 0.3, 1e-9]:
+            actual = calc_weighted_quantile(inputs, np.full(n, weight), quantiles, **kwargs)
+            assert_allclose(actual, expected, rtol=1e-12, atol=1e-12)
 
 
 @pytest.mark.parametrize("name", FOREST_REGRESSORS)

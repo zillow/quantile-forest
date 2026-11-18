@@ -103,7 +103,7 @@ By default (`interpolation="averaged_inverted_cdf"`), a quantile `q` is the smal
 
     >>> y_pred = qrf.predict(X_test, interpolation="linear")
 
-With `interpolation="linear"`, a quantile is calculated from the input rank :math:`x` such that :math:`x = (N + 1 - 2C)q + C`, where :math:`N` is the number of samples and :math:`C = 1` is a constant (degree of freedom). For weighted samples, :math:`N` is their total weight instead, with the weights scaled so that a sample of average weight counts as one sample. For a comparison of the methods, see :ref:`gallery_plot_qrf_interpolation_methods`.
+With `interpolation="linear"`, a quantile is calculated from the input rank :math:`x` such that :math:`x = (N + 1 - 2C)q + C`, where :math:`N` is the number of samples and :math:`C = 1` is a constant (degree of freedom). For weighted samples, :math:`N` is their total weight instead, with the weights scaled so that a sample of average weight counts as one sample. A sample whose scaled weight is below 1 takes up a single rank, with less room on either side of it, so the quantiles still run from the smallest target to the largest and change continuously with `q`. For a comparison of the methods, see :ref:`gallery_plot_qrf_interpolation_methods`.
 
 Multi-target quantile regression is also supported. If the target values are multi-dimensional, then the second output column will correspond to the number of targets::
 

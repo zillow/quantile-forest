@@ -1,4 +1,4 @@
-from libc.math cimport NAN, ceil, fabs, floor, round
+from libc.math cimport NAN, ceil, fabs, floor, fmin, round
 from libcpp.algorithm cimport sort as sort_cpp
 from libcpp.map cimport map
 from libcpp.pair cimport pair
@@ -101,6 +101,30 @@ cdef inline double calc_quantile_index(
     ``C = 1``, this is exactly NumPy's ``(n - 1)q``.
     """
     return quantile * (n - (2 * C - 1)) + (C - 1)
+
+
+cdef inline double calc_last_position(
+    double cum_weight,
+    double weight,
+    bint centred,
+) noexcept nogil:
+    """Return the last 0-based position of a weighted input.
+
+    An input with weight ``w`` of at least 1 occupies ``w`` consecutive
+    positions (like ``w`` repeated values) that end at ``cum_weight - 1``,
+    where ``cum_weight`` is the cumulative weight up to and including it. An
+    input with weight below 1 occupies only the position at the centre of
+    where its ``w`` positions would be, ``cum_weight - (w + 1) / 2``.
+
+    If `centred`, the position is shifted up by 1/2 (to ``cum_weight - 1/2``
+    or ``cum_weight - w/2``), which keeps the positions of very small weights
+    apart near the start, where the unshifted positions are close to -1/2.
+    """
+    if centred:
+        return cum_weight - fmin(weight, 1) * 0.5
+    if weight >= 1:
+        return cum_weight - 1
+    return cum_weight - (weight + 1) * 0.5
 
 
 cdef inline double calc_inverted_cdf_quantile(
@@ -289,7 +313,23 @@ cpdef vector[double] calc_weighted_quantile(
 
     A desired quantile is calculated from the input rank ``x`` such that
     ``x = (W + 1 - 2C)q + C``, where ``q`` is the quantile, ``W`` is the
-    total weight, and ``C`` is a constant (degree of freedom).
+    total weight, and ``C`` is a constant (degree of freedom). That is, as
+    ``q`` runs from 0 to 1, ``x`` runs from the first rank to the last,
+    extended past them by ``1 - C``.
+
+    An input with weight ``w`` below 1 occupies a single rank instead, at the
+    centre of where its ``w`` ranks would be, so the centres of neighbouring
+    inputs are always half their total weight apart. If the first or last
+    input has weight ``w`` below 1, ``x`` runs from or to its rank, extended
+    past it by ``(1 - C)w``. So quantiles still run from the first input to
+    the last (for ``C = 1``), and linear interpolation stays continuous in
+    ``q``. Scaling weights that are all at most 1 (keeping them at most 1)
+    does not change the quantiles, so inputs of equal weight at most 1 give
+    the unweighted quantiles. With "nearest", a tie between two inputs,
+    either of which has weight below 1, goes to the one with an even index
+    among the inputs with positive weight, as it does for unweighted inputs.
+    An input with weight below 1 still bends the interpolation between its
+    neighbours, however small its weight.
 
     If the desired quantile lies between two input ranks ``i < j``, then the
     quantile is interpolated based on the specified `interpolation` method.
@@ -299,7 +339,7 @@ cpdef vector[double] calc_weighted_quantile(
     inputs : list of floats
         List of inputs from which to compute quantiles.
 
-    weights : list of ints
+    weights : list of floats
         List of weights for `inputs`.
 
     quantiles : list of floats
@@ -350,9 +390,12 @@ cpdef vector[double] calc_weighted_quantile(
     cdef bint inverted_cdf, average
     cdef intp_t i, j, k
     cdef intp_t idx_floor, idx_ceil, idx_last
-    cdef double total_weight
-    cdef double quantile, pos, pos_floor, frac, target
+    cdef intp_t n_floor
+    cdef double total_weight, weight_unit
+    cdef double w_first, w_last, w_floor, w_ceil
+    cdef double quantile, pos, pos_lo, pos_hi, pos_floor, frac, target
     cdef double v_floor, v_ceil
+    cdef bint pos_from_ends, unit_gap
     cdef vector[double] cum_weights, sorted_quantile_indices
     cdef vector[double] out
 
@@ -420,6 +463,37 @@ cpdef vector[double] calc_weighted_quantile(
                     out[k] = inputs[idx_ceil] - (inputs[idx_ceil] - inputs[j]) * 0.5
         return out
 
+    idx_last = n_inputs - 1
+    while weights[idx_last] <= 0:
+        idx_last -= 1
+
+    # If every weight is below 1, divide the weights by the largest one. That
+    # does not change the quantiles (see the docstring), but keeps the
+    # positions of very small weights apart. Weights of at least 1 are kept.
+    weight_unit = 0
+    for i in range(idx_floor, idx_last + 1):
+        if weights[i] > weight_unit:
+            weight_unit = weights[i]
+    if weight_unit > 1:
+        weight_unit = 1
+
+    # The quantile's position runs from the first position of the first input
+    # to the last position of the last input, extended past them by `1 - C`,
+    # which is the position `calc_quantile_index` gives. If an end input has
+    # weight `w` below 1, it has a single position instead, and the extension
+    # past it is `(1 - C)w`. Those positions are centred (shifted up by 1/2;
+    # see `calc_last_position`), which makes the first position `w/2`.
+    w_first = weights[idx_floor] / weight_unit
+    w_last = weights[idx_last] / weight_unit
+    pos_from_ends = w_first < 1 or w_last < 1
+    if pos_from_ends:
+        pos_lo = fmin(w_first, 1) * (C - 0.5)
+        pos_hi = calc_last_position(cum_weights[idx_last] / weight_unit, w_last, True)
+        pos_hi += (1 - C) * fmin(w_last, 1)
+
+    # The number of inputs with positive weight up to and including the floor.
+    n_floor = 0
+
     for i in range(n_quantiles):
         quantile = quantiles[i]
 
@@ -428,20 +502,36 @@ cpdef vector[double] calc_weighted_quantile(
 
         # Calculate the quantile's position, treating an input with weight `w`
         # as occupying `w` consecutive positions (like `w` repeated values), so
-        # that integer weights match the unweighted quantile of repeated values.
+        # that integer weights match the unweighted quantile of repeated values,
+        # or a single position if `w` is below 1 (see `calc_last_position`).
         # Positions before the first input or after the last one (possible when
         # C < 1) give the first or last input, as for unweighted quantiles.
-        pos = calc_quantile_index(total_weight, quantile, C)
+        if not pos_from_ends:
+            pos = calc_quantile_index(total_weight / weight_unit, quantile, C)
+        elif quantile >= 1:
+            pos = pos_hi  # exactly, so that q=1 gives the last input
+        else:
+            pos = fmin(pos_lo + quantile * (pos_hi - pos_lo), pos_hi)
 
-        # Find the last input with positive weight whose final position is at
-        # or before `pos`.
-        while j < n_inputs and cum_weights[j] - 1 <= pos:
+        # Find the last input with positive weight whose last position is at or
+        # before `pos`.
+        while j < n_inputs and (
+            weights[j] <= 0
+            or calc_last_position(
+                cum_weights[j] / weight_unit, weights[j] / weight_unit, pos_from_ends
+            )
+            <= pos
+        ):
             if weights[j] > 0:
                 idx_floor = j
+                n_floor += 1
             j += 1
 
-        # The final position of the floor input.
-        pos_floor = cum_weights[idx_floor] - 1
+        # The last position of the floor input.
+        w_floor = weights[idx_floor] / weight_unit
+        pos_floor = calc_last_position(
+            cum_weights[idx_floor] / weight_unit, w_floor, pos_from_ends
+        )
 
         # Check if the quantile lies within the positions of the first input.
         if pos < pos_floor:
@@ -460,10 +550,18 @@ cpdef vector[double] calc_weighted_quantile(
 
         v_floor = inputs[idx_floor]
         v_ceil = inputs[idx_ceil]
+        w_ceil = weights[idx_ceil] / weight_unit
 
-        # The ceiling input's first position is one past the floor input's final
+        # The ceiling input's first position is one past the floor input's last
         # position, so the fractional remainder is the distance from the floor.
-        frac = pos - pos_floor
+        # If either input has weight below 1, the gap between them is half the
+        # sum of their weights (each counted as at most 1), which keeps their
+        # centres half their total weight apart.
+        unit_gap = w_floor >= 1 and w_ceil >= 1
+        if unit_gap:
+            frac = pos - pos_floor
+        else:
+            frac = (pos - pos_floor) / ((fmin(w_floor, 1) + fmin(w_ceil, 1)) * 0.5)
 
         # Check if the quantile lies at the floor value or within the ceiling.
         if frac <= 0 or v_floor == v_ceil:
@@ -482,8 +580,16 @@ cpdef vector[double] calc_weighted_quantile(
             out[k] = 0.5 * (v_floor + v_ceil)
         elif s_interpolation == <char*>b"nearest":
             if frac == 0.5:
-                # Round half to the even position, as NumPy does.
-                out[k] = v_floor if floor(pos_floor / 2) * 2 == pos_floor else v_ceil
+                # Round half to the even position, as NumPy does. If either
+                # input has weight below 1, round half to the even index among
+                # the inputs with positive weight instead, so that equal
+                # weights give the unweighted quantiles.
+                if unit_gap:
+                    if pos_from_ends:
+                        pos_floor -= 0.5  # the unshifted position
+                    out[k] = v_floor if floor(pos_floor / 2) * 2 == pos_floor else v_ceil
+                else:
+                    out[k] = v_floor if (n_floor - 1) % 2 == 0 else v_ceil
             else:
                 out[k] = v_floor if frac < 0.5 else v_ceil
         elif s_interpolation == <char*>b"linear":
