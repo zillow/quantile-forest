@@ -3484,11 +3484,60 @@ def test_calc_weighted_quantile_weights_below_one(interpolation):
     expected = np.quantile([0.0, 10.0, 20.0], [0.25, 0.75], method=interpolation)
     assert_array_equal(actual, expected)
 
+    # Equal fractional weights must preserve exact ranks and nearest ties.
+    inputs = [0.0, 1.0, 2.0]
+    quantiles = [0.25, 0.5, 0.75]
+    actual = calc_weighted_quantile(inputs, [0.4] * 3, quantiles, interpolation.encode())
+    assert_array_equal(actual, np.quantile(inputs, quantiles, method=interpolation))
+
+    # Normalization before accumulation also preserves ties when mixed
+    # fractional weights are rescaled.
+    actual = calc_weighted_quantile(
+        inputs, [0.025, 0.05, 0.025], quantiles, interpolation.encode()
+    )
+    assert_array_equal(actual, np.quantile(inputs, quantiles, method=interpolation))
+
+    # An exact rank stays exact when the largest weight is not a power of two.
+    actual = calc_weighted_quantile(inputs, [0.25, 0.5, 0.75], [0.375], interpolation.encode())
+    assert_array_equal(actual, [1.0])
+
+    if interpolation == "nearest":
+        inputs = [0.0, 10.0, 20.0, 30.0]
+        for weights in [[0.25, 0.125, 0.5, 0.5], [0.5, 0.25, 1.0, 1.0]]:
+            assert_array_equal(calc_weighted_quantile(inputs, weights, [0.75], b"nearest"), [20.0])
+
+        # A fraction just past the midpoint can round to 0.5.
+        actual = calc_weighted_quantile(
+            [0.0, 10.0, 20.0], [0.5, 0.5, 0.5 + 2**-53], [0.25], b"nearest"
+        )
+        assert_array_equal(actual, [10.0])
+
+        # A frequency rank slightly above an even integer is not that integer.
+        actual = calc_weighted_quantile(inputs, [2**-53, 3.0, 3.0, 2**-53], [0.5], b"nearest")
+        assert_array_equal(actual, [20.0])
+
+        # At large ranks the residual may itself hold an even integer.
+        weights = [0.5, 2.5, 2**54, 2**54, 2.5, 0.5]
+        actual = calc_weighted_quantile(list(range(6)), weights, [0.5], b"nearest")
+        assert_array_equal(actual, [2.0])
+
+    if interpolation == "lower":
+        # Just below the next rank, a fraction can round to 1.
+        actual = calc_weighted_quantile(
+            [0.0, 10.0, 20.0], [0.5, 0.5, 0.5 - 2**-54], [0.5], b"lower"
+        )
+        assert_array_equal(actual, [0.0])
+
     # An input with weight below 1 still bends the interpolation, however small
     # its weight.
     if interpolation == "linear":
         actual = calc_weighted_quantile([0.0, 9.0, 10.0], [1.0, 1e-6, 1.0], [0.5], b"linear")
         assert_allclose(actual, [9.0])
+
+        # Two tiny weights after a unit weight still span a distinct gap.
+        weights = [1.0, 2**-53, 2**-53, 1.0]
+        actual = calc_weighted_quantile([0.0, 3.0, 8.0, 10.0], weights, [0.5], b"linear")
+        assert_array_equal(actual, [5.5])
 
 
 @pytest.mark.parametrize("C", [0, 0.5, 1])

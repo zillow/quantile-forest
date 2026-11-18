@@ -1,4 +1,4 @@
-from libc.math cimport NAN, ceil, fabs, floor, fmin, round
+from libc.math cimport NAN, ceil, fabs, floor, fma, fmin, fmod, frexp, ldexp, round
 from libcpp.algorithm cimport sort as sort_cpp
 from libcpp.map cimport map
 from libcpp.pair cimport pair
@@ -103,28 +103,30 @@ cdef inline double calc_quantile_index(
     return quantile * (n - (2 * C - 1)) + (C - 1)
 
 
-cdef inline double calc_last_position(
-    double cum_weight,
-    double weight,
-    bint centred,
-) noexcept nogil:
-    """Return the last 0-based position of a weighted input.
+cdef struct weighted_rank:
+    double high
+    double low
 
-    An input with weight ``w`` of at least 1 occupies ``w`` consecutive
-    positions (like ``w`` repeated values) that end at ``cum_weight - 1``,
-    where ``cum_weight`` is the cumulative weight up to and including it. An
-    input with weight below 1 occupies only the position at the centre of
-    where its ``w`` positions would be, ``cum_weight - (w + 1) / 2``.
 
-    If `centred`, the position is shifted up by 1/2 (to ``cum_weight - 1/2``
-    or ``cum_weight - w/2``), which keeps the positions of very small weights
-    apart near the start, where the unshifted positions are close to -1/2.
-    """
-    if centred:
-        return cum_weight - fmin(weight, 1) * 0.5
-    if weight >= 1:
-        return cum_weight - 1
-    return cum_weight - (weight + 1) * 0.5
+cdef inline weighted_rank rank_sum(double left, double right) noexcept nogil:
+    """Keep the rounding residual of a sum (TwoSum)."""
+    cdef double high = left + right
+    cdef double rounded_right = high - left
+    return weighted_rank(high, (left - (high - rounded_right)) + (right - rounded_right))
+
+
+cdef inline weighted_rank rank_add(weighted_rank left, weighted_rank right) noexcept nogil:
+    cdef weighted_rank high_sum = rank_sum(left.high, right.high)
+    return rank_sum(high_sum.high, high_sum.low + (left.low + right.low))
+
+
+cdef inline weighted_rank rank_scale(weighted_rank rank, double factor) noexcept nogil:
+    cdef double high = rank.high * factor
+    return rank_sum(high, fma(rank.high, factor, -high) + rank.low * factor)
+
+
+cdef inline weighted_rank rank_subtract(weighted_rank left, weighted_rank right) noexcept nogil:
+    return rank_add(left, weighted_rank(-right.high, -right.low))
 
 
 cdef inline double calc_inverted_cdf_quantile(
@@ -325,11 +327,10 @@ cpdef vector[double] calc_weighted_quantile(
     the last (for ``C = 1``), and linear interpolation stays continuous in
     ``q``. Scaling weights that are all at most 1 (keeping them at most 1)
     does not change the quantiles, so inputs of equal weight at most 1 give
-    the unweighted quantiles. With "nearest", a tie between two inputs,
-    either of which has weight below 1, goes to the one with an even index
-    among the inputs with positive weight, as it does for unweighted inputs.
-    An input with weight below 1 still bends the interpolation between its
-    neighbours, however small its weight.
+    the unweighted quantiles. With "nearest", a tie goes to the even positive-weight
+    input index if all weights are at most 1 or either input has weight below 1.
+    An input with weight below 1 can still bend the interpolation between its
+    neighbours, even when its weight is very small.
 
     If the desired quantile lies between two input ranks ``i < j``, then the
     quantile is interpolated based on the specified `interpolation` method.
@@ -391,13 +392,18 @@ cpdef vector[double] calc_weighted_quantile(
     cdef intp_t i, j, k
     cdef intp_t idx_floor, idx_ceil, idx_last
     cdef intp_t n_floor
-    cdef double total_weight, weight_unit
+    cdef int weight_exponent
+    cdef double total_weight, weight_unit, min_weight
     cdef double w_first, w_last, w_floor, w_ceil
-    cdef double quantile, pos, pos_lo, pos_hi, pos_floor, frac, target
-    cdef double v_floor, v_ceil
-    cdef bint pos_from_ends, unit_gap
+    cdef double quantile, pos, pos_floor, frac, target
+    cdef double v_floor, v_ceil, midpoint_delta
+    cdef bint fractional = False
+    cdef bint all_weights_at_most_one
+    cdef bint frequency_tie = True
+    cdef weighted_rank running_weight, pos_lo, pos_hi, span, rank_pos, delta, gap
+    cdef vector[weighted_rank] last_positions
     cdef vector[double] cum_weights, sorted_quantile_indices
-    cdef vector[double] out
+    cdef vector[double] out, positive_inputs
 
     n_inputs = inputs.size()
     n_quantiles = quantiles.size()
@@ -423,6 +429,62 @@ cpdef vector[double] calc_weighted_quantile(
     if total_weight <= 0:
         return out
 
+    # Inputs with zero weight are never part of the distribution.
+    idx_floor = 0
+    while weights[idx_floor] <= 0:
+        idx_floor += 1
+    j = idx_floor
+
+    if not inverted_cdf:
+        idx_last = n_inputs - 1
+        while weights[idx_last] <= 0:
+            idx_last -= 1
+        weight_unit = min_weight = weights[idx_floor]
+        for i in range(idx_floor + 1, idx_last + 1):
+            if weights[i] > weight_unit:
+                weight_unit = weights[i]
+            elif 0 < weights[i] < min_weight:
+                min_weight = weights[i]
+        fractional = min_weight < 1
+
+        if fractional and min_weight == weight_unit:
+            # Equal positive weights give the unweighted result, including its
+            # treatment of exact integer ranks and ties.
+            for i in range(idx_floor, idx_last + 1):
+                if weights[i] > 0:
+                    positive_inputs.push_back(inputs[i])
+            return calc_quantile(positive_inputs, quantiles, interpolation, True, C)
+
+        if fractional:
+            # Scale small weights by a power of two. This keeps tiny weights
+            # away from underflow without moving exact binary ranks and ties.
+            all_weights_at_most_one = weight_unit <= 1
+            if weight_unit < 1:
+                frexp(weight_unit, &weight_exponent)
+                weight_unit = ldexp(1.0, weight_exponent)
+            else:
+                weight_unit = 1
+            running_weight = weighted_rank(0, 0)
+            last_positions = vector[weighted_rank](n_inputs)
+            for i in range(idx_floor, idx_last + 1):
+                w_floor = weights[i] / weight_unit
+                running_weight = rank_add(running_weight, weighted_rank(w_floor, 0))
+                # Shift the last position up by 1/2 so tiny initial ranks are
+                # near zero. Keep the residual so ranks after large weights
+                # can still differ by less than one floating-point step.
+                last_positions[i] = rank_add(
+                    running_weight, weighted_rank(-fmin(w_floor, 1) * 0.5, 0)
+                )
+            w_first = fmin(weights[idx_floor] / weight_unit, 1)
+            w_last = fmin(weights[idx_last] / weight_unit, 1)
+            # Extend the first and last ranks by (1 - C) times their weights,
+            # capped at one per endpoint as in the original frequency ranks.
+            pos_lo = rank_scale(weighted_rank(w_first, 0), C - 0.5)
+            pos_hi = rank_add(
+                last_positions[idx_last], rank_scale(weighted_rank(w_last, 0), 1 - C)
+            )
+            span = rank_subtract(pos_hi, pos_lo)
+
     # Get the indices that would sort the quantiles in ascending order.
     sorted_quantile_indices = vector[double](n_quantiles)
     for i in range(<intp_t>(sorted_quantile_indices.size())):
@@ -433,13 +495,6 @@ cpdef vector[double] calc_weighted_quantile(
     parallel_qsort_asc(quantiles, sorted_quantile_indices, 0, n_quantiles - 1)
 
     out = vector[double](n_quantiles)
-
-    # Inputs with zero weight are never part of the distribution, so start at
-    # the first input with positive weight.
-    idx_floor = 0
-    while weights[idx_floor] <= 0:
-        idx_floor += 1
-    j = idx_floor
 
     if inverted_cdf:
         # Find the first input with positive weight whose cumulative weight
@@ -463,34 +518,6 @@ cpdef vector[double] calc_weighted_quantile(
                     out[k] = inputs[idx_ceil] - (inputs[idx_ceil] - inputs[j]) * 0.5
         return out
 
-    idx_last = n_inputs - 1
-    while weights[idx_last] <= 0:
-        idx_last -= 1
-
-    # If every weight is below 1, divide the weights by the largest one. That
-    # does not change the quantiles (see the docstring), but keeps the
-    # positions of very small weights apart. Weights of at least 1 are kept.
-    weight_unit = 0
-    for i in range(idx_floor, idx_last + 1):
-        if weights[i] > weight_unit:
-            weight_unit = weights[i]
-    if weight_unit > 1:
-        weight_unit = 1
-
-    # The quantile's position runs from the first position of the first input
-    # to the last position of the last input, extended past them by `1 - C`,
-    # which is the position `calc_quantile_index` gives. If an end input has
-    # weight `w` below 1, it has a single position instead, and the extension
-    # past it is `(1 - C)w`. Those positions are centred (shifted up by 1/2;
-    # see `calc_last_position`), which makes the first position `w/2`.
-    w_first = weights[idx_floor] / weight_unit
-    w_last = weights[idx_last] / weight_unit
-    pos_from_ends = w_first < 1 or w_last < 1
-    if pos_from_ends:
-        pos_lo = fmin(w_first, 1) * (C - 0.5)
-        pos_hi = calc_last_position(cum_weights[idx_last] / weight_unit, w_last, True)
-        pos_hi += (1 - C) * fmin(w_last, 1)
-
     # The number of inputs with positive weight up to and including the floor.
     n_floor = 0
 
@@ -500,41 +527,36 @@ cpdef vector[double] calc_weighted_quantile(
         # Assign the output based on the input quantile ordering.
         k = <intp_t>sorted_quantile_indices[i]
 
-        # Calculate the quantile's position, treating an input with weight `w`
-        # as occupying `w` consecutive positions (like `w` repeated values), so
-        # that integer weights match the unweighted quantile of repeated values,
-        # or a single position if `w` is below 1 (see `calc_last_position`).
-        # Positions before the first input or after the last one (possible when
-        # C < 1) give the first or last input, as for unweighted quantiles.
-        if not pos_from_ends:
-            pos = calc_quantile_index(total_weight / weight_unit, quantile, C)
-        elif quantile >= 1:
-            pos = pos_hi  # exactly, so that q=1 gives the last input
+        if fractional:
+            if quantile == 0:
+                out[k] = inputs[idx_floor]
+                continue
+            if quantile == 1:
+                out[k] = inputs[idx_last]
+                continue
+            rank_pos = rank_add(pos_lo, rank_scale(span, quantile))
+            while j <= idx_last:
+                if weights[j] > 0:
+                    delta = rank_subtract(rank_pos, last_positions[j])
+                    if delta.high < 0:
+                        break
+                    idx_floor = j
+                    n_floor += 1
+                j += 1
+            delta = rank_subtract(rank_pos, last_positions[idx_floor])
+            frac = delta.high
         else:
-            pos = fmin(pos_lo + quantile * (pos_hi - pos_lo), pos_hi)
-
-        # Find the last input with positive weight whose last position is at or
-        # before `pos`.
-        while j < n_inputs and (
-            weights[j] <= 0
-            or calc_last_position(
-                cum_weights[j] / weight_unit, weights[j] / weight_unit, pos_from_ends
-            )
-            <= pos
-        ):
-            if weights[j] > 0:
-                idx_floor = j
-                n_floor += 1
-            j += 1
-
-        # The last position of the floor input.
-        w_floor = weights[idx_floor] / weight_unit
-        pos_floor = calc_last_position(
-            cum_weights[idx_floor] / weight_unit, w_floor, pos_from_ends
-        )
+            # Retain the frequency-rank arithmetic for weights of at least 1.
+            pos = calc_quantile_index(total_weight, quantile, C)
+            while j < n_inputs and cum_weights[j] - 1 <= pos:
+                if weights[j] > 0:
+                    idx_floor = j
+                j += 1
+            pos_floor = cum_weights[idx_floor] - 1
+            frac = pos - pos_floor
 
         # Check if the quantile lies within the positions of the first input.
-        if pos < pos_floor:
+        if frac < 0:
             out[k] = inputs[idx_floor]
             continue
 
@@ -550,24 +572,20 @@ cpdef vector[double] calc_weighted_quantile(
 
         v_floor = inputs[idx_floor]
         v_ceil = inputs[idx_ceil]
-        w_ceil = weights[idx_ceil] / weight_unit
-
-        # The ceiling input's first position is one past the floor input's last
-        # position, so the fractional remainder is the distance from the floor.
-        # If either input has weight below 1, the gap between them is half the
-        # sum of their weights (each counted as at most 1), which keeps their
-        # centres half their total weight apart.
-        unit_gap = w_floor >= 1 and w_ceil >= 1
-        if unit_gap:
-            frac = pos - pos_floor
-        else:
-            frac = (pos - pos_floor) / ((fmin(w_floor, 1) + fmin(w_ceil, 1)) * 0.5)
-
         # Check if the quantile lies at the floor value or within the ceiling.
         if frac <= 0 or v_floor == v_ceil:
             out[k] = v_floor
             continue
-        if frac >= 1:
+        if fractional:
+            w_floor = fmin(weights[idx_floor] / weight_unit, 1)
+            w_ceil = fmin(weights[idx_ceil] / weight_unit, 1)
+            gap = rank_scale(rank_sum(w_floor, w_ceil), 0.5)
+            # Compare compensated distances before division. The rounded
+            # fraction alone could turn a near-boundary rank into an exact one.
+            if rank_subtract(delta, gap).high >= 0:
+                out[k] = v_ceil
+                continue
+        elif frac >= 1:
             out[k] = v_ceil
             continue
 
@@ -579,20 +597,30 @@ cpdef vector[double] calc_weighted_quantile(
         elif s_interpolation == <char*>b"midpoint":
             out[k] = 0.5 * (v_floor + v_ceil)
         elif s_interpolation == <char*>b"nearest":
-            if frac == 0.5:
-                # Round half to the even position, as NumPy does. If either
-                # input has weight below 1, round half to the even index among
-                # the inputs with positive weight instead, so that equal
-                # weights give the unweighted quantiles.
-                if unit_gap:
-                    if pos_from_ends:
-                        pos_floor -= 0.5  # the unshifted position
-                    out[k] = v_floor if floor(pos_floor / 2) * 2 == pos_floor else v_ceil
+            if fractional:
+                midpoint_delta = rank_subtract(delta, rank_scale(gap, 0.5)).high
+                frequency_tie = not all_weights_at_most_one and w_floor == 1 and w_ceil == 1
+            else:
+                midpoint_delta = frac - 0.5
+            if midpoint_delta == 0:
+                # Use even frequency ranks for repeated positions and even
+                # positive-weight input indices for single fractional ranks.
+                if frequency_tie:
+                    if fractional:
+                        delta = rank_add(last_positions[idx_floor], weighted_rank(-0.5, 0))
+                        # Reduce both terms modulo 2 before adding them, so a
+                        # large rank does not round away its low-order parity.
+                        delta = rank_sum(fmod(delta.high, 2), fmod(delta.low, 2))
+                        out[k] = v_floor if delta.low == 0 and fmod(delta.high, 2) == 0 else v_ceil
+                    else:
+                        out[k] = v_floor if floor(pos_floor / 2) * 2 == pos_floor else v_ceil
                 else:
                     out[k] = v_floor if (n_floor - 1) % 2 == 0 else v_ceil
             else:
-                out[k] = v_floor if frac < 0.5 else v_ceil
+                out[k] = v_floor if midpoint_delta < 0 else v_ceil
         elif s_interpolation == <char*>b"linear":
+            if fractional:
+                frac = (delta.high + delta.low) / (gap.high + gap.low)
             out[k] = v_floor + frac * (v_ceil - v_floor)
 
     return out
