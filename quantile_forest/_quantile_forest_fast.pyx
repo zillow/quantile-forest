@@ -1190,8 +1190,9 @@ cdef class QuantileForest:
                                         n_leaf_samples[j] += self.sample_weight[0, train_idx - 1]
                                     else:
                                         n_leaf_samples[j] += 1
-                            n_total_samples += n_leaf_samples[j]
-                            n_total_trees += 1
+                            if n_leaf_samples[j] > 0:
+                                n_total_samples += n_leaf_samples[j]
+                                n_total_trees += 1
 
                 for j in range(n_outputs):
                     for k in range(<intp_t>(train_indices.size())):

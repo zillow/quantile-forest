@@ -1613,6 +1613,59 @@ def test_empty_leaf_has_no_value(name, monotonic):
         )
 
 
+@pytest.mark.parametrize("name", FOREST_REGRESSORS)
+@pytest.mark.parametrize("weighted", [False, True])
+def test_empty_leaf_weighted_leaves(name, weighted):
+    """Check that an empty leaf is left out of weighted_leaves predictions."""
+    X, y = datasets.make_regression(n_samples=50, n_features=2, random_state=0)
+    sample_weight = np.random.default_rng(0).uniform(0.5, 2.0, size=len(y)) if weighted else None
+
+    ForestRegressor = FOREST_REGRESSORS[name]
+    est = ForestRegressor(
+        n_estimators=3,
+        max_samples_leaf=None,
+        min_samples_leaf=5,
+        bootstrap=not weighted,
+        random_state=0,
+    ).fit(X, y, sample_weight=sample_weight)
+
+    # Empty the leaf that the first sample reaches in the first tree.
+    leaves = est.apply(X[:1])[0]
+    forest = est.forest_
+    y_train_leaves = np.asarray(forest.y_train_leaves)
+    y_train_leaves[0, leaves[0]] = 0
+    sw = np.asarray(forest.sample_weight) if weighted else None
+    est.forest_ = type(forest)(np.asarray(forest.y_train), y_train_leaves, sample_weight=sw)
+
+    # Compare against the same forest without the empty-leaf tree.
+    expected_est = ForestRegressor(
+        n_estimators=2,
+        max_samples_leaf=None,
+        min_samples_leaf=5,
+        bootstrap=not weighted,
+        random_state=0,
+    ).fit(X, y, sample_weight=sample_weight)
+    expected_est.estimators_ = est.estimators_[1:]
+    expected_est.forest_ = type(forest)(
+        np.asarray(forest.y_train), y_train_leaves[1:], sample_weight=sw
+    )
+
+    quantiles = [0.1, 0.25, 0.5, 0.75, 0.9]
+    for interpolation in INTERPOLATIONS:
+        assert_allclose(
+            est.predict(
+                X[:1], quantiles=quantiles, interpolation=interpolation, weighted_leaves=True
+            ),
+            expected_est.predict(
+                X[:1], quantiles=quantiles, interpolation=interpolation, weighted_leaves=True
+            ),
+        )
+    assert_allclose(
+        est.predict(X[:1], quantiles="mean", weighted_leaves=True),
+        expected_est.predict(X[:1], quantiles="mean", weighted_leaves=True),
+    )
+
+
 def check_missing_values(name):
     """Check that missing values are supported where the scikit-learn forest supports them."""
     ForestRegressor = FOREST_REGRESSORS[name]
